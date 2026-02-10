@@ -453,6 +453,19 @@ if(ei>=0&&firstDate){var newEnd=addMonths(firstDate,usedMonths);setCell(cells[ei
 }
 
 var uniqueCount=Object.keys(processedCodes).length;
+
+/* Auto-detect language from notes AFTER processing/cleaning */
+if(ni>=0){
+var postCleanNotes='';
+for(var ln=1;ln<rows.length;ln++){
+var lnCells=rows[ln].querySelectorAll('td');
+if(lnCells.length>ni){var noteVal=getCell(lnCells[ni]);if(noteVal)postCleanNotes+=noteVal+' ';}
+}
+if(postCleanNotes.trim()){
+var detectedLang=detectLanguage(postCleanNotes);
+setPatientLanguage(detectedLang);
+}
+}
 if(enableWarnings&&warningQueue.length>0){
 showWarningDialog(warningQueue,function(){showPostProcessDialog(totalRows,uniqueCount,duplicatedCount,showPostDialog);});
 }else{
