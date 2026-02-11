@@ -1,1 +1,75 @@
-(function(){var d=document,id='ali_sys_v22',vSet=new Set(),savedRows=[];if(d.getElementById(id))d.getElementById(id).remove();var pNodes=Array.from(d.querySelectorAll('.pagination a, .pagination li')).map(el=>parseInt(el.innerText.trim())).filter(n=>!isNaN(n)),pLim=pNodes.length>0?Math.max(...pNodes):1,s=d.createElement('style');s.innerHTML='#ali_sys_v22{position:fixed;top:5%;right:2%;background:rgba(255,255,255,0.98);backdrop-filter:blur(10px);border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:20px;z-index:9999999;width:300px;color:#333;direction:rtl;border:1px solid #1a73e8;font-family:sans-serif;text-align:center}.minimized{width:50px!important;height:50px!important;padding:0!important;border-radius:50%!important;cursor:pointer;display:flex;align-items:center;justify-content:center}.minimized::before{content:"⚙️";font-size:24px}.s-in{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box}.d-btn{width:100%;padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;margin-top:5px}.b-blue{background:#1a73e8;color:#fff}.b-green{background:#28a745!important;color:#fff}.ali-stats-wrapper{display:flex;justify-content:space-around;margin:10px 0;padding:10px;background:#f0f7ff;border-radius:10px}.ali-cnt-val{padding:2px 8px;border-radius:5px;color:#fff;font-weight:bold}#p-bar{height:6px;background:#eee;margin-top:10px;border-radius:3px;overflow:hidden}#p-fill{height:100%;background:#1a73e8;width:0%;transition:0.3s}';d.head.appendChild(s);var v=d.createElement('div');v.id=id;v.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span id="ali_min" style="cursor:pointer;font-size:20px;color:#1a73e8">−</span><b style="font-size:14px">محرك علي الباز</b><span id="ali_close" style="cursor:pointer;font-size:18px;color:#ccc">✖</span></div><div class="ali-stats-wrapper"><div>الإجمالي<br><span id="stat_total" class="ali-cnt-val" style="background:#1a73e8">0</span></div><div style="border-right:1px solid #ddd">المطابق<br><span id="stat_rec" class="ali-cnt-val" style="background:#28a745">0</span></div></div><div id="ali_main_body"><div style="margin-bottom:10px;font-size:13px">عدد الصفحات: <input type="number" id="p_lim" value="'+pLim+'" style="width:40px"></div><div id="p-bar"><div id="p-fill"></div></div><div id="status-msg" style="font-size:11px;color:#666;margin:5px 0">جاهز...</div><button class="d-btn b-blue" id="start">بدء التجميع</button></div>';d.body.appendChild(v);d.getElementById('ali_close').onclick=()=>v.remove();d.getElementById('ali_min').onclick=()=>v.classList.toggle('minimized');var upC=(m)=>{d.getElementById('stat_total').innerText=savedRows.length;d.getElementById('stat_rec').innerText=m||0},run=(curr,lim)=>{d.getElementById('p-fill').style.width=(curr/lim*100)+'%';d.getElementById('status-msg').innerText='فحص ص '+curr;d.querySelectorAll('table tr').forEach(r=>{var td=r.querySelectorAll('td');if(td.length>1){var k=td[0].innerText.trim();if(k.length>3&&!vSet.has(k)){vSet.add(k);var args=null,lb=r.querySelector('label[onclick^="getDetails"]');if(lb){var m=lb.getAttribute('onclick').match(/\'(.*?)\',\'(.*?)\',\'(.*?)\',\'(.*?)\'/);if(m)args=[m[1],m[2],m[3],m[4]]}savedRows.push({id:k,onl:td[1].innerText.trim(),node:r.cloneNode(true),args:args})}}});upC(0);if(curr<lim){var nxt=Array.from(d.querySelectorAll('.pagination a, .pagination li')).find(el=>el.innerText.trim()==(curr+1));if(nxt){nxt.click();setTimeout(()=>run(curr+1,lim),10000)}else finish()}else finish()},finish=()=>{var table=d.querySelector('table tbody')||d.querySelector('table');if(table)table.innerHTML='';savedRows.forEach(o=>table.appendChild(o.node));d.getElementById('ali_main_body').innerHTML='<input type="text" id="sI" class="s-in" value="0" placeholder="بالفاتورة.."><input type="text" id="sO" class="s-in" placeholder="بالطلب (ERX).."><button class="d-btn b-green" id="btn_main">فتح المطابق (0)</button>';var sI=d.getElementById('sI'),sO=d.getElementById('sO'),bM=d.getElementById('btn_main'),filter=()=>{if(!sI.value.startsWith('0'))sI.value='0'+sI.value.replace(/^0+/,'');var v1=sI.value.trim(),v2=sO.value.trim(),count=0;if(table)table.innerHTML='';savedRows.forEach(o=>{var mI=(v1!=="0"&&o.id.indexOf(v1)!==-1),mO=(v2!==""&&o.onl.indexOf(v2)!==-1);if(mI||mO||(v1==="0"&&v2==="")){if(table)table.appendChild(o.node);count++}});upC(count);bM.innerText="فتح المطابق ("+count+")"};sI.oninput=sO.oninput=filter;bM.onclick=()=>{var v1=sI.value.trim(),v2=sO.value.trim(),list=savedRows.filter(o=>(v1!=="0"&&o.id.indexOf(v1)!==-1)||(v2!==""&&o.onl.indexOf(v2)!==-1));bM.disabled=true;list.forEach((o,i)=>{setTimeout(()=>{if(o.args){var u=window.location.origin+"/ez_pill_web/getEZPill_Details?onlineNumber="+o.args[0].replace("ERX","")+"&Invoice="+o.args[1]+"&typee="+o.args[2]+"&head_id="+o.args[3];window.open(u,"_blank")}if(i===list.length-1)bM.disabled=false},i*1200)})};filter()};d.getElementById('start').onclick=function(){this.disabled=true;run(1,parseInt(d.getElementById('p_lim').value)||1)}})();
+(function(){
+    var d=document,id='ali_sys_v22',vSet=new Set(),savedRows=[];
+    if(d.getElementById(id))d.getElementById(id).remove();
+    var pNodes=Array.from(d.querySelectorAll('.pagination a, .pagination li')).map(function(el){return parseInt(el.innerText.trim())}).filter(function(n){return !isNaN(n)});
+    var pLim=pNodes.length>0?Math.max.apply(Math,pNodes):1;
+    var s=d.createElement('style');
+    s.innerHTML='#ali_sys_v22{position:fixed;top:5%;right:2%;background:rgba(255,255,255,0.98);backdrop-filter:blur(10px);border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:20px;z-index:9999999;width:300px;color:#333;direction:rtl;border:1.5px solid #1a73e8;font-family:sans-serif;text-align:center}.minimized{width:50px!important;height:50px!important;padding:0!important;border-radius:50%!important;cursor:pointer;display:flex;align-items:center;justify-content:center}.minimized::before{content:"⚙️";font-size:24px}.s-in{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box}.d-btn{width:100%;padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;margin-top:5px}.b-blue{background:#1a73e8;color:#fff}.b-green{background:#28a745!important;color:#fff}.ali-stats-wrapper{display:flex;justify-content:space-around;margin:10px 0;padding:10px;background:#f0f7ff;border-radius:10px}.ali-cnt-val{padding:2px 8px;border-radius:5px;color:#fff;font-weight:bold}#p-bar{height:6px;background:#eee;margin-top:10px;border-radius:3px;overflow:hidden}#p-fill{height:100%;background:#1a73e8;width:0%;transition:0.3s}';
+    d.head.appendChild(s);
+    var v=d.createElement('div');
+    v.id=id;
+    v.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span id="ali_min" style="cursor:pointer;font-size:20px;color:#1a73e8">−</span><b style="font-size:14px">محرك علي الباز</b><span id="ali_close" style="cursor:pointer;font-size:18px;color:#ccc">✖</span></div><div class="ali-stats-wrapper"><div>الإجمالي<br><span id="stat_total" class="ali-cnt-val" style="background:#1a73e8">0</span></div><div style="border-right:1px solid #ddd">المطابق<br><span id="stat_rec" class="ali-cnt-val" style="background:#28a745">0</span></div></div><div id="ali_main_body"><div style="margin-bottom:10px;font-size:13px">عدد الصفحات: <input type="number" id="p_lim" value="'+pLim+'" style="width:40px"></div><div id="p-bar"><div id="p-fill"></div></div><div id="status-msg" style="font-size:11px;color:#666;margin:5px 0">جاهز...</div><button class="d-btn b-blue" id="start">بدء التجميع</button></div>';
+    d.body.appendChild(v);
+    d.getElementById('ali_close').onclick=function(){v.remove()};
+    d.getElementById('ali_min').onclick=function(){v.classList.toggle('minimized')};
+    var upC=function(mC){d.getElementById('stat_total').innerText=savedRows.length;d.getElementById('stat_rec').innerText=mC||0};
+    var run=function(curr,lim){
+        var pf=d.getElementById('p-fill');
+        pf.style.width=(curr/lim*100)+'%';
+        d.getElementById('status-msg').innerText='فحص ص '+curr;
+        d.querySelectorAll('table tr').forEach(function(r){
+            var td=r.querySelectorAll('td');
+            if(td.length>1){
+                var k=td[0].innerText.trim();
+                if(k.length>3&&!vSet.has(k)){
+                    vSet.add(k);
+                    var args=null,lb=r.querySelector('label[onclick^="getDetails"]');
+                    if(lb){var m=lb.getAttribute('onclick').match(/\'(.*?)\',\'(.*?)\',\'(.*?)\',\'(.*?)\'/);if(m)args=[m[1],m[2],m[3],m[4]]}
+                    savedRows.push({id:k,onl:td[1].innerText.trim(),node:r.cloneNode(true),args:args})
+                }
+            }
+        });
+        upC(0);
+        if(curr<lim){
+            var nxt=Array.from(d.querySelectorAll('.pagination a, .pagination li')).find(function(el){return el.innerText.trim()==(curr+1)});
+            if(nxt){nxt.click();setTimeout(function(){run(curr+1,lim)},11000)}else{finish()}
+        }else{finish()}
+    };
+    var finish=function(){
+        var ts=d.querySelectorAll('table'),tar=ts[0];
+        ts.forEach(function(t){if(t.innerText.length>tar.innerText.length)tar=t});
+        var mT=tar.querySelector('tbody')||tar;
+        mT.innerHTML='';
+        savedRows.forEach(function(o){mT.appendChild(o.node)});
+        d.getElementById('ali_main_body').innerHTML='<input type="text" id="sI" class="s-in" value="0" placeholder="بالفاتورة.."><input type="text" id="sO" class="s-in" placeholder="بالطلب (ERX).."><button class="d-btn b-green" id="btn_main">فتح المطابق (0)</button>';
+        var sI=d.getElementById('sI'),sO=d.getElementById('sO'),bM=d.getElementById('btn_main');
+        var filter=function(){
+            if(!sI.value.startsWith('0'))sI.value='0'+sI.value.replace(/^0+/,'');
+            var v1=sI.value.trim(),v2=sO.value.trim(),count=0;
+            mT.innerHTML='';
+            savedRows.forEach(function(o){
+                var mI=(v1!=="0"&&o.id.indexOf(v1)!==-1),mO=(v2!==""&&o.onl.indexOf(v2)!==-1);
+                if(mI||mO||(v1==="0"&&v2==="")){mT.appendChild(o.node);count++}
+            });
+            upC(count);
+            bM.innerText="فتح المطابق ("+count+")"
+        };
+        sI.oninput=sO.oninput=filter;
+        bM.onclick=function(){
+            var v1=sI.value.trim(),v2=sO.value.trim();
+            var list=savedRows.filter(function(o){return (v1!=="0"&&o.id.indexOf(v1)!==-1)||(v2!==""&&o.onl.indexOf(v2)!==-1)});
+            if(!list.length)return alert("لا توجد نتائج!");
+            bM.disabled=true;
+            list.forEach(function(o,i){
+                setTimeout(function(){
+                    if(o.args){
+                        var u=window.location.origin+"/ez_pill_web/getEZPill_Details?onlineNumber="+o.args[0].replace("ERX","")+"&Invoice="+o.args[1]+"&typee="+o.args[2]+"&head_id="+o.args[3];
+                        window.open(u,"_blank")
+                    }
+                    if(i===list.length-1)bM.disabled=false
+                },i*1200)
+            })
+        }
+    };
+    d.getElementById('start').onclick=function(){this.disabled=true;run(1,parseInt(d.getElementById('p_lim').value)||1)}
+})();
