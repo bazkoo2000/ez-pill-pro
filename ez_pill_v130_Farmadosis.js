@@ -132,6 +132,7 @@ window.ezShowDoses=function(){
   }
   var ni=idxOf('note'),nmi=idxOf('name');
   if(nmi<0) nmi=idxOf('item');
+  var cdi=idxOf('code');
   if(ni<0||nmi<0){window.ezShowToast('لم يتم العثور على الأعمدة','error');return;}
   function getVal(td){
     if(!td)return'';
@@ -146,12 +147,15 @@ window.ezShowDoses=function(){
     return c.replace(/\s+/g,' ').trim();
   }
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
-  var items=[];
+  var seenCodes={};var items=[];
   rows.forEach(function(r){
     var tds=r.querySelectorAll('td');
     if(tds.length>Math.max(ni,nmi)){
       var name=getVal(tds[nmi]);
       var note=cleanN(getVal(tds[ni]));
+      var code=cdi>=0&&tds.length>cdi?getVal(tds[cdi]).replace(/\D/g,''):'';
+      if(code&&seenCodes[code]){return;}
+      if(code) seenCodes[code]=true;
       if(name&&note) items.push({name:name,note:note});
     }
   });
@@ -317,7 +321,8 @@ window.ezUndoDuplicates=function(){
         var master=g[0],tds=master.querySelectorAll('td');
         var curS=parseInt(get(tds[si]))||0;
         var mult=n;
-        var ev=(n===2?12:8);
+        var isQ6H=g[0].getAttribute('data-q6h')==='true';
+        var ev=isQ6H?6:(n===2?12:8);
         set(tds[si],curS*mult);
         set(tds[ei],ev);
         var allN=g.map(function(row){return get(row.querySelectorAll('td')[ni]);});
@@ -677,6 +682,8 @@ function shouldDuplicateRow(note){
   if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
   var isRegularTwice=((d.hasB||d.hasM)&&(d.hasD||d.hasE))||/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
   if(d.count===2&&!isRegularTwice)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
+  if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
   return null;
 }
 
@@ -714,7 +721,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
 
   function createDuplicateRows(t_val,r,ni,bs,niIdx,si,ei,di,ti,sdi,edi,m_val,tc,ci,qi){
     var tds=r.querySelectorAll('td');var u_code=getCleanCode(tds[ci]);var ns=bs;
-    if(fixedSizeCodes[u_code]){var div=(ni.type==='three')?3:2;ns=Math.floor(fixedSizeCodes[u_code]/div);var remainder=fixedSizeCodes[u_code]%div;if(remainder>0){var splits=[];for(var x=0;x<div;x++){if(x<remainder)splits.push(Math.ceil(fixedSizeCodes[u_code]/div));else splits.push(Math.floor(fixedSizeCodes[u_code]/div));}ni.customSplits=splits;}}
+    if(fixedSizeCodes[u_code]&&ni.type!=='q6h'){var div=(ni.type==='three')?3:2;ns=Math.floor(fixedSizeCodes[u_code]/div);var remainder=fixedSizeCodes[u_code]%div;if(remainder>0){var splits=[];for(var x=0;x<div;x++){if(x<remainder)splits.push(Math.ceil(fixedSizeCodes[u_code]/div));else splits.push(Math.floor(fixedSizeCodes[u_code]/div));}ni.customSplits=splits;}}
     var on=get(r.querySelectorAll('td')[niIdx]);var isEn=/[a-z]/i.test(on)||ni.doseInfo.language==='english';
     var p=ni.isBefore?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد ');
     var bf=isEn?'Breakfast':'الفطار';var ln=isEn?'Lunch':'الغداء';var dn=isEn?'Dinner':'العشاء';
@@ -749,6 +756,22 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
       else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
+    } else if(ni.type==='q6h'){
+      var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
+      var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
+      var q6hSize=bs*2;
+      setSize(nt1[si],q6hSize);setSize(nt2[si],q6hSize);
+      setEvry(nt1[ei],'12');setEvry(nt2[ei],'12');
+      if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
+      if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
+      var andW=isEn?' & ':' و';var bedLbl=isEn?'Before Bed':'قبل النوم';
+      var n1='',t1='',n2='',t2='';
+      if(ni.isBefore){n1=p+bf+andW+dn;t1='08:00';n2=p+ln+andW+bedLbl;t2='13:00';}
+      else{n1=p+bf+andW+dn;t1='09:00';n2=p+ln+andW+bedLbl;t2='13:00';}
+      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
+      nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
+      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
+      meals=isEn?['Breakfast&Dinner','Lunch&Bed']:['الفطار والعشاء','الغداء والنوم'];
     }
     duplicatedRows.push({originalRow:r,duplicates:dupRows,type:ni.type,meals:meals});duplicatedCount++;
     if(r.parentNode)r.parentNode.removeChild(r);
@@ -807,7 +830,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false});
   }
 
-  if(enableWarnings){for(var i=0;i<allRowsData.length;i++){var rd=allRowsData[i];if(rd.durationInfo&&rd.durationInfo.hasDuration){var extracted=rd.durationInfo.days;if(extracted!==t){warningQueue.push({level:'warning',message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',editable:true,editLabel:'عدد الأيام',currentValue:extracted,minValue:1,maxValue:365,rowIndex:i,onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)});}}if(rd.hasFixedSize&&rd.dui){var totalSize=fixedSizeCodes[rd.itemCode];var parts=rd.dui.type==='three'?3:2;var eachPart=Math.floor(totalSize/parts);if(eachPart<5){warningQueue.push({level:'info',message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',editable:false,rowIndex:i});}}}}
+  if(enableWarnings){for(var i=0;i<allRowsData.length;i++){var rd=allRowsData[i];if(rd.durationInfo&&rd.durationInfo.hasDuration){var extracted=rd.durationInfo.days;if(extracted!==t){warningQueue.push({level:'warning',message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',editable:true,editLabel:'عدد الأيام',currentValue:extracted,minValue:1,maxValue:365,rowIndex:i,onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)});}}if(rd.hasFixedSize&&rd.dui){var totalSize=fixedSizeCodes[rd.itemCode];var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);var eachPart=rd.dui.type==='q6h'?totalSize*2:Math.floor(totalSize/parts);if(eachPart<5){warningQueue.push({level:'info',message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',editable:false,rowIndex:i});}}}}
 
   if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
 
