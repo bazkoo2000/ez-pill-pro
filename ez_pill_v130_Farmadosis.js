@@ -1015,18 +1015,18 @@ function beautifyPage(){
       }
     }
     if(topTable){
-      topTable.style.cssText='background:linear-gradient(145deg,#ffffff,#f8f7ff)!important;border:2px solid rgba(129,140,248,0.15)!important;border-radius:16px!important;padding:14px 18px!important;box-shadow:0 6px 24px rgba(99,102,241,0.08),0 2px 8px rgba(0,0,0,0.03)!important;margin-bottom:14px!important;overflow:visible!important;border-collapse:separate!important';
+      topTable.style.cssText='background:linear-gradient(145deg,#6366f1,#4f46e5)!important;border:2px solid rgba(79,70,229,0.3)!important;border-radius:16px!important;padding:14px 18px!important;box-shadow:0 6px 24px rgba(99,102,241,0.15),0 2px 8px rgba(0,0,0,0.06)!important;margin-bottom:14px!important;overflow:visible!important;border-collapse:separate!important';
       var topCells=topTable.querySelectorAll('td,th');
       for(var i=0;i<topCells.length;i++){
         topCells[i].style.cssText+='border:none!important;padding:4px 8px!important';
         var txt=(topCells[i].textContent||'').trim();
         if(txt.endsWith(':')){
-          topCells[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:10px!important;font-weight:900!important;color:#6366f1!important;letter-spacing:0.8px!important;border:none!important;padding:2px 8px 0!important;white-space:nowrap!important;text-transform:uppercase!important';
+          topCells[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:10px!important;font-weight:900!important;color:#fff!important;letter-spacing:0.8px!important;border:none!important;padding:2px 8px 0!important;white-space:nowrap!important;text-transform:uppercase!important;text-shadow:0 1px 3px rgba(0,0,0,0.15)!important';
         }
       }
       var topInputs=topTable.querySelectorAll('input,select');
       for(var i=0;i<topInputs.length;i++){
-        topInputs[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:14px!important;font-weight:800!important;color:#1e1b4b!important;border:1.5px solid rgba(129,140,248,0.15)!important;border-radius:10px!important;padding:7px 12px!important;background:#fff!important;transition:all 0.25s!important;outline:none!important;box-shadow:0 2px 6px rgba(0,0,0,0.03)!important;width:100%!important';
+        topInputs[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:14px!important;font-weight:800!important;color:#1e1b4b!important;border:1.5px solid rgba(255,255,255,0.3)!important;border-radius:10px!important;padding:7px 14px!important;background:#fff!important;transition:all 0.25s!important;outline:none!important;box-shadow:0 2px 8px rgba(0,0,0,0.08)!important;width:100%!important;min-width:120px!important';
       }
     }
 
