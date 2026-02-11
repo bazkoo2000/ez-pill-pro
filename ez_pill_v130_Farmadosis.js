@@ -982,11 +982,6 @@ s_style.textContent='\
 .ez-page-styled table th:first-child{border-left:none!important}\
 .ez-page-styled table td{padding:5px 6px!important;font-size:12px!important;font-weight:700!important;color:#1e1b4b!important;border:none!important;border-bottom:1px solid rgba(129,140,248,0.08)!important;border-left:1px solid rgba(129,140,248,0.06)!important;vertical-align:middle!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important}\
 .ez-page-styled table td:first-child{border-left:none!important}\
-.ez-page-styled table tr:nth-child(even) td{background:rgba(238,242,255,0.35)!important}\
-.ez-page-styled table tr:nth-child(odd) td{background:#fff!important}\
-.ez-page-styled table tr{transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important}\
-.ez-page-styled table tr:hover td{background:rgba(129,140,248,0.07)!important;color:#312e81!important}\
-.ez-page-styled table tr:hover{box-shadow:inset 3px 0 0 #818cf8,0 2px 12px rgba(99,102,241,0.08)!important;position:relative!important;z-index:1!important}\
 .ez-page-styled table input[type="text"],.ez-page-styled table input[type="number"],.ez-page-styled table input[type="time"],.ez-page-styled table input[type="date"],.ez-page-styled table select,.ez-page-styled table textarea{font-family:Cairo,sans-serif!important;font-weight:700!important;color:#1e1b4b!important;font-size:12px!important;border:1px solid rgba(129,140,248,0.1)!important;border-radius:6px!important;padding:3px 5px!important;background:rgba(255,255,255,0.8)!important;transition:all 0.25s!important}\
 .ez-page-styled table input:focus,.ez-page-styled table select:focus,.ez-page-styled table textarea:focus{border-color:#818cf8!important;box-shadow:0 0 0 2px rgba(129,140,248,0.1)!important;background:#fff!important}\
 .ez-page-styled table input[type="checkbox"]{width:18px!important;height:18px!important;accent-color:#6366f1!important;cursor:pointer!important}\
