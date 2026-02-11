@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='129.0';
+var APP_VERSION='130.0';
 var APP_NAME='EZ_Pill Pro';
 
 /* ══════════════════════════════════════════
@@ -85,25 +85,26 @@ window.ezClosePost=function(){
 window.ezMinimize=function(){
   var d=document.getElementById('ez-dialog-box');
   if(d){
-    var content=d.querySelector('.ez-content');
-    var minBtn=d.querySelector('.ez-minimize-btn');
+    var content=d.querySelector('.ez-body');
+    var foot=d.querySelector('.ez-ft');
+    var minBtn=d.querySelector('.ez-close');
     if(content.style.display==='none'){
       content.style.display='block';
+      if(foot) foot.style.display='block';
       minBtn.innerHTML='−';
-      d.style.width='auto';
     } else {
       content.style.display='none';
+      if(foot) foot.style.display='none';
       minBtn.innerHTML='+';
-      d.style.width='380px';
     }
   }
 };
 
 window.ezSelect=function(el,type,val){
   var p=el.parentNode;
-  var pills=p.querySelectorAll('.ez-pill');
-  for(var i=0;i<pills.length;i++) pills[i].classList.remove('selected');
-  el.classList.add('selected');
+  var pills=p.querySelectorAll('.ez-c');
+  for(var i=0;i<pills.length;i++) pills[i].classList.remove('on');
+  el.classList.add('on');
   var d=document.getElementById('ez-dialog-box');
   if(type==='m') d.setAttribute('data-m',val);
   else d.setAttribute('data-t',val);
@@ -114,26 +115,32 @@ window.ezSelect=function(el,type,val){
    ══════════════════════════════════════════ */
 window.showWarnings=function(warnings,callback){
   if(!warnings||warnings.length===0){callback();return;}
-  var html='<div class="warning-dialog"><div class="warning-header">'+
-    '<div class="warning-icon">⚠️</div><div class="warning-title">تحذيرات تحتاج مراجعة</div></div>'+
-    '<div class="warning-list">';
+  var html='<div class="ez-shell" style="width:420px;border-radius:20px;padding:2px;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb,#4facfe,#667eea);background-size:400% 400%;animation:meshFlow 8s ease infinite"><div class="ez-frost" style="background:rgba(255,255,255,0.93);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border-radius:18px;overflow:hidden;position:relative">';
+  html+='<div style="padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:center;position:relative;border-bottom:1px solid rgba(102,126,234,0.1)">';
+  html+='<div style="display:flex;align-items:center;gap:9px"><div style="width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 4px 14px rgba(245,158,11,0.3)">⚠️</div>';
+  html+='<div style="font-size:14px;font-weight:900;background:linear-gradient(135deg,#92400e,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent">تحذيرات تحتاج مراجعة</div></div></div>';
+  html+='<div style="padding:10px 16px 14px">';
   for(var i=0;i<warnings.length;i++){
     var w=warnings[i];
-    html+='<div class="warning-item warning-'+w.level+'"><div class="warning-text">'+w.message+'</div>';
+    var colors={warning:{bg:'rgba(245,158,11,0.06)',bdr:'rgba(245,158,11,0.12)',bar:'linear-gradient(180deg,#f59e0b,#d97706)'},danger:{bg:'rgba(239,68,68,0.06)',bdr:'rgba(239,68,68,0.12)',bar:'linear-gradient(180deg,#ef4444,#dc2626)'},info:{bg:'rgba(102,126,234,0.06)',bdr:'rgba(102,126,234,0.12)',bar:'linear-gradient(180deg,#667eea,#764ba2)'}};
+    var c=colors[w.level]||colors.info;
+    html+='<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:6px 0;border-radius:10px;background:'+c.bg+';border:1px solid '+c.bdr+';position:relative;overflow:hidden">';
+    html+='<div style="position:absolute;top:0;right:0;width:3px;height:100%;background:'+c.bar+';border-radius:0 3px 3px 0"></div>';
+    html+='<div style="flex:1"><div style="font-size:11px;font-weight:700;color:#3f3d56;line-height:1.5">'+w.message+'</div>';
     if(w.editable){
-      html+='<div class="warning-edit"><label>'+w.editLabel+
-        ':</label><input type="number" id="edit-'+i+'" value="'+w.currentValue+
-        '" min="'+w.minValue+'" max="'+w.maxValue+'"></div>';
+      html+='<div style="margin-top:8px"><label style="display:block;font-size:9px;font-weight:700;color:#8b87b3;margin-bottom:4px;letter-spacing:0.5px">'+w.editLabel+':</label>';
+      html+='<input type="number" id="edit-'+i+'" value="'+w.currentValue+'" min="'+w.minValue+'" max="'+w.maxValue+'" style="width:100%;padding:6px 10px;border:1.5px solid rgba(102,126,234,0.15);border-radius:8px;font-size:13px;font-weight:800;color:#2d2b55;background:rgba(255,255,255,0.6);font-family:Tajawal,sans-serif;outline:none"></div>';
     }
-    html+='</div>';
+    html+='</div></div>';
   }
-  html+='</div><div class="warning-actions">'+
-    '<button class="warning-btn warning-accept" onclick="window.acceptWarnings()">✅ تطبيق التعديلات</button>'+
-    '<button class="warning-btn warning-cancel" onclick="window.cancelWarnings()">❌ إلغاء</button></div></div>';
+  html+='<div style="display:flex;gap:6px;margin-top:12px">';
+  html+='<button class="ez-warn-accept" onclick="window.acceptWarnings()" style="flex:1;height:38px;border:none;border-radius:11px;font-size:12px;font-weight:800;cursor:pointer;font-family:Tajawal,sans-serif;color:#fff;background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 18px rgba(16,185,129,0.25);position:relative;overflow:hidden;transition:all 0.3s">✅ تطبيق التعديلات</button>';
+  html+='<button onclick="window.cancelWarnings()" style="flex:1;height:38px;border:1.5px solid rgba(102,126,234,0.12);border-radius:11px;background:rgba(102,126,234,0.03);color:#8b87b3;cursor:pointer;font-size:12px;font-weight:700;font-family:Tajawal,sans-serif;transition:all 0.3s">❌ إلغاء</button>';
+  html+='</div></div></div></div>';
   var overlay=document.createElement('div');
   overlay.id='warning-overlay';
   overlay.innerHTML=html;
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);z-index:999999;display:flex;align-items:center;justify-content:center;';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(45,43,58,0.7);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
   document.body.appendChild(overlay);
   window.warningCallback=callback;
 };
@@ -174,7 +181,7 @@ window.ezSubmit=function(){
     var loader=document.createElement('div');
     loader.id='ez-loader';
     loader.innerHTML='<div class="ez-loader-spinner"></div><div class="ez-loader-text">جاري المعالجة...</div>';
-    loader.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.98);padding:40px 60px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:99998;text-align:center;font-family:Cairo,sans-serif;';
+    loader.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.95);backdrop-filter:blur(40px);padding:40px 60px;border-radius:20px;box-shadow:0 20px 60px rgba(102,126,234,0.2);z-index:99998;text-align:center;font-family:Tajawal,sans-serif;border:2px solid rgba(102,126,234,0.1);';
     document.body.appendChild(loader);
     setTimeout(function(){
       if(loader) loader.remove();
@@ -322,8 +329,8 @@ window.ezNextMonth=function(){
         if(sInput) fireEv(sInput);
       });
       btn.innerHTML=(monthCounter===1)?'📅 الشهر الثالث':'🖨️ تجميع للطباعة';
-      btn.style.background=(monthCounter===1)?'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)':'linear-gradient(135deg, #f6d365 0%, #fda085 100%)';
-      btn.style.color=(monthCounter===1)?'#4a148c':'#bf360c';
+      btn.style.background=(monthCounter===1)?'linear-gradient(135deg, #667eea, #764ba2)':'linear-gradient(135deg, #10b981, #059669)';
+      btn.style.color='#fff';
       btn.setAttribute('data-step',String(monthCounter+1));
     }
   } else if(monthCounter===3){
@@ -342,7 +349,7 @@ window.ezNextMonth=function(){
       }
     });
     btn.innerHTML='✅ تم التجميع بنجاح';
-    btn.style.background='linear-gradient(135deg, #2ecc71, #27ae60)';
+    btn.style.background='linear-gradient(135deg, #10b981, #059669)';
     btn.style.color='#fff';
     btn.disabled=true;
   }
@@ -603,16 +610,26 @@ function checkEndDateConsistency(){
 }
 
 function showEndDateAlert(commonDate,ediIdx){
-  var html='<div class="end-date-alert">'+
-    '<div class="alert-header">⚠️ تحذير: تواريخ انتهاء مختلفة</div>'+
-    '<div class="alert-body">تم اكتشاف صفوف بتواريخ انتهاء مختلفة.<br>هل تريد توحيد جميع التواريخ إلى: <strong>'+commonDate+'</strong>؟</div>'+
-    '<div class="alert-actions">'+
-    '<button class="alert-btn alert-fix" onclick="window.fixEndDates(\''+commonDate+'\','+ediIdx+')">✅ تعديل التاريخ</button>'+
-    '<button class="alert-btn alert-cancel" onclick="window.closeEndDateAlert()">❌ إلغاء</button></div></div>';
+  var html='<div class="ez-shell" style="width:380px;border-radius:20px;padding:2px;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb,#4facfe,#667eea);background-size:400% 400%;animation:meshFlow 8s ease infinite"><div class="ez-frost" style="background:rgba(255,255,255,0.93);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border-radius:18px;overflow:hidden;position:relative">';
+  html+='<div style="padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(102,126,234,0.1)">';
+  html+='<div style="display:flex;align-items:center;gap:9px"><div style="width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 4px 14px rgba(6,182,212,0.3)">📅</div>';
+  html+='<div style="font-size:14px;font-weight:900;background:linear-gradient(135deg,#155e75,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">تواريخ انتهاء مختلفة</div></div>';
+  html+='<button onclick="window.closeEndDateAlert()" style="width:22px;height:22px;border-radius:8px;border:none;background:rgba(102,126,234,0.06);color:#a5a3c7;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.3s">×</button></div>';
+  html+='<div style="padding:14px 16px;text-align:center">';
+  html+='<div style="font-size:12px;color:#6b6895;font-weight:600;line-height:1.6;margin-bottom:12px">تم اكتشاف صفوف بتواريخ انتهاء مختلفة<br>هل تريد توحيد جميع التواريخ؟</div>';
+  html+='<div style="display:flex;align-items:center;justify-content:center;margin:8px 0 14px"><div style="padding:8px 16px;background:linear-gradient(135deg,rgba(102,126,234,0.06),rgba(240,147,251,0.04));border:1.5px solid rgba(102,126,234,0.15);border-radius:10px">';
+  html+='<div style="font-size:15px;font-weight:900;background:linear-gradient(135deg,#2d2b55,#667eea);-webkit-background-clip:text;-webkit-text-fill-color:transparent">'+commonDate+'</div>';
+  html+='<div style="font-size:8px;font-weight:700;color:#a5a3c7;letter-spacing:1px;text-transform:uppercase">التاريخ الأكثر شيوعاً</div></div></div>';
+  html+='<div style="display:flex;gap:6px">';
+  html+='<button onclick="window.fixEndDates(\''+commonDate+'\','+ediIdx+')" style="flex:1;height:38px;border:none;border-radius:11px;font-size:12px;font-weight:800;cursor:pointer;font-family:Tajawal,sans-serif;color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);box-shadow:0 4px 18px rgba(102,126,234,0.25);position:relative;overflow:hidden;transition:all 0.3s">✅ توحيد التواريخ</button>';
+  html+='<button onclick="window.closeEndDateAlert()" style="flex:1;height:38px;border:1.5px solid rgba(102,126,234,0.12);border-radius:11px;background:rgba(102,126,234,0.03);color:#8b87b3;cursor:pointer;font-size:12px;font-weight:700;font-family:Tajawal,sans-serif;transition:all 0.3s">❌ إلغاء</button>';
+  html+='</div></div>';
+  html+='<div style="padding:5px 16px;text-align:center;font-size:7px;color:#c5c3dc;font-weight:700;letter-spacing:1px;border-top:1px solid rgba(102,126,234,0.06)">EZ PILL PRO</div>';
+  html+='</div></div>';
   var overlay=document.createElement('div');
   overlay.id='end-date-overlay';
   overlay.innerHTML=html;
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);z-index:999999;display:flex;align-items:center;justify-content:center;';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(45,43,58,0.7);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
   document.body.appendChild(overlay);
 }
 
@@ -624,18 +641,21 @@ function showPostProcessDialog(){
   if(sdInput) originalStartDate=sdInput.value;
   monthCounter=0;
   var dupInfo=duplicatedCount>0?
-    '<div style="background:#dbeafe;padding:8px 12px;border-radius:8px;margin:10px 0;text-align:center;">'+
-    '<span style="font-size:20px;">⚡</span> <span style="font-weight:700;color:#1e40af;">'+duplicatedCount+' صنف مقسم</span></div>':'';
+    '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;margin-bottom:10px;background:linear-gradient(135deg,rgba(102,126,234,0.06),rgba(240,147,251,0.04));border:1px solid rgba(102,126,234,0.1);border-radius:10px">'+
+    '<span style="font-size:18px">⚡</span><span style="font-size:13px;font-weight:800;background:linear-gradient(135deg,#4338ca,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent">'+duplicatedCount+' صنف مقسم</span></div>':'';
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
-  dialog.className='ez-post-draggable';
-  dialog.style.cssText='position:fixed;top:80px;right:20px;background:linear-gradient(145deg,#fff 0%,#f8f9fa 100%);padding:18px 22px;border-radius:16px;box-shadow:0 15px 50px rgba(0,0,0,0.3),0 0 0 1px rgba(59,130,246,0.1);z-index:99998;border:2px solid rgba(59,130,246,0.2);font-family:Cairo,sans-serif;min-width:280px;max-width:320px;';
-  dialog.innerHTML='<div class="ez-post-header" style="text-align:center;margin-bottom:12px;cursor:move;padding:6px;">'+
-    '<div style="font-size:16px;font-weight:800;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;">⚙️ خيارات إضافية</div>'+
-    '<button onclick="window.ezClosePost()" style="position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;transition:all 0.3s;box-shadow:0 3px 10px rgba(239,68,68,0.3);" onmouseover="this.style.transform=\'scale(1.1) rotate(90deg)\'" onmouseout="this.style.transform=\'scale(1) rotate(0deg)\'">×</button></div>'+
-    dupInfo+
-    '<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;padding:10px;margin:6px 0;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s;box-shadow:0 3px 10px rgba(245,158,11,0.3);" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 5px 15px rgba(245,158,11,0.4)\'" onmouseout="this.style.transform=\'translateY(0)\';this.style.boxShadow=\'0 3px 10px rgba(245,158,11,0.3)\'">🔄 إلغاء التقسيم</button>'+
-    '<button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;padding:10px;margin:6px 0;background:linear-gradient(135deg,#00C9FF,#92FE9D);color:#004d40;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s;box-shadow:0 3px 10px rgba(0,201,255,0.3);" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 5px 15px rgba(0,201,255,0.4)\'" onmouseout="this.style.transform=\'translateY(0)\';this.style.boxShadow=\'0 3px 10px rgba(0,201,255,0.3)\'">🗓️ الشهر التالي (2)</button>';
+  dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;border-radius:20px;padding:2px;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb,#4facfe,#667eea);background-size:400% 400%;animation:meshFlow 8s ease infinite;filter:drop-shadow(0 20px 40px rgba(102,126,234,0.18)) drop-shadow(0 8px 16px rgba(118,75,162,0.12));width:280px;';
+  dialog.innerHTML='<div style="background:rgba(255,255,255,0.93);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border-radius:18px;overflow:hidden;position:relative">'+
+    '<div class="ez-post-header" style="padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(102,126,234,0.1);cursor:move">'+
+    '<div style="display:flex;align-items:center;gap:9px"><div style="width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 4px 14px rgba(102,126,234,0.3)">⚙️</div>'+
+    '<div style="font-size:14px;font-weight:900;background:linear-gradient(135deg,#2d2b55,#667eea);-webkit-background-clip:text;-webkit-text-fill-color:transparent">خيارات إضافية</div></div>'+
+    '<button onclick="window.ezClosePost()" style="width:22px;height:22px;border-radius:8px;border:none;background:rgba(102,126,234,0.06);color:#a5a3c7;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.3s">×</button></div>'+
+    '<div style="padding:12px 16px 14px;font-family:Tajawal,sans-serif">'+dupInfo+
+    '<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:38px;border:none;border-radius:11px;font-size:12px;font-weight:800;cursor:pointer;font-family:Tajawal,sans-serif;color:#fff;background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 4px 18px rgba(245,158,11,0.25);position:relative;overflow:hidden;transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button>'+
+    '<button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:38px;border:none;border-radius:11px;font-size:12px;font-weight:800;cursor:pointer;font-family:Tajawal,sans-serif;color:#fff;background:linear-gradient(135deg,#06b6d4,#0891b2);box-shadow:0 4px 18px rgba(6,182,212,0.25);position:relative;overflow:hidden;transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي (2)</button>'+
+    '</div>'+
+    '<div style="padding:5px 16px;text-align:center;font-size:7px;color:#c5c3dc;font-weight:700;letter-spacing:1px;border-top:1px solid rgba(102,126,234,0.06)">EZ PILL PRO · V'+APP_VERSION+'</div></div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -645,7 +665,7 @@ function showPostProcessDialog(){
    ══════════════════════════════════════════ */
 function makeDraggable(el){
   var pos1=0,pos2=0,pos3=0,pos4=0;
-  var header=el.querySelector('.ez-post-header')||el.querySelector('.ez-header')||el;
+  var header=el.querySelector('.ez-post-header')||el.querySelector('.ez-head')||el;
   header.style.cursor='move';
   header.onmousedown=dragMouseDown;
   function dragMouseDown(e){
@@ -1473,9 +1493,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
           nInp.value=currentCleanNote;fire(nInp);
           var firstOccur=processedCodes[u_code_skp];
           if(firstOccur&&currentCleanNote!==firstOccur.note){
-            nInp.style.backgroundColor='#fff9c4';nInp.style.border='3px solid #ff9800';
+            nInp.style.backgroundColor='rgba(240,147,251,0.12)';nInp.style.border='2px solid rgba(118,75,162,0.4)';
             var firstInp=firstOccur.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');
-            if(firstInp){firstInp.style.backgroundColor='#fff9c4';firstInp.style.border='3px solid #ff9800';}
+            if(firstInp){firstInp.style.backgroundColor='rgba(240,147,251,0.12)';firstInp.style.border='2px solid rgba(118,75,162,0.4)';}
           }
         } else {
           tds_nodes[ni_main].textContent=currentCleanNote;
@@ -1517,78 +1537,72 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
    ══════════════════════════════════════════ */
 var s_style=document.createElement('style');
 s_style.textContent='\
-@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap");\
-.ez-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:0;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.25),0 0 0 1px rgba(59,130,246,0.15);z-index:99999;color:#333;font-family:Cairo,sans-serif;min-width:380px;max-width:420px;overflow:hidden}\
-.ez-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:linear-gradient(135deg,#3b82f6 0%,#6366f1 100%);cursor:move}\
-.ez-title{font-size:17px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.15)}\
-.ez-header-right{display:flex;align-items:center;gap:6px}\
-.ez-version{font-size:9px;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;font-weight:700}\
-.ez-minimize-btn{background:rgba(255,255,255,0.25);color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;font-weight:700;line-height:1;transition:all 0.3s}\
-.ez-minimize-btn:hover{background:rgba(255,255,255,0.4);transform:scale(1.1)}\
-.ez-content{padding:14px 18px}\
-.ez-section-title{font-size:11px;font-weight:700;margin:6px 0 5px;color:#64748b;text-align:right;text-transform:uppercase;letter-spacing:0.5px}\
-.ez-pill-row{display:flex;gap:6px;margin-bottom:8px}\
-.ez-pill{flex:1;height:40px;border-radius:8px;background:#f8fafc;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;cursor:pointer;transition:all 0.2s;color:#94a3b8}\
-.ez-pill:hover{border-color:#3b82f6;color:#3b82f6;background:#eff6ff}\
-.ez-pill.selected{background:linear-gradient(135deg,#3b82f6,#6366f1);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(59,130,246,0.3)}\
-.ez-divider{height:1px;background:#e2e8f0;margin:10px 0}\
-.ez-opt-row{display:flex;align-items:center;padding:7px 10px;margin:4px 0;background:#f8fafc;border-radius:8px;cursor:pointer;transition:all 0.2s;border:1.5px solid #e2e8f0;gap:8px;direction:rtl}\
-.ez-opt-row:hover{background:#eff6ff;border-color:#93c5fd}\
-.ez-opt-row input[type="checkbox"]{display:none}\
-.ez-opt-check{width:16px;height:16px;border:2px solid #cbd5e1;border-radius:50%;position:relative;transition:all 0.2s;background:#fff;flex-shrink:0}\
-.ez-opt-row input:checked+.ez-opt-check{background:linear-gradient(135deg,#3b82f6,#6366f1);border-color:transparent;box-shadow:0 0 0 2px rgba(59,130,246,0.2)}\
-.ez-opt-check::after{content:"✓";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);color:#fff;font-size:10px;font-weight:900;transition:all 0.15s}\
-.ez-opt-row input:checked+.ez-opt-check::after{transform:translate(-50%,-50%) scale(1)}\
-.ez-opt-label{font-size:11px;color:#334155;font-weight:600;flex:1}\
-.ez-opt-icon{font-size:13px;opacity:0.7}\
-.ez-btn-row{display:flex;gap:6px;margin-top:12px}\
-.ez-btn{flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:Cairo,sans-serif}\
-.ez-submit-btn{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 14px rgba(16,185,129,0.3)}\
-.ez-submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,0.4)}\
-.ez-cancel-btn{background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0}\
-.ez-cancel-btn:hover{background:#e2e8f0;transform:translateY(-1px)}\
-.ez-credit{font-size:8px;color:#94a3b8;text-align:center;padding:8px 18px;background:#f8fafc;border-top:1px solid #e2e8f0;font-weight:600}\
-.warning-dialog{background:#fff;border-radius:12px;padding:24px;max-width:550px;max-height:75vh;overflow-y:auto;box-shadow:0 16px 50px rgba(0,0,0,0.3);font-family:Cairo,sans-serif}\
-.warning-header{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #fee2e2}\
-.warning-icon{font-size:32px}\
-.warning-title{font-size:18px;font-weight:800;color:#dc2626}\
-.warning-list{margin:16px 0}\
-.warning-item{background:#f8fafc;border-left:4px solid #3b82f6;padding:12px;margin:8px 0;border-radius:8px}\
-.warning-item.warning-danger{border-left-color:#dc2626;background:#fef2f2}\
-.warning-item.warning-warning{border-left-color:#f59e0b;background:#fffbeb}\
-.warning-item.warning-info{border-left-color:#3b82f6;background:#eff6ff}\
-.warning-text{font-size:12px;color:#1e293b;margin-bottom:8px;font-weight:600}\
-.warning-edit{margin-top:8px}\
-.warning-edit label{display:block;font-size:11px;color:#64748b;margin-bottom:4px;font-weight:600}\
-.warning-edit input{width:100%;padding:6px;border:2px solid #e2e8f0;border-radius:6px;font-size:14px;font-weight:700}\
-.warning-edit input:focus{border-color:#3b82f6;outline:none}\
-.warning-actions{display:flex;gap:8px;margin-top:16px}\
-.warning-btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s}\
-.warning-accept{background:#10b981;color:#fff}\
-.warning-accept:hover{background:#059669;transform:translateY(-1px)}\
-.warning-cancel{background:#f1f5f9;color:#64748b}\
-.warning-cancel:hover{background:#e2e8f0;transform:translateY(-1px)}\
-.unique-count-badge{background:#2196f3;color:#fff;padding:0 12px;border-radius:5px;font-size:12px;font-weight:700;margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;height:28px}\
-.end-date-alert{background:#fff;border-radius:12px;padding:24px;max-width:450px;box-shadow:0 16px 50px rgba(0,0,0,0.3);font-family:Cairo,sans-serif}\
-.alert-header{font-size:17px;font-weight:800;color:#f59e0b;margin-bottom:16px;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}\
-.alert-body{font-size:13px;color:#1e293b;margin-bottom:20px;text-align:center;line-height:1.5}\
-.alert-actions{display:flex;gap:8px}\
-.alert-btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s}\
-.alert-fix{background:#10b981;color:#fff}\
-.alert-fix:hover{background:#059669;transform:translateY(-1px)}\
-.alert-cancel{background:#f1f5f9;color:#64748b}\
-.alert-cancel:hover{background:#e2e8f0;transform:translateY(-1px)}\
-.ez-toast{position:fixed;bottom:30px;right:30px;background:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:999999;display:flex;align-items:center;gap:8px;font-family:Cairo,sans-serif;transform:translateX(400px);opacity:0;transition:all 0.3s}\
-.ez-toast.show{transform:translateX(0);opacity:1}\
-.ez-toast-icon{font-size:16px}\
-.ez-toast-msg{font-size:12px;font-weight:600;color:#1e293b}\
-.ez-toast-success{border-left:4px solid #10b981}\
-.ez-toast-error{border-left:4px solid #ef4444}\
-.ez-toast-info{border-left:4px solid #3b82f6}\
-.ez-toast-warning{border-left:4px solid #f59e0b}\
-.ez-loader-spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}\
+@import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap");\
+@keyframes meshFlow{0%{background-position:0% 50%}25%{background-position:100% 25%}50%{background-position:50% 100%}75%{background-position:0% 75%}100%{background-position:0% 50%}}\
+@keyframes dialogEnter{from{opacity:0;transform:translate(-50%,-46%) scale(0.92)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}\
+@keyframes orbFloat1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-15px,10px) scale(1.1)}}\
+@keyframes orbFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(10px,-15px) scale(1.15)}}\
+@keyframes iconBreath{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:0.35;transform:scale(1.08)}}\
+@keyframes btnShimmer{0%,70%{left:-100%}100%{left:200%}}\
+@keyframes thumbBounce{0%{transform:scale(1)}40%{transform:scale(0.8)}100%{transform:scale(1)}}\
+@keyframes itemSlide{from{opacity:0;transform:translateY(10px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}\
 @keyframes spin{to{transform:rotate(360deg)}}\
-.ez-loader-text{font-size:13px;font-weight:700;color:#1e293b}\
+.ez-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:330px;z-index:99999;border-radius:20px;padding:2px;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb,#4facfe,#667eea);background-size:400% 400%;animation:dialogEnter 0.6s cubic-bezier(0.16,1,0.3,1) forwards,meshFlow 8s ease infinite 0.6s;filter:drop-shadow(0 20px 40px rgba(102,126,234,0.18)) drop-shadow(0 8px 16px rgba(118,75,162,0.12))}\
+.ez-frost{background:rgba(255,255,255,0.93);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border-radius:18px;overflow:hidden;position:relative}\
+.ez-frost::before{content:"";position:absolute;width:120px;height:120px;background:radial-gradient(circle,rgba(102,126,234,0.1) 0%,transparent 70%);top:-30px;right:-20px;border-radius:50%;animation:orbFloat1 6s ease-in-out infinite;pointer-events:none}\
+.ez-frost::after{content:"";position:absolute;width:100px;height:100px;background:radial-gradient(circle,rgba(240,147,251,0.08) 0%,transparent 70%);bottom:-20px;left:-10px;border-radius:50%;animation:orbFloat2 7s ease-in-out infinite;pointer-events:none}\
+.ez-head{padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:center;position:relative;cursor:move}\
+.ez-head::after{content:"";position:absolute;bottom:0;left:20px;right:20px;height:1px;background:linear-gradient(90deg,transparent,rgba(102,126,234,0.18),rgba(240,147,251,0.12),transparent)}\
+.ez-brand{display:flex;align-items:center;gap:9px}\
+.ez-icon{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:15px;position:relative;box-shadow:0 4px 14px rgba(102,126,234,0.3)}\
+.ez-icon::after{content:"";position:absolute;inset:-2px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);z-index:-1;opacity:0.25;filter:blur(6px);animation:iconBreath 3s ease-in-out infinite}\
+.ez-name{font-size:16px;font-weight:900;background:linear-gradient(135deg,#2d2b55,#667eea);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}\
+.ez-head-r{display:flex;align-items:center;gap:5px}\
+.ez-v{font-size:8px;color:#a5a3c7;background:linear-gradient(135deg,rgba(102,126,234,0.08),rgba(240,147,251,0.05));padding:2px 8px;border-radius:6px;font-weight:800;letter-spacing:0.5px}\
+.ez-close{width:22px;height:22px;border-radius:8px;border:none;background:rgba(102,126,234,0.06);color:#a5a3c7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}\
+.ez-close:hover{background:rgba(239,68,68,0.1);color:#ef4444;transform:rotate(90deg)}\
+.ez-body{padding:10px 16px 14px;position:relative}\
+.ez-lbl{font-size:9px;font-weight:800;color:#8b87b3;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;padding-right:2px}\
+.ez-caps{display:flex;gap:5px;margin-bottom:10px;padding:3px;background:linear-gradient(135deg,rgba(102,126,234,0.04),rgba(240,147,251,0.03));border:1px solid rgba(102,126,234,0.08);border-radius:12px}\
+.ez-c{flex:1;height:34px;border-radius:9px;border:none;background:transparent;font-size:15px;font-weight:900;color:#b0aed0;cursor:pointer;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);font-family:Tajawal,sans-serif;position:relative;overflow:hidden}\
+.ez-c:hover:not(.on){color:#667eea;background:rgba(102,126,234,0.05)}\
+.ez-c.on{color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);box-shadow:0 4px 16px rgba(102,126,234,0.25),inset 0 1px 0 rgba(255,255,255,0.25);transform:scale(1.02)}\
+.ez-c.on::before{content:"";position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent);border-radius:9px 9px 0 0;pointer-events:none}\
+.ez-div{height:1px;margin:8px 0;background:linear-gradient(90deg,transparent 0%,rgba(102,126,234,0.12) 20%,rgba(240,147,251,0.1) 50%,rgba(79,172,254,0.08) 80%,transparent 100%);position:relative}\
+.ez-div::before{content:"";position:absolute;width:20px;height:3px;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:2px;top:-1px;right:0;box-shadow:0 0 8px rgba(102,126,234,0.35)}\
+.ez-tog{display:flex;align-items:center;padding:5px 2px;gap:10px;direction:rtl;cursor:pointer}\
+.ez-tog:hover .ez-tog-txt{color:#4a4878}\
+.ez-sw{position:relative;width:34px;height:18px;flex-shrink:0}\
+.ez-sw input{display:none}\
+.ez-track{position:absolute;inset:0;background:#e2e0f0;border-radius:10px;transition:all 0.4s cubic-bezier(0.4,0,0.2,1)}\
+.ez-sw input:checked+.ez-track{background:linear-gradient(135deg,#667eea,#764ba2);box-shadow:0 2px 10px rgba(102,126,234,0.3)}\
+.ez-thumb{position:absolute;top:2px;right:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);box-shadow:0 2px 6px rgba(0,0,0,0.1);pointer-events:none}\
+.ez-sw input:checked~.ez-thumb{right:18px;box-shadow:0 2px 8px rgba(102,126,234,0.25);animation:thumbBounce 0.4s cubic-bezier(0.34,1.56,0.64,1)}\
+.ez-tog-txt{font-size:11px;font-weight:700;color:#6b6895;flex:1;transition:color 0.2s}\
+.ez-tog-ico{font-size:11px;opacity:0.5;transition:opacity 0.2s,transform 0.3s}\
+.ez-tog:hover .ez-tog-ico{opacity:0.8;transform:scale(1.15)}\
+.ez-btns{display:flex;gap:6px;margin-top:12px}\
+.ez-run{flex:1;height:38px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Tajawal,sans-serif;color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);position:relative;overflow:hidden;letter-spacing:0.5px;box-shadow:0 6px 24px rgba(102,126,234,0.25),0 2px 8px rgba(118,75,162,0.15),inset 0 1px 0 rgba(255,255,255,0.25);transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}\
+.ez-run::before{content:"";position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent);pointer-events:none}\
+.ez-run::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);animation:btnShimmer 4s ease-in-out infinite}\
+.ez-run:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(102,126,234,0.35),0 4px 12px rgba(118,75,162,0.2),inset 0 1px 0 rgba(255,255,255,0.25)}\
+.ez-run:active{transform:translateY(0)}\
+.ez-x{width:38px;height:38px;border-radius:12px;border:1.5px solid rgba(102,126,234,0.12);background:rgba(102,126,234,0.04);color:#a5a3c7;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);font-family:Tajawal,sans-serif}\
+.ez-x:hover{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);color:#ef4444;transform:rotate(90deg)}\
+.ez-ft{padding:5px 16px;text-align:center;font-size:7px;color:#c5c3dc;font-weight:700;letter-spacing:1px;border-top:1px solid rgba(102,126,234,0.06);background:rgba(102,126,234,0.02)}\
+.ez-body>*{animation:itemSlide 0.5s cubic-bezier(0.16,1,0.3,1) backwards}\
+.ez-body>*:nth-child(1){animation-delay:0.08s}.ez-body>*:nth-child(2){animation-delay:0.12s}.ez-body>*:nth-child(3){animation-delay:0.16s}.ez-body>*:nth-child(4){animation-delay:0.20s}.ez-body>*:nth-child(5){animation-delay:0.24s}.ez-body>*:nth-child(6){animation-delay:0.27s}.ez-body>*:nth-child(7){animation-delay:0.30s}.ez-body>*:nth-child(8){animation-delay:0.33s}.ez-body>*:nth-child(9){animation-delay:0.36s}\
+.unique-count-badge{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:0 12px;border-radius:8px;font-size:11px;font-weight:800;margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;height:26px;font-family:Tajawal,sans-serif;box-shadow:0 3px 10px rgba(102,126,234,0.25)}\
+.ez-toast{position:fixed;bottom:30px;right:30px;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);padding:10px 14px;border-radius:12px;box-shadow:0 8px 30px rgba(45,43,58,0.15);z-index:999999;display:flex;align-items:center;gap:8px;font-family:Tajawal,sans-serif;transform:translateX(400px);opacity:0;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);border:1px solid rgba(102,126,234,0.08)}\
+.ez-toast.show{transform:translateX(0);opacity:1}\
+.ez-toast-icon{font-size:15px}\
+.ez-toast-msg{font-size:11px;font-weight:700;color:#2d2b55}\
+.ez-toast-success{border-right:3px solid #10b981}\
+.ez-toast-error{border-right:3px solid #ef4444}\
+.ez-toast-info{border-right:3px solid #667eea}\
+.ez-toast-warning{border-right:3px solid #f59e0b}\
+.ez-loader-spinner{width:40px;height:40px;border:4px solid #e2e0f0;border-top-color:#667eea;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}\
+.ez-loader-text{font-size:13px;font-weight:700;color:#2d2b55;font-family:Tajawal,sans-serif}\
 table td,table th{border:1px solid #bbb!important}';
 document.head.appendChild(s_style);
 
@@ -1600,59 +1614,60 @@ d_box.id='ez-dialog-box';
 d_box.className='ez-dialog';
 d_box.setAttribute('data-m','1');
 d_box.setAttribute('data-t','30');
-d_box.setAttribute('data-extraction-mode','manual');
 d_box.innerHTML='\
-<div class="ez-header">\
-  <div class="ez-title">💊 '+APP_NAME+'</div>\
-  <div class="ez-header-right">\
-    <button class="ez-minimize-btn" onclick="window.ezMinimize()">−</button>\
-    <div class="ez-version">v'+APP_VERSION+'</div>\
+<div class="ez-frost">\
+  <div class="ez-head">\
+    <div class="ez-brand">\
+      <div class="ez-icon">💊</div>\
+      <div class="ez-name">EZ Pill Pro</div>\
+    </div>\
+    <div class="ez-head-r">\
+      <div class="ez-v">v'+APP_VERSION+'</div>\
+      <button class="ez-close" onclick="window.ezMinimize()">−</button>\
+    </div>\
   </div>\
-</div>\
-<div class="ez-content">\
-  <div class="ez-section-title">📆 عدد الأشهر</div>\
-  <div class="ez-pill-row">\
-    <div class="ez-pill selected" onclick="window.ezSelect(this,\'m\',1)">1</div>\
-    <div class="ez-pill" onclick="window.ezSelect(this,\'m\',2)">2</div>\
-    <div class="ez-pill" onclick="window.ezSelect(this,\'m\',3)">3</div>\
+  <div class="ez-body">\
+    <div class="ez-lbl">الأشهر</div>\
+    <div class="ez-caps">\
+      <button class="ez-c on" onclick="window.ezSelect(this,\'m\',1)">1</button>\
+      <button class="ez-c" onclick="window.ezSelect(this,\'m\',2)">2</button>\
+      <button class="ez-c" onclick="window.ezSelect(this,\'m\',3)">3</button>\
+    </div>\
+    <div class="ez-lbl">أيام الشهر</div>\
+    <div class="ez-caps">\
+      <button class="ez-c" onclick="window.ezSelect(this,\'t\',28)">28</button>\
+      <button class="ez-c on" onclick="window.ezSelect(this,\'t\',30)">30</button>\
+    </div>\
+    <div class="ez-div"></div>\
+    <label class="ez-tog">\
+      <div class="ez-sw"><input type="checkbox" id="auto-duration" checked><div class="ez-track"></div><div class="ez-thumb"></div></div>\
+      <span class="ez-tog-txt">استخراج المدة تلقائياً</span>\
+      <span class="ez-tog-ico">✨</span>\
+    </label>\
+    <label class="ez-tog">\
+      <div class="ez-sw"><input type="checkbox" id="show-warnings" checked><div class="ez-track"></div><div class="ez-thumb"></div></div>\
+      <span class="ez-tog-txt">عرض التحذيرات</span>\
+      <span class="ez-tog-ico">⚠️</span>\
+    </label>\
+    <label class="ez-tog">\
+      <div class="ez-sw"><input type="checkbox" id="show-post-dialog"><div class="ez-track"></div><div class="ez-thumb"></div></div>\
+      <span class="ez-tog-txt">خيارات إضافية</span>\
+      <span class="ez-tog-ico">⚙️</span>\
+    </label>\
+    <div class="ez-btns">\
+      <button class="ez-run" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
+      <button class="ez-x" onclick="window.ezCancel()">✖</button>\
+    </div>\
   </div>\
-  <div class="ez-section-title">📅 عدد الأيام في الشهر</div>\
-  <div class="ez-pill-row">\
-    <div class="ez-pill" onclick="window.ezSelect(this,\'t\',28)">28</div>\
-    <div class="ez-pill selected" onclick="window.ezSelect(this,\'t\',30)">30</div>\
-  </div>\
-  <div class="ez-divider"></div>\
-  <div class="ez-opt-row" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;">\
-    <input type="checkbox" id="auto-duration" checked>\
-    <span class="ez-opt-check"></span>\
-    <label class="ez-opt-label">استخراج المدة من الملاحظات</label>\
-    <span class="ez-opt-icon">✨</span>\
-  </div>\
-  <div class="ez-opt-row" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;">\
-    <input type="checkbox" id="show-warnings" checked>\
-    <span class="ez-opt-check"></span>\
-    <label class="ez-opt-label">عرض التحذيرات</label>\
-    <span class="ez-opt-icon">⚠️</span>\
-  </div>\
-  <div class="ez-opt-row" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;">\
-    <input type="checkbox" id="show-post-dialog">\
-    <span class="ez-opt-check"></span>\
-    <label class="ez-opt-label">إظهار الخيارات الإضافية</label>\
-    <span class="ez-opt-icon">⚙️</span>\
-  </div>\
-  <div class="ez-btn-row">\
-    <button class="ez-btn ez-submit-btn" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
-    <button class="ez-btn ez-cancel-btn" onclick="window.ezCancel()">✖ إلغاء</button>\
-  </div>\
-</div>\
-<div class="ez-credit">مطور الكود علي الباز | '+APP_NAME+' v'+APP_VERSION+'</div>';
+  <div class="ez-ft">EZ PILL PRO · V'+APP_VERSION+' · علي الباز</div>\
+</div>';
 
 document.body.appendChild(d_box);
 
 // Keyboard shortcuts
 document.addEventListener('keydown',function(e){
-  if(e.key==='Enter'){var sub=document.querySelector('.ez-submit-btn');if(sub) sub.click();}
-  else if(e.key==='Escape'){var can=document.querySelector('.ez-cancel-btn');if(can) can.click();}
+  if(e.key==='Enter'){var sub=document.querySelector('.ez-run');if(sub) sub.click();}
+  else if(e.key==='Escape'){window.ezCancel();}
 });
 
 makeDraggable(d_box);
