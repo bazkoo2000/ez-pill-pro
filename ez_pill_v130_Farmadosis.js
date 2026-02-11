@@ -859,56 +859,56 @@ s_style.textContent='\
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}\
 @keyframes spin{to{transform:rotate(360deg)}}\
 @keyframes meshFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}\
-.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;z-index:99999;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.2);overflow:hidden;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
+.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:560px;z-index:99999;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.2);overflow:hidden;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
 .ez-dialog-v2::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#6366f1,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite;z-index:1}\
-.ez-header{padding:16px 22px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)}\
+.ez-header{padding:20px 28px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)}\
 .ez-logo-group{display:flex;align-items:center;gap:12px}\
-.ez-logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);position:relative}\
-.ez-logo::after{content:"";position:absolute;inset:0;border-radius:13px;background:linear-gradient(180deg,rgba(255,255,255,0.2) 0%,transparent 50%);pointer-events:none}\
+.ez-logo{width:52px;height:52px;border-radius:15px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);position:relative}\
+.ez-logo::after{content:"";position:absolute;inset:0;border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,0.2) 0%,transparent 50%);pointer-events:none}\
 .ez-title-block{display:flex;flex-direction:column;gap:1px}\
-.ez-title{font-size:19px;font-weight:800;color:#1e1b4b;letter-spacing:-0.3px;line-height:1.2}\
-.ez-subtitle{font-size:10px;font-weight:600;color:#7c7cb0;letter-spacing:0.5px}\
+.ez-title{font-size:23px;font-weight:800;color:#1e1b4b;letter-spacing:-0.3px;line-height:1.2}\
+.ez-subtitle{font-size:12px;font-weight:600;color:#7c7cb0;letter-spacing:0.5px}\
 .ez-header-actions{display:flex;align-items:center;gap:6px}\
-.ez-version{font-size:10px;font-weight:700;color:#818cf8;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12);padding:3px 10px;border-radius:8px;letter-spacing:0.5px}\
-.ez-btn-icon{width:30px;height:30px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.06);color:#818cf8;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.25s;font-family:Cairo,sans-serif}\
+.ez-version{font-size:11px;font-weight:700;color:#818cf8;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12);padding:3px 10px;border-radius:8px;letter-spacing:0.5px}\
+.ez-btn-icon{width:34px;height:34px;border-radius:9px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.06);color:#818cf8;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.25s;font-family:Cairo,sans-serif}\
 .ez-btn-icon:hover{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);color:#ef4444;transform:rotate(90deg)}\
-.ez-content{padding:16px 22px 20px}\
-.ez-section-label{font-size:10px;font-weight:800;color:#6366f1;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}\
+.ez-content{padding:20px 28px 24px}\
+.ez-section-label{font-size:12px;font-weight:800;color:#6366f1;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}\
 .ez-section-label .dot{width:4px;height:4px;border-radius:50%;background:#818cf8}\
-.ez-pill-group{display:flex;gap:6px;margin-bottom:16px;padding:4px;background:rgba(241,245,249,0.8);border:1px solid rgba(129,140,248,0.1);border-radius:14px}\
-.ez-pill{flex:1;height:44px;border-radius:10px;border:none;background:transparent;font-size:17px;font-weight:800;color:#94a3b8;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);font-family:Cairo,sans-serif;position:relative}\
+.ez-pill-group{display:flex;gap:8px;margin-bottom:18px;padding:5px;background:rgba(241,245,249,0.8);border:1px solid rgba(129,140,248,0.1);border-radius:14px}\
+.ez-pill{flex:1;height:52px;border-radius:12px;border:none;background:transparent;font-size:20px;font-weight:800;color:#94a3b8;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);font-family:Cairo,sans-serif;position:relative}\
 .ez-pill:hover:not(.active){color:#6366f1;background:rgba(255,255,255,0.6)}\
 .ez-pill.active{color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 16px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);transform:translateY(-1px)}\
 .ez-pill.active::before{content:"";position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent);border-radius:10px 10px 0 0;pointer-events:none}\
-.ez-sep{height:1px;margin:14px 0;background:linear-gradient(90deg,transparent,rgba(129,140,248,0.15),transparent);position:relative}\
+.ez-sep{height:1px;margin:16px 0;background:linear-gradient(90deg,transparent,rgba(129,140,248,0.15),transparent);position:relative}\
 .ez-sep::after{content:"";position:absolute;width:30px;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa);border-radius:2px;top:-1px;right:0;opacity:0.6}\
-.ez-toggle-row{display:flex;align-items:center;padding:8px 6px;gap:12px;direction:rtl;cursor:pointer;border-radius:10px;transition:background 0.2s}\
+.ez-toggle-row{display:flex;align-items:center;padding:10px 8px;gap:14px;direction:rtl;cursor:pointer;border-radius:10px;transition:background 0.2s}\
 .ez-toggle-row:hover{background:rgba(129,140,248,0.04)}\
-.ez-switch{position:relative;width:42px;height:24px;flex-shrink:0}\
+.ez-switch{position:relative;width:48px;height:28px;flex-shrink:0}\
 .ez-switch input{display:none}\
-.ez-switch-track{position:absolute;inset:0;background:#ddd6fe;border-radius:12px;transition:all 0.35s;box-shadow:inset 0 1px 3px rgba(0,0,0,0.08)}\
+.ez-switch-track{position:absolute;inset:0;background:#ddd6fe;border-radius:14px;transition:all 0.35s;box-shadow:inset 0 1px 3px rgba(0,0,0,0.08)}\
 .ez-switch input:checked+.ez-switch-track{background:linear-gradient(135deg,#818cf8,#6366f1);box-shadow:0 2px 10px rgba(99,102,241,0.3)}\
-.ez-switch-knob{position:absolute;top:3px;right:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 1px 4px rgba(0,0,0,0.15);pointer-events:none}\
-.ez-switch input:checked~.ez-switch-knob{right:21px}\
-.ez-toggle-text{font-size:13px;font-weight:700;color:#3730a3;flex:1;line-height:1.4}\
-.ez-toggle-text .auto-tag{font-size:9px;font-weight:800;color:#818cf8;background:rgba(129,140,248,0.08);padding:1px 6px;border-radius:4px;margin-right:4px}\
-.ez-toggle-icon{font-size:15px;opacity:0.5;transition:all 0.25s}\
+.ez-switch-knob{position:absolute;top:3px;right:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 1px 4px rgba(0,0,0,0.15);pointer-events:none}\
+.ez-switch input:checked~.ez-switch-knob{right:23px}\
+.ez-toggle-text{font-size:15px;font-weight:700;color:#3730a3;flex:1;line-height:1.4}\
+.ez-toggle-text .auto-tag{font-size:10px;font-weight:800;color:#818cf8;background:rgba(129,140,248,0.08);padding:1px 6px;border-radius:4px;margin-right:4px}\
+.ez-toggle-icon{font-size:18px;opacity:0.5;transition:all 0.25s}\
 .ez-toggle-row:hover .ez-toggle-icon{opacity:0.85;transform:scale(1.15)}\
-.ez-actions{display:flex;gap:8px;margin-top:18px}\
-.ez-btn-primary{flex:1;height:48px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 14px rgba(99,102,241,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);transition:all 0.3s;position:relative;overflow:hidden;letter-spacing:0.3px}\
+.ez-actions{display:flex;gap:10px;margin-top:22px}\
+.ez-btn-primary{flex:1;height:54px;border:none;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 14px rgba(99,102,241,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);transition:all 0.3s;position:relative;overflow:hidden;letter-spacing:0.3px}\
 .ez-btn-primary::before{content:"";position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent);pointer-events:none;border-radius:14px 14px 0 0}\
 .ez-btn-primary::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 5s ease-in-out infinite}\
 .ez-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,0.28),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12)}\
 .ez-btn-primary:active{transform:translateY(0);box-shadow:0 2px 8px rgba(99,102,241,0.2),inset 0 2px 4px rgba(0,0,0,0.1)}\
-.ez-btn-doses{width:48px;height:48px;border-radius:14px;border:none;background:linear-gradient(145deg,#a78bfa,#8b5cf6);color:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;box-shadow:0 4px 14px rgba(139,92,246,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);position:relative;overflow:hidden}\
+.ez-btn-doses{width:54px;height:54px;border-radius:14px;border:none;background:linear-gradient(145deg,#a78bfa,#8b5cf6);color:#fff;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;box-shadow:0 4px 14px rgba(139,92,246,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);position:relative;overflow:hidden}\
 .ez-btn-doses::before{content:"";position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent);pointer-events:none;border-radius:14px 14px 0 0}\
 .ez-btn-doses:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,92,246,0.3),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12)}\
-.ez-btn-cancel{width:48px;height:48px;border-radius:14px;border:1.5px solid rgba(129,140,248,0.15);background:linear-gradient(145deg,#fff,#f8fafc);color:#94a3b8;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8),inset 0 -1px 0 rgba(0,0,0,0.04)}\
+.ez-btn-cancel{width:54px;height:54px;border-radius:14px;border:1.5px solid rgba(129,140,248,0.15);background:linear-gradient(145deg,#fff,#f8fafc);color:#94a3b8;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8),inset 0 -1px 0 rgba(0,0,0,0.04)}\
 .ez-btn-cancel:hover{background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.2);color:#ef4444;transform:rotate(90deg) translateY(-2px)}\
-.ez-footer{padding:8px 22px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)}\
+.ez-footer{padding:10px 28px;text-align:center;font-size:10px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)}\
 .ez-content>*{animation:fadeSlideUp 0.4s ease backwards}\
 .ez-content>*:nth-child(1){animation-delay:0.05s}.ez-content>*:nth-child(2){animation-delay:0.1s}.ez-content>*:nth-child(3){animation-delay:0.15s}.ez-content>*:nth-child(4){animation-delay:0.2s}.ez-content>*:nth-child(5){animation-delay:0.25s}.ez-content>*:nth-child(6){animation-delay:0.3s}.ez-content>*:nth-child(7){animation-delay:0.35s}.ez-content>*:nth-child(8){animation-delay:0.4s}.ez-content>*:nth-child(9){animation-delay:0.45s}\
-.ez-doses-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:520px;z-index:100000;border-radius:20px;background:#fff;box-shadow:0 20px 60px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.2);overflow:hidden;font-family:Cairo,sans-serif}\
+.ez-doses-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;z-index:100000;border-radius:20px;background:#fff;box-shadow:0 20px 60px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.2);overflow:hidden;font-family:Cairo,sans-serif}\
 .ez-doses-dialog::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a78bfa,#8b5cf6,#6366f1,#8b5cf6,#a78bfa);background-size:200% 100%;animation:barShift 4s ease infinite;z-index:1}\
 .ez-doses-header{padding:14px 22px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(167,139,250,0.03) 0%,transparent 100%)}\
 .ez-doses-logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(145deg,#a78bfa,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(139,92,246,0.25),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);position:relative}\
