@@ -169,7 +169,7 @@ window.ezShowDoses=function(){
   for(var i=0;i<items.length;i++){
     var dupClass=items[i].isDup?' ez-dose-item-dup':'';
     var dupIcon=items[i].isDup?' ⚡':'';
-    html+='<div class="ez-dose-item'+dupClass+'"><div class="ez-dose-num">'+(i+1)+dupIcon+'</div><div class="ez-dose-name">'+items[i].name+'</div><div class="ez-dose-note">'+items[i].note+'</div></div>';
+    html+='<div class="ez-dose-item'+dupClass+'"><div class="ez-dose-num">'+(i+1)+'</div><div class="ez-dose-name">'+items[i].name+'</div><div class="ez-dose-note">'+items[i].note+dupIcon+'</div></div>';
   }
   html+='</div>';
   html+='<div class="ez-doses-footer"><button class="ez-btn-close-doses" onclick="window.ezCloseDoses()">✕ إغلاق</button></div>';
@@ -950,7 +950,6 @@ s_style.textContent='\
 .ez-dose-item:hover{border-color:rgba(129,140,248,0.2);box-shadow:0 2px 12px rgba(99,102,241,0.06)}\
 .ez-dose-item-dup{border:1.5px solid rgba(251,191,36,0.4);background:rgba(251,191,36,0.04)}\
 .ez-dose-item-dup:hover{border-color:rgba(251,191,36,0.6);box-shadow:0 2px 12px rgba(251,191,36,0.1)}\
-.ez-dose-item-dup .ez-dose-num{background:rgba(251,191,36,0.1);color:#d97706}\
 .ez-dose-num{width:36px;display:flex;align-items:center;justify-content:center;background:rgba(129,140,248,0.05);font-size:12px;font-weight:800;color:#818cf8;border-left:1px solid rgba(129,140,248,0.08);flex-shrink:0}\
 .ez-dose-name{flex:1;padding:10px 14px;font-size:12px;font-weight:700;color:#1e1b4b;line-height:1.4;border-left:1px solid rgba(129,140,248,0.08);word-break:break-word}\
 .ez-dose-note{flex:1.2;padding:10px 14px;font-size:12px;font-weight:600;color:#3730a3;line-height:1.4;background:rgba(241,245,249,0.5);word-break:break-word;direction:rtl}\
