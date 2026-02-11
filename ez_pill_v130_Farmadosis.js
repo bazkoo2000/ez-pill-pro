@@ -1,6 +1,6 @@
 javascript:(function(){
 var APP_VERSION='130.0';
-var APP_NAME='EZ_Pill Pro';
+var APP_NAME='EZ_Pill Farmadosis';
 
 /* ══════════════════════════════════════════
    FIXED SIZE CODES DATABASE
