@@ -882,7 +882,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
     if(genBtn){genBtn.className='ez-gen-csv-btn';var bdg=document.createElement('span');bdg.className='unique-count-badge';bdg.innerHTML='📦 عدد الأصناف: '+uc;genBtn.parentNode.insertBefore(bdg,genBtn.nextSibling);}
-    document.body.classList.add('ez-page-styled');
+    beautifyPage();
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡','info');
@@ -977,8 +977,19 @@ s_style.textContent='\
 .unique-count-badge{background:linear-gradient(145deg,#818cf8,#6366f1);color:#fff;padding:0 16px;border-radius:12px;font-size:13px;font-weight:800;margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;height:34px;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}\
 .ez-gen-csv-btn{background:linear-gradient(145deg,#10b981,#059669)!important;color:#fff!important;border:none!important;padding:0 22px!important;height:34px!important;border-radius:12px!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 4px 14px rgba(16,185,129,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important;transition:all 0.3s!important;letter-spacing:0.3px!important;vertical-align:middle!important}\
 .ez-gen-csv-btn:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(16,185,129,0.3),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important}\
-.ez-page-styled input[type="text"],.ez-page-styled input[type="date"],.ez-page-styled input[type="tel"],.ez-page-styled select{border:1.5px solid #e0e7ff!important;border-radius:8px!important;padding:6px 10px!important;font-family:Cairo,sans-serif!important;font-size:13px!important;font-weight:600!important;transition:border-color 0.2s!important;outline:none!important}\
-.ez-page-styled input:focus,.ez-page-styled select:focus{border-color:#818cf8!important;box-shadow:0 0 0 3px rgba(129,140,248,0.1)!important}\
+.ez-page-styled table{border-collapse:separate!important;border-spacing:0!important;width:100%!important;font-family:Cairo,sans-serif!important;border-radius:12px!important;overflow:hidden!important;box-shadow:0 4px 20px rgba(99,102,241,0.08),0 1px 4px rgba(0,0,0,0.04)!important;border:1.5px solid rgba(129,140,248,0.12)!important}\
+.ez-page-styled table th{background:linear-gradient(145deg,#6366f1,#4f46e5)!important;color:#fff!important;font-size:11.5px!important;font-weight:800!important;padding:10px 6px!important;text-align:center!important;letter-spacing:0.3px!important;border:none!important;border-bottom:2px solid #4338ca!important;border-left:1px solid rgba(255,255,255,0.12)!important;white-space:nowrap!important;text-shadow:0 1px 2px rgba(0,0,0,0.15)!important}\
+.ez-page-styled table th:first-child{border-left:none!important}\
+.ez-page-styled table td{padding:5px 6px!important;font-size:12px!important;font-weight:700!important;color:#1e1b4b!important;border:none!important;border-bottom:1px solid rgba(129,140,248,0.08)!important;border-left:1px solid rgba(129,140,248,0.06)!important;vertical-align:middle!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important}\
+.ez-page-styled table td:first-child{border-left:none!important}\
+.ez-page-styled table tr:nth-child(even) td{background:rgba(238,242,255,0.35)!important}\
+.ez-page-styled table tr:nth-child(odd) td{background:#fff!important}\
+.ez-page-styled table tr{transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important}\
+.ez-page-styled table tr:hover td{background:rgba(129,140,248,0.07)!important;color:#312e81!important}\
+.ez-page-styled table tr:hover{box-shadow:inset 3px 0 0 #818cf8,0 2px 12px rgba(99,102,241,0.08)!important;position:relative!important;z-index:1!important}\
+.ez-page-styled table input[type="text"],.ez-page-styled table input[type="number"],.ez-page-styled table input[type="time"],.ez-page-styled table input[type="date"],.ez-page-styled table select,.ez-page-styled table textarea{font-family:Cairo,sans-serif!important;font-weight:700!important;color:#1e1b4b!important;font-size:12px!important;border:1px solid rgba(129,140,248,0.1)!important;border-radius:6px!important;padding:3px 5px!important;background:rgba(255,255,255,0.8)!important;transition:all 0.25s!important}\
+.ez-page-styled table input:focus,.ez-page-styled table select:focus,.ez-page-styled table textarea:focus{border-color:#818cf8!important;box-shadow:0 0 0 2px rgba(129,140,248,0.1)!important;background:#fff!important}\
+.ez-page-styled table input[type="checkbox"]{width:18px!important;height:18px!important;accent-color:#6366f1!important;cursor:pointer!important}\
 .ez-toast{position:fixed;bottom:30px;right:30px;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);padding:12px 16px;border-radius:14px;box-shadow:0 10px 35px rgba(45,43,58,0.12),0 2px 8px rgba(0,0,0,0.06);z-index:999999;display:flex;align-items:center;gap:10px;font-family:Cairo,sans-serif;transform:translateX(400px);opacity:0;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);border:1px solid rgba(129,140,248,0.1)}\
 .ez-toast.show{transform:translateX(0);opacity:1}\
 .ez-toast-icon{font-size:18px}\
@@ -989,8 +1000,110 @@ s_style.textContent='\
 .ez-toast-warning{border-right:4px solid #f59e0b}\
 .ez-loader-spinner{width:40px;height:40px;border:4px solid #e0e7ff;border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}\
 .ez-loader-text{font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif}\
-table td,table th{border:1px solid #bbb!important}';
+table td,table th{border:1px solid rgba(129,140,248,0.08)!important}';
 document.head.appendChild(s_style);
+
+/* ══════════════════════════════════════════
+   PAGE BEAUTIFICATION
+   ══════════════════════════════════════════ */
+function beautifyPage(){
+  try{
+    document.body.classList.add('ez-page-styled');
+    var allTables=document.querySelectorAll('table');
+
+    /* ── Style top form section ── */
+    var topTable=null;
+    for(var i=0;i<allTables.length;i++){
+      var txt=allTables[i].innerText.toLowerCase();
+      if((txt.indexOf('name')>-1||txt.indexOf('mobile')>-1)&&txt.indexOf('start date')>-1){
+        if(allTables[i].querySelectorAll('tr').length<5){topTable=allTables[i];break;}
+      }
+    }
+    if(topTable){
+      topTable.style.cssText='background:linear-gradient(145deg,#ffffff,#f8f7ff)!important;border:2px solid rgba(129,140,248,0.15)!important;border-radius:16px!important;padding:14px 18px!important;box-shadow:0 6px 24px rgba(99,102,241,0.08),0 2px 8px rgba(0,0,0,0.03)!important;margin-bottom:14px!important;overflow:visible!important;border-collapse:separate!important';
+      var topCells=topTable.querySelectorAll('td,th');
+      for(var i=0;i<topCells.length;i++){
+        topCells[i].style.cssText+='border:none!important;padding:4px 8px!important';
+        var txt=(topCells[i].textContent||'').trim();
+        if(txt.endsWith(':')){
+          topCells[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:10px!important;font-weight:900!important;color:#6366f1!important;letter-spacing:0.8px!important;border:none!important;padding:2px 8px 0!important;white-space:nowrap!important;text-transform:uppercase!important';
+        }
+      }
+      var topInputs=topTable.querySelectorAll('input,select');
+      for(var i=0;i<topInputs.length;i++){
+        topInputs[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:14px!important;font-weight:800!important;color:#1e1b4b!important;border:1.5px solid rgba(129,140,248,0.15)!important;border-radius:10px!important;padding:7px 12px!important;background:#fff!important;transition:all 0.25s!important;outline:none!important;box-shadow:0 2px 6px rgba(0,0,0,0.03)!important;width:100%!important';
+      }
+    }
+
+    /* ── Style main data table columns ── */
+    var dataTable=null;
+    for(var i=0;i<allTables.length;i++){
+      var txt=allTables[i].innerText.toLowerCase();
+      if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){
+        dataTable=allTables[i];break;
+      }
+    }
+    if(dataTable){
+      var ths=dataTable.querySelectorAll('th');
+      var colMap={};
+      for(var i=0;i<ths.length;i++){
+        var t=ths[i].textContent.trim().toLowerCase();
+        colMap[t]=i;
+        if(t==='#') ths[i].innerHTML='#️⃣';
+        else if(t==='code') ths[i].innerHTML='🔑 Code';
+        else if(t==='name'||t==='item') ths[i].innerHTML='💊 Name';
+        else if(t==='qty') ths[i].innerHTML='📦 QTY';
+        else if(t==='size') ths[i].innerHTML='📏 Size';
+        else if(t==='dose') ths[i].innerHTML='💉 Dose';
+        else if(t.indexOf('every')>-1||t.indexOf('evry')>-1) ths[i].innerHTML='⏰ Every';
+        else if(t==='start time') ths[i].innerHTML='🕐 Time';
+        else if(t==='note') ths[i].innerHTML='📝 Note';
+        else if(t==='start date') ths[i].innerHTML='📅 Start';
+        else if(t==='end date') ths[i].innerHTML='📅 End';
+        else if(t==='expiry') ths[i].innerHTML='⏳ Exp';
+        else if(t==='remaining') ths[i].innerHTML='📊';
+        else if(t==='critical') ths[i].innerHTML='🚨';
+        else if(t==='action') ths[i].innerHTML='⚡';
+      }
+      var ri=colMap['remaining'];
+      var nmi2=colMap['name']!==undefined?colMap['name']:colMap['item'];
+      if(ri!==undefined){ths[ri].style.cssText+='width:35px!important;min-width:35px!important;max-width:40px!important;padding:10px 2px!important';}
+      if(nmi2!==undefined){ths[nmi2].style.cssText+='min-width:210px!important';}
+      if(colMap['#']!==undefined){ths[colMap['#']].style.cssText+='width:28px!important;min-width:28px!important;padding:10px 2px!important';}
+      if(colMap['critical']!==undefined){ths[colMap['critical']].style.cssText+='width:40px!important;min-width:40px!important;padding:10px 2px!important';}
+      if(colMap['action']!==undefined){ths[colMap['action']].style.cssText+='width:58px!important;min-width:58px!important';}
+
+      var rows=dataTable.querySelectorAll('tr');
+      for(var r=1;r<rows.length;r++){
+        var tds=rows[r].querySelectorAll('td');
+        if(ri!==undefined&&tds[ri]){tds[ri].style.cssText+='text-align:center!important;width:35px!important;max-width:40px!important;padding:5px 2px!important;font-size:11px!important';}
+        if(nmi2!==undefined&&tds[nmi2]){tds[nmi2].style.cssText+='font-weight:800!important;color:#312e81!important;font-size:11.5px!important';}
+        if(colMap['critical']!==undefined&&tds[colMap['critical']]){tds[colMap['critical']].style.cssText+='text-align:center!important;width:40px!important;font-size:11px!important;padding:5px 2px!important';}
+      }
+    }
+
+    /* ── Style buttons ── */
+    var allBtns=document.querySelectorAll('button,input[type="button"],input[type="submit"],a.btn,a');
+    for(var i=0;i<allBtns.length;i++){
+      var txt=(allBtns[i].innerText||allBtns[i].value||'').toLowerCase();
+      if(txt.indexOf('import')>-1&&txt.indexOf('invoice')>-1){
+        allBtns[i].style.cssText='background:linear-gradient(145deg,#818cf8,#6366f1)!important;color:#fff!important;border:none!important;padding:8px 20px!important;border-radius:12px!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 4px 14px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important;transition:all 0.3s!important;text-decoration:none!important;display:inline-flex!important;align-items:center!important';
+      }
+      if(txt.indexOf('duplicate')>-1){
+        allBtns[i].style.cssText='background:linear-gradient(145deg,#f59e0b,#d97706)!important;color:#fff!important;border:none!important;padding:4px 12px!important;border-radius:8px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 3px 10px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.2)!important;transition:all 0.3s!important;text-decoration:none!important';
+      }
+    }
+
+    /* ── Delivery Time label ── */
+    var allEls=document.querySelectorAll('span,div,label,td');
+    for(var i=0;i<allEls.length;i++){
+      var txt=(allEls[i].textContent||'').trim();
+      if(txt.indexOf('Delivery Time:')>-1&&txt.length<100){
+        allEls[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:12px!important;font-weight:700!important;color:#4338ca!important;background:rgba(129,140,248,0.06)!important;padding:6px 14px!important;border-radius:10px!important;border:1px solid rgba(129,140,248,0.12)!important;display:inline-block!important;margin:6px 0!important';
+      }
+    }
+  }catch(e){console.log('EZ beautify:',e);}
+}
 
 /* ══════════════════════════════════════════
    MAIN DIALOG - NEW PROFESSIONAL DESIGN
@@ -1060,4 +1173,5 @@ document.addEventListener('keydown',function(e){
 });
 
 makeDraggable(d_box);
+beautifyPage();
 })();
