@@ -58,16 +58,7 @@ function setPatientLanguage(language){
 /* ══════════════════════════════════════════
    TOAST NOTIFICATION SYSTEM
    ══════════════════════════════════════════ */
-window.ezShowToast=function(msg,type){
-  var t=document.createElement('div');
-  t.className='ez-toast ez-toast-'+type;
-  t.innerHTML='<div class="ez-toast-icon">'+
-    {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'}[type]+
-    '</div><div class="ez-toast-msg">'+msg+'</div>';
-  document.body.appendChild(t);
-  setTimeout(function(){t.classList.add('show');},10);
-  setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},300);},3000);
-};
+window.ezShowToast=function(msg,type,duration){var t=document.createElement('div');t.className='ez-toast ez-toast-'+type;var icons={success:'<svg width="20" height="20" fill="currentColor"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm-2 15l-5-5 1.41-1.41L8 12.17l7.59-7.59L17 6l-9 9z"/></svg>',error:'<svg width="20" height="20" fill="currentColor"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/></svg>',info:'<svg width="20" height="20" fill="currentColor"><circle cx="10" cy="10" r="9"/><path fill="#fff" d="M9 5h2v2H9zm0 4h2v6H9z"/></svg>',warning:'<svg width="20" height="20" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'};t.innerHTML='<div class="ez-toast-icon">'+icons[type]+'</div><div class="ez-toast-msg">'+msg+'</div><div class="ez-toast-progress"></div>';document.body.appendChild(t);setTimeout(function(){t.classList.add('show');},10);var timeout=duration||3000;setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},300);},timeout);};
 
 /* ══════════════════════════════════════════
    DIALOG CONTROL FUNCTIONS
@@ -82,22 +73,7 @@ window.ezClosePost=function(){
   if(d) d.remove();
 };
 
-window.ezMinimize=function(){
-  var d=document.getElementById('ez-dialog-box');
-  if(d){
-    var content=d.querySelector('.ez-content');
-    var minBtn=d.querySelector('.ez-minimize-btn');
-    if(content.style.display==='none'){
-      content.style.display='block';
-      minBtn.innerHTML='−';
-      d.style.width='auto';
-    } else {
-      content.style.display='none';
-      minBtn.innerHTML='+';
-      d.style.width='380px';
-    }
-  }
-};
+window.ezMinimize=function(){var d=document.getElementById('ez-dialog-box');if(d){var content=d.querySelector('.ez-content');var minBtn=d.querySelector('.ez-minimize-btn');if(content.style.display==='none'){content.style.display='block';minBtn.innerHTML='<svg width="14" height="14" fill="currentColor"><path d="M0 7h14"/></svg>';d.style.width='auto';}else{content.style.display='none';minBtn.innerHTML='<svg width="14" height="14" fill="currentColor"><path d="M7 0v14M0 7h14"/></svg>';d.style.width='380px';}}};
 
 window.ezSelect=function(el,type,val){
   var p=el.parentNode;
@@ -113,50 +89,26 @@ window.ezSelect=function(el,type,val){
    WARNING SYSTEM
    ══════════════════════════════════════════ */
 window.showWarnings=function(warnings,callback){
-  if(!warnings||warnings.length===0){callback();return;}
-  var html='<div class="warning-dialog"><div class="warning-header">'+
-    '<div class="warning-icon">⚠️</div><div class="warning-title">تحذيرات تحتاج مراجعة</div></div>'+
-    '<div class="warning-list">';
-  for(var i=0;i<warnings.length;i++){
-    var w=warnings[i];
-    html+='<div class="warning-item warning-'+w.level+'"><div class="warning-text">'+w.message+'</div>';
-    if(w.editable){
-      html+='<div class="warning-edit"><label>'+w.editLabel+
-        ':</label><input type="number" id="edit-'+i+'" value="'+w.currentValue+
-        '" min="'+w.minValue+'" max="'+w.maxValue+'"></div>';
-    }
-    html+='</div>';
-  }
-  html+='</div><div class="warning-actions">'+
-    '<button class="warning-btn warning-accept" onclick="window.acceptWarnings()">✅ تطبيق التعديلات</button>'+
-    '<button class="warning-btn warning-cancel" onclick="window.cancelWarnings()">❌ إلغاء</button></div></div>';
-  var overlay=document.createElement('div');
-  overlay.id='warning-overlay';
-  overlay.innerHTML=html;
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);z-index:999999;display:flex;align-items:center;justify-content:center;';
-  document.body.appendChild(overlay);
-  window.warningCallback=callback;
+if(!warnings||warnings.length===0){callback();return;}
+var criticalCount=0;var warningCount=0;var infoCount=0;
+for(var i=0;i<warnings.length;i++){if(warnings[i].level==='danger')criticalCount++;else if(warnings[i].level==='warning')warningCount++;else infoCount++;}
+var html='<div class="warning-dialog"><div class="warning-header-modern"><div class="warning-pulse"></div><div class="warning-icon-modern">⚠️</div><div class="warning-title-modern">تحذيرات تحتاج انتباهك</div><div class="warning-stats"><span class="stat-critical">'+criticalCount+'</span><span class="stat-warning">'+warningCount+'</span><span class="stat-info">'+infoCount+'</span></div></div><div class="warning-list-modern">';
+for(var j=0;j<warnings.length;j++){
+var w=warnings[j];var severityBadge='';
+if(w.severity==='critical')severityBadge='<span class="severity-badge critical">حرج</span>';
+else if(w.severity==='high')severityBadge='<span class="severity-badge high">عالي</span>';
+else if(w.severity==='medium')severityBadge='<span class="severity-badge medium">متوسط</span>';
+html+='<div class="warning-item-modern warning-'+w.level+'"><div class="warning-indicator"></div><div class="warning-content"><div class="warning-text-modern">'+w.message+severityBadge+'</div>';
+if(w.editable){html+='<div class="warning-edit-modern"><label>'+w.editLabel+':</label><div class="input-group"><input type="number" id="edit-'+j+'" value="'+w.currentValue+'" min="'+w.minValue+'" max="'+w.maxValue+'"><span class="input-unit">عبوة</span></div></div>';}
+html+='</div></div>';}
+html+='</div><div class="warning-actions-modern"><button class="warning-btn-modern warning-accept" onclick="window.acceptWarnings()"><svg width="18" height="18" fill="currentColor"><path d="M9 0C4.03 0 0 4.03 0 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zM7 13L3 9l1.41-1.41L7 10.17l6.59-6.59L15 5l-8 8z"/></svg>تطبيق</button><button class="warning-btn-modern warning-cancel" onclick="window.cancelWarnings()"><svg width="18" height="18" fill="currentColor"><path d="M9 0C4.03 0 0 4.03 0 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm4.5 12.09l-1.41 1.41L9 10.41 5.91 13.5 4.5 12.09 7.59 9 4.5 5.91 5.91 4.5 9 7.59l3.09-3.09 1.41 1.41L10.41 9l3.09 3.09z"/></svg>إلغاء</button></div></div>';
+var overlay=document.createElement('div');overlay.id='warning-overlay';overlay.innerHTML=html;
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease;';
+document.body.appendChild(overlay);window.warningCallback=callback;
 };
 
-window.acceptWarnings=function(){
-  var edits={};
-  var inputs=document.querySelectorAll('[id^="edit-"]');
-  for(var i=0;i<inputs.length;i++){
-    var id=inputs[i].id.replace('edit-','');
-    edits[id]=parseInt(inputs[i].value);
-  }
-  for(var key in edits){
-    if(warningQueue[key]&&warningQueue[key].onEdit) warningQueue[key].onEdit(edits[key]);
-  }
-  var overlay=document.getElementById('warning-overlay');
-  if(overlay) overlay.remove();
-  if(window.warningCallback) window.warningCallback();
-};
-
-window.cancelWarnings=function(){
-  var overlay=document.getElementById('warning-overlay');
-  if(overlay) overlay.remove();
-};
+window.acceptWarnings=function(){var edits={};var inputs=document.querySelectorAll('[id^="edit-"]');for(var i=0;i<inputs.length;i++){var id=inputs[i].id.replace('edit-','');edits[id]=parseInt(inputs[i].value);}for(var key in edits){if(warningQueue[key]&&warningQueue[key].onEdit){warningQueue[key].onEdit(edits[key]);}}var overlay=document.getElementById('warning-overlay');if(overlay){overlay.classList.add('closing');setTimeout(function(){overlay.remove();},200);}if(window.warningCallback)window.warningCallback();};
+window.cancelWarnings=function(){var overlay=document.getElementById('warning-overlay');if(overlay){overlay.classList.add('closing');setTimeout(function(){overlay.remove();},200);}};
 
 /* ══════════════════════════════════════════
    SUBMIT HANDLER
@@ -269,9 +221,7 @@ window.ezUndoDuplicates=function(){
 };
 
 /* ══════════════════════════════════════════
-   NEXT MONTH HANDLER - JVM
-   new start = old end_date + 1 day
-   then subtract 1 day from new end dates
+   NEXT MONTH HANDLER
    ══════════════════════════════════════════ */
 window.ezNextMonth=function(){
   monthCounter++;
@@ -305,7 +255,6 @@ window.ezNextMonth=function(){
   }
 
   if(monthCounter===1||monthCounter===2){
-    // JVM: new start = end_date + 1 day (end_date already has -1 applied)
     var endDateStr='';
     for(var i=1;i<rows.length;i++){
       var tds=rows[i].querySelectorAll('td');
@@ -324,8 +273,6 @@ window.ezNextMonth=function(){
         var sInput=r.querySelectorAll('td')[si]?r.querySelectorAll('td')[si].querySelector('input,textarea'):null;
         if(sInput) fireEv(sInput);
       });
-
-      // JVM: subtract 1 day from new end dates
       setTimeout(function(){
         for(var i=1;i<rows.length;i++){
           var tds=rows[i].querySelectorAll('td');
@@ -340,7 +287,6 @@ window.ezNextMonth=function(){
           }
         }
       },500);
-
       btn.innerHTML=(monthCounter===1)?'📅 الشهر الثالث':'🖨️ تجميع للطباعة';
       btn.style.background=(monthCounter===1)?'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)':'linear-gradient(135deg, #f6d365 0%, #fda085 100%)';
       btn.style.color=(monthCounter===1)?'#4a148c':'#bf360c';
@@ -1553,80 +1499,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
    STYLES
    ══════════════════════════════════════════ */
 var s_style=document.createElement('style');
-s_style.textContent='\
-@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap");\
-.ez-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:0;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.25),0 0 0 1px rgba(59,130,246,0.15);z-index:99999;color:#333;font-family:Cairo,sans-serif;min-width:380px;max-width:420px;overflow:hidden}\
-.ez-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:linear-gradient(135deg,#3b82f6 0%,#6366f1 100%);cursor:move}\
-.ez-title{font-size:17px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.15)}\
-.ez-header-right{display:flex;align-items:center;gap:6px}\
-.ez-version{font-size:9px;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;font-weight:700}\
-.ez-minimize-btn{background:rgba(255,255,255,0.25);color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;font-weight:700;line-height:1;transition:all 0.3s}\
-.ez-minimize-btn:hover{background:rgba(255,255,255,0.4);transform:scale(1.1)}\
-.ez-content{padding:14px 18px}\
-.ez-section-title{font-size:11px;font-weight:700;margin:6px 0 5px;color:#64748b;text-align:right;text-transform:uppercase;letter-spacing:0.5px}\
-.ez-pill-row{display:flex;gap:6px;margin-bottom:8px}\
-.ez-pill{flex:1;height:40px;border-radius:8px;background:#f8fafc;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;cursor:pointer;transition:all 0.2s;color:#94a3b8}\
-.ez-pill:hover{border-color:#3b82f6;color:#3b82f6;background:#eff6ff}\
-.ez-pill.selected{background:linear-gradient(135deg,#3b82f6,#6366f1);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(59,130,246,0.3)}\
-.ez-divider{height:1px;background:#e2e8f0;margin:10px 0}\
-.ez-opt-row{display:flex;align-items:center;padding:7px 10px;margin:4px 0;background:#f8fafc;border-radius:8px;cursor:pointer;transition:all 0.2s;border:1.5px solid #e2e8f0;gap:8px;direction:rtl}\
-.ez-opt-row:hover{background:#eff6ff;border-color:#93c5fd}\
-.ez-opt-row input[type="checkbox"]{display:none}\
-.ez-opt-check{width:16px;height:16px;border:2px solid #cbd5e1;border-radius:50%;position:relative;transition:all 0.2s;background:#fff;flex-shrink:0}\
-.ez-opt-row input:checked+.ez-opt-check{background:linear-gradient(135deg,#3b82f6,#6366f1);border-color:transparent;box-shadow:0 0 0 2px rgba(59,130,246,0.2)}\
-.ez-opt-check::after{content:"✓";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);color:#fff;font-size:10px;font-weight:900;transition:all 0.15s}\
-.ez-opt-row input:checked+.ez-opt-check::after{transform:translate(-50%,-50%) scale(1)}\
-.ez-opt-label{font-size:11px;color:#334155;font-weight:600;flex:1}\
-.ez-opt-icon{font-size:13px;opacity:0.7}\
-.ez-btn-row{display:flex;gap:6px;margin-top:12px}\
-.ez-btn{flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:Cairo,sans-serif}\
-.ez-submit-btn{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 14px rgba(16,185,129,0.3)}\
-.ez-submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,0.4)}\
-.ez-cancel-btn{background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0}\
-.ez-cancel-btn:hover{background:#e2e8f0;transform:translateY(-1px)}\
-.ez-credit{font-size:8px;color:#94a3b8;text-align:center;padding:8px 18px;background:#f8fafc;border-top:1px solid #e2e8f0;font-weight:600}\
-.warning-dialog{background:#fff;border-radius:12px;padding:24px;max-width:550px;max-height:75vh;overflow-y:auto;box-shadow:0 16px 50px rgba(0,0,0,0.3);font-family:Cairo,sans-serif}\
-.warning-header{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #fee2e2}\
-.warning-icon{font-size:32px}\
-.warning-title{font-size:18px;font-weight:800;color:#dc2626}\
-.warning-list{margin:16px 0}\
-.warning-item{background:#f8fafc;border-left:4px solid #3b82f6;padding:12px;margin:8px 0;border-radius:8px}\
-.warning-item.warning-danger{border-left-color:#dc2626;background:#fef2f2}\
-.warning-item.warning-warning{border-left-color:#f59e0b;background:#fffbeb}\
-.warning-item.warning-info{border-left-color:#3b82f6;background:#eff6ff}\
-.warning-text{font-size:12px;color:#1e293b;margin-bottom:8px;font-weight:600}\
-.warning-edit{margin-top:8px}\
-.warning-edit label{display:block;font-size:11px;color:#64748b;margin-bottom:4px;font-weight:600}\
-.warning-edit input{width:100%;padding:6px;border:2px solid #e2e8f0;border-radius:6px;font-size:14px;font-weight:700}\
-.warning-edit input:focus{border-color:#3b82f6;outline:none}\
-.warning-actions{display:flex;gap:8px;margin-top:16px}\
-.warning-btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s}\
-.warning-accept{background:#10b981;color:#fff}\
-.warning-accept:hover{background:#059669;transform:translateY(-1px)}\
-.warning-cancel{background:#f1f5f9;color:#64748b}\
-.warning-cancel:hover{background:#e2e8f0;transform:translateY(-1px)}\
-.unique-count-badge{background:#2196f3;color:#fff;padding:0 12px;border-radius:5px;font-size:12px;font-weight:700;margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;height:28px}\
-.end-date-alert{background:#fff;border-radius:12px;padding:24px;max-width:450px;box-shadow:0 16px 50px rgba(0,0,0,0.3);font-family:Cairo,sans-serif}\
-.alert-header{font-size:17px;font-weight:800;color:#f59e0b;margin-bottom:16px;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}\
-.alert-body{font-size:13px;color:#1e293b;margin-bottom:20px;text-align:center;line-height:1.5}\
-.alert-actions{display:flex;gap:8px}\
-.alert-btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s}\
-.alert-fix{background:#10b981;color:#fff}\
-.alert-fix:hover{background:#059669;transform:translateY(-1px)}\
-.alert-cancel{background:#f1f5f9;color:#64748b}\
-.alert-cancel:hover{background:#e2e8f0;transform:translateY(-1px)}\
-.ez-toast{position:fixed;bottom:30px;right:30px;background:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:999999;display:flex;align-items:center;gap:8px;font-family:Cairo,sans-serif;transform:translateX(400px);opacity:0;transition:all 0.3s}\
-.ez-toast.show{transform:translateX(0);opacity:1}\
-.ez-toast-icon{font-size:16px}\
-.ez-toast-msg{font-size:12px;font-weight:600;color:#1e293b}\
-.ez-toast-success{border-left:4px solid #10b981}\
-.ez-toast-error{border-left:4px solid #ef4444}\
-.ez-toast-info{border-left:4px solid #3b82f6}\
-.ez-toast-warning{border-left:4px solid #f59e0b}\
-.ez-loader-spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}\
-@keyframes spin{to{transform:rotate(360deg)}}\
-.ez-loader-text{font-size:13px;font-weight:700;color:#1e293b}\
-table td,table th{border:1px solid #bbb!important}';
+s_style.innerHTML='@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap");@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}@keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:0.8;}}.ez-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#fff 0%,#f8f9fa 100%);border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,0.25),0 0 1px rgba(0,0,0,0.3);z-index:99999;font-family:Cairo,sans-serif;min-width:420px;max-width:500px;max-height:95vh;animation:slideUp 0.3s ease;}.ez-dialog.closing{animation:slideUp 0.2s ease reverse;}.ez-header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;cursor:move;box-shadow:0 4px 12px rgba(102,126,234,0.3);}.ez-title{font-size:19px;font-weight:900;letter-spacing:0.5px;text-shadow:0 2px 4px rgba(0,0,0,0.2);}.ez-version{background:rgba(255,255,255,0.25);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-left:8px;}.ez-minimize-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;transition:all 0.3s;display:flex;align-items:center;justify-content:center;}.ez-minimize-btn:hover{background:rgba(255,255,255,0.35);transform:scale(1.1);}.ez-content{padding:20px;overflow-y:auto;max-height:calc(95vh - 90px);}.mode-section{margin-bottom:16px;}.mode-title{font-size:15px;font-weight:800;color:#1e293b;padding:10px;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border-radius:10px;border:2px solid #3b82f6;display:flex;align-items:center;justify-content:center;gap:8px;}.options-section{display:block;}.months-section,.days-section{margin-bottom:14px;}.ez-section-title{font-size:12px;font-weight:700;color:#475569;margin-bottom:8px;text-align:center;}.ez-pill-container{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}.ez-pill{background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);border:2px solid #cbd5e1;padding:10px 22px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;color:#334155;transition:all 0.3s;text-align:center;min-width:55px;box-shadow:0 2px 8px rgba(0,0,0,0.08);}.ez-pill:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.15);border-color:#94a3b8;}.ez-pill.selected{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:#fff;border-color:#1d4ed8;box-shadow:0 4px 16px rgba(59,130,246,0.4);}.ez-options-group{background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border-radius:12px;padding:12px;margin:14px 0;border:1.5px solid #86efac;}.ez-options-group .ez-options-title{font-size:12px;font-weight:800;color:#166534;margin-bottom:10px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}.ez-checkbox-line{display:flex;align-items:center;margin:6px 0;padding:8px 10px;background:#fff;border-radius:8px;cursor:pointer;transition:all 0.3s;border:1.5px solid #e5e7eb;position:relative;}.ez-checkbox-line:hover{background:#f0fdf4;border-color:#86efac;transform:translateX(-2px);}.ez-checkbox-line input[type="checkbox"]{position:absolute;opacity:0;width:0;height:0;}.ez-checkbox-custom{width:18px;height:18px;border:2px solid #cbd5e1;border-radius:5px;margin:0 8px 0 0;position:relative;transition:all 0.3s;background:#fff;flex-shrink:0;}.ez-checkbox-line input[type="checkbox"]:checked+.ez-checkbox-custom{background:linear-gradient(135deg,#10b981,#059669);border-color:#059669;box-shadow:0 0 0 2px rgba(16,185,129,0.2);}.ez-checkbox-custom::after{content:"✓";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);color:#fff;font-size:12px;font-weight:900;transition:all 0.2s;}.ez-checkbox-line input[type="checkbox"]:checked+.ez-checkbox-custom::after{transform:translate(-50%,-50%) scale(1);}.ez-checkbox-label{font-size:12px;color:#1e293b;font-weight:700;flex:1;}.ez-checkbox-icon{font-size:14px;margin-left:4px;opacity:0.8;}.ez-buttons-container{display:flex;gap:10px;margin-top:16px;}.ez-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,0,0,0.1);}.ez-submit-btn{background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#fff;}.ez-submit-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(16,185,129,0.4);}.ez-cancel-btn{background:linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%);color:#64748b;}.ez-cancel-btn:hover{background:linear-gradient(135deg,#e2e8f0 0%,#cbd5e1 100%);transform:translateY(-2px);}.ez-credit{font-size:10px;color:#94a3b8;margin-top:12px;padding-top:10px;border-top:2px solid #f1f5f9;font-weight:700;text-align:center;}.warning-dialog{background:#fff;border-radius:20px;padding:24px;max-width:560px;max-height:80vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.35);font-family:Cairo,sans-serif;animation:slideUp 0.3s ease;}.warning-header-modern{text-align:center;margin-bottom:20px;padding-bottom:14px;border-bottom:3px solid #fee2e2;position:relative;}.warning-pulse{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:60px;height:60px;background:radial-gradient(circle,rgba(239,68,68,0.3),transparent);border-radius:50%;animation:pulse 2s infinite;}.warning-icon-modern{font-size:40px;margin-bottom:6px;animation:pulse 1.5s infinite;}.warning-title-modern{font-size:18px;font-weight:900;color:#dc2626;}.warning-stats{display:flex;gap:10px;justify-content:center;margin-top:10px;}.warning-stats span{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;}.stat-critical{background:#fecaca;color:#991b1b;}.stat-warning{background:#fed7aa;color:#9a3412;}.stat-info{background:#bfdbfe;color:#1e40af;}.warning-list-modern{margin:16px 0;max-height:350px;overflow-y:auto;}.warning-item-modern{background:#f8fafc;border-radius:10px;padding:14px;margin:10px 0;position:relative;padding-right:20px;transition:all 0.3s;}.warning-item-modern:hover{transform:translateX(-3px);box-shadow:0 4px 12px rgba(0,0,0,0.1);}.warning-item-modern.warning-danger{background:linear-gradient(135deg,#fef2f2,#fee2e2);border-right:4px solid #dc2626;}.warning-item-modern.warning-warning{background:linear-gradient(135deg,#fffbeb,#fef3c7);border-right:4px solid #f59e0b;}.warning-item-modern.warning-info{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-right:4px solid #3b82f6;}.warning-indicator{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;animation:pulse 2s infinite;}.warning-danger .warning-indicator{background:#dc2626;}.warning-warning .warning-indicator{background:#f59e0b;}.warning-info .warning-indicator{background:#3b82f6;}.warning-content{padding-right:6px;}.warning-text-modern{font-size:12px;color:#1e293b;margin-bottom:8px;font-weight:700;line-height:1.5;}.severity-badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:9px;font-weight:800;margin-right:6px;vertical-align:middle;}.severity-badge.critical{background:#dc2626;color:#fff;}.severity-badge.high{background:#f59e0b;color:#fff;}.severity-badge.medium{background:#3b82f6;color:#fff;}.warning-edit-modern{margin-top:10px;background:#fff;padding:10px;border-radius:6px;border:1.5px solid #e5e7eb;}.warning-edit-modern label{display:block;font-size:11px;color:#64748b;margin-bottom:6px;font-weight:700;}.input-group{display:flex;align-items:center;gap:6px;}.warning-edit-modern input{flex:1;padding:8px 10px;border:2px solid #cbd5e1;border-radius:6px;font-size:14px;font-weight:700;font-family:Cairo,sans-serif;}.warning-edit-modern input:focus{border-color:#3b82f6;outline:none;box-shadow:0 0 0 2px rgba(59,130,246,0.1);}.input-unit{font-size:11px;color:#64748b;font-weight:700;padding:8px;background:#f8fafc;border-radius:5px;}.warning-actions-modern{display:flex;gap:10px;margin-top:20px;}.warning-btn-modern{flex:1;padding:12px 16px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s;display:flex;align-items:center;justify-content:center;gap:6px;}.warning-accept{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 12px rgba(16,185,129,0.3);}.warning-accept:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(16,185,129,0.4);}.warning-cancel{background:linear-gradient(135deg,#f1f5f9,#e2e8f0);color:#64748b;}.warning-cancel:hover{background:linear-gradient(135deg,#e2e8f0,#cbd5e1);transform:translateY(-2px);}.ez-toast{position:fixed;bottom:30px;right:30px;background:#fff;padding:14px 20px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.25);z-index:999999;display:flex;align-items:center;gap:12px;font-family:Cairo,sans-serif;transform:translateX(500px);opacity:0;transition:all 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);min-width:280px;}.ez-toast.show{transform:translateX(0);opacity:1;}.ez-toast.closing{transform:translateX(500px);opacity:0;}.ez-toast-icon{font-size:20px;display:flex;align-items:center;}.ez-toast-icon svg{width:24px;height:24px;}.ez-toast-msg{font-size:13px;font-weight:700;color:#1e293b;flex:1;}.ez-toast-progress{position:absolute;bottom:0;left:0;height:3px;background:currentColor;width:100%;animation:progress 3s linear;border-radius:0 0 14px 14px;}@keyframes progress{from{width:100%;}to{width:0%;}}.ez-toast-success{border-right:4px solid #10b981;}.ez-toast-success .ez-toast-icon{color:#10b981;}.ez-toast-error{border-right:4px solid #ef4444;}.ez-toast-error .ez-toast-icon{color:#ef4444;}.ez-toast-info{border-right:4px solid #3b82f6;}.ez-toast-info .ez-toast-icon{color:#3b82f6;}.ez-toast-warning{border-right:4px solid #f59e0b;}.ez-toast-warning .ez-toast-icon{color:#f59e0b;}.ez-loader-spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}.ez-loader-text{font-size:13px;font-weight:700;color:#1e293b}.unique-count-badge{background:#2196f3;color:#fff;padding:0 12px;border-radius:5px;font-size:12px;font-weight:700;margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;height:28px}.end-date-alert{background:#fff;border-radius:12px;padding:24px;max-width:450px;box-shadow:0 16px 50px rgba(0,0,0,0.3);font-family:Cairo,sans-serif}.alert-header{font-size:17px;font-weight:800;color:#f59e0b;margin-bottom:16px;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}.alert-body{font-size:13px;color:#1e293b;margin-bottom:20px;text-align:center;line-height:1.5}.alert-actions{display:flex;gap:8px}.alert-btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s}.alert-fix{background:#10b981;color:#fff}.alert-fix:hover{background:#059669;transform:translateY(-1px)}.alert-cancel{background:#f1f5f9;color:#64748b}.alert-cancel:hover{background:#e2e8f0;transform:translateY(-1px)}table td,table th{border:1px solid #bbb!important}';
 document.head.appendChild(s_style);
 
 /* ══════════════════════════════════════════
@@ -1638,51 +1511,7 @@ d_box.className='ez-dialog';
 d_box.setAttribute('data-m','1');
 d_box.setAttribute('data-t','30');
 d_box.setAttribute('data-extraction-mode','manual');
-d_box.innerHTML='\
-<div class="ez-header">\
-  <div class="ez-title">💊 '+APP_NAME+'</div>\
-  <div class="ez-header-right">\
-    <button class="ez-minimize-btn" onclick="window.ezMinimize()">−</button>\
-    <div class="ez-version">v'+APP_VERSION+'</div>\
-  </div>\
-</div>\
-<div class="ez-content">\
-  <div class="ez-section-title">📆 عدد الأشهر</div>\
-  <div class="ez-pill-row">\
-    <div class="ez-pill selected" onclick="window.ezSelect(this,\'m\',1)">1</div>\
-    <div class="ez-pill" onclick="window.ezSelect(this,\'m\',2)">2</div>\
-    <div class="ez-pill" onclick="window.ezSelect(this,\'m\',3)">3</div>\
-  </div>\
-  <div class="ez-section-title">📅 عدد الأيام في الشهر</div>\
-  <div class="ez-pill-row">\
-    <div class="ez-pill" onclick="window.ezSelect(this,\'t\',28)">28</div>\
-    <div class="ez-pill selected" onclick="window.ezSelect(this,\'t\',30)">30</div>\
-  </div>\
-  <div class="ez-divider"></div>\
-  <div class="ez-opt-row" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;">\
-    <input type="checkbox" id="auto-duration" checked>\
-    <span class="ez-opt-check"></span>\
-    <label class="ez-opt-label">استخراج المدة من الملاحظات</label>\
-    <span class="ez-opt-icon">✨</span>\
-  </div>\
-  <div class="ez-opt-row" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;">\
-    <input type="checkbox" id="show-warnings" checked>\
-    <span class="ez-opt-check"></span>\
-    <label class="ez-opt-label">عرض التحذيرات</label>\
-    <span class="ez-opt-icon">⚠️</span>\
-  </div>\
-  <div class="ez-opt-row" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;">\
-    <input type="checkbox" id="show-post-dialog">\
-    <span class="ez-opt-check"></span>\
-    <label class="ez-opt-label">إظهار الخيارات الإضافية</label>\
-    <span class="ez-opt-icon">⚙️</span>\
-  </div>\
-  <div class="ez-btn-row">\
-    <button class="ez-btn ez-submit-btn" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
-    <button class="ez-btn ez-cancel-btn" onclick="window.ezCancel()">✖ إلغاء</button>\
-  </div>\
-</div>\
-<div class="ez-credit">JVM Edition | '+APP_NAME+' v'+APP_VERSION+'</div>';
+d_box.innerHTML='<div class="ez-header"><div class="ez-title">'+APP_NAME+'</div><div style="display:flex;align-items:center;gap:8px;"><button class="ez-minimize-btn" onclick="window.ezMinimize()"><svg width="14" height="14" fill="currentColor"><path d="M0 7h14"/></svg></button><div class="ez-version">v'+APP_VERSION+'</div></div></div><div class="ez-content"><div class="mode-section"><div class="mode-title">✨ وضع المعالجة الذكي</div></div><div class="options-section"><div class="months-section"><div class="ez-section-title">📅 عدد الأشهر</div><div class="ez-pill-container"><div class="ez-pill selected" onclick="window.ezSelect(this,\'m\',1)">1</div><div class="ez-pill" onclick="window.ezSelect(this,\'m\',2)">2</div><div class="ez-pill" onclick="window.ezSelect(this,\'m\',3)">3</div></div></div><div class="days-section"><div class="ez-section-title">📆 عدد الأيام في الشهر</div><div class="ez-pill-container"><div class="ez-pill" onclick="window.ezSelect(this,\'t\',28)">28</div><div class="ez-pill selected" onclick="window.ezSelect(this,\'t\',30)">30</div></div></div></div><div class="ez-options-group"><div class="ez-options-title">⚙️ خيارات ذكية</div><div class="ez-checkbox-line" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;"><input type="checkbox" id="auto-duration" checked><span class="ez-checkbox-custom"></span><label class="ez-checkbox-label">استخراج المدة والجرعات من الملاحظات</label><span class="ez-checkbox-icon">🤖</span></div><div class="ez-checkbox-line" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;"><input type="checkbox" id="show-warnings" checked><span class="ez-checkbox-custom"></span><label class="ez-checkbox-label">عرض تحذيرات التحقق الذكي</label><span class="ez-checkbox-icon">🛡️</span></div><div class="ez-checkbox-line" onclick="var cb=this.querySelector(\'input\');cb.checked=!cb.checked;"><input type="checkbox" id="show-post-dialog"><span class="ez-checkbox-custom"></span><label class="ez-checkbox-label">خيارات ما بعد المعالجة (دمج - شهر تالي)</label><span class="ez-checkbox-icon">⚙️</span></div></div><div class="ez-buttons-container"><button class="ez-btn ez-submit-btn" onclick="window.ezSubmit()">⚡ بدء المعالجة الذكية</button><button class="ez-btn ez-cancel-btn" onclick="window.ezCancel()">✖ إلغاء</button></div></div><div class="ez-credit">JVM Edition | '+APP_NAME+' v'+APP_VERSION+'</div>';
 
 document.body.appendChild(d_box);
 
