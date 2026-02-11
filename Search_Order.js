@@ -4,11 +4,11 @@
     var pNodes=Array.from(d.querySelectorAll('.pagination a, .pagination li')).map(function(el){return parseInt(el.innerText.trim())}).filter(function(n){return !isNaN(n)});
     var pLim=pNodes.length>0?Math.max.apply(Math,pNodes):1;
     var s=d.createElement('style');
-    s.innerHTML='#ali_sys_v22{position:fixed;top:5%;right:2%;background:rgba(255,255,255,0.98);backdrop-filter:blur(10px);border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:20px;z-index:9999999;width:300px;color:#333;direction:rtl;border:1.5px solid #1a73e8;font-family:sans-serif;text-align:center}.minimized{width:50px!important;height:50px!important;padding:0!important;border-radius:50%!important;cursor:pointer;display:flex;align-items:center;justify-content:center}.minimized::before{content:"⚙️";font-size:24px}.s-in{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;outline:none;box-sizing:border-box}.d-btn{width:100%;padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;margin-top:5px}.b-blue{background:#1a73e8;color:#fff}.b-green{background:#28a745!important;color:#fff}.ali-stats-wrapper{display:flex;justify-content:space-around;margin:10px 0;padding:10px;background:#f0f7ff;border-radius:10px}.ali-cnt-val{padding:2px 8px;border-radius:5px;color:#fff;font-weight:bold}#p-bar{height:6px;background:#eee;margin-top:10px;border-radius:3px;overflow:hidden}#p-fill{height:100%;background:#1a73e8;width:0%;transition:0.3s}';
+    s.innerHTML='#ali_sys_v22{position:fixed;top:5%;right:2%;background:rgba(255,255,255,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:24px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);padding:24px;z-index:9999999;width:340px;color:#1e293b;direction:rtl;border:1px solid rgba(255,255,255,0.3);font-family:"Segoe UI",Roboto,sans-serif;transition:all 0.4s cubic-bezier(0.4,0,0.2,1)}.minimized{width:64px!important;height:64px!important;padding:0!important;border-radius:50%!important;cursor:pointer;display:flex!important;align-items:center;justify-content:center;overflow:hidden}.minimized::before{content:"⚙️";font-size:32px}.ali-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.ali-title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#1a73e8,#0d47a1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.ali-btn-circle{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s}.ali-btn-circle:hover{background:#e2e8f0;color:#1e293b}.ali-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}.ali-stat-box{background:#fff;padding:12px;border-radius:16px;border:1px solid #f1f5f9;text-align:center;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)}.ali-stat-label{font-size:11px;color:#64748b;font-weight:600;display:block;margin-bottom:4px}.ali-stat-value{font-size:20px;font-weight:800;color:#1e293b}.s-group{position:relative;margin-bottom:12px}.s-in{width:100%;padding:14px 16px;border:2px solid #f1f5f9;border-radius:14px;font-size:14px;outline:none;transition:0.3s;box-sizing:border-box;background:#f8fafc;font-weight:600}.s-in:focus{border-color:#1a73e8;background:#fff;box-shadow:0 0 0 4px rgba(26,115,232,0.1)}.d-btn{width:100%;padding:16px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:15px;transition:0.3s;display:flex;align-items:center;justify-content:center;gap:8px}.b-blue{background:#1a73e8;color:#fff;box-shadow:0 10px 15px -3px rgba(26,115,232,0.3)}.b-blue:hover{background:#1557b0;transform:translateY(-2px)}.b-green{background:#10b981!important;color:#fff;box-shadow:0 10px 15px -3px rgba(16,185,129,0.3)}.b-green:hover{background:#059669!important;transform:translateY(-2px)}.b-green:disabled{background:#94a3b8!important;transform:none;box-shadow:none}#p-bar{height:6px;background:#f1f5f9;border-radius:10px;margin:15px 0;overflow:hidden}#p-fill{height:100%;background:linear-gradient(90deg,#1a73e8,#60a5fa);width:0%;transition:0.4s}';
     d.head.appendChild(s);
     var v=d.createElement('div');
     v.id=id;
-    v.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span id="ali_min" style="cursor:pointer;font-size:20px;color:#1a73e8">−</span><b style="font-size:14px">محرك علي الباز</b><span id="ali_close" style="cursor:pointer;font-size:18px;color:#ccc">✖</span></div><div class="ali-stats-wrapper"><div>الإجمالي<br><span id="stat_total" class="ali-cnt-val" style="background:#1a73e8">0</span></div><div style="border-right:1px solid #ddd">المطابق<br><span id="stat_rec" class="ali-cnt-val" style="background:#28a745">0</span></div></div><div id="ali_main_body"><div style="margin-bottom:10px;font-size:13px">عدد الصفحات: <input type="number" id="p_lim" value="'+pLim+'" style="width:40px"></div><div id="p-bar"><div id="p-fill"></div></div><div id="status-msg" style="font-size:11px;color:#666;margin:5px 0">جاهز...</div><button class="d-btn b-blue" id="start">بدء التجميع</button></div>';
+    v.innerHTML='<div class="ali-header"><button class="ali-btn-circle" id="ali_min">−</button><span class="ali-title">EZ-PILL PRO</span><button class="ali-btn-circle" id="ali_close">✕</button></div><div class="ali-card-stats"><div class="ali-stat-box"><span class="ali-stat-label">إجمالي الطلبات</span><span id="stat_total" class="ali-stat-value">0</span></div><div class="ali-stat-box" style="border-right:3px solid #10b981"><span class="ali-stat-label">مطابق للبحث</span><span id="stat_rec" class="ali-stat-value">0</span></div></div><div id="ali_main_body"><div style="background:#f8fafc;padding:12px;border-radius:12px;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:700">نطاق الفحص:</span><input type="number" id="p_lim" value="'+pLim+'" style="width:50px;border:none;background:transparent;text-align:center;font-weight:800;color:#1a73e8;font-size:16px"></div><div id="p-bar"><div id="p-fill"></div></div><div id="status-msg" style="font-size:12px;color:#94a3b8;margin-bottom:10px;text-align:center;font-weight:600">جاهز لبدء العمليات...</div><button class="d-btn b-blue" id="start">🚀 بدء تجميع البيانات</button></div><div style="text-align:center;margin-top:20px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>';
     d.body.appendChild(v);
     d.getElementById('ali_close').onclick=function(){v.remove()};
     d.getElementById('ali_min').onclick=function(){v.classList.toggle('minimized')};
@@ -16,7 +16,7 @@
     var run=function(curr,lim){
         var pf=d.getElementById('p-fill');
         pf.style.width=(curr/lim*100)+'%';
-        d.getElementById('status-msg').innerText='فحص ص '+curr;
+        d.getElementById('status-msg').innerText='تحليل الصفحة رقم '+curr+' جاري...';
         d.querySelectorAll('table tr').forEach(function(r){
             var td=r.querySelectorAll('td');
             if(td.length>1){
@@ -41,7 +41,7 @@
         var mT=tar.querySelector('tbody')||tar;
         mT.innerHTML='';
         savedRows.forEach(function(o){mT.appendChild(o.node)});
-        d.getElementById('ali_main_body').innerHTML='<input type="text" id="sI" class="s-in" value="0" placeholder="بالفاتورة.."><input type="text" id="sO" class="s-in" placeholder="بالطلب (ERX).."><button class="d-btn b-green" id="btn_main">فتح المطابق (0)</button>';
+        d.getElementById('ali_main_body').innerHTML='<div class="s-group"><input type="text" id="sI" class="s-in" value="0" placeholder="رقم الفاتورة.."></div><div class="s-group"><input type="text" id="sO" class="s-in" placeholder="رقم الطلب (ERX).."></div><button class="d-btn b-green" id="btn_main">⚡ فتح المطابق (0)</button><button id="btn_ref" style="background:none;border:none;color:#94a3b8;font-size:11px;margin-top:10px;cursor:pointer;width:100%;font-weight:700">🔄 تحديث الصفحة</button>';
         var sI=d.getElementById('sI'),sO=d.getElementById('sO'),bM=d.getElementById('btn_main');
         var filter=function(){
             if(!sI.value.startsWith('0'))sI.value='0'+sI.value.replace(/^0+/,'');
@@ -52,13 +52,14 @@
                 if(mI||mO||(v1==="0"&&v2==="")){mT.appendChild(o.node);count++}
             });
             upC(count);
-            bM.innerText="فتح المطابق ("+count+")"
+            bM.innerText="⚡ فتح المطابق ("+count+")"
         };
         sI.oninput=sO.oninput=filter;
+        d.getElementById('btn_ref').onclick=function(){location.reload()};
         bM.onclick=function(){
             var v1=sI.value.trim(),v2=sO.value.trim();
             var list=savedRows.filter(function(o){return (v1!=="0"&&o.id.indexOf(v1)!==-1)||(v2!==""&&o.onl.indexOf(v2)!==-1)});
-            if(!list.length)return alert("لا توجد نتائج!");
+            if(!list.length)return;
             bM.disabled=true;
             list.forEach(function(o,i){
                 setTimeout(function(){
