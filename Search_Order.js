@@ -25,6 +25,8 @@ javascript:(function(){
   // └─────────────────────────────────────────────────────────────────┘
 
   const PANEL_ID = 'ali_sys_v4';
+  const VERSION = '4.1';
+  const VER_KEY = 'ezpill_ver';
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
     return;
@@ -70,6 +72,9 @@ javascript:(function(){
       setTimeout(function() { toast.remove(); }, 300);
     }, 3500);
   }
+
+  // ─── Update Check ───
+  try{var lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(function(){showToast('تم تلقي تحديث جديد 🎉 → v'+VERSION,'success')},1000);}}catch(e){}
 
   // ═══════════════════════════════════════════
   //  Dialog System
