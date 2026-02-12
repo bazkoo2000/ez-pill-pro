@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '1.6';
+  var VERSION = '1.7';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -65,7 +65,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v1.6</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v1.7</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -99,21 +99,14 @@ javascript:(function(){
   // ─── Helpers ───
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
-  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="animation:feyBlink 1s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
+  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
   function addLog(t,type){var l=document.getElementById('fey_log');if(!l)return;var co={ok:'#34d399',err:'#f87171',info:'#94a3b8',warn:'#fbbf24',debug:'#818cf8'};var d=document.createElement('div');d.innerHTML='<span style="color:'+(co[type]||co.info)+'">'+t+'</span>';l.appendChild(d);l.parentElement.scrollTop=l.parentElement.scrollHeight;}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
   // ═══════════════════════════════════════════════════════════════
-  //  Ant Design rc-select — Paste + Enter
+  //  Injection — نفس طريقة v1.4 بالظبط
   // ═══════════════════════════════════════════════════════════════
-  //
-  //  الطريقة الجديدة:
-  //  1. المستخدم يلمس خانة Reference Number يدوي
-  //  2. الكود يكتشف الـ focus ويبدأ فوراً
-  //  3. لكل طلب: نلصق الرقم في الـ input + نضغط Enter
-  //  4. بعد Enter الـ Select بيقفل — نفتحه تاني بـ click
-  //
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
@@ -134,36 +127,79 @@ javascript:(function(){
     return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length;
   }
 
-  // لصق + Enter لطلب واحد
-  async function pasteAndEnter(orderNum) {
+  async function waitForOpen(input, timeout) {
+    var start = Date.now();
+    while (Date.now() - start < timeout) {
+      if (input.getAttribute('aria-expanded') === 'true') return true;
+      await wait(50);
+    }
+    return false;
+  }
+
+  async function forceOpenSelect() {
+    var input = getInput();
+    var selector = getSelector();
+    if (!input || !selector) return false;
+
+    selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
+    selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
+    selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
+    await wait(100);
+
+    input.focus();
+    await wait(100);
+
+    if (input.getAttribute('aria-expanded') !== 'true') {
+      var overflow = document.querySelector('.ant-select-selection-overflow');
+      if (overflow) {
+        overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+        overflow.click();
+        await wait(100);
+        input.focus();
+      }
+    }
+
+    if (input.getAttribute('aria-expanded') !== 'true') {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
+      await wait(100);
+    }
+
+    var isOpen = await waitForOpen(input, 800);
+    return isOpen;
+  }
+
+  async function injectOne(orderNum) {
     var input = getInput();
     if (!input) return false;
 
     var tagsBefore = countTags();
 
-    // التأكد إن الـ input في focus
-    input.focus();
-    await wait(50);
+    // فتح الـ Select
+    var opened = await forceOpenSelect();
+    addLog('  📂 open=' + (opened?'yes':'no') + ' aria=' + input.getAttribute('aria-expanded'), 'debug');
 
-    // مسح أي نص قديم
+    // مسح
     nativeSetter.call(input, '');
-    input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'deleteContentBackward' }));
-    await wait(50);
+    input.dispatchEvent(new Event('input', { bubbles:true }));
+    await wait(80);
 
-    // لصق النص عبر Clipboard API
-    nativeSetter.call(input, orderNum);
-    input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertFromPaste', data:orderNum }));
-    input.dispatchEvent(new Event('change', { bubbles:true }));
-    await wait(150);
+    // كتابة بـ execCommand
+    input.focus();
+    document.execCommand('selectAll', false);
+    document.execCommand('delete', false);
+    document.execCommand('insertText', false, orderNum);
+    await wait(100);
 
-    // لو ما اشتغلش — نجرب React onChange مباشرة
-    if (!input.value || input.value !== orderNum) {
-      var rp = Object.keys(input).find(function(k){return k.startsWith('__reactProps$')});
-      if (rp && input[rp] && typeof input[rp].onChange === 'function') {
-        input[rp].onChange({ target: { value: orderNum } });
-        await wait(100);
-      }
+    // fallback
+    if (input.value !== orderNum) {
+      nativeSetter.call(input, orderNum);
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      input.dispatchEvent(new Event('change', { bubbles:true }));
+      input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum }));
     }
+    await wait(200);
+
+    addLog('  ✏️ val="' + input.value + '"', 'debug');
 
     // Enter
     var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
@@ -172,70 +208,39 @@ javascript:(function(){
     input.dispatchEvent(new KeyboardEvent('keypress', enterOpts));
     await wait(50);
     input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
-    await wait(300);
+    await wait(400);
 
     var tagsAfter = countTags();
 
-    // لو ما اتضافش — نجرب نفتح الـ Select تاني + Enter
+    // retry Enter
     if (tagsAfter <= tagsBefore) {
-      var selector = getSelector();
-      if (selector) {
-        selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-        selector.click();
-        await wait(200);
-        input.focus();
-        await wait(100);
-        nativeSetter.call(input, orderNum);
-        input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertFromPaste', data:orderNum }));
-        await wait(150);
-        input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
-        await wait(100);
-        input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
-        await wait(300);
-        tagsAfter = countTags();
-      }
+      input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
+      await wait(100);
+      input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
+      await wait(400);
+      tagsAfter = countTags();
     }
 
+    addLog('  🏷️ tags: ' + tagsBefore + '→' + tagsAfter, 'debug');
     return tagsAfter > tagsBefore;
   }
 
-  // إعادة فتح الـ Select بعد كل Enter
-  async function reopenSelect() {
-    var selector = getSelector();
-    var input = getInput();
-    if (!selector || !input) return;
-
-    selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
-    selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
-    selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
-    await wait(150);
-    input.focus();
-    await wait(100);
-  }
-
-  // انتظار لمس الخانة من المستخدم
-  function waitForFieldTouch() {
+  // ─── العد التنازلي ───
+  function countdown(seconds) {
     return new Promise(function(resolve) {
-      var input = getInput();
-      if (!input) { resolve(false); return; }
+      var remaining = seconds;
+      setSt('👆 المس خانة Reference Number الآن! (' + remaining + ')', 'waiting');
+      showToast('المس الخانة خلال ' + seconds + ' ثواني!', 'warning');
 
-      // لو الخانة في focus بالفعل
-      if (document.activeElement === input) {
-        resolve(true);
-        return;
-      }
-
-      function onFocus() {
-        input.removeEventListener('focus', onFocus);
-        resolve(true);
-      }
-      input.addEventListener('focus', onFocus);
-
-      // Timeout 30 ثانية
-      setTimeout(function() {
-        input.removeEventListener('focus', onFocus);
-        resolve(false);
-      }, 30000);
+      var timer = setInterval(function() {
+        remaining--;
+        if (remaining > 0) {
+          setSt('👆 المس خانة Reference Number الآن! (' + remaining + ')', 'waiting');
+        } else {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 1000);
     });
   }
 
@@ -273,7 +278,7 @@ javascript:(function(){
     }
 
     var res = await showDialog({icon:'📤',iconColor:'purple',title:'رفع الطلبات',
-      desc:'بعد الضغط على "بدء" — المس خانة Reference Number وسيبدأ الرفع تلقائياً',
+      desc:'بعد الضغط على "بدء" سيظهر عد تنازلي 5 ثواني\n👆 المس خانة Reference Number خلالهم ثم سيبدأ الرفع تلقائياً',
       info:[
         {label:'الطلبات',value:state.orders.length+' طلب',color:'#8b5cf6'},
         {label:'Tags حالياً',value:countTags()+' tag',color:'#10b981'},
@@ -285,26 +290,16 @@ javascript:(function(){
       ]});
     if(res!=='confirm')return;
 
-    // ═══ انتظار لمس الخانة ═══
-    setSt('👆 المس خانة Reference Number الآن...','waiting');
-    startBtn.innerHTML = '⏳ في انتظار لمس الخانة...';
+    // ═══ عد تنازلي 5 ثواني ═══
+    startBtn.innerHTML = '👆 المس الخانة...';
     startBtn.disabled = true;
     startBtn.style.opacity = '0.8';
-    showToast('المس خانة Reference Number!', 'warning');
 
-    var touched = await waitForFieldTouch();
+    await countdown(5);
 
-    if (!touched) {
-      setSt('انتهت المهلة — لم يتم لمس الخانة','error');
-      startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
-      startBtn.innerHTML = '📤 رفع الطلبات (' + state.orders.length + ' طلب)';
-      showToast('انتهت المهلة! جرب تاني', 'error');
-      return;
-    }
-
-    // ═══ بدأ! الخانة اتلمست ═══
-    showToast('تم! جاري الرفع...', 'success');
-    await wait(500); // مهلة صغيرة بعد اللمس
+    // ═══ بدء الرفع ═══
+    setSt('🚀 جاري الرفع...', 'working');
+    showToast('جاري الرفع!', 'success');
 
     state.isRunning = true;
     state.injectedCount = 0;
@@ -329,20 +324,19 @@ javascript:(function(){
 
       addLog('[' + (i+1) + '] ' + order, 'info');
 
-      var ok = await pasteAndEnter(order);
+      var ok = await injectOne(order);
 
       if (ok) {
         state.injectedCount++;
-        addLog('  ✅ OK (tags: ' + countTags() + ')', 'ok');
+        addLog('  ✅ OK', 'ok');
       } else {
-        // retry مع إعادة فتح
+        // retry
         addLog('  🔄 retry...', 'warn');
-        await reopenSelect();
-        await wait(300);
-        ok = await pasteAndEnter(order);
+        await wait(500);
+        ok = await injectOne(order);
         if (ok) {
           state.injectedCount++;
-          addLog('  ✅ OK retry (tags: ' + countTags() + ')', 'ok');
+          addLog('  ✅ OK (retry)', 'ok');
         } else {
           state.failedCount++;
           addLog('  ❌ FAILED', 'err');
@@ -350,11 +344,7 @@ javascript:(function(){
       }
       upStats();
 
-      // إعادة فتح الـ Select للطلب التالي
-      if (i < state.orders.length - 1) {
-        await reopenSelect();
-        await wait(state.delayMs - 250);
-      }
+      if (i < state.orders.length - 1) await wait(state.delayMs);
     }
 
     // ═══ انتهى ═══
