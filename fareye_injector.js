@@ -2,12 +2,8 @@ javascript:(function(){
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════════
-  // FAREYE Order Injector v1.0
+  // FAREYE Order Injector v1.1
   // المطور: علي الباز
-  // ═══════════════════════════════════════════════════════════════════
-  //
-  // الوظيفة: قراءة ملفات أرقام الطلبات (ERX) المُصدَّرة من منهي
-  //           الطلبات وحقنها في خانة Reference Number على FarEye
   // ═══════════════════════════════════════════════════════════════════
 
   var PANEL_ID = 'fareye_injector';
@@ -21,7 +17,6 @@ javascript:(function(){
     injectedCount: 0,
     failedCount: 0,
     isRunning: false,
-    isPaused: false,
     currentIndex: 0,
     delayMs: 800
   };
@@ -45,8 +40,7 @@ javascript:(function(){
     t.innerHTML = '<span>' + icons[type] + '</span> ' + msg;
     box.appendChild(t);
     setTimeout(function() {
-      t.style.transition = 'all 0.3s';
-      t.style.opacity = '0';
+      t.style.transition = 'all 0.3s'; t.style.opacity = '0';
       setTimeout(function() { t.remove(); }, 300);
     }, 3500);
   }
@@ -58,13 +52,7 @@ javascript:(function(){
     return new Promise(function(resolve) {
       var ov = document.createElement('div');
       ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:feyFadeIn 0.25s';
-      var iconBg = {
-        blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',
-        green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',
-        amber:'linear-gradient(135deg,#fef3c7,#fde68a)',
-        red:'linear-gradient(135deg,#fee2e2,#fecaca)',
-        purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)'
-      };
+      var iconBg = { blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)', green:'linear-gradient(135deg,#dcfce7,#bbf7d0)', amber:'linear-gradient(135deg,#fef3c7,#fde68a)', red:'linear-gradient(135deg,#fee2e2,#fecaca)', purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)' };
       var infoHTML = '';
       if (opts.info) {
         for (var i = 0; i < opts.info.length; i++) {
@@ -108,7 +96,6 @@ javascript:(function(){
     '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}' +
     '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}' +
     '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}' +
-    '@keyframes feyProgressGlow{0%,100%{box-shadow:0 0 8px rgba(124,58,237,0.3)}50%{box-shadow:0 0 20px rgba(124,58,237,0.6)}}' +
     '#' + PANEL_ID + '{position:fixed;top:3%;left:2%;width:380px;max-height:92vh;background:#ffffff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}' +
     '#' + PANEL_ID + '.fey-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}' +
     '#' + PANEL_ID + '.fey-minimized .fey-inner{display:none!important}' +
@@ -122,7 +109,6 @@ javascript:(function(){
   panel.id = PANEL_ID;
   panel.innerHTML =
     '<div class="fey-inner">' +
-      // Header
       '<div style="background:linear-gradient(135deg,#4c1d95,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden">' +
         '<div style="position:absolute;top:-50%;left:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">' +
@@ -133,86 +119,40 @@ javascript:(function(){
           '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">FAREYE</h3>' +
         '</div>' +
         '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.0</span>' +
+          '<span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.1</span>' +
         '</div>' +
       '</div>' +
-
-      // Body
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">' +
-
         // Stats
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">' +
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden">' +
-            '<div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div>' +
-            '<div style="font-size:18px;margin-bottom:4px">📋</div>' +
-            '<div id="fey_stat_total" style="font-size:22px;font-weight:900;color:#8b5cf6;line-height:1;margin-bottom:2px">0</div>' +
-            '<div style="font-size:10px;color:#94a3b8;font-weight:700">إجمالي</div>' +
-          '</div>' +
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden">' +
-            '<div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div>' +
-            '<div style="font-size:18px;margin-bottom:4px">✅</div>' +
-            '<div id="fey_stat_done" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div>' +
-            '<div style="font-size:10px;color:#94a3b8;font-weight:700">تم حقنه</div>' +
-          '</div>' +
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden">' +
-            '<div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div>' +
-            '<div style="font-size:18px;margin-bottom:4px">❌</div>' +
-            '<div id="fey_stat_fail" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div>' +
-            '<div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div>' +
-          '</div>' +
+          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div><div style="font-size:18px;margin-bottom:4px">📋</div><div id="fey_stat_total" style="font-size:22px;font-weight:900;color:#8b5cf6;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">إجمالي</div></div>' +
+          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_stat_done" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>' +
+          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_stat_fail" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>' +
         '</div>' +
-
         '<div id="fey_main_body">' +
-          // Upload Area
+          // Upload
           '<div id="fey_upload_area" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">' +
             '<div style="font-size:40px;margin-bottom:8px">📂</div>' +
             '<div style="font-size:15px;font-weight:800;color:#6d28d9;margin-bottom:4px">اضغط لرفع ملف الطلبات</div>' +
             '<div style="font-size:12px;color:#a78bfa;font-weight:600">ملف .txt من منهي الطلبات (أرقام ERX)</div>' +
             '<input type="file" id="fey_file_input" accept=".txt,.csv" multiple style="display:none">' +
           '</div>' +
-
-          // أو إدخال يدوي
           '<div style="text-align:center;color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:12px">— أو أدخل الأرقام يدوياً —</div>' +
-          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات هنا (سطر لكل رقم)...\nERX2847555\nERX2847556\nERX2847557" style="width:100%;height:90px;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;transition:all 0.25s;box-sizing:border-box;line-height:1.6"></textarea>' +
-
+          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات هنا (سطر لكل رقم)...\nERX2847555\nERX2847556" style="width:100%;height:80px;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;transition:all 0.25s;box-sizing:border-box;line-height:1.6"></textarea>' +
           // Status
-          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">' +
-            '<span>✅</span><span>جاهز — ارفع ملف أو أدخل الأرقام</span>' +
-          '</div>' +
-
-          // Speed Control
+          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز — ارفع ملف أو أدخل الأرقام</span></div>' +
+          // Speed
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">' +
             '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير بين كل طلب:</span>' +
-            '<div style="display:flex;align-items:center;gap:6px">' +
-              '<input type="range" id="fey_speed" min="300" max="2000" value="800" step="100" style="width:80px;accent-color:#8b5cf6">' +
-              '<span id="fey_speed_label" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">0.8s</span>' +
-            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="400" max="3000" value="1000" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_label" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.0s</span></div>' +
           '</div>' +
-
-          // Start Button
-          '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5;cursor:not-allowed" disabled>' +
-            '💉 بدء الحقن (ارفع ملف أولاً)' +
-          '</button>' +
+          // Start
+          '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>' +
         '</div>' +
-
-        // Progress Bar (hidden initially)
-        '<div id="fey_progress_wrap" style="display:none;margin-bottom:12px">' +
-          '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
-            '<span style="font-size:12px;font-weight:700;color:#475569">التقدم</span>' +
-            '<span id="fey_progress_text" style="font-size:12px;font-weight:800;color:#8b5cf6">0 / 0</span>' +
-          '</div>' +
-          '<div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
-            '<div id="fey_progress_fill" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s cubic-bezier(0.16,1,0.3,1)"></div>' +
-          '</div>' +
-        '</div>' +
-
-        // Live Log (hidden initially)
-        '<div id="fey_log_wrap" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:150px;overflow-y:auto">' +
-          '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;font-family:Segoe UI,sans-serif;direction:rtl">📝 سجل العمليات:</div>' +
-          '<div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div>' +
-        '</div>' +
-
-        // Footer
+        // Progress
+        '<div id="fey_progress_wrap" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_progress_text" style="font-size:12px;font-weight:800;color:#8b5cf6">0 / 0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_progress_fill" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>' +
+        // Log
+        '<div id="fey_log_wrap" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:150px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل العمليات:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>' +
         '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>' +
       '</div>' +
     '</div>';
@@ -245,14 +185,13 @@ javascript:(function(){
       working: { bg:'#f5f3ff', color:'#6d28d9', border:'#ddd6fe', icon:'spinner' },
       error:   { bg:'#fef2f2', color:'#dc2626', border:'#fecaca', icon:'❌' },
       done:    { bg:'#f0fdf4', color:'#15803d', border:'#bbf7d0', icon:'🎉' },
-      paused:  { bg:'#fefce8', color:'#a16207', border:'#fef08a', icon:'⏸️' },
       loaded:  { bg:'#f5f3ff', color:'#6d28d9', border:'#ddd6fe', icon:'📋' }
     };
     var c = configs[type] || configs.ready;
     var iconHTML = c.icon === 'spinner'
       ? '<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>'
       : '<span>' + c.icon + '</span>';
-    el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.border + ';transition:all 0.3s';
+    el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.border;
     el.innerHTML = iconHTML + '<span>' + text + '</span>';
   }
 
@@ -267,105 +206,173 @@ javascript:(function(){
   }
 
   function parseOrders(text) {
-    return text.split(/[\n\r]+/)
-      .map(function(line) { return line.trim(); })
-      .filter(function(line) { return line.length > 0; });
+    return text.split(/[\n\r]+/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+  }
+
+  function wait(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
   }
 
   // ═══════════════════════════════════════════
-  //  Header Events
+  //  Ant Design Select — الحقن الصحيح
+  // ═══════════════════════════════════════════
+  //
+  // Ant Design Select (mode=tags/multiple) يشتغل بـ React:
+  //   1. لازم نفتح الـ select أول (click على الـ container)
+  //   2. نكتب في الـ input بطريقة React (nativeInputValueSetter)
+  //   3. ننتظر الـ dropdown يظهر
+  //   4. نضغط Enter عشان يضيف الـ tag
+  //   5. ننتظر الـ tag يتضاف
+  //
+
+  function findSelectContainer() {
+    // البحث عن الـ ant-select container الأب
+    var input = document.getElementById('rc_select_1');
+    if (!input) input = document.querySelector('.ant-select-selection-search-input[role="combobox"]');
+    if (!input) input = document.querySelector('.ant-select-selection-search-input');
+    if (!input) return null;
+
+    // الوصول للـ container الكبير
+    var container = input.closest('.ant-select') || input.closest('.ant-select-selector') || input.parentElement.parentElement.parentElement;
+    return { input: input, container: container };
+  }
+
+  // طريقة React لتغيير قيمة الـ input
+  var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+
+  function reactSetValue(input, value) {
+    nativeInputValueSetter.call(input, value);
+    // React يسمع على 'input' event في bubble phase
+    input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+  }
+
+  function fireKeyDown(element, key, keyCode) {
+    element.dispatchEvent(new KeyboardEvent('keydown', {
+      key: key, code: key === 'Enter' ? 'Enter' : 'Key' + key.toUpperCase(),
+      keyCode: keyCode, which: keyCode,
+      bubbles: true, cancelable: true
+    }));
+  }
+
+  function fireKeyUp(element, key, keyCode) {
+    element.dispatchEvent(new KeyboardEvent('keyup', {
+      key: key, code: key === 'Enter' ? 'Enter' : 'Key' + key.toUpperCase(),
+      keyCode: keyCode, which: keyCode,
+      bubbles: true, cancelable: true
+    }));
+  }
+
+  // محاكاة كتابة حرف حرف (أقرب للمستخدم الحقيقي)
+  async function typeIntoInput(input, text) {
+    // مسح أي قيمة قديمة
+    reactSetValue(input, '');
+    await wait(50);
+
+    // كتابة النص كله مرة واحدة بطريقة React
+    reactSetValue(input, text);
+    await wait(100);
+
+    // Trigger change
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await wait(100);
+  }
+
+  async function injectSingleOrder(orderNum) {
+    var elements = findSelectContainer();
+    if (!elements) return false;
+
+    var input = elements.input;
+    var container = elements.container;
+
+    try {
+      // Step 1: فتح الـ Select (click على الـ selector)
+      var selector = container.querySelector('.ant-select-selector') || container;
+      selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      await wait(100);
+      selector.click();
+      await wait(100);
+
+      // Step 2: Focus على الـ input
+      input.focus();
+      await wait(100);
+
+      // Step 3: كتابة الرقم بطريقة React
+      await typeIntoInput(input, orderNum);
+      await wait(200);
+
+      // Step 4: Enter — لإضافة الـ tag
+      fireKeyDown(input, 'Enter', 13);
+      await wait(50);
+      input.dispatchEvent(new KeyboardEvent('keypress', {
+        key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+        bubbles: true, cancelable: true
+      }));
+      await wait(50);
+      fireKeyUp(input, 'Enter', 13);
+      await wait(200);
+
+      // Step 5: مسح الـ input للطلب التالي
+      reactSetValue(input, '');
+      await wait(100);
+
+      // التحقق: هل اتضاف tag جديد؟
+      // (الـ tags بتكون في ant-select-selection-overflow-item)
+      return true;
+
+    } catch (e) {
+      console.error('FAREYE inject error:', e);
+      return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  //  Events
   // ═══════════════════════════════════════════
   panel.addEventListener('click', function(e) {
-    if (panel.classList.contains('fey-minimized')) {
-      panel.classList.remove('fey-minimized');
-      e.stopPropagation();
-    }
+    if (panel.classList.contains('fey-minimized')) { panel.classList.remove('fey-minimized'); e.stopPropagation(); }
   });
   document.getElementById('fey_close').addEventListener('click', function(e) {
-    e.stopPropagation();
-    panel.style.animation = 'feySlideIn 0.3s reverse';
+    e.stopPropagation(); panel.style.animation = 'feySlideIn 0.3s reverse';
     setTimeout(function() { panel.remove(); }, 280);
   });
   document.getElementById('fey_min').addEventListener('click', function(e) {
-    e.stopPropagation();
-    panel.classList.add('fey-minimized');
+    e.stopPropagation(); panel.classList.add('fey-minimized');
   });
 
-  // ═══════════════════════════════════════════
-  //  File Upload
-  // ═══════════════════════════════════════════
+  // File Upload
   var uploadArea = document.getElementById('fey_upload_area');
   var fileInput = document.getElementById('fey_file_input');
   var startBtn = document.getElementById('fey_start');
   var manualInput = document.getElementById('fey_manual');
 
   uploadArea.addEventListener('click', function() { fileInput.click(); });
-
-  // Drag & Drop
-  uploadArea.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    this.style.borderColor = '#8b5cf6';
-    this.style.background = '#ede9fe';
-  });
-  uploadArea.addEventListener('dragleave', function() {
-    this.style.borderColor = '#d8b4fe';
-    this.style.background = '#faf5ff';
-  });
-  uploadArea.addEventListener('drop', function(e) {
-    e.preventDefault();
-    this.style.borderColor = '#d8b4fe';
-    this.style.background = '#faf5ff';
-    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
-  });
-
-  fileInput.addEventListener('change', function() {
-    if (this.files.length) handleFiles(this.files);
-  });
+  uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); this.style.borderColor = '#8b5cf6'; this.style.background = '#ede9fe'; });
+  uploadArea.addEventListener('dragleave', function() { this.style.borderColor = '#d8b4fe'; this.style.background = '#faf5ff'; });
+  uploadArea.addEventListener('drop', function(e) { e.preventDefault(); this.style.borderColor = '#d8b4fe'; this.style.background = '#faf5ff'; if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+  fileInput.addEventListener('change', function() { if (this.files.length) handleFiles(this.files); });
 
   function handleFiles(files) {
     var allOrders = [];
     var filesLoaded = 0;
     var totalFiles = files.length;
-
     for (var i = 0; i < files.length; i++) {
       (function(file) {
         var reader = new FileReader();
         reader.onload = function(e) {
-          var orders = parseOrders(e.target.result);
-          allOrders = allOrders.concat(orders);
+          allOrders = allOrders.concat(parseOrders(e.target.result));
           filesLoaded++;
-
           if (filesLoaded === totalFiles) {
-            // إزالة التكرارات
-            var unique = [];
-            var seen = {};
+            var unique = []; var seen = {};
             for (var j = 0; j < allOrders.length; j++) {
-              if (!seen[allOrders[j]]) {
-                seen[allOrders[j]] = true;
-                unique.push(allOrders[j]);
-              }
+              if (!seen[allOrders[j]]) { seen[allOrders[j]] = true; unique.push(allOrders[j]); }
             }
-
-            state.orders = unique;
-            state.injectedCount = 0;
-            state.failedCount = 0;
-            state.currentIndex = 0;
+            state.orders = unique; state.injectedCount = 0; state.failedCount = 0; state.currentIndex = 0;
             updateStats();
-
             var dupes = allOrders.length - unique.length;
-
-            // تحديث الـ UI
-            uploadArea.innerHTML =
-              '<div style="font-size:30px;margin-bottom:6px">✅</div>' +
-              '<div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل ' + totalFiles + (totalFiles === 1 ? ' ملف' : ' ملفات') + '</div>' +
-              '<div style="font-size:13px;color:#10b981;font-weight:600">' + unique.length + ' طلب' + (dupes > 0 ? ' (تم حذف ' + dupes + ' مكرر)' : '') + '</div>' +
-              '<div style="font-size:11px;color:#94a3b8;margin-top:6px;font-weight:500">اضغط لتحميل ملفات إضافية</div>';
-            uploadArea.style.borderColor = '#34d399';
-            uploadArea.style.background = '#f0fdf4';
-
-            setStatus('تم تحميل ' + unique.length + ' طلب — جاهز للحقن', 'loaded');
-            showToast('تم تحميل ' + unique.length + ' طلب من ' + totalFiles + ' ملف', 'success');
-
+            uploadArea.innerHTML = '<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل ' + totalFiles + (totalFiles === 1 ? ' ملف' : ' ملفات') + '</div><div style="font-size:13px;color:#10b981;font-weight:600">' + unique.length + ' طلب' + (dupes > 0 ? ' (تم حذف ' + dupes + ' مكرر)' : '') + '</div><div style="font-size:11px;color:#94a3b8;margin-top:6px">اضغط لتحميل ملفات إضافية</div>';
+            uploadArea.style.borderColor = '#34d399'; uploadArea.style.background = '#f0fdf4';
+            setStatus('تم تحميل ' + unique.length + ' طلب — جاهز للرفع', 'loaded');
+            showToast('تم تحميل ' + unique.length + ' طلب', 'success');
             enableStart();
           }
         };
@@ -374,32 +381,23 @@ javascript:(function(){
     }
   }
 
-  // Manual Input
   manualInput.addEventListener('input', function() {
     var orders = parseOrders(this.value);
     if (orders.length > 0) {
-      state.orders = orders;
-      state.injectedCount = 0;
-      state.failedCount = 0;
-      state.currentIndex = 0;
-      updateStats();
-      enableStart();
+      state.orders = orders; state.injectedCount = 0; state.failedCount = 0; state.currentIndex = 0;
+      updateStats(); enableStart();
     } else {
-      startBtn.disabled = true;
-      startBtn.style.opacity = '0.5';
-      startBtn.style.cursor = 'not-allowed';
-      startBtn.innerHTML = '💉 بدء الحقن (ارفع ملف أولاً)';
+      startBtn.disabled = true; startBtn.style.opacity = '0.5'; startBtn.style.cursor = 'not-allowed';
+      startBtn.innerHTML = '📤 رفع الطلبات (ارفع ملف أولاً)';
     }
   });
 
   function enableStart() {
-    startBtn.disabled = false;
-    startBtn.style.opacity = '1';
-    startBtn.style.cursor = 'pointer';
-    startBtn.innerHTML = '💉 بدء الحقن (' + state.orders.length + ' طلب)';
+    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
+    startBtn.innerHTML = '📤 رفع الطلبات (' + state.orders.length + ' طلب)';
   }
 
-  // Speed Control
+  // Speed
   var speedSlider = document.getElementById('fey_speed');
   var speedLabel = document.getElementById('fey_speed_label');
   speedSlider.addEventListener('input', function() {
@@ -408,192 +406,111 @@ javascript:(function(){
   });
 
   // ═══════════════════════════════════════════
-  //  Ant Design Input Injection
-  // ═══════════════════════════════════════════
-  function findTargetInput() {
-    // البحث عن الـ input بتاع Ant Select
-    var input = document.getElementById('rc_select_1');
-    if (input) return input;
-
-    // Fallback: البحث بالـ class
-    input = document.querySelector('.ant-select-selection-search-input');
-    if (input) return input;
-
-    // Fallback: البحث بـ role
-    input = document.querySelector('input[role="combobox"]');
-    return input;
-  }
-
-  function setNativeValue(element, value) {
-    var valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-    valueSetter.call(element, value);
-    element.dispatchEvent(new Event('input', { bubbles: true }));
-    element.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
-  function simulateKeyEvent(element, eventType, keyCode, key) {
-    var event = new KeyboardEvent(eventType, {
-      key: key || 'Enter',
-      code: 'Enter',
-      keyCode: keyCode || 13,
-      which: keyCode || 13,
-      bubbles: true,
-      cancelable: true
-    });
-    element.dispatchEvent(event);
-  }
-
-  function injectSingleOrder(orderNum) {
-    return new Promise(function(resolve) {
-      var input = findTargetInput();
-      if (!input) {
-        resolve(false);
-        return;
-      }
-
-      // Focus
-      input.focus();
-      input.click();
-
-      setTimeout(function() {
-        // Set value
-        setNativeValue(input, orderNum);
-
-        setTimeout(function() {
-          // Press Enter
-          simulateKeyEvent(input, 'keydown', 13, 'Enter');
-          simulateKeyEvent(input, 'keypress', 13, 'Enter');
-          simulateKeyEvent(input, 'keyup', 13, 'Enter');
-
-          setTimeout(function() {
-            // Clear for next
-            setNativeValue(input, '');
-            resolve(true);
-          }, 150);
-        }, 200);
-      }, 150);
-    });
-  }
-
-  // ═══════════════════════════════════════════
-  //  Start Injection
+  //  Start
   // ═══════════════════════════════════════════
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
 
-    // التحقق من وجود الـ input
-    var targetInput = findTargetInput();
-    if (!targetInput) {
+    var elements = findSelectContainer();
+    if (!elements) {
       await showDialog({
-        icon: '❌',
-        iconColor: 'red',
+        icon: '❌', iconColor: 'red',
         title: 'لم يتم العثور على الحقل',
-        desc: 'تعذر العثور على خانة Reference Number — تأكد من أنك في الصفحة الصحيحة',
+        desc: 'تعذر العثور على خانة Reference Number — تأكد إنك في الصفحة الصحيحة وإن الخانة ظاهرة',
         info: [
-          { label: 'الحقل المطلوب', value: 'ant-select (rc_select_1)', color: '#ef4444' },
-          { label: 'الحل', value: 'افتح صفحة FarEye أولاً', color: '#3b82f6' }
+          { label: 'الحقل المطلوب', value: 'Reference Number (Ant Select)', color: '#ef4444' },
+          { label: 'الحل', value: 'افتح صفحة FarEye واضغط على الخانة أولاً', color: '#3b82f6' }
         ],
-        buttons: [
-          { text: '👍 حسناً', value: 'ok', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white' }
-        ]
+        buttons: [{ text: '👍 حسناً', value: 'ok', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white' }]
       });
       return;
     }
 
-    // دايلوج تأكيد
+    // تأكيد
     var result = await showDialog({
-      icon: '💉',
-      iconColor: 'purple',
-      title: 'بدء حقن الطلبات',
-      desc: 'سيتم إدخال أرقام الطلبات في خانة Reference Number',
+      icon: '📤', iconColor: 'purple',
+      title: 'رفع الطلبات',
+      desc: 'سيتم إدخال أرقام الطلبات في خانة Reference Number واحد واحد مع Enter بعد كل رقم',
       info: [
         { label: 'عدد الطلبات', value: state.orders.length + ' طلب', color: '#8b5cf6' },
         { label: 'التأخير', value: (state.delayMs / 1000).toFixed(1) + ' ثانية/طلب', color: '#f59e0b' },
         { label: 'الوقت المتوقع', value: '~' + Math.ceil(state.orders.length * state.delayMs / 1000) + ' ثانية', color: '#3b82f6' },
-        { label: 'الحقل المستهدف', value: 'Reference Number ✅', color: '#10b981' }
+        { label: 'الحقل', value: 'Reference Number ✅', color: '#10b981' }
       ],
       buttons: [
         { text: 'إلغاء', value: 'cancel' },
-        { text: '💉 بدء الحقن', value: 'confirm', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 12px rgba(124,58,237,0.3)' }
+        { text: '📤 بدء الرفع', value: 'confirm', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 12px rgba(124,58,237,0.3)' }
       ]
     });
-
     if (result !== 'confirm') return;
 
-    // بدء الحقن
-    state.isRunning = true;
-    state.injectedCount = 0;
-    state.failedCount = 0;
-    state.currentIndex = 0;
-
-    // إظهار Progress + Log
+    // بدء
+    state.isRunning = true; state.injectedCount = 0; state.failedCount = 0;
     document.getElementById('fey_progress_wrap').style.display = 'block';
     document.getElementById('fey_log_wrap').style.display = 'block';
     document.getElementById('fey_log').innerHTML = '';
-
-    startBtn.disabled = true;
-    startBtn.style.opacity = '0.6';
-    startBtn.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:feySpin 0.8s linear infinite"></div> جاري الحقن...';
+    startBtn.disabled = true; startBtn.style.opacity = '0.6'; startBtn.style.cursor = 'not-allowed';
 
     var progressFill = document.getElementById('fey_progress_fill');
     var progressText = document.getElementById('fey_progress_text');
 
-    for (var i = 0; i < state.orders.length; i++) {
-      state.currentIndex = i;
-      var order = state.orders[i];
+    // عمل click أولي على الـ Select عشان يتفتح
+    addLog('🔓 فتح خانة Reference Number...', 'info');
+    var firstElements = findSelectContainer();
+    if (firstElements) {
+      var sel = firstElements.container.querySelector('.ant-select-selector') || firstElements.container;
+      sel.click();
+      firstElements.input.focus();
+      await wait(300);
+      addLog('✅ تم فتح الخانة', 'ok');
+    }
 
-      setStatus('حقن ' + (i + 1) + ' من ' + state.orders.length + ': ' + order, 'working');
+    for (var i = 0; i < state.orders.length; i++) {
+      var order = state.orders[i];
+      setStatus('رفع ' + (i + 1) + ' من ' + state.orders.length + ': ' + order, 'working');
       progressFill.style.width = (((i + 1) / state.orders.length) * 100) + '%';
       progressText.innerText = (i + 1) + ' / ' + state.orders.length;
+      startBtn.innerHTML = '📤 جاري الرفع (' + (i + 1) + '/' + state.orders.length + ')';
 
       var success = await injectSingleOrder(order);
 
       if (success) {
         state.injectedCount++;
-        addLog('✅ ' + order + ' — تم', 'ok');
+        addLog('✅ ' + order, 'ok');
       } else {
         state.failedCount++;
         addLog('❌ ' + order + ' — فشل', 'err');
       }
-
       updateStats();
-      startBtn.innerHTML = '💉 جاري الحقن (' + (i + 1) + '/' + state.orders.length + ')';
 
       if (i < state.orders.length - 1) {
-        await new Promise(function(resolve) { setTimeout(resolve, state.delayMs); });
+        await wait(state.delayMs);
       }
     }
 
     // انتهاء
     state.isRunning = false;
     progressFill.style.width = '100%';
-
-    startBtn.disabled = false;
-    startBtn.style.opacity = '1';
-    startBtn.style.cursor = 'pointer';
-    startBtn.innerHTML = '🔄 إعادة الحقن (' + state.orders.length + ' طلب)';
+    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
+    startBtn.innerHTML = '🔄 إعادة الرفع (' + state.orders.length + ' طلب)';
 
     addLog('', 'info');
     addLog('═══ انتهى: ' + state.injectedCount + ' نجاح / ' + state.failedCount + ' فشل ═══', state.failedCount > 0 ? 'warn' : 'ok');
 
-    // دايلوج الإنجاز
     await showDialog({
-      icon: '🎉',
-      iconColor: 'green',
-      title: 'تم الحقن!',
+      icon: '🎉', iconColor: 'green',
+      title: 'تم الرفع!',
       desc: 'تمت معالجة جميع الطلبات',
       info: [
-        { label: 'تم حقنها', value: state.injectedCount + ' طلب', color: '#10b981' },
+        { label: 'تم رفعها', value: state.injectedCount + ' طلب', color: '#10b981' },
         { label: 'فشلت', value: state.failedCount + ' طلب', color: state.failedCount > 0 ? '#ef4444' : '#10b981' },
         { label: 'النسبة', value: Math.round((state.injectedCount / state.orders.length) * 100) + '%', color: '#8b5cf6' }
       ],
-      buttons: [
-        { text: '👍 إغلاق', value: 'ok', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white' }
-      ]
+      buttons: [{ text: '👍 إغلاق', value: 'ok', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white' }]
     });
 
-    setStatus('تم الحقن — ' + state.injectedCount + ' نجاح / ' + state.failedCount + ' فشل', 'done');
-    showToast('تم حقن ' + state.injectedCount + ' طلب بنجاح', state.failedCount > 0 ? 'warning' : 'success');
+    setStatus('تم الرفع — ' + state.injectedCount + ' نجاح / ' + state.failedCount + ' فشل', 'done');
+    showToast('تم رفع ' + state.injectedCount + ' طلب', state.failedCount > 0 ? 'warning' : 'success');
   });
 
 })();
