@@ -18,6 +18,15 @@ var CHANGELOG={
       {icon:'🛡️',text:'حماية من استيراد الفاتورة الحالية مرتين'},
       {icon:'🖌️',text:'تنسيق احترافي للصفحة والأزرار والجداول'}
     ]
+  },
+  '2.2':{
+    title:'تحديث مهم 🔧',
+    features:[
+      {icon:'📅',text:'إصلاح دالة إنقاص يوم من End Date'},
+      {icon:'✅',text:'إضافة أحداث change للتسجيل الصحيح'},
+      {icon:'🔔',text:'Toast message للتأكيد على التعديل'},
+      {icon:'⏱️',text:'زيادة وقت الانتظار للمعالجة'}
+    ]
   }
 };
 
@@ -1048,39 +1057,39 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(showPostDialog)showPostProcessDialog();
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
+    
     /* ── JVM: Subtract 1 day from every End Date ── */
-setTimeout(function(){
-  if(edi_main<0) return;
-  var rows=tb_main.querySelectorAll('tr');
-  var updatedCount = 0;
-  
-  for(var i=1;i<rows.length;i++){
-    var tds=rows[i].querySelectorAll('td');
-    if(tds.length<=edi_main) continue;
-    
-    var inp=tds[edi_main].querySelector('input');
-    var val=inp?inp.value:tds[edi_main].textContent.trim();
-    
-    if(!val||!/\d{4}-\d{2}-\d{2}/.test(val)) continue;
-    
-    var newVal=addDays(val,-1);
-    
-    if(inp){
-      inp.value=newVal;
-      // إطلاق الأحداث لتسجيل التغيير
-      inp.dispatchEvent(new Event('input',{bubbles:true}));
-      inp.dispatchEvent(new Event('change',{bubbles:true}));
-      inp.dispatchEvent(new Event('blur',{bubbles:true}));
-      updatedCount++;
-    } else {
-      tds[edi_main].textContent=newVal;
-    }
-  }
-  
-  if(updatedCount>0){
-    window.ezShowToast('تم إنقاص يوم من '+updatedCount+' تاريخ انتهاء','success');
-  }
-},2000);
+    setTimeout(function(){
+      if(edi_main<0) return;
+      var rows=tb_main.querySelectorAll('tr');
+      var updatedCount=0;
+      
+      for(var i=1;i<rows.length;i++){
+        var tds=rows[i].querySelectorAll('td');
+        if(tds.length<=edi_main) continue;
+        
+        var inp=tds[edi_main].querySelector('input');
+        var val=inp?inp.value:tds[edi_main].textContent.trim();
+        
+        if(!val||!/\d{4}-\d{2}-\d{2}/.test(val)) continue;
+        
+        var newVal=addDays(val,-1);
+        
+        if(inp){
+          inp.value=newVal;
+          inp.dispatchEvent(new Event('input',{bubbles:true}));
+          inp.dispatchEvent(new Event('change',{bubbles:true}));
+          inp.dispatchEvent(new Event('blur',{bubbles:true}));
+          updatedCount++;
+        } else {
+          tds[edi_main].textContent=newVal;
+        }
+      }
+      
+      if(updatedCount>0){
+        window.ezShowToast('📅 تم إنقاص يوم من '+updatedCount+' تاريخ انتهاء','success');
+      }
+    },3000);
   }
 }
 
