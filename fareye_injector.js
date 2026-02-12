@@ -2,11 +2,11 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '1.5';
+  var VERSION = '1.6';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
-  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:1500 };
+  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:1200 };
 
   function showToast(msg, type) {
     type = type || 'info';
@@ -45,6 +45,7 @@ javascript:(function(){
     '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}'+
     '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}'+
     '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}'+
+    '@keyframes feyBlink{0%,100%{opacity:1}50%{opacity:0.3}}'+
     '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:390px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s;animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
     '#'+PANEL_ID+'.fey-min{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}'+
     '#'+PANEL_ID+'.fey-min .fey-inner{display:none!important}'+
@@ -64,7 +65,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v1.5</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v1.6</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -84,12 +85,12 @@ javascript:(function(){
           '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز</span></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'+
             '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير:</span>'+
-            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="800" max="4000" value="1500" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.5s</span></div>'+
+            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="500" max="3000" value="1200" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.2s</span></div>'+
           '</div>'+
           '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>'+
         '</div>'+
         '<div id="fey_pw" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_pt" style="font-size:12px;font-weight:800;color:#8b5cf6">0/0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_pf" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>'+
-        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:180px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 Debug Log:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
+        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:180px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
         '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>'+
       '</div>'+
     '</div>';
@@ -98,22 +99,23 @@ javascript:(function(){
   // ─── Helpers ───
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
-  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
+  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="animation:feyBlink 1s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
   function addLog(t,type){var l=document.getElementById('fey_log');if(!l)return;var co={ok:'#34d399',err:'#f87171',info:'#94a3b8',warn:'#fbbf24',debug:'#818cf8'};var d=document.createElement('div');d.innerHTML='<span style="color:'+(co[type]||co.info)+'">'+t+'</span>';l.appendChild(d);l.parentElement.scrollTop=l.parentElement.scrollHeight;}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
   // ═══════════════════════════════════════════════════════════════
-  //  🔑 Ant Design rc-select — Character-by-Character Typing
+  //  Ant Design rc-select — Paste + Enter
   // ═══════════════════════════════════════════════════════════════
   //
-  //  المشكلة: rc-select الـ input controlled بالكامل من React
-  //  nativeSetter و execCommand ما بيشتغلوش لأن React بيتجاهلهم
+  //  الطريقة الجديدة:
+  //  1. المستخدم يلمس خانة Reference Number يدوي
+  //  2. الكود يكتشف الـ focus ويبدأ فوراً
+  //  3. لكل طلب: نلصق الرقم في الـ input + نضغط Enter
+  //  4. بعد Enter الـ Select بيقفل — نفتحه تاني بـ click
   //
-  //  الحل: نحاكي الكتابة حرف حرف بالظبط زي لما المستخدم يضغط
-  //  على الكيبورد — كل حرف: keydown → InputEvent → keyup
-  //  ده بيفعّل React's onChange handler على الـ input
-  //
+
+  var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
   function getInput() {
     return document.getElementById('rc_select_1')
@@ -132,147 +134,109 @@ javascript:(function(){
     return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length;
   }
 
-  var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-
-  // ─── محاكاة ضغط حرف واحد ───
-  function simulateChar(input, char, currentVal) {
-    var newVal = currentVal + char;
-    var charCode = char.charCodeAt(0);
-
-    // 1. keydown
-    input.dispatchEvent(new KeyboardEvent('keydown', {
-      key: char, code: 'Key' + char.toUpperCase(),
-      keyCode: charCode, which: charCode, charCode: 0,
-      bubbles: true, cancelable: true
-    }));
-
-    // 2. تغيير القيمة بـ nativeSetter (مهم قبل الـ input event)
-    nativeSetter.call(input, newVal);
-
-    // 3. InputEvent — ده اللي React بيسمعه فعلاً
-    input.dispatchEvent(new InputEvent('input', {
-      bubbles: true,
-      cancelable: true,
-      inputType: 'insertText',
-      data: char
-    }));
-
-    // 4. keyup
-    input.dispatchEvent(new KeyboardEvent('keyup', {
-      key: char, code: 'Key' + char.toUpperCase(),
-      keyCode: charCode, which: charCode,
-      bubbles: true, cancelable: true
-    }));
-
-    return newVal;
-  }
-
-  // ─── كتابة نص كامل حرف حرف ───
-  async function typeCharByChar(input, text) {
-    var current = '';
-    for (var i = 0; i < text.length; i++) {
-      current = simulateChar(input, text[i], current);
-      await wait(30); // تأخير بسيط بين كل حرف
-    }
-    return current;
-  }
-
-  // ─── فتح الـ Select ───
-  async function openSelect() {
+  // لصق + Enter لطلب واحد
+  async function pasteAndEnter(orderNum) {
     var input = getInput();
-    var selector = getSelector();
-    if (!input || !selector) return false;
+    if (!input) return false;
 
-    // mousedown + click
+    var tagsBefore = countTags();
+
+    // التأكد إن الـ input في focus
+    input.focus();
+    await wait(50);
+
+    // مسح أي نص قديم
+    nativeSetter.call(input, '');
+    input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'deleteContentBackward' }));
+    await wait(50);
+
+    // لصق النص عبر Clipboard API
+    nativeSetter.call(input, orderNum);
+    input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertFromPaste', data:orderNum }));
+    input.dispatchEvent(new Event('change', { bubbles:true }));
+    await wait(150);
+
+    // لو ما اشتغلش — نجرب React onChange مباشرة
+    if (!input.value || input.value !== orderNum) {
+      var rp = Object.keys(input).find(function(k){return k.startsWith('__reactProps$')});
+      if (rp && input[rp] && typeof input[rp].onChange === 'function') {
+        input[rp].onChange({ target: { value: orderNum } });
+        await wait(100);
+      }
+    }
+
+    // Enter
+    var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
+    input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
+    await wait(50);
+    input.dispatchEvent(new KeyboardEvent('keypress', enterOpts));
+    await wait(50);
+    input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
+    await wait(300);
+
+    var tagsAfter = countTags();
+
+    // لو ما اتضافش — نجرب نفتح الـ Select تاني + Enter
+    if (tagsAfter <= tagsBefore) {
+      var selector = getSelector();
+      if (selector) {
+        selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+        selector.click();
+        await wait(200);
+        input.focus();
+        await wait(100);
+        nativeSetter.call(input, orderNum);
+        input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertFromPaste', data:orderNum }));
+        await wait(150);
+        input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
+        await wait(100);
+        input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
+        await wait(300);
+        tagsAfter = countTags();
+      }
+    }
+
+    return tagsAfter > tagsBefore;
+  }
+
+  // إعادة فتح الـ Select بعد كل Enter
+  async function reopenSelect() {
+    var selector = getSelector();
+    var input = getInput();
+    if (!selector || !input) return;
+
     selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
     selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
     selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
     await wait(150);
-
     input.focus();
     await wait(100);
-
-    // لو مش مفتوح — ArrowDown
-    if (input.getAttribute('aria-expanded') !== 'true') {
-      input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
-      await wait(200);
-    }
-
-    return input.getAttribute('aria-expanded') === 'true';
   }
 
-  // ─── Enter ───
-  function pressEnter(input) {
-    var opts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
-    input.dispatchEvent(new KeyboardEvent('keydown', opts));
-    input.dispatchEvent(new KeyboardEvent('keypress', opts));
-    input.dispatchEvent(new KeyboardEvent('keyup', opts));
-  }
+  // انتظار لمس الخانة من المستخدم
+  function waitForFieldTouch() {
+    return new Promise(function(resolve) {
+      var input = getInput();
+      if (!input) { resolve(false); return; }
 
-  // ─── حقن طلب واحد ───
-  async function injectOne(orderNum) {
-    var input = getInput();
-    if (!input) return false;
-    var tagsBefore = countTags();
-
-    // 1. فتح
-    var isOpen = await openSelect();
-    addLog('  📂 open=' + isOpen, 'debug');
-
-    // 2. مسح أي نص قديم — Backspace متعدد
-    var oldVal = input.value || '';
-    for (var b = 0; b < oldVal.length + 5; b++) {
-      nativeSetter.call(input, input.value.slice(0, -1));
-      input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'deleteContentBackward', data:null }));
-    }
-    nativeSetter.call(input, '');
-    input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'deleteContentBackward', data:null }));
-    await wait(100);
-
-    // 3. كتابة حرف حرف
-    var typed = await typeCharByChar(input, orderNum);
-    await wait(200);
-
-    addLog('  ✏️ typed="' + typed + '" actual="' + input.value + '"', 'debug');
-
-    // 4. لو الكتابة حرف حرف ما اشتغلتش — Fallback: nativeSetter + كل أنواع الـ events
-    if (input.value !== orderNum && input.value.length === 0) {
-      addLog('  🔄 Fallback: nativeSetter + events', 'debug');
-      nativeSetter.call(input, orderNum);
-
-      // نجرب كل أنواع الـ events
-      input.dispatchEvent(new Event('input', { bubbles:true }));
-      input.dispatchEvent(new Event('change', { bubbles:true }));
-      input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum }));
-
-      // React 17+ specific: يستخدم onInput من خلال SyntheticEvent
-      // نجرب نلاقي الـ React event handler مباشرة
-      var reactPropsKey = Object.keys(input).find(function(k) { return k.startsWith('__reactProps$'); });
-      if (reactPropsKey && input[reactPropsKey] && typeof input[reactPropsKey].onChange === 'function') {
-        addLog('  🔬 Found React onChange — calling directly', 'debug');
-        input[reactPropsKey].onChange({ target: { value: orderNum }, currentTarget: { value: orderNum }, nativeEvent: { inputType: 'insertText' }, preventDefault:function(){}, stopPropagation:function(){} });
+      // لو الخانة في focus بالفعل
+      if (document.activeElement === input) {
+        resolve(true);
+        return;
       }
 
-      await wait(200);
-      addLog('  ✏️ After fallback: "' + input.value + '"', 'debug');
-    }
+      function onFocus() {
+        input.removeEventListener('focus', onFocus);
+        resolve(true);
+      }
+      input.addEventListener('focus', onFocus);
 
-    // 5. Enter
-    pressEnter(input);
-    await wait(500);
-
-    // 6. تحقق
-    var tagsAfter = countTags();
-
-    // لو ما اتضافش — Enter تاني
-    if (tagsAfter <= tagsBefore) {
-      pressEnter(input);
-      await wait(500);
-      tagsAfter = countTags();
-    }
-
-    addLog('  🏷️ tags: ' + tagsBefore + '→' + tagsAfter, 'debug');
-    return tagsAfter > tagsBefore;
+      // Timeout 30 ثانية
+      setTimeout(function() {
+        input.removeEventListener('focus', onFocus);
+        resolve(false);
+      }, 30000);
+    });
   }
 
   // ─── Events ───
@@ -300,29 +264,16 @@ javascript:(function(){
   // ─── Start ───
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
+
     var input = getInput();
     if (!input) {
-      await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye وإن خانة Reference Number ظاهرة',
-        info:[{label:'الحقل',value:'Reference Number',color:'#ef4444'}],
+      await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye الصحيحة',
         buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
       return;
     }
 
-    // Debug: نعرض كل الـ React props الموجودة على الـ input
-    addLog('🔬 React keys on input:', 'debug');
-    Object.keys(input).filter(function(k){return k.startsWith('__react')}).forEach(function(k){
-      addLog('  ' + k, 'debug');
-    });
-    var rp = Object.keys(input).find(function(k){return k.startsWith('__reactProps$')});
-    if (rp) {
-      var props = input[rp];
-      addLog('  onChange: ' + (typeof props.onChange), 'debug');
-      addLog('  onInput: ' + (typeof props.onInput), 'debug');
-      addLog('  onSearch: ' + (typeof props.onSearch), 'debug');
-    }
-
     var res = await showDialog({icon:'📤',iconColor:'purple',title:'رفع الطلبات',
-      desc:'v1.5 — كتابة حرف حرف لمحاكاة المستخدم الحقيقي',
+      desc:'بعد الضغط على "بدء" — المس خانة Reference Number وسيبدأ الرفع تلقائياً',
       info:[
         {label:'الطلبات',value:state.orders.length+' طلب',color:'#8b5cf6'},
         {label:'Tags حالياً',value:countTags()+' tag',color:'#10b981'},
@@ -330,64 +281,99 @@ javascript:(function(){
       ],
       buttons:[
         {text:'إلغاء',value:'cancel'},
-        {text:'📤 بدء الرفع',value:'confirm',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}
+        {text:'📤 بدء',value:'confirm',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}
       ]});
     if(res!=='confirm')return;
 
-    state.isRunning=true; state.injectedCount=0; state.failedCount=0;
-    document.getElementById('fey_pw').style.display='block';
-    document.getElementById('fey_lw').style.display='block';
-    document.getElementById('fey_log').innerHTML='';
-    startBtn.disabled=true; startBtn.style.opacity='0.6';
-    upStats();
+    // ═══ انتظار لمس الخانة ═══
+    setSt('👆 المس خانة Reference Number الآن...','waiting');
+    startBtn.innerHTML = '⏳ في انتظار لمس الخانة...';
+    startBtn.disabled = true;
+    startBtn.style.opacity = '0.8';
+    showToast('المس خانة Reference Number!', 'warning');
 
-    var pf=document.getElementById('fey_pf');
-    var pt=document.getElementById('fey_pt');
+    var touched = await waitForFieldTouch();
 
-    addLog('═══ بدء v1.5 — '+state.orders.length+' طلب ═══','info');
-    addLog('Tags قبل: '+countTags(),'info');
-
-    for(var i=0;i<state.orders.length;i++){
-      var order = state.orders[i];
-      setSt((i+1)+'/'+state.orders.length+': '+order,'working');
-      pf.style.width=(((i+1)/state.orders.length)*100)+'%';
-      pt.innerText=(i+1)+'/'+state.orders.length;
-      startBtn.innerHTML='📤 '+(i+1)+'/'+state.orders.length;
-
-      addLog('── ['+(i+1)+'] '+order+' ──','info');
-      var ok = await injectOne(order);
-
-      if(ok){
-        state.injectedCount++;
-        addLog('✅ '+order+' OK','ok');
-      } else {
-        // retry
-        addLog('🔄 retry...','warn');
-        await wait(800);
-        ok = await injectOne(order);
-        if(ok){ state.injectedCount++; addLog('✅ '+order+' OK (retry)','ok'); }
-        else { state.failedCount++; addLog('❌ '+order+' FAILED','err'); }
-      }
-      upStats();
-      if(i<state.orders.length-1) await wait(state.delayMs);
+    if (!touched) {
+      setSt('انتهت المهلة — لم يتم لمس الخانة','error');
+      startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
+      startBtn.innerHTML = '📤 رفع الطلبات (' + state.orders.length + ' طلب)';
+      showToast('انتهت المهلة! جرب تاني', 'error');
+      return;
     }
 
-    state.isRunning=false;
-    pf.style.width='100%';
-    startBtn.disabled=false; startBtn.style.opacity='1'; startBtn.style.cursor='pointer';
-    startBtn.innerHTML='🔄 إعادة ('+state.orders.length+')';
+    // ═══ بدأ! الخانة اتلمست ═══
+    showToast('تم! جاري الرفع...', 'success');
+    await wait(500); // مهلة صغيرة بعد اللمس
 
-    addLog('','info');
-    addLog('═══ '+state.injectedCount+'✅ / '+state.failedCount+'❌ — Tags: '+countTags()+' ═══',state.failedCount>0?'warn':'ok');
+    state.isRunning = true;
+    state.injectedCount = 0;
+    state.failedCount = 0;
+    document.getElementById('fey_pw').style.display = 'block';
+    document.getElementById('fey_lw').style.display = 'block';
+    document.getElementById('fey_log').innerHTML = '';
+    upStats();
 
-    await showDialog({icon:'🎉',iconColor:'green',title:'انتهى',desc:state.injectedCount+' نجاح / '+state.failedCount+' فشل',
+    var pf = document.getElementById('fey_pf');
+    var pt = document.getElementById('fey_pt');
+
+    addLog('═══ بدء الرفع — ' + state.orders.length + ' طلب ═══', 'info');
+    addLog('Tags قبل: ' + countTags(), 'info');
+
+    for (var i = 0; i < state.orders.length; i++) {
+      var order = state.orders[i];
+      setSt((i+1) + '/' + state.orders.length + ': ' + order, 'working');
+      pf.style.width = (((i+1) / state.orders.length) * 100) + '%';
+      pt.innerText = (i+1) + '/' + state.orders.length;
+      startBtn.innerHTML = '📤 ' + (i+1) + '/' + state.orders.length;
+
+      addLog('[' + (i+1) + '] ' + order, 'info');
+
+      var ok = await pasteAndEnter(order);
+
+      if (ok) {
+        state.injectedCount++;
+        addLog('  ✅ OK (tags: ' + countTags() + ')', 'ok');
+      } else {
+        // retry مع إعادة فتح
+        addLog('  🔄 retry...', 'warn');
+        await reopenSelect();
+        await wait(300);
+        ok = await pasteAndEnter(order);
+        if (ok) {
+          state.injectedCount++;
+          addLog('  ✅ OK retry (tags: ' + countTags() + ')', 'ok');
+        } else {
+          state.failedCount++;
+          addLog('  ❌ FAILED', 'err');
+        }
+      }
+      upStats();
+
+      // إعادة فتح الـ Select للطلب التالي
+      if (i < state.orders.length - 1) {
+        await reopenSelect();
+        await wait(state.delayMs - 250);
+      }
+    }
+
+    // ═══ انتهى ═══
+    state.isRunning = false;
+    pf.style.width = '100%';
+    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
+    startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
+
+    addLog('', 'info');
+    addLog('═══ ' + state.injectedCount + '✅ / ' + state.failedCount + '❌ — Tags: ' + countTags() + ' ═══', state.failedCount > 0 ? 'warn' : 'ok');
+
+    await showDialog({icon:'🎉',iconColor:'green',title:'انتهى الرفع',desc:state.injectedCount + ' نجاح / ' + state.failedCount + ' فشل',
       info:[
         {label:'رُفعت',value:state.injectedCount+'',color:'#10b981'},
         {label:'فشلت',value:state.failedCount+'',color:state.failedCount>0?'#ef4444':'#10b981'},
         {label:'Tags',value:countTags()+'',color:'#8b5cf6'}
       ],
       buttons:[{text:'👍',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
-    setSt(state.injectedCount+'✅ / '+state.failedCount+'❌','done');
+    setSt(state.injectedCount + '✅ / ' + state.failedCount + '❌', 'done');
   });
 
 })();
