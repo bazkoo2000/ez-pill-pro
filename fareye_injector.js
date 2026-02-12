@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '1.8';
+  var VERSION = '1.7';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -225,22 +225,79 @@ javascript:(function(){
     return tagsAfter > tagsBefore;
   }
 
-  // ─── العد التنازلي ───
-  function countdown(seconds) {
+  // ─── بانر "المس الخانة" مع كشف اللمس تلقائي ───
+  function showTouchBanner(input) {
     return new Promise(function(resolve) {
-      var remaining = seconds;
-      setSt('👆 المس خانة Reference Number الآن! (' + remaining + ')', 'waiting');
-      showToast('المس الخانة خلال ' + seconds + ' ثواني!', 'warning');
+      var resolved = false;
+      var selector = getSelector();
+      var antSelect = input.closest('.ant-select');
 
-      var timer = setInterval(function() {
-        remaining--;
-        if (remaining > 0) {
-          setSt('👆 المس خانة Reference Number الآن! (' + remaining + ')', 'waiting');
-        } else {
-          clearInterval(timer);
-          resolve();
+      // إنشاء البانر
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.4);backdrop-filter:blur(4px);z-index:99999998;animation:feyFadeIn 0.3s;cursor:pointer';
+      var banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;z-index:99999999;background:white;border-radius:28px;padding:30px 50px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.25);font-family:Segoe UI,sans-serif;direction:rtl;transition:all 0.4s cubic-bezier(0.16,1,0.3,1)';
+      banner.innerHTML = '<div style="font-size:60px;margin-bottom:10px;animation:feyBlink 0.8s infinite">👆</div><div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">المس خانة Reference Number</div><div style="font-size:14px;color:#8b5cf6;font-weight:700">' + state.orders.length + ' طلب جاهز للرفع</div><div style="font-size:12px;color:#94a3b8;margin-top:10px;font-weight:600">سيبدأ الرفع تلقائياً بمجرد لمس الخانة</div>';
+      document.body.appendChild(overlay);
+      document.body.appendChild(banner);
+      requestAnimationFrame(function(){banner.style.opacity='1';banner.style.transform='translate(-50%,-50%) scale(1)';});
+
+      function done() {
+        if (resolved) return;
+        resolved = true;
+        clearInterval(pollTimer);
+        if (observer) observer.disconnect();
+        // animation خروج
+        banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';
+        overlay.style.opacity='0';
+        setTimeout(function(){banner.remove();overlay.remove();},400);
+        resolve(true);
+      }
+
+      // 1. Polling كل 150ms — الأكثر موثوقية
+      var pollTimer = setInterval(function() {
+        if (document.activeElement === input || input.getAttribute('aria-expanded') === 'true') {
+          done();
         }
-      }, 1000);
+      }, 150);
+
+      // 2. MutationObserver على aria-expanded
+      var observer = null;
+      try {
+        observer = new MutationObserver(function(mutations) {
+          if (input.getAttribute('aria-expanded') === 'true') done();
+        });
+        observer.observe(input, { attributes: true, attributeFilter: ['aria-expanded'] });
+      } catch(e) {}
+
+      // 3. Events مباشرة
+      function onTouch() { setTimeout(done, 200); }
+      input.addEventListener('focus', onTouch);
+      if (selector) selector.addEventListener('mousedown', onTouch, true);
+      if (antSelect) antSelect.addEventListener('click', onTouch, true);
+
+      // 4. لو ضغط على الـ overlay = إلغاء
+      overlay.addEventListener('click', function() {
+        if (resolved) return;
+        resolved = true;
+        clearInterval(pollTimer);
+        if (observer) observer.disconnect();
+        banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';
+        overlay.style.opacity='0';
+        setTimeout(function(){banner.remove();overlay.remove();},400);
+        resolve(false);
+      });
+
+      // Timeout 60 ثانية
+      setTimeout(function() {
+        if (!resolved) {
+          resolved = true;
+          clearInterval(pollTimer);
+          if (observer) observer.disconnect();
+          banner.remove(); overlay.remove();
+          resolve(false);
+        }
+      }, 60000);
     });
   }
 
@@ -277,25 +334,19 @@ javascript:(function(){
       return;
     }
 
-    var res = await showDialog({icon:'📤',iconColor:'purple',title:'رفع الطلبات',
-      desc:'بعد الضغط على "بدء" سيظهر عد تنازلي 5 ثواني\n👆 المس خانة Reference Number خلالهم ثم سيبدأ الرفع تلقائياً',
-      info:[
-        {label:'الطلبات',value:state.orders.length+' طلب',color:'#8b5cf6'},
-        {label:'Tags حالياً',value:countTags()+' tag',color:'#10b981'},
-        {label:'التأخير',value:(state.delayMs/1000).toFixed(1)+' ث/طلب',color:'#f59e0b'}
-      ],
-      buttons:[
-        {text:'إلغاء',value:'cancel'},
-        {text:'📤 بدء',value:'confirm',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}
-      ]});
-    if(res!=='confirm')return;
-
-    // ═══ عد تنازلي 5 ثواني ═══
+    // ═══ بانر "المس الخانة" — يختفي تلقائي لما تلمسها ═══
     startBtn.innerHTML = '👆 المس الخانة...';
     startBtn.disabled = true;
     startBtn.style.opacity = '0.8';
 
-    await countdown(5);
+    var touched = await showTouchBanner(input);
+    if (!touched) {
+      startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
+      startBtn.innerHTML = '📤 رفع الطلبات (' + state.orders.length + ' طلب)';
+      return;
+    }
+
+    await wait(300);
 
     // ═══ بدء الرفع ═══
     setSt('🚀 جاري الرفع...', 'working');
