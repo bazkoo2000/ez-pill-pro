@@ -2,9 +2,11 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
+  var VERSION = '1.4';
+  var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
-  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:1000 };
+  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:1200 };
 
   // ─── Toast ───
   function showToast(msg, type) {
@@ -19,6 +21,8 @@ javascript:(function(){
     box.appendChild(t);
     setTimeout(function(){t.style.transition='all 0.3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},3500);
   }
+
+  try{var lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(function(){showToast('تم تلقي تحديث جديد 🎉 → v'+VERSION,'success')},1000);}}catch(e){}
 
   // ─── Dialog ───
   function showDialog(o) {
@@ -45,7 +49,7 @@ javascript:(function(){
     '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}'+
     '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}'+
     '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}'+
-    '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:380px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
+    '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:390px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
     '#'+PANEL_ID+'.fey-min{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}'+
     '#'+PANEL_ID+'.fey-min .fey-inner{display:none!important}'+
     '#'+PANEL_ID+'.fey-min::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
@@ -65,7 +69,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.2</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.4</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -85,12 +89,12 @@ javascript:(function(){
           '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز — ارفع ملف أو أدخل الأرقام</span></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'+
             '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير:</span>'+
-            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="500" max="3000" value="1000" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.0s</span></div>'+
+            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="800" max="4000" value="1500" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.5s</span></div>'+
           '</div>'+
           '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>'+
         '</div>'+
         '<div id="fey_pw" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_pt" style="font-size:12px;font-weight:800;color:#8b5cf6">0/0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_pf" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>'+
-        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:150px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
+        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:180px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل Debug:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
         '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>'+
       '</div>'+
     '</div>';
@@ -100,101 +104,425 @@ javascript:(function(){
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
   function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
-  function addLog(t,type){var l=document.getElementById('fey_log');if(!l)return;var co={ok:'#34d399',err:'#f87171',info:'#94a3b8',warn:'#fbbf24'};var d=document.createElement('div');d.innerHTML='<span style="color:'+(co[type]||co.info)+'">'+t+'</span>';l.appendChild(d);l.parentElement.scrollTop=l.parentElement.scrollHeight;}
+  function addLog(t,type){var l=document.getElementById('fey_log');if(!l)return;var co={ok:'#34d399',err:'#f87171',info:'#94a3b8',warn:'#fbbf24',debug:'#818cf8'};var d=document.createElement('div');d.innerHTML='<span style="color:'+(co[type]||co.info)+'">'+t+'</span>';l.appendChild(d);l.parentElement.scrollTop=l.parentElement.scrollHeight;}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
-  // ═══════════════════════════════════════════
-  //  Ant Design Select — الحقن
-  // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  //  🔧 Ant Design Select — React Fiber Approach
+  // ═══════════════════════════════════════════════════════════════
   //
-  //  الـ HTML:
-  //  .ant-select-selection-overflow
-  //    .ant-select-selection-overflow-item  ← هنا الـ tags اللي اتضافت
-  //    .ant-select-selection-overflow-item (suffix)
-  //      .ant-select-selection-search
-  //        input#rc_select_1 (role=combobox)
+  //  بدل ما نحاكي كتابة المستخدم (اللي Ant Select مش بيستجيب ليها)
+  //  هنروح مباشرة لـ React ونغير الـ state من جوا
   //
-  //  الخطوات:
-  //  1. Click على الـ overflow container عشان يفتح الـ dropdown
-  //  2. Focus الـ input
-  //  3. كتابة الرقم بـ React nativeInputValueSetter + input event
-  //  4. Enter keydown عشان يضيف كـ tag
-  //  5. عدّ الـ tags قبل وبعد للتأكد
+  //  الخطة:
+  //  1. نلاقي الـ React Fiber من الـ DOM element
+  //  2. نطلع في شجرة الـ Fiber لحد ما نلاقي onChange
+  //  3. نضيف القيم مباشرة عن طريق onChange
   //
 
-  var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+  // الحصول على React internal instance
+  function getReactFiber(dom) {
+    if (!dom) return null;
+    var keys = Object.keys(dom);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].startsWith('__reactFiber$') || keys[i].startsWith('__reactInternalInstance$')) {
+        return dom[keys[i]];
+      }
+    }
+    return null;
+  }
+
+  // الحصول على React props من DOM
+  function getReactProps(dom) {
+    if (!dom) return null;
+    var keys = Object.keys(dom);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].startsWith('__reactProps$')) {
+        return dom[keys[i]];
+      }
+    }
+    return null;
+  }
+
+  // البحث في Fiber tree عن onChange handler
+  function findOnChange(startNode) {
+    var node = startNode;
+    var depth = 0;
+    while (node && depth < 30) {
+      // بحث في memoizedProps
+      if (node.memoizedProps) {
+        if (typeof node.memoizedProps.onChange === 'function') return { handler: node.memoizedProps.onChange, props: node.memoizedProps, fiber: node };
+        if (typeof node.memoizedProps.onSelect === 'function') return { handler: node.memoizedProps.onSelect, props: node.memoizedProps, fiber: node };
+      }
+      // بحث في pendingProps
+      if (node.pendingProps) {
+        if (typeof node.pendingProps.onChange === 'function') return { handler: node.pendingProps.onChange, props: node.pendingProps, fiber: node };
+      }
+      node = node.return; // طلوع لأعلى
+      depth++;
+    }
+    return null;
+  }
+
+  // البحث عن القيمة الحالية (value array)
+  function findCurrentValue(startNode) {
+    var node = startNode;
+    var depth = 0;
+    while (node && depth < 30) {
+      if (node.memoizedProps && Array.isArray(node.memoizedProps.value)) {
+        return node.memoizedProps.value;
+      }
+      if (node.memoizedState) {
+        // بحث في state chain
+        var st = node.memoizedState;
+        while (st) {
+          if (st.memoizedState && Array.isArray(st.memoizedState)) return st.memoizedState;
+          if (st.queue && st.queue.lastRenderedState && Array.isArray(st.queue.lastRenderedState)) return st.queue.lastRenderedState;
+          st = st.next;
+        }
+      }
+      node = node.return;
+      depth++;
+    }
+    return [];
+  }
 
   function getInput() {
     return document.getElementById('rc_select_1')
-      || document.querySelector('.ant-select-selection-search-input[role="combobox"]')
-      || document.querySelector('input.ant-select-selection-search-input');
+      || document.querySelector('input.ant-select-selection-search-input[role="combobox"]')
+      || document.querySelector('input.ant-select-selection-search-input')
+      || document.querySelector('input[aria-haspopup="listbox"]');
   }
 
-  function getOverflow() {
-    return document.querySelector('.ant-select-selection-overflow');
+  function getSelector() {
+    var input = getInput();
+    if (!input) return null;
+    return input.closest('.ant-select-selector') || input.closest('.ant-select');
   }
 
   function countTags() {
-    var items = document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)');
-    return items.length;
+    return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length;
   }
 
-  function reactInput(el, val) {
-    nativeSetter.call(el, val);
-    el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-  }
+  var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
-  function fireKey(el, type, key, code) {
-    el.dispatchEvent(new KeyboardEvent(type, {
-      key: key, code: code || key, keyCode: key === 'Enter' ? 13 : 0,
-      which: key === 'Enter' ? 13 : 0, bubbles: true, cancelable: true
-    }));
-  }
-
-  async function injectOne(orderNum) {
+  // ═══════════════════════════════════════════
+  //  Strategy 1: React Fiber (الأقوى)
+  // ═══════════════════════════════════════════
+  function tryReactFiber(allOrders) {
     var input = getInput();
-    var overflow = getOverflow();
-    if (!input || !overflow) return false;
+    if (!input) return false;
+
+    var fiber = getReactFiber(input);
+    if (!fiber) return false;
+
+    var result = findOnChange(fiber);
+    if (!result) return false;
+
+    addLog('🔬 React Fiber: وجدنا onChange handler!', 'debug');
+
+    var currentVal = findCurrentValue(fiber);
+    addLog('🔬 القيم الحالية: ' + currentVal.length + ' tag', 'debug');
+
+    // نجرب نضيف كل الطلبات مرة واحدة
+    var newValues = currentVal.slice(); // نسخة
+    for (var i = 0; i < allOrders.length; i++) {
+      if (newValues.indexOf(allOrders[i]) === -1) {
+        newValues.push(allOrders[i]);
+      }
+    }
+
+    try {
+      result.handler(newValues);
+      return true;
+    } catch (e) {
+      addLog('⚠️ Fiber onChange فشل: ' + e.message, 'warn');
+      return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  //  Strategy 2: Clipboard Paste (سريعة)
+  // ═══════════════════════════════════════════
+  async function tryPasteAll(allOrders) {
+    var input = getInput();
+    var selector = getSelector();
+    if (!input || !selector) return false;
+
+    // فتح الـ Select
+    selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+    selector.dispatchEvent(new MouseEvent('click', { bubbles:true }));
+    await wait(300);
+    input.focus();
+    await wait(200);
 
     var tagsBefore = countTags();
 
-    try {
-      // 1. Click لفتح الـ Select
-      overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-      overflow.click();
-      await wait(150);
+    // نلصق كل الأرقام مفصولة بـ newline
+    var text = allOrders.join('\n');
+    var clipData = new DataTransfer();
+    clipData.setData('text/plain', text);
+    var pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: clipData });
+    input.dispatchEvent(pasteEvent);
+    await wait(500);
 
-      // 2. Focus
-      input.focus();
-      await wait(100);
-
-      // 3. مسح أي قيمة قديمة
-      reactInput(input, '');
-      await wait(50);
-
-      // 4. كتابة الرقم
-      reactInput(input, orderNum);
-      await wait(250);
-
-      // 5. Enter
-      fireKey(input, 'keydown', 'Enter', 'Enter');
-      await wait(100);
-      fireKey(input, 'keyup', 'Enter', 'Enter');
-      await wait(300);
-
-      // 6. مسح
-      reactInput(input, '');
-      await wait(100);
-
-      // 7. تحقق — هل اتضاف tag جديد؟
-      var tagsAfter = countTags();
-      return tagsAfter > tagsBefore;
-
-    } catch (e) {
-      console.error('FAREYE:', e);
-      return false;
+    // لو ما اشتغلش الـ paste، نجرب بـ separator مختلف
+    if (countTags() <= tagsBefore) {
+      // نجرب بفاصلة
+      text = allOrders.join(',');
+      clipData = new DataTransfer();
+      clipData.setData('text/plain', text);
+      pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: clipData });
+      input.dispatchEvent(pasteEvent);
+      await wait(500);
     }
+
+    // لو ما اشتغلش نجرب بمسافة
+    if (countTags() <= tagsBefore) {
+      text = allOrders.join(' ');
+      clipData = new DataTransfer();
+      clipData.setData('text/plain', text);
+      pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: clipData });
+      input.dispatchEvent(pasteEvent);
+      await wait(500);
+    }
+
+    var tagsAfter = countTags();
+    return tagsAfter > tagsBefore;
+  }
+
+  // ═══════════════════════════════════════════
+  //  Strategy 3: DOM واحد واحد (مُحسّن)
+  // ═══════════════════════════════════════════
+  async function waitForOpen(input, timeout) {
+    var start = Date.now();
+    while (Date.now() - start < timeout) {
+      if (input.getAttribute('aria-expanded') === 'true') return true;
+      await wait(50);
+    }
+    return false;
+  }
+
+  async function forceOpenSelect() {
+    var input = getInput();
+    var selector = getSelector();
+    if (!input || !selector) return false;
+
+    // طريقة 1: click عادي
+    selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
+    selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
+    selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
+    await wait(100);
+
+    // Focus
+    input.focus();
+    await wait(100);
+
+    // لو لسه مش مفتوح — نجرب نضغط على الـ overflow مباشرة
+    if (input.getAttribute('aria-expanded') !== 'true') {
+      var overflow = document.querySelector('.ant-select-selection-overflow');
+      if (overflow) {
+        overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+        overflow.click();
+        await wait(100);
+        input.focus();
+      }
+    }
+
+    // لو لسه — نجرب ArrowDown
+    if (input.getAttribute('aria-expanded') !== 'true') {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
+      await wait(100);
+    }
+
+    var isOpen = await waitForOpen(input, 800);
+    return isOpen;
+  }
+
+  async function injectOneDom(orderNum) {
+    var input = getInput();
+    if (!input) return false;
+
+    var tagsBefore = countTags();
+
+    // فتح الـ Select
+    var opened = await forceOpenSelect();
+    addLog('  📂 Select open: ' + (opened ? 'yes' : 'no') + ' (aria=' + input.getAttribute('aria-expanded') + ')', 'debug');
+
+    // مسح الـ input
+    nativeSetter.call(input, '');
+    input.dispatchEvent(new Event('input', { bubbles:true }));
+    await wait(80);
+
+    // كتابة بـ execCommand
+    input.focus();
+    document.execCommand('selectAll', false);
+    document.execCommand('delete', false);
+    document.execCommand('insertText', false, orderNum);
+    await wait(100);
+
+    // لو ما اتكتبش — fallback
+    if (input.value !== orderNum) {
+      nativeSetter.call(input, orderNum);
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      input.dispatchEvent(new Event('change', { bubbles:true }));
+      // كمان InputEvent
+      input.dispatchEvent(new InputEvent('input', { bubbles:true, data:orderNum, inputType:'insertText' }));
+    }
+    await wait(200);
+
+    addLog('  ✏️ Value: "' + input.value + '" (expected: "' + orderNum + '")', 'debug');
+
+    // Enter
+    var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
+    input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
+    await wait(50);
+    input.dispatchEvent(new KeyboardEvent('keypress', enterOpts));
+    await wait(50);
+    input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
+    await wait(400);
+
+    var tagsAfter = countTags();
+
+    // لو ما اتضافش — Enter تاني
+    if (tagsAfter <= tagsBefore) {
+      addLog('  ⏎ Enter ثاني...', 'debug');
+      input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
+      await wait(100);
+      input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
+      await wait(400);
+      tagsAfter = countTags();
+    }
+
+    addLog('  🏷️ Tags: ' + tagsBefore + ' → ' + tagsAfter, 'debug');
+    return tagsAfter > tagsBefore;
+  }
+
+  // ═══════════════════════════════════════════
+  //  Main Runner — يجرب الـ 3 طرق
+  // ═══════════════════════════════════════════
+  async function runInjection(orders) {
+    state.isRunning = true;
+    state.injectedCount = 0;
+    state.failedCount = 0;
+
+    document.getElementById('fey_pw').style.display = 'block';
+    document.getElementById('fey_lw').style.display = 'block';
+    document.getElementById('fey_log').innerHTML = '';
+    startBtn.disabled = true; startBtn.style.opacity = '0.6';
+
+    var pf = document.getElementById('fey_pf');
+    var pt = document.getElementById('fey_pt');
+    var tagsBefore = countTags();
+
+    addLog('═══ بدء الرفع — ' + orders.length + ' طلب ═══', 'info');
+    addLog('Tags قبل: ' + tagsBefore, 'info');
+
+    // ────────────────────────────────────
+    //  Strategy 1: React Fiber
+    // ────────────────────────────────────
+    addLog('', 'info');
+    addLog('🔬 [Strategy 1] React Fiber...', 'debug');
+    setSt('جاري تجربة React Fiber...', 'working');
+
+    var fiberOk = tryReactFiber(orders);
+    await wait(500);
+
+    if (fiberOk && countTags() > tagsBefore) {
+      var added = countTags() - tagsBefore;
+      state.injectedCount = added;
+      upStats();
+      pf.style.width = '100%';
+      pt.innerText = added + ' / ' + orders.length;
+      addLog('✅ React Fiber نجح! — ' + added + ' tag اتضافوا دفعة واحدة', 'ok');
+      finishInjection(orders);
+      return;
+    }
+    addLog('❌ React Fiber لم ينجح', 'err');
+
+    // ────────────────────────────────────
+    //  Strategy 2: Paste
+    // ────────────────────────────────────
+    addLog('', 'info');
+    addLog('📋 [Strategy 2] Paste...', 'debug');
+    setSt('جاري تجربة Paste...', 'working');
+
+    var pasteOk = await tryPasteAll(orders);
+    await wait(500);
+
+    if (pasteOk && countTags() > tagsBefore) {
+      var added2 = countTags() - tagsBefore;
+      state.injectedCount = added2;
+      upStats();
+      pf.style.width = '100%';
+      pt.innerText = added2 + ' / ' + orders.length;
+      addLog('✅ Paste نجح! — ' + added2 + ' tag', 'ok');
+      finishInjection(orders);
+      return;
+    }
+    addLog('❌ Paste لم ينجح', 'err');
+
+    // ────────────────────────────────────
+    //  Strategy 3: واحد واحد DOM
+    // ────────────────────────────────────
+    addLog('', 'info');
+    addLog('⌨️ [Strategy 3] DOM واحد واحد...', 'debug');
+    setSt('جاري الرفع واحد واحد...', 'working');
+
+    for (var i = 0; i < orders.length; i++) {
+      var order = orders[i];
+      setSt('رفع ' + (i+1) + '/' + orders.length + ': ' + order, 'working');
+      pf.style.width = (((i+1)/orders.length)*100) + '%';
+      pt.innerText = (i+1) + ' / ' + orders.length;
+      startBtn.innerHTML = '📤 ' + (i+1) + '/' + orders.length;
+
+      addLog('── [' + (i+1) + '] ' + order + ' ──', 'info');
+      var ok = await injectOneDom(order);
+
+      if (ok) {
+        state.injectedCount++;
+        addLog('✅ ' + order + ' OK', 'ok');
+      } else {
+        // retry
+        addLog('🔄 إعادة محاولة...', 'warn');
+        await wait(500);
+        ok = await injectOneDom(order);
+        if (ok) {
+          state.injectedCount++;
+          addLog('✅ ' + order + ' OK (retry)', 'ok');
+        } else {
+          state.failedCount++;
+          addLog('❌ ' + order + ' FAILED', 'err');
+        }
+      }
+      upStats();
+      if (i < orders.length - 1) await wait(state.delayMs);
+    }
+
+    finishInjection(orders);
+  }
+
+  async function finishInjection(orders) {
+    state.isRunning = false;
+    var pf = document.getElementById('fey_pf');
+    if (pf) pf.style.width = '100%';
+    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
+    startBtn.innerHTML = '🔄 إعادة الرفع (' + orders.length + ' طلب)';
+
+    addLog('', 'info');
+    addLog('═══ النتيجة: ' + state.injectedCount + '✅ / ' + state.failedCount + '❌ — Tags: ' + countTags() + ' ═══', state.failedCount > 0 ? 'warn' : 'ok');
+
+    await showDialog({icon:'🎉',iconColor:'green',title:'انتهى الرفع',desc:'تمت معالجة الطلبات',
+      info:[
+        {label:'تم رفعها',value:state.injectedCount+' طلب',color:'#10b981'},
+        {label:'فشلت',value:state.failedCount+' طلب',color:state.failedCount>0?'#ef4444':'#10b981'},
+        {label:'Tags الآن',value:countTags()+' tag',color:'#8b5cf6'}
+      ],
+      buttons:[{text:'👍 إغلاق',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
+
+    setSt('تم — '+state.injectedCount+' نجاح / '+state.failedCount+' فشل','done');
+    showToast('تم رفع '+state.injectedCount+' طلب',state.failedCount>0?'warning':'success');
   }
 
   // ─── Events ───
@@ -213,12 +541,9 @@ javascript:(function(){
   uploadArea.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#d8b4fe';this.style.background='#faf5ff';if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
   fileInput.addEventListener('change',function(){if(this.files.length)handleFiles(this.files)});
 
-  function handleFiles(files) {
-    var all=[],loaded=0,total=files.length;
-    for(var i=0;i<files.length;i++){(function(f){var r=new FileReader();r.onload=function(e){all=all.concat(parse(e.target.result));loaded++;if(loaded===total){var u=[],s={};for(var j=0;j<all.length;j++)if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt('تم تحميل '+u.length+' طلب — جاهز للرفع','loaded');showToast(u.length+' طلب جاهز','success');enableStart()}};r.readAsText(f)})(files[i])}
-  }
+  function handleFiles(files){var all=[],loaded=0,total=files.length;for(var i=0;i<files.length;i++){(function(f){var r=new FileReader();r.onload=function(e){all=all.concat(parse(e.target.result));loaded++;if(loaded===total){var u=[],s={};for(var j=0;j<all.length;j++)if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب — جاهز للرفع','loaded');showToast(u.length+' طلب جاهز','success');enableStart()}};r.readAsText(f)})(files[i])}}
 
-  manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.style.cursor='not-allowed';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
+  manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
 
   function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
 
@@ -230,18 +555,18 @@ javascript:(function(){
 
     var input = getInput();
     if (!input) {
-      await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تعذر العثور على خانة Reference Number',
-        info:[{label:'الحقل',value:'rc_select_1',color:'#ef4444'},{label:'الحل',value:'اضغط على خانة Reference Number أولاً',color:'#3b82f6'}],
+      await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye وإن خانة Reference Number ظاهرة',
+        info:[{label:'الحقل',value:'Reference Number',color:'#ef4444'}],
         buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
       return;
     }
 
-    var res = await showDialog({icon:'📤',iconColor:'purple',title:'رفع الطلبات',desc:'سيتم إدخال الأرقام في Reference Number واحد واحد',
+    var res = await showDialog({icon:'📤',iconColor:'purple',title:'رفع الطلبات',
+      desc:'سيتم تجربة 3 طرق تلقائياً — React Fiber ثم Paste ثم واحد واحد',
       info:[
         {label:'عدد الطلبات',value:state.orders.length+' طلب',color:'#8b5cf6'},
-        {label:'التأخير',value:(state.delayMs/1000).toFixed(1)+' ثانية/طلب',color:'#f59e0b'},
-        {label:'الوقت المتوقع',value:'~'+Math.ceil(state.orders.length*state.delayMs/1000)+' ثانية',color:'#3b82f6'},
-        {label:'Tags حالياً',value:countTags()+' tag',color:'#10b981'}
+        {label:'Tags حالياً',value:countTags()+' tag',color:'#10b981'},
+        {label:'الاستراتيجيات',value:'3 طرق (تلقائي)',color:'#f59e0b'}
       ],
       buttons:[
         {text:'إلغاء',value:'cancel'},
@@ -249,58 +574,7 @@ javascript:(function(){
       ]});
     if(res!=='confirm')return;
 
-    state.isRunning=true; state.injectedCount=0; state.failedCount=0;
-    document.getElementById('fey_pw').style.display='block';
-    document.getElementById('fey_lw').style.display='block';
-    document.getElementById('fey_log').innerHTML='';
-    startBtn.disabled=true; startBtn.style.opacity='0.6'; startBtn.style.cursor='not-allowed';
-
-    var pf=document.getElementById('fey_pf');
-    var pt=document.getElementById('fey_pt');
-
-    addLog('🔓 بدء الرفع — '+state.orders.length+' طلب','info');
-    addLog('Tags قبل البدء: '+countTags(),'info');
-
-    for(var i=0;i<state.orders.length;i++){
-      var order = state.orders[i];
-      setSt('رفع '+(i+1)+' من '+state.orders.length+': '+order,'working');
-      pf.style.width=(((i+1)/state.orders.length)*100)+'%';
-      pt.innerText=(i+1)+' / '+state.orders.length;
-      startBtn.innerHTML='📤 جاري الرفع ('+(i+1)+'/'+state.orders.length+')';
-
-      var ok = await injectOne(order);
-
-      if(ok){
-        state.injectedCount++;
-        addLog('✅ '+order+' — تم (tags: '+countTags()+')','ok');
-      } else {
-        state.failedCount++;
-        addLog('❌ '+order+' — فشل (tags: '+countTags()+')','err');
-      }
-      upStats();
-
-      if(i<state.orders.length-1) await wait(state.delayMs);
-    }
-
-    state.isRunning=false;
-    pf.style.width='100%';
-    startBtn.disabled=false; startBtn.style.opacity='1'; startBtn.style.cursor='pointer';
-    startBtn.innerHTML='🔄 إعادة الرفع ('+state.orders.length+' طلب)';
-
-    addLog('','info');
-    addLog('═══ انتهى: '+state.injectedCount+' نجاح / '+state.failedCount+' فشل — Tags: '+countTags()+' ═══',state.failedCount>0?'warn':'ok');
-
-    await showDialog({icon:'🎉',iconColor:'green',title:'تم الرفع!',desc:'تمت معالجة جميع الطلبات',
-      info:[
-        {label:'تم رفعها',value:state.injectedCount+' طلب',color:'#10b981'},
-        {label:'فشلت',value:state.failedCount+' طلب',color:state.failedCount>0?'#ef4444':'#10b981'},
-        {label:'Tags النهائية',value:countTags()+' tag',color:'#8b5cf6'},
-        {label:'النسبة',value:Math.round((state.injectedCount/state.orders.length)*100)+'%',color:'#8b5cf6'}
-      ],
-      buttons:[{text:'👍 إغلاق',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
-
-    setSt('تم — '+state.injectedCount+' نجاح / '+state.failedCount+' فشل','done');
-    showToast('تم رفع '+state.injectedCount+' طلب',state.failedCount>0?'warning':'success');
+    await runInjection(state.orders);
   });
 
 })();
