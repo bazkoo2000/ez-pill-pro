@@ -1169,4 +1169,257 @@ document.addEventListener('keydown',function(e){
 
 makeDraggable(d_box);
 beautifyPage();
+
+/* ══════════════════════════════════════════
+   IMPORT INVOICE - SMART SEARCH
+   ══════════════════════════════════════════ */
+(function(){
+  /* Get current invoice number from main page */
+  function getCurrentInvoice(){
+    var allEls=document.querySelectorAll('td,span,div,label,input,b,strong');
+    for(var i=0;i<allEls.length;i++){
+      var txt=(allEls[i].textContent||'').trim();
+      if(txt.toLowerCase().indexOf('invoice')>-1){
+        var next=allEls[i].nextElementSibling;
+        if(next){
+          var val=(next.value||next.textContent||'').trim();
+          if(val&&/\d{5,}/.test(val)) return val.replace(/\D/g,'');
+        }
+        var parent=allEls[i].parentElement;
+        if(parent){
+          var inp=parent.querySelector('input');
+          if(inp&&inp.value&&/\d{5,}/.test(inp.value)) return inp.value.trim();
+        }
+      }
+    }
+    /* Try finding in top form area by pattern */
+    var inputs=document.querySelectorAll('input[type="text"],input:not([type])');
+    for(var i=0;i<inputs.length;i++){
+      var v=inputs[i].value||'';
+      if(/^0\d{8,}$/.test(v.trim())) return v.trim();
+    }
+    /* Try from URL or page content */
+    var bodyText=document.body.innerText;
+    var invMatch=bodyText.match(/Invoice\s*(?:Number|No|#)?[:\s]*(\d{8,})/i);
+    if(invMatch) return invMatch[1];
+    return '';
+  }
+
+  var currentInvoice=getCurrentInvoice();
+  var searchInjected=false;
+
+  function injectSearch(){
+    var modal=document.querySelector('#exampleModal');
+    if(!modal) return;
+    var modalBody=modal.querySelector('.modal-body');
+    if(!modalBody) return;
+    if(modal.querySelector('.ez-search-box')) return;
+
+    var tb=modalBody.querySelector('table');
+    if(!tb) return;
+
+    /* Find column indexes */
+    var ths=tb.querySelectorAll('th');
+    var invIdx=-1,erxIdx=-1;
+    for(var i=0;i<ths.length;i++){
+      var t=(ths[i].textContent||'').trim().toLowerCase();
+      if(t.indexOf('invoice')>-1) invIdx=i;
+      if(t.indexOf('erx')>-1) erxIdx=i;
+    }
+
+    /* Build search UI */
+    var box=document.createElement('div');
+    box.className='ez-search-box';
+    box.style.cssText='display:flex;gap:10px;padding:14px 18px;margin:0 0 12px;background:linear-gradient(145deg,#f8f7ff,#eef2ff);border:1.5px solid rgba(129,140,248,0.15);border-radius:14px;font-family:Cairo,sans-serif;align-items:stretch;box-shadow:0 2px 10px rgba(99,102,241,0.06);position:relative;z-index:5';
+
+    /* Invoice search */
+    var invWrap=document.createElement('div');
+    invWrap.style.cssText='flex:1;position:relative';
+    invWrap.innerHTML='\
+      <label style="display:block;font-size:9px;font-weight:900;color:#6366f1;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase">🔍 Invoice Number</label>\
+      <div style="position:relative">\
+        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:800;color:#d4d4e0;pointer-events:none;font-family:Cairo,sans-serif;letter-spacing:1px" id="ez-inv-ghost">0</span>\
+        <input type="text" id="ez-inv-search" placeholder="رقم الفاتورة..." style="width:100%;padding:9px 14px;padding-right:24px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif;outline:none;background:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,0.04);transition:all 0.25s;direction:ltr;text-align:left" />\
+      </div>';
+    box.appendChild(invWrap);
+
+    /* ERX search */
+    var erxWrap=document.createElement('div');
+    erxWrap.style.cssText='flex:1;position:relative';
+    erxWrap.innerHTML='\
+      <label style="display:block;font-size:9px;font-weight:900;color:#8b5cf6;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase">🔍 ERX Number</label>\
+      <div style="position:relative">\
+        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:800;color:#d4d4e0;pointer-events:none;font-family:Cairo,sans-serif;letter-spacing:0.5px" id="ez-erx-ghost">ERX-</span>\
+        <input type="text" id="ez-erx-search" placeholder="رقم الطلب..." style="width:100%;padding:9px 14px;padding-right:48px;border:1.5px solid rgba(139,92,246,0.15);border-radius:10px;font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif;outline:none;background:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,0.04);transition:all 0.25s;direction:ltr;text-align:left" />\
+      </div>';
+    box.appendChild(erxWrap);
+
+    /* Result counter */
+    var counter=document.createElement('div');
+    counter.id='ez-search-counter';
+    counter.style.cssText='display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:50px;background:linear-gradient(145deg,#818cf8,#6366f1);border-radius:10px;padding:4px 10px;box-shadow:0 3px 10px rgba(99,102,241,0.2),inset 0 1px 0 rgba(255,255,255,0.2)';
+    counter.innerHTML='<div style="font-size:18px;font-weight:900;color:#fff;line-height:1" id="ez-match-count">-</div><div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.5px">نتيجة</div>';
+    box.appendChild(counter);
+
+    modalBody.insertBefore(box,modalBody.firstChild);
+
+    /* ── Search Logic ── */
+    function getAllRows(){
+      return Array.from(tb.querySelectorAll('tr')).slice(1);
+    }
+
+    function getCellText(row,idx){
+      if(idx<0) return '';
+      var tds=row.querySelectorAll('td');
+      if(tds.length<=idx) return '';
+      return(tds[idx].innerText||tds[idx].textContent||'').trim();
+    }
+
+    function doSearch(){
+      var invVal=(document.getElementById('ez-inv-search').value||'').trim().replace(/\D/g,'');
+      var erxVal=(document.getElementById('ez-erx-search').value||'').trim().replace(/[^a-zA-Z0-9\-]/g,'');
+      var rows=getAllRows();
+      var matched=[];
+      var unmatched=[];
+      var hasSearch=invVal.length>0||erxVal.length>0;
+
+      /* Update ghost visibility */
+      var invGhost=document.getElementById('ez-inv-ghost');
+      var erxGhost=document.getElementById('ez-erx-ghost');
+      if(invGhost) invGhost.style.display=invVal.length>0?'none':'block';
+      if(erxGhost) erxGhost.style.display=erxVal.length>0?'none':'block';
+
+      rows.forEach(function(r){
+        var invCell=getCellText(r,invIdx);
+        var erxCell=getCellText(r,erxIdx);
+        var invNum=invCell.replace(/\D/g,'');
+        var erxNum=erxCell.replace(/[^a-zA-Z0-9\-]/g,'').toUpperCase();
+        var erxDigits=erxNum.replace(/[^0-9]/g,'');
+
+        var isMatch=true;
+        if(invVal.length>0){
+          if(invNum.indexOf(invVal)===-1) isMatch=false;
+        }
+        if(erxVal.length>0){
+          var searchUpper=erxVal.toUpperCase();
+          var searchDigits=erxVal.replace(/[^0-9]/g,'');
+          /* Smart: match full ERX or just trailing digits */
+          var erxMatch=false;
+          if(erxNum.indexOf(searchUpper)>-1) erxMatch=true;
+          else if(searchDigits.length>0&&erxDigits.endsWith(searchDigits)) erxMatch=true;
+          else if(searchDigits.length>0&&erxDigits.indexOf(searchDigits)>-1) erxMatch=true;
+          if(!erxMatch) isMatch=false;
+        }
+
+        if(!hasSearch||isMatch) matched.push(r);
+        else unmatched.push(r);
+
+        /* Highlight/unhighlight */
+        if(hasSearch&&isMatch){
+          r.style.cssText='background:rgba(129,140,248,0.06)!important;border-right:3px solid #818cf8!important;transition:all 0.3s!important';
+        } else if(hasSearch&&!isMatch){
+          r.style.cssText='opacity:0.35!important;transition:all 0.3s!important';
+        } else {
+          r.style.cssText='transition:all 0.3s!important';
+        }
+
+        /* Protect current invoice - remove Import button */
+        if(currentInvoice&&invNum===currentInvoice){
+          var btns=r.querySelectorAll('button');
+          btns.forEach(function(b){
+            var bt=(b.innerText||'').toLowerCase();
+            if(bt.indexOf('import')>-1){
+              b.disabled=true;
+              b.style.cssText='background:#94a3b8!important;color:#fff!important;border:none!important;padding:4px 12px!important;border-radius:8px!important;font-size:11px!important;font-weight:700!important;cursor:not-allowed!important;font-family:Cairo,sans-serif!important;opacity:0.6!important';
+              b.innerHTML='✅ الحالي';
+            }
+          });
+        }
+      });
+
+      /* Reorder: matched first, then unmatched */
+      if(hasSearch){
+        var parent=tb.querySelector('tbody')||tb;
+        matched.forEach(function(r){parent.appendChild(r);});
+        unmatched.forEach(function(r){parent.appendChild(r);});
+      }
+
+      /* Update counter */
+      var countEl=document.getElementById('ez-match-count');
+      if(countEl){
+        if(hasSearch) countEl.textContent=matched.length;
+        else countEl.textContent=rows.length;
+      }
+    }
+
+    /* Bind events */
+    var invInput=document.getElementById('ez-inv-search');
+    var erxInput=document.getElementById('ez-erx-search');
+    if(invInput) invInput.addEventListener('input',doSearch);
+    if(erxInput) erxInput.addEventListener('input',doSearch);
+
+    /* Focus animation */
+    [invInput,erxInput].forEach(function(inp){
+      if(!inp) return;
+      inp.addEventListener('focus',function(){this.style.borderColor='#818cf8';this.style.boxShadow='0 0 0 3px rgba(129,140,248,0.12)';});
+      inp.addEventListener('blur',function(){this.style.borderColor='rgba(129,140,248,0.15)';this.style.boxShadow='inset 0 1px 3px rgba(0,0,0,0.04)';});
+    });
+
+    /* Style modal itself */
+    var modalContent=modal.querySelector('.modal-content');
+    if(modalContent){
+      modalContent.style.cssText+='border-radius:18px!important;border:2px solid rgba(129,140,248,0.15)!important;overflow:hidden!important;box-shadow:0 20px 60px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06)!important';
+    }
+    var modalHeader=modal.querySelector('.modal-header');
+    if(modalHeader){
+      modalHeader.style.cssText+='background:linear-gradient(145deg,#6366f1,#4f46e5)!important;border-bottom:2px solid #4338ca!important;padding:14px 20px!important';
+      var title=modalHeader.querySelector('.modal-title,h4,h5');
+      if(title) title.style.cssText='color:#fff!important;font-family:Cairo,sans-serif!important;font-weight:900!important;font-size:16px!important;text-shadow:0 1px 3px rgba(0,0,0,0.15)!important';
+      var closeBtn=modalHeader.querySelector('button.close,[data-dismiss="modal"]');
+      if(closeBtn) closeBtn.style.cssText+='color:#fff!important;opacity:0.8!important;text-shadow:none!important;font-size:22px!important';
+    }
+
+    /* Style modal table header */
+    var mThs=tb.querySelectorAll('th');
+    for(var i=0;i<mThs.length;i++){
+      mThs[i].style.cssText='background:linear-gradient(145deg,#818cf8,#6366f1)!important;color:#fff!important;font-size:11px!important;font-weight:800!important;padding:8px 6px!important;text-align:center!important;border:none!important;border-left:1px solid rgba(255,255,255,0.12)!important;white-space:nowrap!important;font-family:Cairo,sans-serif!important;text-shadow:0 1px 2px rgba(0,0,0,0.15)!important;position:sticky!important;top:0!important;z-index:2!important';
+    }
+
+    /* Style modal table */
+    tb.style.cssText+='border-collapse:separate!important;border-spacing:0!important;width:100%!important;font-family:Cairo,sans-serif!important;border-radius:10px!important;overflow:hidden!important';
+
+    /* Init counter */
+    doSearch();
+    searchInjected=true;
+  }
+
+  /* Watch for modal open */
+  var modal=document.querySelector('#exampleModal');
+  if(modal){
+    var observer=new MutationObserver(function(mutations){
+      mutations.forEach(function(m){
+        if(m.attributeName==='style'||m.attributeName==='class'){
+          var isVisible=modal.classList.contains('show')||
+                        modal.style.display==='block'||
+                        getComputedStyle(modal).display!=='none';
+          if(isVisible&&!searchInjected){
+            setTimeout(injectSearch,200);
+          }
+          if(!isVisible) searchInjected=false;
+        }
+      });
+    });
+    observer.observe(modal,{attributes:true});
+
+    /* Also hook the button click */
+    var importBtn=document.getElementById('importinv');
+    if(importBtn){
+      importBtn.addEventListener('click',function(){
+        searchInjected=false;
+        setTimeout(injectSearch,500);
+      });
+    }
+  }
+})();
+
 })();
