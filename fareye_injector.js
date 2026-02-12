@@ -231,61 +231,6 @@ javascript:(function(){
     return tagsAfter > tagsBefore;
   }
 
-  // ─── تنبيه صغير تحت + كشف لمس الخانة ───
-  function showTouchBanner(input) {
-    return new Promise(function(resolve) {
-      var resolved = false;
-      var selector = getSelector();
-      var antSelect = input.closest('.ant-select');
-
-      // تنبيه صغير تحت
-      var alert = document.createElement('div');
-      alert.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;z-index:99999999;background:linear-gradient(135deg,#4c1d95,#6d28d9);color:white;padding:14px 28px;border-radius:16px;font-family:Segoe UI,sans-serif;direction:rtl;display:flex;align-items:center;gap:10px;box-shadow:0 10px 40px rgba(124,58,237,0.4);transition:all 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
-      alert.innerHTML = '<span style="font-size:22px;animation:feyBlink 0.8s infinite">👆</span><span style="font-weight:700;font-size:14px">المس خانة Reference Number</span><span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:8px;font-size:12px;font-weight:800">' + state.orders.length + ' طلب</span>';
-      document.body.appendChild(alert);
-      requestAnimationFrame(function(){alert.style.opacity='1';alert.style.transform='translateX(-50%) translateY(0)';});
-
-      function done() {
-        if (resolved) return;
-        resolved = true;
-        clearInterval(pollTimer);
-        if (observer) observer.disconnect();
-        input.removeEventListener('focus', onTouch);
-        if (selector) selector.removeEventListener('mousedown', onTouch, true);
-        if (antSelect) antSelect.removeEventListener('click', onTouch, true);
-        // اختفاء
-        alert.style.opacity='0';alert.style.transform='translateX(-50%) translateY(20px)';
-        setTimeout(function(){alert.remove()},400);
-        resolve(true);
-      }
-
-      // 1. Polling
-      var pollTimer = setInterval(function() {
-        if (document.activeElement === input || input.getAttribute('aria-expanded') === 'true') done();
-      }, 150);
-
-      // 2. MutationObserver
-      var observer = null;
-      try {
-        observer = new MutationObserver(function() {
-          if (input.getAttribute('aria-expanded') === 'true') done();
-        });
-        observer.observe(input, { attributes: true, attributeFilter: ['aria-expanded'] });
-      } catch(e) {}
-
-      // 3. Events
-      function onTouch() { setTimeout(done, 200); }
-      input.addEventListener('focus', onTouch);
-      if (selector) selector.addEventListener('mousedown', onTouch, true);
-      if (antSelect) antSelect.addEventListener('click', onTouch, true);
-
-      // Timeout 60 ثانية
-      setTimeout(function() {
-        if (!resolved) { resolved = true; clearInterval(pollTimer); if(observer)observer.disconnect(); alert.remove(); resolve(false); }
-      }, 60000);
-    });
-  }
-
   // ─── Events ───
   panel.addEventListener('click',function(e){if(panel.classList.contains('fey-min')){panel.classList.remove('fey-min');e.stopPropagation();}});
   document.getElementById('fey_close').addEventListener('click',function(e){e.stopPropagation();panel.style.animation='feySlideIn 0.3s reverse';setTimeout(function(){panel.remove()},280);});
@@ -319,23 +264,10 @@ javascript:(function(){
       return;
     }
 
-    // ═══ بانر "المس الخانة" — يختفي تلقائي لما تلمسها ═══
-    startBtn.innerHTML = '👆 المس الخانة...';
+    // ═══ بدء الرفع مباشرة ═══
     startBtn.disabled = true;
     startBtn.style.opacity = '0.8';
-
-    var touched = await showTouchBanner(input);
-    if (!touched) {
-      startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
-      startBtn.innerHTML = '📤 رفع الطلبات (' + state.orders.length + ' طلب)';
-      return;
-    }
-
-    await wait(300);
-
-    // ═══ بدء الرفع ═══
     setSt('🚀 جاري الرفع...', 'working');
-    showToast('جاري الرفع!', 'success');
 
     state.isRunning = true;
     state.injectedCount = 0;
