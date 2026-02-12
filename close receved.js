@@ -7,6 +7,8 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v3';
+  const VERSION = '3.1';
+  const VER_KEY = 'munhi_ver';
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
     return;
@@ -51,6 +53,9 @@ javascript:(function(){
       setTimeout(() => toast.remove(), 300);
     }, 3500);
   }
+
+  // ─── Update Check ───
+  try{const lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(()=>showToast('تم تلقي تحديث جديد 🎉 → v'+VERSION,'success'),1000);}}catch(e){}
 
   // ─── Dialog System ───
   function showDialog({ icon, iconColor, title, desc, info, buttons, body }) {
