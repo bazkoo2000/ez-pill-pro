@@ -476,7 +476,8 @@ javascript:(function(){
       <div style="margin-bottom:16px">
         <div style="position:relative;margin-bottom:8px">
           <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🧾</span>
-          <input type="text" id="ali_sI" placeholder="بحث برقم الفاتورة..." style="width:100%;padding:12px 42px 12px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:'Tajawal',sans-serif;outline:none;background:#fafbfc;color:#1e293b;direction:rtl;transition:all 0.25s">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:900;color:#cbd5e1;pointer-events:none;font-family:monospace;z-index:1">0</span>
+          <input type="text" id="ali_sI" placeholder="أدخل الأرقام بعد الـ 0..." style="width:100%;padding:12px 42px 12px 32px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:'Tajawal',monospace;outline:none;background:#fafbfc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700">
         </div>
         <div style="position:relative;margin-bottom:8px">
           <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🔗</span>
@@ -502,10 +503,10 @@ javascript:(function(){
     // Search
     const sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sC=document.getElementById('ali_search_count');
     function filterTbl(){
-      const v1=sI.value.trim().toLowerCase(),v2=sO.value.trim().toLowerCase();
+      const rawV1=sI.value.trim(),v1=rawV1!==''?('0'+rawV1).toLowerCase():'',v2=sO.value.trim().toLowerCase();
       tbody.innerHTML='';let shown=0;
       state.savedRows.forEach(r=>{
-        if((v1!==''&&r.id.toLowerCase().startsWith(v1))||(v2!==''&&r.onl.toLowerCase().includes(v2))||(v1===''&&v2==='')){tbody.appendChild(r.node);shown++}
+        if((v1!==''&&r.id.toLowerCase().startsWith(v1))||(v2!==''&&r.onl.toLowerCase().includes(v2))||(rawV1===''&&v2==='')){tbody.appendChild(r.node);shown++}
       });
       sC.innerText=`عرض ${shown} من ${state.savedRows.length} نتيجة`;
     }
