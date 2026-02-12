@@ -98,6 +98,24 @@ window.ezClosePost=function(){
   if(d) d.remove();
 };
 
+window.ezMinimizePost=function(){
+  var d=document.getElementById('ez-post-dialog');
+  if(d){
+    var body=d.querySelector('.ez-post-body');
+    var foot=d.querySelector('.ez-post-foot');
+    var btn=d.querySelector('.ez-post-min-btn');
+    if(body.style.display==='none'){
+      body.style.display='block';
+      if(foot) foot.style.display='block';
+      btn.innerHTML='−';
+    } else {
+      body.style.display='none';
+      if(foot) foot.style.display='none';
+      btn.innerHTML='+';
+    }
+  }
+};
+
 window.ezCloseDoses=function(){
   var d=document.getElementById('ez-doses-dialog');
   if(d) d.remove();
@@ -613,7 +631,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">×</button></div><div style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي (2)</button></div><div style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ PILL PRO · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي (2)</button></div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ PILL PRO · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -1218,15 +1236,6 @@ beautifyPage();
     var tb=modalBody.querySelector('table');
     if(!tb) return;
 
-    /* Find column indexes */
-    var ths=tb.querySelectorAll('th');
-    var invIdx=-1,erxIdx=-1;
-    for(var i=0;i<ths.length;i++){
-      var t=(ths[i].textContent||'').trim().toLowerCase();
-      if(t.indexOf('invoice')>-1) invIdx=i;
-      if(t.indexOf('erx')>-1) erxIdx=i;
-    }
-
     /* Build search UI */
     var box=document.createElement('div');
     box.className='ez-search-box';
@@ -1268,47 +1277,63 @@ beautifyPage();
       return Array.from(tb.querySelectorAll('tr')).slice(1);
     }
 
-    function getCellText(row,idx){
-      if(idx<0) return '';
-      var tds=row.querySelectorAll('td');
-      if(tds.length<=idx) return '';
-      return(tds[idx].innerText||tds[idx].textContent||'').trim();
+    function getRowAllText(row){
+      var txt=(row.innerText||row.textContent||'').trim();
+      /* Also grab onclick attributes from buttons */
+      var btns=row.querySelectorAll('button[onclick]');
+      for(var b=0;b<btns.length;b++){txt+=' '+(btns[b].getAttribute('onclick')||'');}
+      /* Also grab input values */
+      var inps=row.querySelectorAll('input,textarea,select');
+      for(var b=0;b<inps.length;b++){txt+=' '+(inps[b].value||'');}
+      return txt;
     }
 
     function doSearch(){
-      var invVal=(document.getElementById('ez-inv-search').value||'').trim().replace(/\D/g,'');
-      var erxVal=(document.getElementById('ez-erx-search').value||'').trim().replace(/[^a-zA-Z0-9\-]/g,'');
+      var invVal=(document.getElementById('ez-inv-search').value||'').trim();
+      var erxVal=(document.getElementById('ez-erx-search').value||'').trim();
+      /* Strip non-digits for invoice search */
+      var invDigits=invVal.replace(/\D/g,'');
       var rows=getAllRows();
       var matched=[];
       var unmatched=[];
-      var hasSearch=invVal.length>0||erxVal.length>0;
+      var hasSearch=invDigits.length>0||erxVal.length>0;
 
       /* Update ghost visibility */
       var invGhost=document.getElementById('ez-inv-ghost');
       var erxGhost=document.getElementById('ez-erx-ghost');
-      if(invGhost) invGhost.style.display=invVal.length>0?'none':'block';
+      if(invGhost) invGhost.style.display=invDigits.length>0?'none':'block';
       if(erxGhost) erxGhost.style.display=erxVal.length>0?'none':'block';
 
       rows.forEach(function(r){
-        var invCell=getCellText(r,invIdx);
-        var erxCell=getCellText(r,erxIdx);
-        var invNum=invCell.replace(/\D/g,'');
-        var erxNum=erxCell.replace(/[^a-zA-Z0-9\-]/g,'').toUpperCase();
-        var erxDigits=erxNum.replace(/[^0-9]/g,'');
-
+        var allText=getRowAllText(r);
         var isMatch=true;
-        if(invVal.length>0){
-          if(invNum.indexOf(invVal)===-1) isMatch=false;
+
+        /* Invoice search: find any number containing the search digits */
+        if(invDigits.length>0){
+          if(allText.indexOf(invDigits)===-1) isMatch=false;
         }
+
+        /* ERX search: smart match */
         if(erxVal.length>0){
           var searchUpper=erxVal.toUpperCase();
-          var searchDigits=erxVal.replace(/[^0-9]/g,'');
-          /* Smart: match full ERX or just trailing digits */
-          var erxMatch=false;
-          if(erxNum.indexOf(searchUpper)>-1) erxMatch=true;
-          else if(searchDigits.length>0&&erxDigits.endsWith(searchDigits)) erxMatch=true;
-          else if(searchDigits.length>0&&erxDigits.indexOf(searchDigits)>-1) erxMatch=true;
-          if(!erxMatch) isMatch=false;
+          var allUpper=allText.toUpperCase();
+          var searchDigitsOnly=erxVal.replace(/[^0-9]/g,'');
+          var erxFound=false;
+          /* Direct text match */
+          if(allUpper.indexOf(searchUpper)>-1) erxFound=true;
+          /* Smart: user typed just digits - find in ERX numbers */
+          if(!erxFound&&searchDigitsOnly.length>0){
+            var erxMatches=allUpper.match(/ERX-(\d+)/g);
+            if(erxMatches){
+              for(var e=0;e<erxMatches.length;e++){
+                var erxD=erxMatches[e].replace(/[^0-9]/g,'');
+                if(erxD.indexOf(searchDigitsOnly)>-1||erxD.endsWith(searchDigitsOnly)){erxFound=true;break;}
+              }
+            }
+            /* Also try plain number match anywhere */
+            if(!erxFound&&allText.indexOf(searchDigitsOnly)>-1) erxFound=true;
+          }
+          if(!erxFound) isMatch=false;
         }
 
         if(!hasSearch||isMatch) matched.push(r);
@@ -1323,8 +1348,8 @@ beautifyPage();
           r.style.cssText='transition:all 0.3s!important';
         }
 
-        /* Protect current invoice - remove Import button */
-        if(currentInvoice&&invNum===currentInvoice){
+        /* Protect current invoice - disable Import button */
+        if(currentInvoice&&allText.indexOf(currentInvoice)>-1){
           var btns=r.querySelectorAll('button');
           btns.forEach(function(b){
             var bt=(b.innerText||'').toLowerCase();
