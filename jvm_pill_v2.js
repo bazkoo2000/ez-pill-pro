@@ -1038,26 +1038,23 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     }
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
-    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
-    /* ── JVM: Subtract 1 day from ALL End Dates (delayed to wait for system calculation) ── */
-    setTimeout(function(){
-      if(edi_main>=0){
-        var allR=tb_main.querySelectorAll('tr');
-        for(var ed_i=1;ed_i<allR.length;ed_i++){
-          var ed_tds=allR[ed_i].querySelectorAll('td');
-          if(ed_tds.length>edi_main){
-            var ed_inp=ed_tds[edi_main].querySelector('input');
-            var ed_val=ed_inp?ed_inp.value:ed_tds[edi_main].textContent.trim();
-            if(ed_val&&/\d{4}-\d{2}-\d{2}/.test(ed_val)){
-              var newEdVal=addDays(ed_val,-1);
-              if(ed_inp){ed_inp.value=newEdVal;fire(ed_inp);}
-              else{ed_tds[edi_main].textContent=newEdVal;}
-            }
+    /* ── JVM: Subtract 1 day from all End Dates ── */
+    if(edi_main>=0){
+      var allR=tb_main.querySelectorAll('tr');
+      for(var ed_i=1;ed_i<allR.length;ed_i++){
+        var ed_tds=allR[ed_i].querySelectorAll('td');
+        if(ed_tds.length>edi_main){
+          var ed_inp=ed_tds[edi_main].querySelector('input');
+          var ed_val=ed_inp?ed_inp.value:ed_tds[edi_main].textContent.trim();
+          if(ed_val&&/\d{4}-\d{2}-\d{2}/.test(ed_val)){
+            var newEdVal=addDays(ed_val,-1);
+            if(ed_inp){ed_inp.value=newEdVal;fire(ed_inp);}
+            else{ed_tds[edi_main].textContent=newEdVal;}
           }
         }
       }
-      checkEndDateConsistency();
-    },1500);
+    }
+    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
     if(genBtn){genBtn.className='ez-gen-csv-btn';var bdg=document.createElement('span');bdg.className='unique-count-badge';bdg.innerHTML='📦 عدد الأصناف: '+uc;genBtn.parentNode.insertBefore(bdg,genBtn.nextSibling);}
     beautifyPage();
@@ -1065,6 +1062,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡','info');
     if(showPostDialog)showPostProcessDialog();
+    checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
   }
 }
