@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '1.9';
+  var VERSION = '2.0';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -65,7 +65,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.9</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v2.0</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -341,6 +341,145 @@ javascript:(function(){
     requestAnimationFrame(function(){banner.style.opacity='1';banner.style.transform='translate(-50%,-50%) scale(1)';});
     setTimeout(function(){banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';setTimeout(function(){banner.remove()},400);}, 3000);
     setSt(state.injectedCount + '✅ / ' + state.failedCount + '❌', 'done');
+
+    // ═══ سؤال Allocate بعد 3.5 ثانية (بعد ما البانر يختفي) ═══
+    await wait(3500);
+
+    var allocRes = await showDialog({
+      icon:'📦', iconColor:'blue', title:'Allocate الطلبات؟',
+      desc:'هل تريد تعليم طلبات Allocation وعمل Allocate تلقائي؟',
+      buttons:[
+        {text:'لا، شكراً',value:'no'},
+        {text:'📦 Allocate',value:'yes',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;box-shadow:0 4px 12px rgba(37,99,235,0.3)'}
+      ]
+    });
+
+    if (allocRes === 'yes') {
+      await runAllocate();
+    }
   });
+
+  // ═══════════════════════════════════════════════════════════════
+  //  📦 Allocate — تعليم صفوف Allocation + ضغط Allocate
+  // ═══════════════════════════════════════════════════════════════
+
+  async function runAllocate() {
+    setSt('📦 جاري البحث عن طلبات Allocation...', 'working');
+    addLog('', 'info');
+    addLog('═══ بدء Allocate ═══', 'info');
+
+    // 1. إيجاد عمود Current Flow
+    var headers = document.querySelectorAll('th .ant-table-column-title, th span');
+    var flowColIndex = -1;
+    for (var h = 0; h < headers.length; h++) {
+      if (headers[h].textContent.trim() === 'Current Flow') {
+        // نحسب index العمود
+        var th = headers[h].closest('th');
+        if (th && th.parentElement) {
+          var cells = th.parentElement.children;
+          for (var ci = 0; ci < cells.length; ci++) {
+            if (cells[ci] === th) { flowColIndex = ci; break; }
+          }
+        }
+        break;
+      }
+    }
+
+    if (flowColIndex === -1) {
+      addLog('❌ لم يتم العثور على عمود Current Flow', 'err');
+      showToast('لم يتم العثور على عمود Current Flow', 'error');
+      setSt('❌ عمود Current Flow غير موجود', 'error');
+      return;
+    }
+
+    addLog('📍 عمود Current Flow: index=' + flowColIndex, 'debug');
+
+    // 2. فحص كل صف
+    var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]');
+    var checkedCount = 0;
+    var skippedCount = 0;
+
+    addLog('📋 إجمالي الصفوف: ' + rows.length, 'info');
+
+    for (var r = 0; r < rows.length; r++) {
+      var cells = rows[r].querySelectorAll('td');
+      if (flowColIndex >= cells.length) continue;
+
+      var flowText = cells[flowColIndex].textContent.trim();
+
+      if (flowText === 'Allocation') {
+        // تعليم الـ checkbox
+        var checkbox = rows[r].querySelector('input[type="checkbox"], .ant-checkbox-input, .ant-checkbox');
+        if (checkbox) {
+          if (checkbox.tagName === 'INPUT' && !checkbox.checked) {
+            checkbox.click();
+            checkedCount++;
+          } else if (!checkbox.classList.contains('ant-checkbox-checked')) {
+            // لو هو wrapper مش input
+            var cbInput = checkbox.querySelector('input') || checkbox;
+            cbInput.click();
+            checkedCount++;
+          } else {
+            // بالفعل متعلّم
+            checkedCount++;
+          }
+          addLog('  ✅ صف ' + (r+1) + ': ' + flowText + ' — تم التعليم', 'ok');
+        } else {
+          addLog('  ⚠️ صف ' + (r+1) + ': Allocation لكن لا يوجد checkbox', 'warn');
+        }
+        await wait(50);
+      } else {
+        skippedCount++;
+        addLog('  ⏭️ صف ' + (r+1) + ': ' + flowText + ' — تم التجاهل', 'info');
+      }
+    }
+
+    addLog('', 'info');
+    addLog('✅ تم تعليم: ' + checkedCount + ' | تجاهل: ' + skippedCount, checkedCount > 0 ? 'ok' : 'warn');
+
+    if (checkedCount === 0) {
+      showToast('لا يوجد طلبات Allocation!', 'warning');
+      setSt('⚠️ لا يوجد طلبات Allocation', 'error');
+      return;
+    }
+
+    showToast('تم تعليم ' + checkedCount + ' طلب', 'success');
+    setSt('📦 تم التعليم — جاري الضغط على Allocate...', 'working');
+    await wait(500);
+
+    // 3. البحث عن زر Allocate والضغط عليه
+    var allocateBtn = null;
+    var allBtns = document.querySelectorAll('button, span, a');
+    for (var b = 0; b < allBtns.length; b++) {
+      var btnText = allBtns[b].textContent.trim();
+      if (btnText === 'Allocate') {
+        allocateBtn = allBtns[b];
+        break;
+      }
+    }
+
+    if (!allocateBtn) {
+      // ممكن يكون جوا dropdown أو قائمة — ننتظر شوية
+      await wait(1000);
+      allBtns = document.querySelectorAll('button, span, a, li, div[role="menuitem"]');
+      for (var b2 = 0; b2 < allBtns.length; b2++) {
+        if (allBtns[b2].textContent.trim() === 'Allocate') {
+          allocateBtn = allBtns[b2];
+          break;
+        }
+      }
+    }
+
+    if (allocateBtn) {
+      allocateBtn.click();
+      addLog('✅ تم الضغط على زر Allocate!', 'ok');
+      showToast('✅ تم عمل Allocate!', 'success');
+      setSt('🎉 تم Allocate ' + checkedCount + ' طلب بنجاح', 'done');
+    } else {
+      addLog('❌ لم يتم العثور على زر Allocate', 'err');
+      showToast('زر Allocate غير موجود!', 'error');
+      setSt('⚠️ تم التعليم — اضغط Allocate يدوياً', 'error');
+    }
+  }
 
 })();
