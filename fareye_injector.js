@@ -1,516 +1,306 @@
 javascript:(function(){
   'use strict';
 
-  // ═══════════════════════════════════════════════════════════════════
-  // FAREYE Order Injector v1.1
-  // المطور: علي الباز
-  // ═══════════════════════════════════════════════════════════════════
-
   var PANEL_ID = 'fareye_injector';
-  if (document.getElementById(PANEL_ID)) {
-    document.getElementById(PANEL_ID).remove();
-    return;
-  }
+  if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
-  var state = {
-    orders: [],
-    injectedCount: 0,
-    failedCount: 0,
-    isRunning: false,
-    currentIndex: 0,
-    delayMs: 800
-  };
+  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:1000 };
 
-  // ═══════════════════════════════════════════
-  //  Toast
-  // ═══════════════════════════════════════════
+  // ─── Toast ───
   function showToast(msg, type) {
     type = type || 'info';
     var box = document.getElementById('fareye-toast-box');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'fareye-toast-box';
-      box.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center';
-      document.body.appendChild(box);
-    }
-    var colors = { success:'#059669', error:'#dc2626', warning:'#d97706', info:'#1e293b' };
-    var icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+    if (!box) { box = document.createElement('div'); box.id = 'fareye-toast-box'; box.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center'; document.body.appendChild(box); }
+    var colors = {success:'#059669',error:'#dc2626',warning:'#d97706',info:'#1e293b'};
+    var icons = {success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
     var t = document.createElement('div');
-    t.style.cssText = 'background:' + colors[type] + ';color:white;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:600;font-family:Segoe UI,Roboto,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:flex;align-items:center;gap:8px;direction:rtl;animation:feyToastIn 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
-    t.innerHTML = '<span>' + icons[type] + '</span> ' + msg;
+    t.style.cssText = 'background:'+colors[type]+';color:white;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:600;font-family:Segoe UI,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:flex;align-items:center;gap:8px;direction:rtl;animation:feyToastIn 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
+    t.innerHTML = '<span>'+icons[type]+'</span> '+msg;
     box.appendChild(t);
-    setTimeout(function() {
-      t.style.transition = 'all 0.3s'; t.style.opacity = '0';
-      setTimeout(function() { t.remove(); }, 300);
-    }, 3500);
+    setTimeout(function(){t.style.transition='all 0.3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},3500);
   }
 
-  // ═══════════════════════════════════════════
-  //  Dialog
-  // ═══════════════════════════════════════════
-  function showDialog(opts) {
+  // ─── Dialog ───
+  function showDialog(o) {
     return new Promise(function(resolve) {
       var ov = document.createElement('div');
       ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:feyFadeIn 0.25s';
-      var iconBg = { blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)', green:'linear-gradient(135deg,#dcfce7,#bbf7d0)', amber:'linear-gradient(135deg,#fef3c7,#fde68a)', red:'linear-gradient(135deg,#fee2e2,#fecaca)', purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)' };
-      var infoHTML = '';
-      if (opts.info) {
-        for (var i = 0; i < opts.info.length; i++) {
-          var r = opts.info[i];
-          infoHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">' + r.label + '</span><span style="font-weight:800;color:' + (r.color || '#1e293b') + ';font-size:12px">' + r.value + '</span></div>';
-        }
-      }
-      var btnsHTML = '';
-      if (opts.buttons) {
-        for (var j = 0; j < opts.buttons.length; j++) {
-          btnsHTML += '<button data-idx="' + j + '" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;' + (opts.buttons[j].style || 'background:#f1f5f9;color:#475569') + ';transition:all 0.2s">' + opts.buttons[j].text + '</button>';
-        }
-      }
-      ov.innerHTML =
-        '<div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">' +
-          '<div style="padding:24px 24px 0;text-align:center">' +
-            '<div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:' + (iconBg[opts.iconColor] || iconBg.blue) + '">' + opts.icon + '</div>' +
-            '<div style="font-size:20px;font-weight:900;margin-bottom:6px">' + opts.title + '</div>' +
-            '<div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">' + opts.desc + '</div>' +
-          '</div>' +
-          '<div style="padding:20px 24px">' + infoHTML + (opts.body || '') + '</div>' +
-          '<div style="padding:16px 24px 24px;display:flex;gap:10px">' + btnsHTML + '</div>' +
-        '</div>';
-      ov.addEventListener('click', function(e) {
-        var b = e.target.closest('[data-idx]');
-        if (b) { ov.remove(); resolve(opts.buttons[parseInt(b.getAttribute('data-idx'))].value); }
-      });
+      var ibg = {blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',amber:'linear-gradient(135deg,#fef3c7,#fde68a)',red:'linear-gradient(135deg,#fee2e2,#fecaca)',purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)'};
+      var ih='',bh='';
+      if(o.info)for(var i=0;i<o.info.length;i++){var r=o.info[i];ih+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">'+r.label+'</span><span style="font-weight:800;color:'+(r.color||'#1e293b')+';font-size:12px">'+r.value+'</span></div>';}
+      if(o.buttons)for(var j=0;j<o.buttons.length;j++)bh+='<button data-idx="'+j+'" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;'+(o.buttons[j].style||'background:#f1f5f9;color:#475569')+';transition:all 0.2s">'+o.buttons[j].text+'</button>';
+      ov.innerHTML='<div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px">'+bh+'</div></div>';
+      ov.addEventListener('click',function(e){var b=e.target.closest('[data-idx]');if(b){ov.remove();resolve(o.buttons[parseInt(b.getAttribute('data-idx'))].value);}});
       document.body.appendChild(ov);
     });
   }
 
-  // ═══════════════════════════════════════════
-  //  CSS
-  // ═══════════════════════════════════════════
+  // ─── CSS ───
   var css = document.createElement('style');
   css.innerHTML =
-    '@keyframes feySlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}' +
-    '@keyframes feyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}' +
-    '@keyframes feySpin{to{transform:rotate(360deg)}}' +
-    '@keyframes feyFadeIn{from{opacity:0}to{opacity:1}}' +
-    '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}' +
-    '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}' +
-    '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}' +
-    '#' + PANEL_ID + '{position:fixed;top:3%;left:2%;width:380px;max-height:92vh;background:#ffffff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}' +
-    '#' + PANEL_ID + '.fey-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}' +
-    '#' + PANEL_ID + '.fey-minimized .fey-inner{display:none!important}' +
-    '#' + PANEL_ID + '.fey-minimized::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
+    '@keyframes feySlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}'+
+    '@keyframes feyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}'+
+    '@keyframes feySpin{to{transform:rotate(360deg)}}'+
+    '@keyframes feyFadeIn{from{opacity:0}to{opacity:1}}'+
+    '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}'+
+    '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}'+
+    '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}'+
+    '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:380px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
+    '#'+PANEL_ID+'.fey-min{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}'+
+    '#'+PANEL_ID+'.fey-min .fey-inner{display:none!important}'+
+    '#'+PANEL_ID+'.fey-min::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
   document.head.appendChild(css);
 
-  // ═══════════════════════════════════════════
-  //  Panel
-  // ═══════════════════════════════════════════
+  // ─── Panel ───
   var panel = document.createElement('div');
   panel.id = PANEL_ID;
   panel.innerHTML =
-    '<div class="fey-inner">' +
-      '<div style="background:linear-gradient(135deg,#4c1d95,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden">' +
-        '<div style="position:absolute;top:-50%;left:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">' +
-          '<div style="display:flex;gap:6px">' +
-            '<span id="fey_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer">−</span>' +
-            '<span id="fey_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>' +
-          '</div>' +
-          '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">FAREYE</h3>' +
-        '</div>' +
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.1</span>' +
-        '</div>' +
-      '</div>' +
-      '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">' +
-        // Stats
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">' +
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div><div style="font-size:18px;margin-bottom:4px">📋</div><div id="fey_stat_total" style="font-size:22px;font-weight:900;color:#8b5cf6;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">إجمالي</div></div>' +
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_stat_done" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>' +
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_stat_fail" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>' +
-        '</div>' +
-        '<div id="fey_main_body">' +
-          // Upload
-          '<div id="fey_upload_area" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">' +
-            '<div style="font-size:40px;margin-bottom:8px">📂</div>' +
-            '<div style="font-size:15px;font-weight:800;color:#6d28d9;margin-bottom:4px">اضغط لرفع ملف الطلبات</div>' +
-            '<div style="font-size:12px;color:#a78bfa;font-weight:600">ملف .txt من منهي الطلبات (أرقام ERX)</div>' +
-            '<input type="file" id="fey_file_input" accept=".txt,.csv" multiple style="display:none">' +
-          '</div>' +
-          '<div style="text-align:center;color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:12px">— أو أدخل الأرقام يدوياً —</div>' +
-          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات هنا (سطر لكل رقم)...\nERX2847555\nERX2847556" style="width:100%;height:80px;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;transition:all 0.25s;box-sizing:border-box;line-height:1.6"></textarea>' +
-          // Status
-          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز — ارفع ملف أو أدخل الأرقام</span></div>' +
-          // Speed
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">' +
-            '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير بين كل طلب:</span>' +
-            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="400" max="3000" value="1000" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_label" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.0s</span></div>' +
-          '</div>' +
-          // Start
-          '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>' +
-        '</div>' +
-        // Progress
-        '<div id="fey_progress_wrap" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_progress_text" style="font-size:12px;font-weight:800;color:#8b5cf6">0 / 0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_progress_fill" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>' +
-        // Log
-        '<div id="fey_log_wrap" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:150px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل العمليات:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>' +
-        '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>' +
-      '</div>' +
+    '<div class="fey-inner">'+
+      '<div style="background:linear-gradient(135deg,#4c1d95,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden">'+
+        '<div style="position:absolute;top:-50%;left:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">'+
+          '<div style="display:flex;gap:6px">'+
+            '<span id="fey_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer">−</span>'+
+            '<span id="fey_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>'+
+          '</div>'+
+          '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
+        '</div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.2</span></div>'+
+      '</div>'+
+      '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
+          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div><div style="font-size:18px;margin-bottom:4px">📋</div><div id="fey_s_t" style="font-size:22px;font-weight:900;color:#8b5cf6;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">إجمالي</div></div>'+
+          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_s_d" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>'+
+          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
+        '</div>'+
+        '<div id="fey_main">'+
+          '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
+            '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
+            '<div style="font-size:15px;font-weight:800;color:#6d28d9;margin-bottom:4px">اضغط لرفع ملف الطلبات</div>'+
+            '<div style="font-size:12px;color:#a78bfa;font-weight:600">ملف .txt من منهي الطلبات (أرقام ERX)</div>'+
+            '<input type="file" id="fey_file" accept=".txt,.csv" multiple style="display:none">'+
+          '</div>'+
+          '<div style="text-align:center;color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:12px">— أو أدخل الأرقام يدوياً —</div>'+
+          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات هنا (سطر لكل رقم)..." style="width:100%;height:80px;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>'+
+          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز — ارفع ملف أو أدخل الأرقام</span></div>'+
+          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'+
+            '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير:</span>'+
+            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="500" max="3000" value="1000" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.0s</span></div>'+
+          '</div>'+
+          '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>'+
+        '</div>'+
+        '<div id="fey_pw" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_pt" style="font-size:12px;font-weight:800;color:#8b5cf6">0/0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_pf" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>'+
+        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:150px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
+        '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>'+
+      '</div>'+
     '</div>';
   document.body.appendChild(panel);
 
-  // ═══════════════════════════════════════════
-  //  Helpers
-  // ═══════════════════════════════════════════
-  function animNum(id, val) {
-    var el = document.getElementById(id);
-    if (!el || el.innerText === String(val)) return;
-    requestAnimationFrame(function() {
-      el.innerText = val;
-      el.style.animation = 'feyCountUp 0.4s';
-      setTimeout(function() { el.style.animation = ''; }, 400);
-    });
-  }
-
-  function updateStats() {
-    animNum('fey_stat_total', state.orders.length);
-    animNum('fey_stat_done', state.injectedCount);
-    animNum('fey_stat_fail', state.failedCount);
-  }
-
-  function setStatus(text, type) {
-    var el = document.getElementById('fey_status');
-    if (!el) return;
-    var configs = {
-      ready:   { bg:'#f0fdf4', color:'#15803d', border:'#bbf7d0', icon:'✅' },
-      working: { bg:'#f5f3ff', color:'#6d28d9', border:'#ddd6fe', icon:'spinner' },
-      error:   { bg:'#fef2f2', color:'#dc2626', border:'#fecaca', icon:'❌' },
-      done:    { bg:'#f0fdf4', color:'#15803d', border:'#bbf7d0', icon:'🎉' },
-      loaded:  { bg:'#f5f3ff', color:'#6d28d9', border:'#ddd6fe', icon:'📋' }
-    };
-    var c = configs[type] || configs.ready;
-    var iconHTML = c.icon === 'spinner'
-      ? '<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>'
-      : '<span>' + c.icon + '</span>';
-    el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.border;
-    el.innerHTML = iconHTML + '<span>' + text + '</span>';
-  }
-
-  function addLog(text, type) {
-    var log = document.getElementById('fey_log');
-    if (!log) return;
-    var colors = { ok:'#34d399', err:'#f87171', info:'#94a3b8', warn:'#fbbf24' };
-    var line = document.createElement('div');
-    line.innerHTML = '<span style="color:' + (colors[type] || colors.info) + '">' + text + '</span>';
-    log.appendChild(line);
-    log.parentElement.scrollTop = log.parentElement.scrollHeight;
-  }
-
-  function parseOrders(text) {
-    return text.split(/[\n\r]+/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
-  }
-
-  function wait(ms) {
-    return new Promise(function(resolve) { setTimeout(resolve, ms); });
-  }
+  // ─── Helpers ───
+  function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
+  function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
+  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
+  function addLog(t,type){var l=document.getElementById('fey_log');if(!l)return;var co={ok:'#34d399',err:'#f87171',info:'#94a3b8',warn:'#fbbf24'};var d=document.createElement('div');d.innerHTML='<span style="color:'+(co[type]||co.info)+'">'+t+'</span>';l.appendChild(d);l.parentElement.scrollTop=l.parentElement.scrollHeight;}
+  function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
+  function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
   // ═══════════════════════════════════════════
-  //  Ant Design Select — الحقن الصحيح
+  //  Ant Design Select — الحقن
   // ═══════════════════════════════════════════
   //
-  // Ant Design Select (mode=tags/multiple) يشتغل بـ React:
-  //   1. لازم نفتح الـ select أول (click على الـ container)
-  //   2. نكتب في الـ input بطريقة React (nativeInputValueSetter)
-  //   3. ننتظر الـ dropdown يظهر
-  //   4. نضغط Enter عشان يضيف الـ tag
-  //   5. ننتظر الـ tag يتضاف
+  //  الـ HTML:
+  //  .ant-select-selection-overflow
+  //    .ant-select-selection-overflow-item  ← هنا الـ tags اللي اتضافت
+  //    .ant-select-selection-overflow-item (suffix)
+  //      .ant-select-selection-search
+  //        input#rc_select_1 (role=combobox)
+  //
+  //  الخطوات:
+  //  1. Click على الـ overflow container عشان يفتح الـ dropdown
+  //  2. Focus الـ input
+  //  3. كتابة الرقم بـ React nativeInputValueSetter + input event
+  //  4. Enter keydown عشان يضيف كـ tag
+  //  5. عدّ الـ tags قبل وبعد للتأكد
   //
 
-  function findSelectContainer() {
-    // البحث عن الـ ant-select container الأب
-    var input = document.getElementById('rc_select_1');
-    if (!input) input = document.querySelector('.ant-select-selection-search-input[role="combobox"]');
-    if (!input) input = document.querySelector('.ant-select-selection-search-input');
-    if (!input) return null;
+  var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
-    // الوصول للـ container الكبير
-    var container = input.closest('.ant-select') || input.closest('.ant-select-selector') || input.parentElement.parentElement.parentElement;
-    return { input: input, container: container };
+  function getInput() {
+    return document.getElementById('rc_select_1')
+      || document.querySelector('.ant-select-selection-search-input[role="combobox"]')
+      || document.querySelector('input.ant-select-selection-search-input');
   }
 
-  // طريقة React لتغيير قيمة الـ input
-  var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-
-  function reactSetValue(input, value) {
-    nativeInputValueSetter.call(input, value);
-    // React يسمع على 'input' event في bubble phase
-    input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+  function getOverflow() {
+    return document.querySelector('.ant-select-selection-overflow');
   }
 
-  function fireKeyDown(element, key, keyCode) {
-    element.dispatchEvent(new KeyboardEvent('keydown', {
-      key: key, code: key === 'Enter' ? 'Enter' : 'Key' + key.toUpperCase(),
-      keyCode: keyCode, which: keyCode,
-      bubbles: true, cancelable: true
+  function countTags() {
+    var items = document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)');
+    return items.length;
+  }
+
+  function reactInput(el, val) {
+    nativeSetter.call(el, val);
+    el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+  }
+
+  function fireKey(el, type, key, code) {
+    el.dispatchEvent(new KeyboardEvent(type, {
+      key: key, code: code || key, keyCode: key === 'Enter' ? 13 : 0,
+      which: key === 'Enter' ? 13 : 0, bubbles: true, cancelable: true
     }));
   }
 
-  function fireKeyUp(element, key, keyCode) {
-    element.dispatchEvent(new KeyboardEvent('keyup', {
-      key: key, code: key === 'Enter' ? 'Enter' : 'Key' + key.toUpperCase(),
-      keyCode: keyCode, which: keyCode,
-      bubbles: true, cancelable: true
-    }));
-  }
+  async function injectOne(orderNum) {
+    var input = getInput();
+    var overflow = getOverflow();
+    if (!input || !overflow) return false;
 
-  // محاكاة كتابة حرف حرف (أقرب للمستخدم الحقيقي)
-  async function typeIntoInput(input, text) {
-    // مسح أي قيمة قديمة
-    reactSetValue(input, '');
-    await wait(50);
-
-    // كتابة النص كله مرة واحدة بطريقة React
-    reactSetValue(input, text);
-    await wait(100);
-
-    // Trigger change
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    await wait(100);
-  }
-
-  async function injectSingleOrder(orderNum) {
-    var elements = findSelectContainer();
-    if (!elements) return false;
-
-    var input = elements.input;
-    var container = elements.container;
+    var tagsBefore = countTags();
 
     try {
-      // Step 1: فتح الـ Select (click على الـ selector)
-      var selector = container.querySelector('.ant-select-selector') || container;
-      selector.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-      await wait(100);
-      selector.click();
-      await wait(100);
+      // 1. Click لفتح الـ Select
+      overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+      overflow.click();
+      await wait(150);
 
-      // Step 2: Focus على الـ input
+      // 2. Focus
       input.focus();
       await wait(100);
 
-      // Step 3: كتابة الرقم بطريقة React
-      await typeIntoInput(input, orderNum);
-      await wait(200);
-
-      // Step 4: Enter — لإضافة الـ tag
-      fireKeyDown(input, 'Enter', 13);
+      // 3. مسح أي قيمة قديمة
+      reactInput(input, '');
       await wait(50);
-      input.dispatchEvent(new KeyboardEvent('keypress', {
-        key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
-        bubbles: true, cancelable: true
-      }));
-      await wait(50);
-      fireKeyUp(input, 'Enter', 13);
-      await wait(200);
 
-      // Step 5: مسح الـ input للطلب التالي
-      reactSetValue(input, '');
+      // 4. كتابة الرقم
+      reactInput(input, orderNum);
+      await wait(250);
+
+      // 5. Enter
+      fireKey(input, 'keydown', 'Enter', 'Enter');
+      await wait(100);
+      fireKey(input, 'keyup', 'Enter', 'Enter');
+      await wait(300);
+
+      // 6. مسح
+      reactInput(input, '');
       await wait(100);
 
-      // التحقق: هل اتضاف tag جديد؟
-      // (الـ tags بتكون في ant-select-selection-overflow-item)
-      return true;
+      // 7. تحقق — هل اتضاف tag جديد؟
+      var tagsAfter = countTags();
+      return tagsAfter > tagsBefore;
 
     } catch (e) {
-      console.error('FAREYE inject error:', e);
+      console.error('FAREYE:', e);
       return false;
     }
   }
 
-  // ═══════════════════════════════════════════
-  //  Events
-  // ═══════════════════════════════════════════
-  panel.addEventListener('click', function(e) {
-    if (panel.classList.contains('fey-minimized')) { panel.classList.remove('fey-minimized'); e.stopPropagation(); }
-  });
-  document.getElementById('fey_close').addEventListener('click', function(e) {
-    e.stopPropagation(); panel.style.animation = 'feySlideIn 0.3s reverse';
-    setTimeout(function() { panel.remove(); }, 280);
-  });
-  document.getElementById('fey_min').addEventListener('click', function(e) {
-    e.stopPropagation(); panel.classList.add('fey-minimized');
-  });
+  // ─── Events ───
+  panel.addEventListener('click',function(e){if(panel.classList.contains('fey-min')){panel.classList.remove('fey-min');e.stopPropagation();}});
+  document.getElementById('fey_close').addEventListener('click',function(e){e.stopPropagation();panel.style.animation='feySlideIn 0.3s reverse';setTimeout(function(){panel.remove()},280);});
+  document.getElementById('fey_min').addEventListener('click',function(e){e.stopPropagation();panel.classList.add('fey-min');});
 
-  // File Upload
-  var uploadArea = document.getElementById('fey_upload_area');
-  var fileInput = document.getElementById('fey_file_input');
-  var startBtn = document.getElementById('fey_start');
-  var manualInput = document.getElementById('fey_manual');
+  var uploadArea=document.getElementById('fey_upload');
+  var fileInput=document.getElementById('fey_file');
+  var startBtn=document.getElementById('fey_start');
+  var manualInput=document.getElementById('fey_manual');
 
-  uploadArea.addEventListener('click', function() { fileInput.click(); });
-  uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); this.style.borderColor = '#8b5cf6'; this.style.background = '#ede9fe'; });
-  uploadArea.addEventListener('dragleave', function() { this.style.borderColor = '#d8b4fe'; this.style.background = '#faf5ff'; });
-  uploadArea.addEventListener('drop', function(e) { e.preventDefault(); this.style.borderColor = '#d8b4fe'; this.style.background = '#faf5ff'; if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
-  fileInput.addEventListener('change', function() { if (this.files.length) handleFiles(this.files); });
+  uploadArea.addEventListener('click',function(){fileInput.click()});
+  uploadArea.addEventListener('dragover',function(e){e.preventDefault();this.style.borderColor='#8b5cf6';this.style.background='#ede9fe'});
+  uploadArea.addEventListener('dragleave',function(){this.style.borderColor='#d8b4fe';this.style.background='#faf5ff'});
+  uploadArea.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#d8b4fe';this.style.background='#faf5ff';if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
+  fileInput.addEventListener('change',function(){if(this.files.length)handleFiles(this.files)});
 
   function handleFiles(files) {
-    var allOrders = [];
-    var filesLoaded = 0;
-    var totalFiles = files.length;
-    for (var i = 0; i < files.length; i++) {
-      (function(file) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          allOrders = allOrders.concat(parseOrders(e.target.result));
-          filesLoaded++;
-          if (filesLoaded === totalFiles) {
-            var unique = []; var seen = {};
-            for (var j = 0; j < allOrders.length; j++) {
-              if (!seen[allOrders[j]]) { seen[allOrders[j]] = true; unique.push(allOrders[j]); }
-            }
-            state.orders = unique; state.injectedCount = 0; state.failedCount = 0; state.currentIndex = 0;
-            updateStats();
-            var dupes = allOrders.length - unique.length;
-            uploadArea.innerHTML = '<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل ' + totalFiles + (totalFiles === 1 ? ' ملف' : ' ملفات') + '</div><div style="font-size:13px;color:#10b981;font-weight:600">' + unique.length + ' طلب' + (dupes > 0 ? ' (تم حذف ' + dupes + ' مكرر)' : '') + '</div><div style="font-size:11px;color:#94a3b8;margin-top:6px">اضغط لتحميل ملفات إضافية</div>';
-            uploadArea.style.borderColor = '#34d399'; uploadArea.style.background = '#f0fdf4';
-            setStatus('تم تحميل ' + unique.length + ' طلب — جاهز للرفع', 'loaded');
-            showToast('تم تحميل ' + unique.length + ' طلب', 'success');
-            enableStart();
-          }
-        };
-        reader.readAsText(file);
-      })(files[i]);
-    }
+    var all=[],loaded=0,total=files.length;
+    for(var i=0;i<files.length;i++){(function(f){var r=new FileReader();r.onload=function(e){all=all.concat(parse(e.target.result));loaded++;if(loaded===total){var u=[],s={};for(var j=0;j<all.length;j++)if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt('تم تحميل '+u.length+' طلب — جاهز للرفع','loaded');showToast(u.length+' طلب جاهز','success');enableStart()}};r.readAsText(f)})(files[i])}
   }
 
-  manualInput.addEventListener('input', function() {
-    var orders = parseOrders(this.value);
-    if (orders.length > 0) {
-      state.orders = orders; state.injectedCount = 0; state.failedCount = 0; state.currentIndex = 0;
-      updateStats(); enableStart();
-    } else {
-      startBtn.disabled = true; startBtn.style.opacity = '0.5'; startBtn.style.cursor = 'not-allowed';
-      startBtn.innerHTML = '📤 رفع الطلبات (ارفع ملف أولاً)';
-    }
-  });
+  manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.style.cursor='not-allowed';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
 
-  function enableStart() {
-    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
-    startBtn.innerHTML = '📤 رفع الطلبات (' + state.orders.length + ' طلب)';
-  }
+  function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
 
-  // Speed
-  var speedSlider = document.getElementById('fey_speed');
-  var speedLabel = document.getElementById('fey_speed_label');
-  speedSlider.addEventListener('input', function() {
-    state.delayMs = parseInt(this.value);
-    speedLabel.innerText = (state.delayMs / 1000).toFixed(1) + 's';
-  });
+  document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
 
-  // ═══════════════════════════════════════════
-  //  Start
-  // ═══════════════════════════════════════════
+  // ─── Start ───
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
 
-    var elements = findSelectContainer();
-    if (!elements) {
-      await showDialog({
-        icon: '❌', iconColor: 'red',
-        title: 'لم يتم العثور على الحقل',
-        desc: 'تعذر العثور على خانة Reference Number — تأكد إنك في الصفحة الصحيحة وإن الخانة ظاهرة',
-        info: [
-          { label: 'الحقل المطلوب', value: 'Reference Number (Ant Select)', color: '#ef4444' },
-          { label: 'الحل', value: 'افتح صفحة FarEye واضغط على الخانة أولاً', color: '#3b82f6' }
-        ],
-        buttons: [{ text: '👍 حسناً', value: 'ok', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white' }]
-      });
+    var input = getInput();
+    if (!input) {
+      await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تعذر العثور على خانة Reference Number',
+        info:[{label:'الحقل',value:'rc_select_1',color:'#ef4444'},{label:'الحل',value:'اضغط على خانة Reference Number أولاً',color:'#3b82f6'}],
+        buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
       return;
     }
 
-    // تأكيد
-    var result = await showDialog({
-      icon: '📤', iconColor: 'purple',
-      title: 'رفع الطلبات',
-      desc: 'سيتم إدخال أرقام الطلبات في خانة Reference Number واحد واحد مع Enter بعد كل رقم',
-      info: [
-        { label: 'عدد الطلبات', value: state.orders.length + ' طلب', color: '#8b5cf6' },
-        { label: 'التأخير', value: (state.delayMs / 1000).toFixed(1) + ' ثانية/طلب', color: '#f59e0b' },
-        { label: 'الوقت المتوقع', value: '~' + Math.ceil(state.orders.length * state.delayMs / 1000) + ' ثانية', color: '#3b82f6' },
-        { label: 'الحقل', value: 'Reference Number ✅', color: '#10b981' }
+    var res = await showDialog({icon:'📤',iconColor:'purple',title:'رفع الطلبات',desc:'سيتم إدخال الأرقام في Reference Number واحد واحد',
+      info:[
+        {label:'عدد الطلبات',value:state.orders.length+' طلب',color:'#8b5cf6'},
+        {label:'التأخير',value:(state.delayMs/1000).toFixed(1)+' ثانية/طلب',color:'#f59e0b'},
+        {label:'الوقت المتوقع',value:'~'+Math.ceil(state.orders.length*state.delayMs/1000)+' ثانية',color:'#3b82f6'},
+        {label:'Tags حالياً',value:countTags()+' tag',color:'#10b981'}
       ],
-      buttons: [
-        { text: 'إلغاء', value: 'cancel' },
-        { text: '📤 بدء الرفع', value: 'confirm', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 12px rgba(124,58,237,0.3)' }
-      ]
-    });
-    if (result !== 'confirm') return;
+      buttons:[
+        {text:'إلغاء',value:'cancel'},
+        {text:'📤 بدء الرفع',value:'confirm',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 12px rgba(124,58,237,0.3)'}
+      ]});
+    if(res!=='confirm')return;
 
-    // بدء
-    state.isRunning = true; state.injectedCount = 0; state.failedCount = 0;
-    document.getElementById('fey_progress_wrap').style.display = 'block';
-    document.getElementById('fey_log_wrap').style.display = 'block';
-    document.getElementById('fey_log').innerHTML = '';
-    startBtn.disabled = true; startBtn.style.opacity = '0.6'; startBtn.style.cursor = 'not-allowed';
+    state.isRunning=true; state.injectedCount=0; state.failedCount=0;
+    document.getElementById('fey_pw').style.display='block';
+    document.getElementById('fey_lw').style.display='block';
+    document.getElementById('fey_log').innerHTML='';
+    startBtn.disabled=true; startBtn.style.opacity='0.6'; startBtn.style.cursor='not-allowed';
 
-    var progressFill = document.getElementById('fey_progress_fill');
-    var progressText = document.getElementById('fey_progress_text');
+    var pf=document.getElementById('fey_pf');
+    var pt=document.getElementById('fey_pt');
 
-    // عمل click أولي على الـ Select عشان يتفتح
-    addLog('🔓 فتح خانة Reference Number...', 'info');
-    var firstElements = findSelectContainer();
-    if (firstElements) {
-      var sel = firstElements.container.querySelector('.ant-select-selector') || firstElements.container;
-      sel.click();
-      firstElements.input.focus();
-      await wait(300);
-      addLog('✅ تم فتح الخانة', 'ok');
-    }
+    addLog('🔓 بدء الرفع — '+state.orders.length+' طلب','info');
+    addLog('Tags قبل البدء: '+countTags(),'info');
 
-    for (var i = 0; i < state.orders.length; i++) {
+    for(var i=0;i<state.orders.length;i++){
       var order = state.orders[i];
-      setStatus('رفع ' + (i + 1) + ' من ' + state.orders.length + ': ' + order, 'working');
-      progressFill.style.width = (((i + 1) / state.orders.length) * 100) + '%';
-      progressText.innerText = (i + 1) + ' / ' + state.orders.length;
-      startBtn.innerHTML = '📤 جاري الرفع (' + (i + 1) + '/' + state.orders.length + ')';
+      setSt('رفع '+(i+1)+' من '+state.orders.length+': '+order,'working');
+      pf.style.width=(((i+1)/state.orders.length)*100)+'%';
+      pt.innerText=(i+1)+' / '+state.orders.length;
+      startBtn.innerHTML='📤 جاري الرفع ('+(i+1)+'/'+state.orders.length+')';
 
-      var success = await injectSingleOrder(order);
+      var ok = await injectOne(order);
 
-      if (success) {
+      if(ok){
         state.injectedCount++;
-        addLog('✅ ' + order, 'ok');
+        addLog('✅ '+order+' — تم (tags: '+countTags()+')','ok');
       } else {
         state.failedCount++;
-        addLog('❌ ' + order + ' — فشل', 'err');
+        addLog('❌ '+order+' — فشل (tags: '+countTags()+')','err');
       }
-      updateStats();
+      upStats();
 
-      if (i < state.orders.length - 1) {
-        await wait(state.delayMs);
-      }
+      if(i<state.orders.length-1) await wait(state.delayMs);
     }
 
-    // انتهاء
-    state.isRunning = false;
-    progressFill.style.width = '100%';
-    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
-    startBtn.innerHTML = '🔄 إعادة الرفع (' + state.orders.length + ' طلب)';
+    state.isRunning=false;
+    pf.style.width='100%';
+    startBtn.disabled=false; startBtn.style.opacity='1'; startBtn.style.cursor='pointer';
+    startBtn.innerHTML='🔄 إعادة الرفع ('+state.orders.length+' طلب)';
 
-    addLog('', 'info');
-    addLog('═══ انتهى: ' + state.injectedCount + ' نجاح / ' + state.failedCount + ' فشل ═══', state.failedCount > 0 ? 'warn' : 'ok');
+    addLog('','info');
+    addLog('═══ انتهى: '+state.injectedCount+' نجاح / '+state.failedCount+' فشل — Tags: '+countTags()+' ═══',state.failedCount>0?'warn':'ok');
 
-    await showDialog({
-      icon: '🎉', iconColor: 'green',
-      title: 'تم الرفع!',
-      desc: 'تمت معالجة جميع الطلبات',
-      info: [
-        { label: 'تم رفعها', value: state.injectedCount + ' طلب', color: '#10b981' },
-        { label: 'فشلت', value: state.failedCount + ' طلب', color: state.failedCount > 0 ? '#ef4444' : '#10b981' },
-        { label: 'النسبة', value: Math.round((state.injectedCount / state.orders.length) * 100) + '%', color: '#8b5cf6' }
+    await showDialog({icon:'🎉',iconColor:'green',title:'تم الرفع!',desc:'تمت معالجة جميع الطلبات',
+      info:[
+        {label:'تم رفعها',value:state.injectedCount+' طلب',color:'#10b981'},
+        {label:'فشلت',value:state.failedCount+' طلب',color:state.failedCount>0?'#ef4444':'#10b981'},
+        {label:'Tags النهائية',value:countTags()+' tag',color:'#8b5cf6'},
+        {label:'النسبة',value:Math.round((state.injectedCount/state.orders.length)*100)+'%',color:'#8b5cf6'}
       ],
-      buttons: [{ text: '👍 إغلاق', value: 'ok', style: 'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white' }]
-    });
+      buttons:[{text:'👍 إغلاق',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
 
-    setStatus('تم الرفع — ' + state.injectedCount + ' نجاح / ' + state.failedCount + ' فشل', 'done');
-    showToast('تم رفع ' + state.injectedCount + ' طلب', state.failedCount > 0 ? 'warning' : 'success');
+    setSt('تم — '+state.injectedCount+' نجاح / '+state.failedCount+' فشل','done');
+    showToast('تم رفع '+state.injectedCount+' طلب',state.failedCount>0?'warning':'success');
   });
 
 })();
