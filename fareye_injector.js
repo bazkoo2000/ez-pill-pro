@@ -225,78 +225,57 @@ javascript:(function(){
     return tagsAfter > tagsBefore;
   }
 
-  // ─── بانر "المس الخانة" مع كشف اللمس تلقائي ───
+  // ─── تنبيه صغير تحت + كشف لمس الخانة ───
   function showTouchBanner(input) {
     return new Promise(function(resolve) {
       var resolved = false;
       var selector = getSelector();
       var antSelect = input.closest('.ant-select');
 
-      // إنشاء البانر
-      var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.4);backdrop-filter:blur(4px);z-index:99999998;animation:feyFadeIn 0.3s;cursor:pointer';
-      var banner = document.createElement('div');
-      banner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;z-index:99999999;background:white;border-radius:28px;padding:30px 50px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.25);font-family:Segoe UI,sans-serif;direction:rtl;transition:all 0.4s cubic-bezier(0.16,1,0.3,1)';
-      banner.innerHTML = '<div style="font-size:60px;margin-bottom:10px;animation:feyBlink 0.8s infinite">👆</div><div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">المس خانة Reference Number</div><div style="font-size:14px;color:#8b5cf6;font-weight:700">' + state.orders.length + ' طلب جاهز للرفع</div><div style="font-size:12px;color:#94a3b8;margin-top:10px;font-weight:600">سيبدأ الرفع تلقائياً بمجرد لمس الخانة</div>';
-      document.body.appendChild(overlay);
-      document.body.appendChild(banner);
-      requestAnimationFrame(function(){banner.style.opacity='1';banner.style.transform='translate(-50%,-50%) scale(1)';});
+      // تنبيه صغير تحت
+      var alert = document.createElement('div');
+      alert.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;z-index:99999999;background:linear-gradient(135deg,#4c1d95,#6d28d9);color:white;padding:14px 28px;border-radius:16px;font-family:Segoe UI,sans-serif;direction:rtl;display:flex;align-items:center;gap:10px;box-shadow:0 10px 40px rgba(124,58,237,0.4);transition:all 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
+      alert.innerHTML = '<span style="font-size:22px;animation:feyBlink 0.8s infinite">👆</span><span style="font-weight:700;font-size:14px">المس خانة Reference Number</span><span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:8px;font-size:12px;font-weight:800">' + state.orders.length + ' طلب</span>';
+      document.body.appendChild(alert);
+      requestAnimationFrame(function(){alert.style.opacity='1';alert.style.transform='translateX(-50%) translateY(0)';});
 
       function done() {
         if (resolved) return;
         resolved = true;
         clearInterval(pollTimer);
         if (observer) observer.disconnect();
-        // animation خروج
-        banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';
-        overlay.style.opacity='0';
-        setTimeout(function(){banner.remove();overlay.remove();},400);
+        input.removeEventListener('focus', onTouch);
+        if (selector) selector.removeEventListener('mousedown', onTouch, true);
+        if (antSelect) antSelect.removeEventListener('click', onTouch, true);
+        // اختفاء
+        alert.style.opacity='0';alert.style.transform='translateX(-50%) translateY(20px)';
+        setTimeout(function(){alert.remove()},400);
         resolve(true);
       }
 
-      // 1. Polling كل 150ms — الأكثر موثوقية
+      // 1. Polling
       var pollTimer = setInterval(function() {
-        if (document.activeElement === input || input.getAttribute('aria-expanded') === 'true') {
-          done();
-        }
+        if (document.activeElement === input || input.getAttribute('aria-expanded') === 'true') done();
       }, 150);
 
-      // 2. MutationObserver على aria-expanded
+      // 2. MutationObserver
       var observer = null;
       try {
-        observer = new MutationObserver(function(mutations) {
+        observer = new MutationObserver(function() {
           if (input.getAttribute('aria-expanded') === 'true') done();
         });
         observer.observe(input, { attributes: true, attributeFilter: ['aria-expanded'] });
       } catch(e) {}
 
-      // 3. Events مباشرة
+      // 3. Events
       function onTouch() { setTimeout(done, 200); }
       input.addEventListener('focus', onTouch);
       if (selector) selector.addEventListener('mousedown', onTouch, true);
       if (antSelect) antSelect.addEventListener('click', onTouch, true);
 
-      // 4. لو ضغط على الـ overlay = إلغاء
-      overlay.addEventListener('click', function() {
-        if (resolved) return;
-        resolved = true;
-        clearInterval(pollTimer);
-        if (observer) observer.disconnect();
-        banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';
-        overlay.style.opacity='0';
-        setTimeout(function(){banner.remove();overlay.remove();},400);
-        resolve(false);
-      });
-
       // Timeout 60 ثانية
       setTimeout(function() {
-        if (!resolved) {
-          resolved = true;
-          clearInterval(pollTimer);
-          if (observer) observer.disconnect();
-          banner.remove(); overlay.remove();
-          resolve(false);
-        }
+        if (!resolved) { resolved = true; clearInterval(pollTimer); if(observer)observer.disconnect(); alert.remove(); resolve(false); }
       }, 60000);
     });
   }
