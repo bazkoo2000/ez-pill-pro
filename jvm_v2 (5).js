@@ -1,11 +1,26 @@
 javascript:(function(){
-var APP_VERSION='2.0';
+var APP_VERSION='2.2';
 var APP_NAME='JVM Pill Pro';
 
 /* ══════════════════════════════════════════
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '2.2':{
+    title:'Remaining Fix Verified ✅',
+    features:[
+      {icon:'✅',text:'تأكيد إصلاح عمود Remaining بعد إنقاص يوم من تاريخ الانتهاء'},
+      {icon:'🔄',text:'النظام يطلق أحداث input/change/blur تلقائياً'},
+      {icon:'📊',text:'عمود Remaining يتحدث فوراً بعد تعديل التاريخ'}
+    ]
+  },
+  '2.1':{
+    title:'Fix Remaining Column 🔧',
+    features:[
+      {icon:'🐛',text:'إصلاح عمود Remaining بعد تعديل تاريخ الانتهاء (-1 يوم)'},
+      {icon:'⚡',text:'إطلاق أحداث input/change/blur بعد تغيير التاريخ'}
+    ]
+  },
   '2.0':{
     title:'JVM Pill Pro 🎉',
     features:[
@@ -1051,6 +1066,13 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     /* ── JVM: Subtract 1 day from every End Date ── */
     setTimeout(function(){
       try{
+        function fireEd(el){
+          if(!el)return;
+          el.focus();
+          el.dispatchEvent(new Event('input',{bubbles:true}));
+          el.dispatchEvent(new Event('change',{bubbles:true}));
+          el.dispatchEvent(new Event('blur',{bubbles:true}));
+        }
         var tables=document.querySelectorAll('table');
         var tbl=null;
         for(var t=0;t<tables.length;t++){
@@ -1076,8 +1098,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
           var d=new Date(dateVal);
           d.setDate(d.getDate()-1);
           var newDate=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-          if(input) input.value=newDate;
-          else cells[endCol].textContent=newDate;
+          if(input){input.value=newDate;fireEd(input);}
+          else{cells[endCol].textContent=newDate;}
           count++;
         }
         if(count>0) window.ezShowToast('تم تعديل '+count+' تاريخ انتهاء (-1 يوم)','info');
