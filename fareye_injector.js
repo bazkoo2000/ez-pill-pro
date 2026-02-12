@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '1.8';
+  var VERSION = '1.9';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -65,7 +65,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.8</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.9</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -264,9 +264,17 @@ javascript:(function(){
       return;
     }
 
-    // ═══ بدء الرفع مباشرة ═══
+    // ═══ عد تنازلي 5 ثواني في الـ Status ═══
     startBtn.disabled = true;
     startBtn.style.opacity = '0.8';
+    startBtn.innerHTML = '👆 المس الخانة...';
+
+    for (var sec = 5; sec > 0; sec--) {
+      setSt('👆 المس الخانة الآن! (' + sec + ')', 'waiting');
+      await wait(1000);
+    }
+
+    // ═══ بدء الرفع ═══
     setSt('🚀 جاري الرفع...', 'working');
 
     state.isRunning = true;
