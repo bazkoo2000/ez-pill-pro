@@ -2,13 +2,12 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '1.4';
+  var VERSION = '1.5';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
-  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:1200 };
+  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:1500 };
 
-  // ─── Toast ───
   function showToast(msg, type) {
     type = type || 'info';
     var box = document.getElementById('fareye-toast-box');
@@ -21,10 +20,8 @@ javascript:(function(){
     box.appendChild(t);
     setTimeout(function(){t.style.transition='all 0.3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},3500);
   }
-
   try{var lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(function(){showToast('تم تلقي تحديث جديد 🎉 → v'+VERSION,'success')},1000);}}catch(e){}
 
-  // ─── Dialog ───
   function showDialog(o) {
     return new Promise(function(resolve) {
       var ov = document.createElement('div');
@@ -39,7 +36,6 @@ javascript:(function(){
     });
   }
 
-  // ─── CSS ───
   var css = document.createElement('style');
   css.innerHTML =
     '@keyframes feySlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}'+
@@ -49,13 +45,12 @@ javascript:(function(){
     '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}'+
     '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}'+
     '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}'+
-    '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:390px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
+    '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:390px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s;animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
     '#'+PANEL_ID+'.fey-min{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}'+
     '#'+PANEL_ID+'.fey-min .fey-inner{display:none!important}'+
     '#'+PANEL_ID+'.fey-min::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
   document.head.appendChild(css);
 
-  // ─── Panel ───
   var panel = document.createElement('div');
   panel.id = PANEL_ID;
   panel.innerHTML =
@@ -69,7 +64,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v1.4</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v1.5</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -81,12 +76,12 @@ javascript:(function(){
           '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
             '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
             '<div style="font-size:15px;font-weight:800;color:#6d28d9;margin-bottom:4px">اضغط لرفع ملف الطلبات</div>'+
-            '<div style="font-size:12px;color:#a78bfa;font-weight:600">ملف .txt من منهي الطلبات (أرقام ERX)</div>'+
+            '<div style="font-size:12px;color:#a78bfa;font-weight:600">ملف .txt (أرقام ERX)</div>'+
             '<input type="file" id="fey_file" accept=".txt,.csv" multiple style="display:none">'+
           '</div>'+
-          '<div style="text-align:center;color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:12px">— أو أدخل الأرقام يدوياً —</div>'+
-          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات هنا (سطر لكل رقم)..." style="width:100%;height:80px;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>'+
-          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز — ارفع ملف أو أدخل الأرقام</span></div>'+
+          '<div style="text-align:center;color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:12px">— أو أدخل يدوياً —</div>'+
+          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات (سطر لكل رقم)..." style="width:100%;height:80px;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>'+
+          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز</span></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'+
             '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير:</span>'+
             '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="800" max="4000" value="1500" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">1.5s</span></div>'+
@@ -94,7 +89,7 @@ javascript:(function(){
           '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>'+
         '</div>'+
         '<div id="fey_pw" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_pt" style="font-size:12px;font-weight:800;color:#8b5cf6">0/0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_pf" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>'+
-        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:180px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل Debug:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
+        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:180px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 Debug Log:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
         '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>'+
       '</div>'+
     '</div>';
@@ -109,84 +104,16 @@ javascript:(function(){
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
   // ═══════════════════════════════════════════════════════════════
-  //  🔧 Ant Design Select — React Fiber Approach
+  //  🔑 Ant Design rc-select — Character-by-Character Typing
   // ═══════════════════════════════════════════════════════════════
   //
-  //  بدل ما نحاكي كتابة المستخدم (اللي Ant Select مش بيستجيب ليها)
-  //  هنروح مباشرة لـ React ونغير الـ state من جوا
+  //  المشكلة: rc-select الـ input controlled بالكامل من React
+  //  nativeSetter و execCommand ما بيشتغلوش لأن React بيتجاهلهم
   //
-  //  الخطة:
-  //  1. نلاقي الـ React Fiber من الـ DOM element
-  //  2. نطلع في شجرة الـ Fiber لحد ما نلاقي onChange
-  //  3. نضيف القيم مباشرة عن طريق onChange
+  //  الحل: نحاكي الكتابة حرف حرف بالظبط زي لما المستخدم يضغط
+  //  على الكيبورد — كل حرف: keydown → InputEvent → keyup
+  //  ده بيفعّل React's onChange handler على الـ input
   //
-
-  // الحصول على React internal instance
-  function getReactFiber(dom) {
-    if (!dom) return null;
-    var keys = Object.keys(dom);
-    for (var i = 0; i < keys.length; i++) {
-      if (keys[i].startsWith('__reactFiber$') || keys[i].startsWith('__reactInternalInstance$')) {
-        return dom[keys[i]];
-      }
-    }
-    return null;
-  }
-
-  // الحصول على React props من DOM
-  function getReactProps(dom) {
-    if (!dom) return null;
-    var keys = Object.keys(dom);
-    for (var i = 0; i < keys.length; i++) {
-      if (keys[i].startsWith('__reactProps$')) {
-        return dom[keys[i]];
-      }
-    }
-    return null;
-  }
-
-  // البحث في Fiber tree عن onChange handler
-  function findOnChange(startNode) {
-    var node = startNode;
-    var depth = 0;
-    while (node && depth < 30) {
-      // بحث في memoizedProps
-      if (node.memoizedProps) {
-        if (typeof node.memoizedProps.onChange === 'function') return { handler: node.memoizedProps.onChange, props: node.memoizedProps, fiber: node };
-        if (typeof node.memoizedProps.onSelect === 'function') return { handler: node.memoizedProps.onSelect, props: node.memoizedProps, fiber: node };
-      }
-      // بحث في pendingProps
-      if (node.pendingProps) {
-        if (typeof node.pendingProps.onChange === 'function') return { handler: node.pendingProps.onChange, props: node.pendingProps, fiber: node };
-      }
-      node = node.return; // طلوع لأعلى
-      depth++;
-    }
-    return null;
-  }
-
-  // البحث عن القيمة الحالية (value array)
-  function findCurrentValue(startNode) {
-    var node = startNode;
-    var depth = 0;
-    while (node && depth < 30) {
-      if (node.memoizedProps && Array.isArray(node.memoizedProps.value)) {
-        return node.memoizedProps.value;
-      }
-      if (node.memoizedState) {
-        // بحث في state chain
-        var st = node.memoizedState;
-        while (st) {
-          if (st.memoizedState && Array.isArray(st.memoizedState)) return st.memoizedState;
-          if (st.queue && st.queue.lastRenderedState && Array.isArray(st.queue.lastRenderedState)) return st.queue.lastRenderedState;
-          st = st.next;
-        }
-      }
-      node = node.return;
-      depth++;
-    }
-    return [];
-  }
 
   function getInput() {
     return document.getElementById('rc_select_1')
@@ -207,322 +134,145 @@ javascript:(function(){
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
-  // ═══════════════════════════════════════════
-  //  Strategy 1: React Fiber (الأقوى)
-  // ═══════════════════════════════════════════
-  function tryReactFiber(allOrders) {
-    var input = getInput();
-    if (!input) return false;
+  // ─── محاكاة ضغط حرف واحد ───
+  function simulateChar(input, char, currentVal) {
+    var newVal = currentVal + char;
+    var charCode = char.charCodeAt(0);
 
-    var fiber = getReactFiber(input);
-    if (!fiber) return false;
+    // 1. keydown
+    input.dispatchEvent(new KeyboardEvent('keydown', {
+      key: char, code: 'Key' + char.toUpperCase(),
+      keyCode: charCode, which: charCode, charCode: 0,
+      bubbles: true, cancelable: true
+    }));
 
-    var result = findOnChange(fiber);
-    if (!result) return false;
+    // 2. تغيير القيمة بـ nativeSetter (مهم قبل الـ input event)
+    nativeSetter.call(input, newVal);
 
-    addLog('🔬 React Fiber: وجدنا onChange handler!', 'debug');
+    // 3. InputEvent — ده اللي React بيسمعه فعلاً
+    input.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertText',
+      data: char
+    }));
 
-    var currentVal = findCurrentValue(fiber);
-    addLog('🔬 القيم الحالية: ' + currentVal.length + ' tag', 'debug');
+    // 4. keyup
+    input.dispatchEvent(new KeyboardEvent('keyup', {
+      key: char, code: 'Key' + char.toUpperCase(),
+      keyCode: charCode, which: charCode,
+      bubbles: true, cancelable: true
+    }));
 
-    // نجرب نضيف كل الطلبات مرة واحدة
-    var newValues = currentVal.slice(); // نسخة
-    for (var i = 0; i < allOrders.length; i++) {
-      if (newValues.indexOf(allOrders[i]) === -1) {
-        newValues.push(allOrders[i]);
-      }
-    }
-
-    try {
-      result.handler(newValues);
-      return true;
-    } catch (e) {
-      addLog('⚠️ Fiber onChange فشل: ' + e.message, 'warn');
-      return false;
-    }
+    return newVal;
   }
 
-  // ═══════════════════════════════════════════
-  //  Strategy 2: Clipboard Paste (سريعة)
-  // ═══════════════════════════════════════════
-  async function tryPasteAll(allOrders) {
-    var input = getInput();
-    var selector = getSelector();
-    if (!input || !selector) return false;
-
-    // فتح الـ Select
-    selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-    selector.dispatchEvent(new MouseEvent('click', { bubbles:true }));
-    await wait(300);
-    input.focus();
-    await wait(200);
-
-    var tagsBefore = countTags();
-
-    // نلصق كل الأرقام مفصولة بـ newline
-    var text = allOrders.join('\n');
-    var clipData = new DataTransfer();
-    clipData.setData('text/plain', text);
-    var pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: clipData });
-    input.dispatchEvent(pasteEvent);
-    await wait(500);
-
-    // لو ما اشتغلش الـ paste، نجرب بـ separator مختلف
-    if (countTags() <= tagsBefore) {
-      // نجرب بفاصلة
-      text = allOrders.join(',');
-      clipData = new DataTransfer();
-      clipData.setData('text/plain', text);
-      pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: clipData });
-      input.dispatchEvent(pasteEvent);
-      await wait(500);
+  // ─── كتابة نص كامل حرف حرف ───
+  async function typeCharByChar(input, text) {
+    var current = '';
+    for (var i = 0; i < text.length; i++) {
+      current = simulateChar(input, text[i], current);
+      await wait(30); // تأخير بسيط بين كل حرف
     }
-
-    // لو ما اشتغلش نجرب بمسافة
-    if (countTags() <= tagsBefore) {
-      text = allOrders.join(' ');
-      clipData = new DataTransfer();
-      clipData.setData('text/plain', text);
-      pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: clipData });
-      input.dispatchEvent(pasteEvent);
-      await wait(500);
-    }
-
-    var tagsAfter = countTags();
-    return tagsAfter > tagsBefore;
+    return current;
   }
 
-  // ═══════════════════════════════════════════
-  //  Strategy 3: DOM واحد واحد (مُحسّن)
-  // ═══════════════════════════════════════════
-  async function waitForOpen(input, timeout) {
-    var start = Date.now();
-    while (Date.now() - start < timeout) {
-      if (input.getAttribute('aria-expanded') === 'true') return true;
-      await wait(50);
-    }
-    return false;
-  }
-
-  async function forceOpenSelect() {
+  // ─── فتح الـ Select ───
+  async function openSelect() {
     var input = getInput();
     var selector = getSelector();
     if (!input || !selector) return false;
 
-    // طريقة 1: click عادي
+    // mousedown + click
     selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
     selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
     selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
-    await wait(100);
+    await wait(150);
 
-    // Focus
     input.focus();
     await wait(100);
 
-    // لو لسه مش مفتوح — نجرب نضغط على الـ overflow مباشرة
-    if (input.getAttribute('aria-expanded') !== 'true') {
-      var overflow = document.querySelector('.ant-select-selection-overflow');
-      if (overflow) {
-        overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-        overflow.click();
-        await wait(100);
-        input.focus();
-      }
-    }
-
-    // لو لسه — نجرب ArrowDown
+    // لو مش مفتوح — ArrowDown
     if (input.getAttribute('aria-expanded') !== 'true') {
       input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
-      await wait(100);
+      await wait(200);
     }
 
-    var isOpen = await waitForOpen(input, 800);
-    return isOpen;
+    return input.getAttribute('aria-expanded') === 'true';
   }
 
-  async function injectOneDom(orderNum) {
+  // ─── Enter ───
+  function pressEnter(input) {
+    var opts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
+    input.dispatchEvent(new KeyboardEvent('keydown', opts));
+    input.dispatchEvent(new KeyboardEvent('keypress', opts));
+    input.dispatchEvent(new KeyboardEvent('keyup', opts));
+  }
+
+  // ─── حقن طلب واحد ───
+  async function injectOne(orderNum) {
     var input = getInput();
     if (!input) return false;
-
     var tagsBefore = countTags();
 
-    // فتح الـ Select
-    var opened = await forceOpenSelect();
-    addLog('  📂 Select open: ' + (opened ? 'yes' : 'no') + ' (aria=' + input.getAttribute('aria-expanded') + ')', 'debug');
+    // 1. فتح
+    var isOpen = await openSelect();
+    addLog('  📂 open=' + isOpen, 'debug');
 
-    // مسح الـ input
+    // 2. مسح أي نص قديم — Backspace متعدد
+    var oldVal = input.value || '';
+    for (var b = 0; b < oldVal.length + 5; b++) {
+      nativeSetter.call(input, input.value.slice(0, -1));
+      input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'deleteContentBackward', data:null }));
+    }
     nativeSetter.call(input, '');
-    input.dispatchEvent(new Event('input', { bubbles:true }));
-    await wait(80);
-
-    // كتابة بـ execCommand
-    input.focus();
-    document.execCommand('selectAll', false);
-    document.execCommand('delete', false);
-    document.execCommand('insertText', false, orderNum);
+    input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'deleteContentBackward', data:null }));
     await wait(100);
 
-    // لو ما اتكتبش — fallback
-    if (input.value !== orderNum) {
-      nativeSetter.call(input, orderNum);
-      input.dispatchEvent(new Event('input', { bubbles:true }));
-      input.dispatchEvent(new Event('change', { bubbles:true }));
-      // كمان InputEvent
-      input.dispatchEvent(new InputEvent('input', { bubbles:true, data:orderNum, inputType:'insertText' }));
-    }
+    // 3. كتابة حرف حرف
+    var typed = await typeCharByChar(input, orderNum);
     await wait(200);
 
-    addLog('  ✏️ Value: "' + input.value + '" (expected: "' + orderNum + '")', 'debug');
+    addLog('  ✏️ typed="' + typed + '" actual="' + input.value + '"', 'debug');
 
-    // Enter
-    var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
-    input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
-    await wait(50);
-    input.dispatchEvent(new KeyboardEvent('keypress', enterOpts));
-    await wait(50);
-    input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
-    await wait(400);
+    // 4. لو الكتابة حرف حرف ما اشتغلتش — Fallback: nativeSetter + كل أنواع الـ events
+    if (input.value !== orderNum && input.value.length === 0) {
+      addLog('  🔄 Fallback: nativeSetter + events', 'debug');
+      nativeSetter.call(input, orderNum);
 
+      // نجرب كل أنواع الـ events
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      input.dispatchEvent(new Event('change', { bubbles:true }));
+      input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum }));
+
+      // React 17+ specific: يستخدم onInput من خلال SyntheticEvent
+      // نجرب نلاقي الـ React event handler مباشرة
+      var reactPropsKey = Object.keys(input).find(function(k) { return k.startsWith('__reactProps$'); });
+      if (reactPropsKey && input[reactPropsKey] && typeof input[reactPropsKey].onChange === 'function') {
+        addLog('  🔬 Found React onChange — calling directly', 'debug');
+        input[reactPropsKey].onChange({ target: { value: orderNum }, currentTarget: { value: orderNum }, nativeEvent: { inputType: 'insertText' }, preventDefault:function(){}, stopPropagation:function(){} });
+      }
+
+      await wait(200);
+      addLog('  ✏️ After fallback: "' + input.value + '"', 'debug');
+    }
+
+    // 5. Enter
+    pressEnter(input);
+    await wait(500);
+
+    // 6. تحقق
     var tagsAfter = countTags();
 
     // لو ما اتضافش — Enter تاني
     if (tagsAfter <= tagsBefore) {
-      addLog('  ⏎ Enter ثاني...', 'debug');
-      input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
-      await wait(100);
-      input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
-      await wait(400);
+      pressEnter(input);
+      await wait(500);
       tagsAfter = countTags();
     }
 
-    addLog('  🏷️ Tags: ' + tagsBefore + ' → ' + tagsAfter, 'debug');
+    addLog('  🏷️ tags: ' + tagsBefore + '→' + tagsAfter, 'debug');
     return tagsAfter > tagsBefore;
-  }
-
-  // ═══════════════════════════════════════════
-  //  Main Runner — يجرب الـ 3 طرق
-  // ═══════════════════════════════════════════
-  async function runInjection(orders) {
-    state.isRunning = true;
-    state.injectedCount = 0;
-    state.failedCount = 0;
-
-    document.getElementById('fey_pw').style.display = 'block';
-    document.getElementById('fey_lw').style.display = 'block';
-    document.getElementById('fey_log').innerHTML = '';
-    startBtn.disabled = true; startBtn.style.opacity = '0.6';
-
-    var pf = document.getElementById('fey_pf');
-    var pt = document.getElementById('fey_pt');
-    var tagsBefore = countTags();
-
-    addLog('═══ بدء الرفع — ' + orders.length + ' طلب ═══', 'info');
-    addLog('Tags قبل: ' + tagsBefore, 'info');
-
-    // ────────────────────────────────────
-    //  Strategy 1: React Fiber
-    // ────────────────────────────────────
-    addLog('', 'info');
-    addLog('🔬 [Strategy 1] React Fiber...', 'debug');
-    setSt('جاري تجربة React Fiber...', 'working');
-
-    var fiberOk = tryReactFiber(orders);
-    await wait(500);
-
-    if (fiberOk && countTags() > tagsBefore) {
-      var added = countTags() - tagsBefore;
-      state.injectedCount = added;
-      upStats();
-      pf.style.width = '100%';
-      pt.innerText = added + ' / ' + orders.length;
-      addLog('✅ React Fiber نجح! — ' + added + ' tag اتضافوا دفعة واحدة', 'ok');
-      finishInjection(orders);
-      return;
-    }
-    addLog('❌ React Fiber لم ينجح', 'err');
-
-    // ────────────────────────────────────
-    //  Strategy 2: Paste
-    // ────────────────────────────────────
-    addLog('', 'info');
-    addLog('📋 [Strategy 2] Paste...', 'debug');
-    setSt('جاري تجربة Paste...', 'working');
-
-    var pasteOk = await tryPasteAll(orders);
-    await wait(500);
-
-    if (pasteOk && countTags() > tagsBefore) {
-      var added2 = countTags() - tagsBefore;
-      state.injectedCount = added2;
-      upStats();
-      pf.style.width = '100%';
-      pt.innerText = added2 + ' / ' + orders.length;
-      addLog('✅ Paste نجح! — ' + added2 + ' tag', 'ok');
-      finishInjection(orders);
-      return;
-    }
-    addLog('❌ Paste لم ينجح', 'err');
-
-    // ────────────────────────────────────
-    //  Strategy 3: واحد واحد DOM
-    // ────────────────────────────────────
-    addLog('', 'info');
-    addLog('⌨️ [Strategy 3] DOM واحد واحد...', 'debug');
-    setSt('جاري الرفع واحد واحد...', 'working');
-
-    for (var i = 0; i < orders.length; i++) {
-      var order = orders[i];
-      setSt('رفع ' + (i+1) + '/' + orders.length + ': ' + order, 'working');
-      pf.style.width = (((i+1)/orders.length)*100) + '%';
-      pt.innerText = (i+1) + ' / ' + orders.length;
-      startBtn.innerHTML = '📤 ' + (i+1) + '/' + orders.length;
-
-      addLog('── [' + (i+1) + '] ' + order + ' ──', 'info');
-      var ok = await injectOneDom(order);
-
-      if (ok) {
-        state.injectedCount++;
-        addLog('✅ ' + order + ' OK', 'ok');
-      } else {
-        // retry
-        addLog('🔄 إعادة محاولة...', 'warn');
-        await wait(500);
-        ok = await injectOneDom(order);
-        if (ok) {
-          state.injectedCount++;
-          addLog('✅ ' + order + ' OK (retry)', 'ok');
-        } else {
-          state.failedCount++;
-          addLog('❌ ' + order + ' FAILED', 'err');
-        }
-      }
-      upStats();
-      if (i < orders.length - 1) await wait(state.delayMs);
-    }
-
-    finishInjection(orders);
-  }
-
-  async function finishInjection(orders) {
-    state.isRunning = false;
-    var pf = document.getElementById('fey_pf');
-    if (pf) pf.style.width = '100%';
-    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
-    startBtn.innerHTML = '🔄 إعادة الرفع (' + orders.length + ' طلب)';
-
-    addLog('', 'info');
-    addLog('═══ النتيجة: ' + state.injectedCount + '✅ / ' + state.failedCount + '❌ — Tags: ' + countTags() + ' ═══', state.failedCount > 0 ? 'warn' : 'ok');
-
-    await showDialog({icon:'🎉',iconColor:'green',title:'انتهى الرفع',desc:'تمت معالجة الطلبات',
-      info:[
-        {label:'تم رفعها',value:state.injectedCount+' طلب',color:'#10b981'},
-        {label:'فشلت',value:state.failedCount+' طلب',color:state.failedCount>0?'#ef4444':'#10b981'},
-        {label:'Tags الآن',value:countTags()+' tag',color:'#8b5cf6'}
-      ],
-      buttons:[{text:'👍 إغلاق',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
-
-    setSt('تم — '+state.injectedCount+' نجاح / '+state.failedCount+' فشل','done');
-    showToast('تم رفع '+state.injectedCount+' طلب',state.failedCount>0?'warning':'success');
   }
 
   // ─── Events ───
@@ -541,18 +291,15 @@ javascript:(function(){
   uploadArea.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#d8b4fe';this.style.background='#faf5ff';if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
   fileInput.addEventListener('change',function(){if(this.files.length)handleFiles(this.files)});
 
-  function handleFiles(files){var all=[],loaded=0,total=files.length;for(var i=0;i<files.length;i++){(function(f){var r=new FileReader();r.onload=function(e){all=all.concat(parse(e.target.result));loaded++;if(loaded===total){var u=[],s={};for(var j=0;j<all.length;j++)if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب — جاهز للرفع','loaded');showToast(u.length+' طلب جاهز','success');enableStart()}};r.readAsText(f)})(files[i])}}
+  function handleFiles(files){var all=[],loaded=0,total=files.length;for(var i=0;i<files.length;i++){(function(f){var r=new FileReader();r.onload=function(e){all=all.concat(parse(e.target.result));loaded++;if(loaded===total){var u=[],s={};for(var j=0;j<all.length;j++)if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب جاهز','loaded');showToast(u.length+' طلب','success');enableStart()}};r.readAsText(f)})(files[i])}}
 
   manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
-
   function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
-
   document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
 
   // ─── Start ───
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
-
     var input = getInput();
     if (!input) {
       await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye وإن خانة Reference Number ظاهرة',
@@ -561,20 +308,86 @@ javascript:(function(){
       return;
     }
 
+    // Debug: نعرض كل الـ React props الموجودة على الـ input
+    addLog('🔬 React keys on input:', 'debug');
+    Object.keys(input).filter(function(k){return k.startsWith('__react')}).forEach(function(k){
+      addLog('  ' + k, 'debug');
+    });
+    var rp = Object.keys(input).find(function(k){return k.startsWith('__reactProps$')});
+    if (rp) {
+      var props = input[rp];
+      addLog('  onChange: ' + (typeof props.onChange), 'debug');
+      addLog('  onInput: ' + (typeof props.onInput), 'debug');
+      addLog('  onSearch: ' + (typeof props.onSearch), 'debug');
+    }
+
     var res = await showDialog({icon:'📤',iconColor:'purple',title:'رفع الطلبات',
-      desc:'سيتم تجربة 3 طرق تلقائياً — React Fiber ثم Paste ثم واحد واحد',
+      desc:'v1.5 — كتابة حرف حرف لمحاكاة المستخدم الحقيقي',
       info:[
-        {label:'عدد الطلبات',value:state.orders.length+' طلب',color:'#8b5cf6'},
+        {label:'الطلبات',value:state.orders.length+' طلب',color:'#8b5cf6'},
         {label:'Tags حالياً',value:countTags()+' tag',color:'#10b981'},
-        {label:'الاستراتيجيات',value:'3 طرق (تلقائي)',color:'#f59e0b'}
+        {label:'التأخير',value:(state.delayMs/1000).toFixed(1)+' ث/طلب',color:'#f59e0b'}
       ],
       buttons:[
         {text:'إلغاء',value:'cancel'},
-        {text:'📤 بدء الرفع',value:'confirm',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 12px rgba(124,58,237,0.3)'}
+        {text:'📤 بدء الرفع',value:'confirm',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}
       ]});
     if(res!=='confirm')return;
 
-    await runInjection(state.orders);
+    state.isRunning=true; state.injectedCount=0; state.failedCount=0;
+    document.getElementById('fey_pw').style.display='block';
+    document.getElementById('fey_lw').style.display='block';
+    document.getElementById('fey_log').innerHTML='';
+    startBtn.disabled=true; startBtn.style.opacity='0.6';
+    upStats();
+
+    var pf=document.getElementById('fey_pf');
+    var pt=document.getElementById('fey_pt');
+
+    addLog('═══ بدء v1.5 — '+state.orders.length+' طلب ═══','info');
+    addLog('Tags قبل: '+countTags(),'info');
+
+    for(var i=0;i<state.orders.length;i++){
+      var order = state.orders[i];
+      setSt((i+1)+'/'+state.orders.length+': '+order,'working');
+      pf.style.width=(((i+1)/state.orders.length)*100)+'%';
+      pt.innerText=(i+1)+'/'+state.orders.length;
+      startBtn.innerHTML='📤 '+(i+1)+'/'+state.orders.length;
+
+      addLog('── ['+(i+1)+'] '+order+' ──','info');
+      var ok = await injectOne(order);
+
+      if(ok){
+        state.injectedCount++;
+        addLog('✅ '+order+' OK','ok');
+      } else {
+        // retry
+        addLog('🔄 retry...','warn');
+        await wait(800);
+        ok = await injectOne(order);
+        if(ok){ state.injectedCount++; addLog('✅ '+order+' OK (retry)','ok'); }
+        else { state.failedCount++; addLog('❌ '+order+' FAILED','err'); }
+      }
+      upStats();
+      if(i<state.orders.length-1) await wait(state.delayMs);
+    }
+
+    state.isRunning=false;
+    pf.style.width='100%';
+    startBtn.disabled=false; startBtn.style.opacity='1'; startBtn.style.cursor='pointer';
+    startBtn.innerHTML='🔄 إعادة ('+state.orders.length+')';
+
+    addLog('','info');
+    addLog('═══ '+state.injectedCount+'✅ / '+state.failedCount+'❌ — Tags: '+countTags()+' ═══',state.failedCount>0?'warn':'ok');
+
+    await showDialog({icon:'🎉',iconColor:'green',title:'انتهى',desc:state.injectedCount+' نجاح / '+state.failedCount+' فشل',
+      info:[
+        {label:'رُفعت',value:state.injectedCount+'',color:'#10b981'},
+        {label:'فشلت',value:state.failedCount+'',color:state.failedCount>0?'#ef4444':'#10b981'},
+        {label:'Tags',value:countTags()+'',color:'#8b5cf6'}
+      ],
+      buttons:[{text:'👍',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
+    setSt(state.injectedCount+'✅ / '+state.failedCount+'❌','done');
   });
 
 })();
