@@ -505,7 +505,7 @@ javascript:(function(){
       const v1=sI.value.trim().toLowerCase(),v2=sO.value.trim().toLowerCase();
       tbody.innerHTML='';let shown=0;
       state.savedRows.forEach(r=>{
-        if((v1!==''&&r.id.toLowerCase().includes(v1))||(v2!==''&&r.onl.toLowerCase().includes(v2))||(v1===''&&v2==='')){tbody.appendChild(r.node);shown++}
+        if((v1!==''&&r.id.toLowerCase().startsWith(v1))||(v2!==''&&r.onl.toLowerCase().includes(v2))||(v1===''&&v2==='')){tbody.appendChild(r.node);shown++}
       });
       sC.innerText=`عرض ${shown} من ${state.savedRows.length} نتيجة`;
     }
