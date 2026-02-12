@@ -3,6 +3,120 @@ var APP_VERSION='132.0';
 var APP_NAME='EZ_Pill Farmadosis';
 
 /* ══════════════════════════════════════════
+   WHAT'S NEW - CHANGELOG SYSTEM
+   ══════════════════════════════════════════ */
+var CHANGELOG={
+  '132.0':{
+    title:'تحديث رئيسي 🎉',
+    features:[
+      {icon:'🎨',text:'واجهة Dialog جديدة بتصميم احترافي'},
+      {icon:'💊',text:'دعم كل 6 ساعات (Q6H) → صفين × 12 ساعة'},
+      {icon:'🔍',text:'بحث ذكي في Import Invoice (فاتورة + ERX)'},
+      {icon:'📋',text:'جدول جرعات محسن مع تعليم أصناف التكرار ⚡'},
+      {icon:'🌐',text:'اكتشاف لغة الجرعات وضبط Patient Language'},
+      {icon:'🛡️',text:'حماية من استيراد الفاتورة الحالية مرتين'},
+      {icon:'🖌️',text:'تنسيق احترافي للصفحة والأزرار والجداول'}
+    ]
+  }
+};
+
+function showWhatsNew(){
+  try{
+    var lastSeen=localStorage.getItem('ez_pill_version');
+    if(lastSeen===APP_VERSION) return;
+    var info=CHANGELOG[APP_VERSION];
+    if(!info&&lastSeen) {localStorage.setItem('ez_pill_version',APP_VERSION);return;}
+    if(!info) info={title:'تحديث جديد ✨',features:[{icon:'🚀',text:'تم التحديث إلى النسخة '+APP_VERSION}]};
+
+    /* Build features HTML */
+    var featuresHtml='';
+    for(var i=0;i<info.features.length;i++){
+      var f=info.features[i];
+      featuresHtml+='<div class="ez-wn-item" style="animation-delay:'+(0.1+i*0.07)+'s">'+
+        '<span class="ez-wn-icon">'+f.icon+'</span>'+
+        '<span class="ez-wn-text">'+f.text+'</span></div>';
+    }
+
+    /* Create overlay */
+    var overlay=document.createElement('div');
+    overlay.id='ez-whats-new';
+    overlay.innerHTML='\
+    <style>\
+    @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap");\
+    #ez-whats-new{position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:999998;display:flex;align-items:center;justify-content:center;animation:ezWnFadeIn 0.4s ease}\
+    @keyframes ezWnFadeIn{from{opacity:0}to{opacity:1}}\
+    @keyframes ezWnSlideUp{from{opacity:0;transform:translateY(40px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}\
+    @keyframes ezWnItemIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}\
+    @keyframes ezWnPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}\
+    @keyframes ezWnShine{0%{background-position:-200% 0}100%{background-position:200% 0}}\
+    @keyframes ezWnConfetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(-60px) rotate(360deg);opacity:0}}\
+    .ez-wn-card{background:#fff;border-radius:22px;width:380px;max-height:85vh;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.2),0 8px 24px rgba(0,0,0,0.08);animation:ezWnSlideUp 0.5s cubic-bezier(0.16,1,0.3,1);border:2px solid rgba(129,140,248,0.12);position:relative}\
+    .ez-wn-confetti{position:absolute;top:0;left:0;right:0;height:120px;pointer-events:none;overflow:hidden}\
+    .ez-wn-dot{position:absolute;width:6px;height:6px;border-radius:50%;animation:ezWnConfetti 1.5s ease-out forwards}\
+    .ez-wn-header{background:linear-gradient(145deg,#6366f1,#4f46e5);padding:28px 24px 22px;text-align:center;position:relative;overflow:hidden}\
+    .ez-wn-header::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);background-size:200% 100%;animation:ezWnShine 3s ease infinite}\
+    .ez-wn-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;color:rgba(255,255,255,0.9);margin-bottom:10px;border:1px solid rgba(255,255,255,0.15);letter-spacing:0.5px}\
+    .ez-wn-badge-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,0.5);animation:ezWnPulse 1.5s ease infinite}\
+    .ez-wn-ver{font-size:36px;font-weight:900;color:#fff;font-family:Cairo,sans-serif;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,0.15)}\
+    .ez-wn-ver-sub{font-size:13px;font-weight:700;color:rgba(255,255,255,0.75);margin-top:4px;font-family:Cairo,sans-serif}\
+    .ez-wn-body{padding:20px 22px;max-height:300px;overflow-y:auto}\
+    .ez-wn-title{font-size:16px;font-weight:900;color:#1e1b4b;font-family:Cairo,sans-serif;margin-bottom:12px;display:flex;align-items:center;gap:6px}\
+    .ez-wn-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;margin-bottom:4px;border-radius:10px;transition:all 0.25s;opacity:0;animation:ezWnItemIn 0.4s ease forwards}\
+    .ez-wn-item:hover{background:rgba(129,140,248,0.05)}\
+    .ez-wn-icon{font-size:18px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(129,140,248,0.08);border-radius:8px}\
+    .ez-wn-text{font-size:13px;font-weight:700;color:#3730a3;font-family:Cairo,sans-serif;line-height:1.5;direction:rtl;flex:1}\
+    .ez-wn-footer{padding:14px 22px 18px;border-top:1px solid rgba(129,140,248,0.08)}\
+    .ez-wn-btn{width:100%;height:48px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 6px 20px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;position:relative;overflow:hidden}\
+    .ez-wn-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}\
+    .ez-wn-btn::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transition:0.5s}\
+    .ez-wn-btn:hover::after{left:100%}\
+    .ez-wn-skip{display:block;text-align:center;margin-top:8px;font-size:11px;font-weight:700;color:#a5b4fc;cursor:pointer;font-family:Cairo,sans-serif;transition:color 0.2s;background:none;border:none;width:100%}\
+    .ez-wn-skip:hover{color:#6366f1}\
+    </style>\
+    <div class="ez-wn-card">\
+      <div class="ez-wn-confetti" id="ez-wn-confetti"></div>\
+      <div class="ez-wn-header">\
+        <div class="ez-wn-badge"><span class="ez-wn-badge-dot"></span> NEW UPDATE</div>\
+        <div class="ez-wn-ver">v'+APP_VERSION+'</div>\
+        <div class="ez-wn-ver-sub">'+APP_NAME+'</div>\
+      </div>\
+      <div class="ez-wn-body">\
+        <div class="ez-wn-title">'+info.title+'</div>\
+        '+featuresHtml+'\
+      </div>\
+      <div class="ez-wn-footer">\
+        <button class="ez-wn-btn" id="ez-wn-ok">تمام، يلا نبدأ 🚀</button>\
+        <button class="ez-wn-skip" id="ez-wn-skip">عدم الإظهار لهذا التحديث</button>\
+      </div>\
+    </div>';
+    document.body.appendChild(overlay);
+
+    /* Confetti dots */
+    var confettiEl=document.getElementById('ez-wn-confetti');
+    var colors=['#818cf8','#a78bfa','#f59e0b','#10b981','#f472b6','#22d3ee','#6366f1'];
+    for(var c=0;c<20;c++){
+      var dot=document.createElement('div');
+      dot.className='ez-wn-dot';
+      dot.style.cssText='left:'+Math.random()*100+'%;top:'+(60+Math.random()*40)+'%;background:'+colors[c%colors.length]+';animation-delay:'+Math.random()*0.8+'s;animation-duration:'+(1+Math.random()*0.8)+'s;width:'+(4+Math.random()*5)+'px;height:'+(4+Math.random()*5)+'px';
+      confettiEl.appendChild(dot);
+    }
+
+    /* Close handlers */
+    function closeWN(){
+      localStorage.setItem('ez_pill_version',APP_VERSION);
+      overlay.style.animation='ezWnFadeIn 0.3s ease reverse';
+      setTimeout(function(){overlay.remove();},300);
+    }
+    document.getElementById('ez-wn-ok').addEventListener('click',closeWN);
+    document.getElementById('ez-wn-skip').addEventListener('click',closeWN);
+    overlay.addEventListener('click',function(e){if(e.target===overlay)closeWN();});
+  }catch(e){
+    /* localStorage not available or error - skip silently */
+    console.log('EZ WhatsNew:',e);
+  }
+}
+
+/* ══════════════════════════════════════════
    FIXED SIZE CODES DATABASE
    ══════════════════════════════════════════ */
 var fixedSizeCodes={
@@ -1187,6 +1301,7 @@ document.addEventListener('keydown',function(e){
 
 makeDraggable(d_box);
 beautifyPage();
+showWhatsNew();
 
 /* ══════════════════════════════════════════
    IMPORT INVOICE - SMART SEARCH
