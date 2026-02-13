@@ -1304,6 +1304,217 @@ beautifyPage();
 showWhatsNew();
 
 /* ══════════════════════════════════════════
+   NAME EXTRACTION FROM PRESCRIPTION NOTES
+   ══════════════════════════════════════════ */
+(function(){
+  try{
+    /* Find Prescription Notes field */
+    function findNotesField(){
+      var inputs=document.querySelectorAll('input[type="text"],textarea');
+      for(var i=0;i<inputs.length;i++){
+        var lbl=null;
+        /* Check associated label */
+        if(inputs[i].id){lbl=document.querySelector('label[for="'+inputs[i].id+'"]');}
+        if(!lbl){var prev=inputs[i].previousElementSibling;if(prev) lbl=prev;}
+        if(!lbl){var parent=inputs[i].parentElement;if(parent){var spans=parent.querySelectorAll('label,span,b,strong,td');for(var j=0;j<spans.length;j++){var st=spans[j].textContent.toLowerCase();if(st.indexOf('prescription')>-1||st.indexOf('note')>-1){lbl=spans[j];break;}}}}
+        if(lbl){
+          var lt=(lbl.textContent||'').toLowerCase();
+          if(lt.indexOf('prescription')>-1&&lt.indexOf('note')>-1) return inputs[i];
+        }
+        /* Check by name/id/placeholder */
+        var attrs=(inputs[i].name||'')+(inputs[i].id||'')+(inputs[i].placeholder||'');
+        if(/presc.*note|prescription.*note/i.test(attrs)) return inputs[i];
+      }
+      /* Last resort: large text input with Arabic content */
+      for(var i=0;i<inputs.length;i++){
+        var v=inputs[i].value||'';
+        if(v.length>30&&/[\u0600-\u06FF]/.test(v)&&(/ضيف|اسم|توصيل|صيدل/i.test(v))) return inputs[i];
+      }
+      return null;
+    }
+
+    /* Extract name from text */
+    function extractName(text){
+      if(!text||text.length<5) return null;
+      var s=text.trim();
+
+      /* Patterns ordered by specificity */
+      var patterns=[
+        /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:يكتب\s*(?:عليه|عليها)?\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:كتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:وكتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:باسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:الاسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i
+      ];
+
+      /* Stop words - remove from end of extracted name */
+      var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
+        'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
+        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة','الى','الي','على','عند','اليوم',
+        'شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','والتوصيل','في'];
+
+      for(var p=0;p<patterns.length;p++){
+        var m=s.match(patterns[p]);
+        if(m&&m[1]){
+          var name=m[1].trim();
+          /* Remove stop words from end */
+          var words=name.split(/\s+/);
+          var cleaned=[];
+          for(var w=0;w<words.length;w++){
+            var wl=words[w].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+            var isStop=false;
+            for(var st=0;st<stopWords.length;st++){
+              if(wl===stopWords[st].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')){isStop=true;break;}
+            }
+            if(isStop) break;
+            /* Skip single-letter words unless first */
+            if(words[w].length<=1&&cleaned.length>0) break;
+            cleaned.push(words[w]);
+          }
+          if(cleaned.length>=1&&cleaned.join(' ').length>=3){
+            return cleaned.join(' ');
+          }
+        }
+      }
+      return null;
+    }
+
+    /* Find Name input in top form */
+    function findNameField(){
+      var inp=document.querySelector('input[name*="name" i]:not([name*="user"]):not([type="hidden"])');
+      if(inp) return inp;
+      /* Search by label */
+      var allInputs=document.querySelectorAll('input[type="text"]');
+      for(var i=0;i<allInputs.length;i++){
+        var parent=allInputs[i].closest('td,div');
+        if(parent){
+          var prev=parent.previousElementSibling;
+          if(prev&&/^name[:\s]*$/i.test(prev.textContent.trim())) return allInputs[i];
+        }
+      }
+      /* Search by header label proximity */
+      var labels=document.querySelectorAll('td,th,label,span');
+      for(var i=0;i<labels.length;i++){
+        var lt=labels[i].textContent.trim().toLowerCase();
+        if(lt==='name:'||lt==='name'){
+          var next=labels[i].nextElementSibling;
+          if(next){
+            var nInp=next.querySelector?next.querySelector('input'):null;
+            if(nInp) return nInp;
+            if(next.tagName==='INPUT') return next;
+          }
+          var parent2=labels[i].parentElement;
+          if(parent2){
+            var nInp2=parent2.querySelector('input[type="text"]');
+            if(nInp2&&nInp2!==labels[i]) return nInp2;
+            var nextTd=parent2.nextElementSibling;
+            if(nextTd){var nInp3=nextTd.querySelector('input');if(nInp3) return nInp3;}
+          }
+        }
+      }
+      return null;
+    }
+
+    var notesField=findNotesField();
+    if(!notesField) return;
+    var notesText=(notesField.value||'').trim();
+    if(!notesText) return;
+    var extractedName=extractName(notesText);
+    if(!extractedName) return;
+    var nameField=findNameField();
+    if(!nameField) return;
+
+    /* Show confirmation dialog */
+    var overlay=document.createElement('div');
+    overlay.id='ez-name-confirm';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.5);backdrop-filter:blur(6px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:dialogEnter 0.4s ease';
+
+    var card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:20px;width:420px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
+
+    card.innerHTML='\
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+    <div style="padding:18px 22px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(129,140,248,0.08)">\
+      <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(245,158,11,0.25),inset 0 1px 0 rgba(255,255,255,0.3)">👤</div>\
+      <div>\
+        <div style="font-size:16px;font-weight:900;color:#1e1b4b">تم اكتشاف اسم في الملاحظات</div>\
+        <div style="font-size:11px;font-weight:700;color:#92400e;margin-top:2px">Prescription Notes</div>\
+      </div>\
+    </div>\
+    <div style="padding:16px 22px">\
+      <div style="background:rgba(245,158,11,0.06);border:1.5px solid rgba(245,158,11,0.15);border-radius:12px;padding:12px 14px;margin-bottom:14px;direction:rtl">\
+        <div style="font-size:10px;font-weight:800;color:#b45309;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase">📝 النص الأصلي</div>\
+        <div style="font-size:12px;font-weight:700;color:#451a03;line-height:1.7;max-height:80px;overflow-y:auto">'+notesText.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>\
+      </div>\
+      <div style="background:linear-gradient(145deg,#ecfdf5,#d1fae5);border:1.5px solid rgba(16,185,129,0.2);border-radius:12px;padding:14px;text-align:center">\
+        <div style="font-size:10px;font-weight:800;color:#047857;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase">✨ الاسم المستخلص</div>\
+        <div style="font-size:22px;font-weight:900;color:#064e3b;direction:rtl" id="ez-extracted-name">'+extractedName+'</div>\
+        <input type="text" id="ez-name-edit" value="'+extractedName+'" style="display:none;width:90%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.3);border-radius:10px;font-size:18px;font-weight:800;color:#064e3b;text-align:center;font-family:Cairo,sans-serif;outline:none;direction:rtl;margin-top:6px" />\
+      </div>\
+    </div>\
+    <div style="padding:10px 22px 18px;display:flex;gap:8px">\
+      <button id="ez-name-ok" style="flex:1;height:46px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s">✅ تأكيد وكتابة الاسم</button>\
+      <button id="ez-name-edit-btn" style="width:46px;height:46px;border:none;border-radius:12px;font-size:18px;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(129,140,248,0.08);border:1.5px solid rgba(129,140,248,0.15);transition:all 0.3s;display:flex;align-items:center;justify-content:center">✏️</button>\
+      <button id="ez-name-no" style="width:46px;height:46px;border:none;border-radius:12px;font-size:18px;cursor:pointer;font-family:Cairo,sans-serif;color:#ef4444;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.15);transition:all 0.3s;display:flex;align-items:center;justify-content:center">✖</button>\
+    </div>';
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    /* Edit mode toggle */
+    var editMode=false;
+    document.getElementById('ez-name-edit-btn').addEventListener('click',function(){
+      var display=document.getElementById('ez-extracted-name');
+      var input=document.getElementById('ez-name-edit');
+      if(!editMode){
+        display.style.display='none';
+        input.style.display='block';
+        input.focus();
+        input.select();
+        this.innerHTML='💾';
+        this.style.color='#10b981';
+        editMode=true;
+      } else {
+        var newVal=input.value.trim();
+        if(newVal){display.textContent=newVal;}
+        display.style.display='block';
+        input.style.display='none';
+        this.innerHTML='✏️';
+        this.style.color='#6366f1';
+        editMode=false;
+      }
+    });
+
+    /* Confirm */
+    document.getElementById('ez-name-ok').addEventListener('click',function(){
+      var finalName=editMode?document.getElementById('ez-name-edit').value.trim():document.getElementById('ez-extracted-name').textContent.trim();
+      if(finalName&&nameField){
+        nameField.value=finalName;
+        nameField.dispatchEvent(new Event('input',{bubbles:true}));
+        nameField.dispatchEvent(new Event('change',{bubbles:true}));
+        if(typeof angular!=='undefined'){try{angular.element(nameField).triggerHandler('change');}catch(e){}}
+        if(typeof jQuery!=='undefined'){try{jQuery(nameField).trigger('change');}catch(e){}}
+        window.ezShowToast('تم كتابة الاسم: '+finalName+' ✅','success');
+      }
+      overlay.remove();
+    });
+
+    /* Reject */
+    document.getElementById('ez-name-no').addEventListener('click',function(){
+      overlay.remove();
+    });
+
+    /* Click outside to close */
+    overlay.addEventListener('click',function(e){if(e.target===overlay) overlay.remove();});
+
+  }catch(e){console.log('EZ NameExtract:',e);}
+})();
+
+/* ══════════════════════════════════════════
    IMPORT INVOICE - SMART SEARCH
    ══════════════════════════════════════════ */
 (function(){
