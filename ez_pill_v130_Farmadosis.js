@@ -1867,7 +1867,32 @@ function extractAndConfirmName(){
       if(!text||text.length<5) return null;
       var s=text.trim();
 
-      /* Patterns ordered by specificity */
+      /* Generic title words - NOT actual names */
+      var genericWords=['الضيف','الضيفه','الضيفة','ضيف','ضيفه','ضيفة',
+        'المريض','المريضه','المريضة','مريض','مريضه','مريضة',
+        'العميل','العميله','العميلة','عميل','عميله','عميلة'];
+
+      function isGeneric(w){
+        var n=w.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+        for(var g=0;g<genericWords.length;g++){
+          if(n===genericWords[g].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')) return true;
+        }
+        return false;
+      }
+
+      /* PRIORITY 1: Look for name in parentheses after keywords */
+      var parenPatterns=[
+        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
+        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*[:\-]?\s*\(([^)]+)\)/i
+      ];
+      for(var pp=0;pp<parenPatterns.length;pp++){
+        var pm=s.match(parenPatterns[pp]);
+        if(pm&&pm[1]&&pm[1].trim().length>=2){
+          return pm[1].trim();
+        }
+      }
+
+      /* PRIORITY 2: Standard Arabic name patterns */
       var patterns=[
         /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
@@ -1890,6 +1915,17 @@ function extractAndConfirmName(){
         var m=s.match(patterns[p]);
         if(m&&m[1]){
           var name=m[1].trim();
+          /* If first word is generic (الضيف/المريض), check for English name in parens after it */
+          var firstWord=name.split(/\s+/)[0];
+          if(isGeneric(firstWord)){
+            var afterMatch=s.substring(s.indexOf(m[0])+m[0].length);
+            var parenMatch=afterMatch.match(/^\s*\(([^)]+)\)/);
+            if(parenMatch&&parenMatch[1]&&parenMatch[1].trim().length>=2){
+              return parenMatch[1].trim();
+            }
+            /* Skip this match - الضيف is not a real name */
+            continue;
+          }
           /* Remove stop words from end */
           var words=name.split(/\s+/);
           var cleaned=[];
