@@ -1,11 +1,23 @@
 javascript:(function(){
-var APP_VERSION='134.0';
+var APP_VERSION='135.0';
 var APP_NAME='EZ_Pill Farmadosis';
 
 /* ══════════════════════════════════════════
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '135.0':{
+    title:'تصميم جديد بالكامل 🎨',
+    features:[
+      {icon:'✨',text:'دايلوج جديد بتصميم Glassmorphism مع تأثيرات Shimmer'},
+      {icon:'📅',text:'أزرار الأشهر بوصف عربي (شهر / شهرين / ٣ شهور)'},
+      {icon:'🔘',text:'Toggles ذكية بتنور لما تتفعّل'},
+      {icon:'⚡',text:'زرار المعالجة بتأثير Pulse + progress bar جديد'},
+      {icon:'🛡️',text:'Functions موحدة + Column Aliases لحماية من تغيير الأعمدة'},
+      {icon:'🔍',text:'Error handling واضح - بيقولك إيه العمود الناقص بالاسم'},
+      {icon:'🔁',text:'تنبيه الأصناف المكررة في نفس الطلب'}
+    ]
+  },
   '134.0':{
     title:'تحديث ذكي ⚡',
     features:[
