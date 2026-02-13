@@ -15,6 +15,7 @@ var CHANGELOG={
       {icon:'🔍',text:'بحث ذكي في Import Invoice بالفاتورة أو ERX'},
       {icon:'🛡️',text:'حماية الفاتورة الحالية من الاستيراد المكرر'},
       {icon:'📋',text:'زرار تصغير لدايلوج خيارات إضافية'},
+      {icon:'📦',text:'اكتشاف تعليمات التغليف: دمج بوكس واحد أو كل شهر بصندوق منفصل'},
       {icon:'🎉',text:'شاشة What\'s New تظهر مرة واحدة مع كل تحديث'}
     ]
   },
@@ -1180,7 +1181,144 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
       },500);
     }
     setTimeout(function(){extractAndConfirmName();},800);
+    setTimeout(function(){detectPackagingInstructions();},1200);
   }
+}
+
+/* ══════════════════════════════════════════
+   PACKAGING INSTRUCTIONS DETECTION
+   ══════════════════════════════════════════ */
+function detectPackagingInstructions(){
+  try{
+    /* Find Prescription Notes */
+    var inputs=document.querySelectorAll('input[type="text"],textarea');
+    var notesText='';
+    for(var i=0;i<inputs.length;i++){
+      var v=(inputs[i].value||'').trim();
+      if(v.length>30&&/[\u0600-\u06FF]/.test(v)&&(/ضيف|توصيل|صيدل|دمج|بوكس|صندوق|شهر/i.test(v))){notesText=v;break;}
+      var attrs=(inputs[i].name||'')+(inputs[i].id||'')+(inputs[i].placeholder||'');
+      if(/presc.*note|prescription.*note/i.test(attrs)&&v.length>10){notesText=v;break;}
+    }
+    if(!notesText) return;
+
+    var detected=null;
+    var s=notesText;
+
+    /* ── Pattern 1: MERGE - دمج الطلبات في بوكس واحد ── */
+    var mergePatterns=[
+      /دمج(هم|هن|وهم|وا|يهم)?\s*(في|فى|ب)?\s*(بوكس|صندوق|كرتون|شنطه|شنطة)?\s*(واحد)?/i,
+      /(بوكس|صندوق|كرتون|شنطه|شنطة)\s*(واحد|واحده)/i,
+      /تجميع(هم|هن)?\s*(في|فى|ب)?\s*(بوكس|صندوق)?/i,
+      /(في|فى)\s*(بوكس|صندوق|كرتون)\s*(واحد)/i,
+      /مع\s*بعض\s*(في|فى|ب)?\s*(بوكس|صندوق)?/i,
+      /طلب(ات|ين)?\s*(ب)?رجاء\s*دمج/i
+    ];
+
+    /* Extract order count */
+    var orderCount='';
+    var countMatch=s.match(/(\d+)\s*(طلب|طلبات|اوردر|order)/i);
+    if(countMatch) orderCount=countMatch[1];
+    var countMatch2=s.match(/(ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته|سبع|ثمان|تسع|عشر)\s*(طلب|طلبات)/i);
+    if(countMatch2){
+      var arabicNums={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','خمسة':'5','ست':'6','سته':'6','سبع':'7','ثمان':'8','تسع':'9','عشر':'10'};
+      orderCount=arabicNums[countMatch2[1]]||countMatch2[1];
+    }
+
+    for(var p=0;p<mergePatterns.length;p++){
+      if(mergePatterns[p].test(s)){
+        detected={
+          type:'merge',
+          icon:'📦',
+          color:'#6366f1',
+          colorLight:'rgba(99,102,241,0.06)',
+          colorBorder:'rgba(99,102,241,0.15)',
+          title:'دمج الطلبات في بوكس واحد',
+          detail:'الضيف عنده '+(orderCount?orderCount+' طلبات':'عدة طلبات')+' - المطلوب تجميعهم في بوكس واحد',
+          action:'تأكد من دمج جميع الطلبات في صندوق واحد قبل التوصيل'
+        };
+        break;
+      }
+    }
+
+    /* ── Pattern 2: SEPARATE BOXES - كل شهر بصندوق منفصل ── */
+    if(!detected){
+      var separatePatterns=[
+        /كل\s*(شهر|بوكس)\s*(ب|في|فى)?\s*(صندوق|بوكس|كرتون)/i,
+        /كل\s*شهر\s*(لوحد|منفصل|لحال)/i,
+        /(بوكسات|صناديق|كراتين)\s*(منفصل|منفصله|لوحد)/i,
+        /كل\s*شهر\s*(ب|في|فى)\s*(بوكس|صندوق)/i,
+        /(فصل|افصل|يفصل)\s*(كل)?\s*(شهر|بوكس)/i,
+        /شهر\s*(ب|في|فى)\s*(صندوق|بوكس)\s*(منفصل)?/i,
+        /جعل\s*كل\s*شهر\s*(ب|في|فى)?\s*(صندوق|بوكس)/i
+      ];
+
+      /* Extract month count */
+      var monthCount='';
+      var mMatch=s.match(/(\d+)\s*(شهر|اشهر|أشهر|شهور)/i);
+      if(mMatch) monthCount=mMatch[1];
+      var mMatch2=s.match(/(شهرين|ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته)\s*(شهر|اشهر|أشهر|شهور)?/i);
+      if(mMatch2){
+        var arabicNums2={'شهرين':'2','ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','خمسة':'5','ست':'6','سته':'6'};
+        monthCount=arabicNums2[mMatch2[1]]||mMatch2[1];
+      }
+      var lMatch=s.match(/ل(ثلاث|ثلاثة|اربع|أربع|خمس|ست)\s*(اشهر|أشهر|شهور)/i);
+      if(lMatch){
+        var arabicNums3={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','ست':'6'};
+        monthCount=arabicNums3[lMatch[1]]||lMatch[1];
+      }
+
+      for(var p2=0;p2<separatePatterns.length;p2++){
+        if(separatePatterns[p2].test(s)){
+          detected={
+            type:'separate',
+            icon:'📦📦📦',
+            color:'#f59e0b',
+            colorLight:'rgba(245,158,11,0.06)',
+            colorBorder:'rgba(245,158,11,0.15)',
+            title:'كل شهر في صندوق منفصل',
+            detail:'المطلوب '+(monthCount?monthCount+' صناديق - صندوق لكل شهر':'تقسيم الأدوية لصناديق منفصلة - صندوق لكل شهر'),
+            action:'تأكد من فصل أدوية كل شهر في بوكس منفصل عند التجهيز'
+          };
+          break;
+        }
+      }
+    }
+
+    if(!detected) return;
+
+    /* Show packaging banner - right side */
+    var pkgBanner=document.createElement('div');
+    pkgBanner.id='ez-pkg-alert';
+    pkgBanner.style.cssText='position:fixed;right:-500px;top:80px;width:340px;z-index:9999996;transition:right 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
+
+    pkgBanner.innerHTML='\
+    <div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.1),0 4px 12px rgba(0,0,0,0.04);border:2px solid '+detected.colorBorder+'">\
+      <div style="height:3px;background:linear-gradient(90deg,'+detected.color+','+detected.color+'88,'+detected.color+');background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+      <div style="padding:14px 16px 10px;display:flex;align-items:center;gap:10px">\
+        <div style="font-size:24px;flex-shrink:0">'+detected.icon+'</div>\
+        <div style="flex:1"><div style="font-size:14px;font-weight:900;color:#1e1b4b">'+detected.title+'</div></div>\
+        <button onclick="var el=document.getElementById(\'ez-pkg-alert\');el.style.right=\'-500px\';setTimeout(function(){el.remove()},600)" style="width:26px;height:26px;border:none;border-radius:7px;font-size:13px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>\
+      </div>\
+      <div style="padding:0 16px 12px">\
+        <div style="background:'+detected.colorLight+';border:1px solid '+detected.colorBorder+';border-radius:10px;padding:10px 12px;margin-bottom:8px;direction:rtl">\
+          <div style="font-size:12px;font-weight:800;color:#1e1b4b;line-height:1.6">'+detected.detail+'</div>\
+        </div>\
+        <div style="display:flex;align-items:flex-start;gap:6px;direction:rtl;padding:6px 8px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.08)">\
+          <span style="font-size:14px;flex-shrink:0;margin-top:1px">⚡</span>\
+          <div style="font-size:11px;font-weight:700;color:#92400e;line-height:1.6">'+detected.action+'</div>\
+        </div>\
+      </div>\
+      <div style="padding:6px 16px 12px">\
+        <button onclick="var el=document.getElementById(\'ez-pkg-alert\');el.style.right=\'-500px\';setTimeout(function(){el.remove()},600);window.ezShowToast(\'✅ تم الاطلاع\',\'success\')" style="width:100%;height:36px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,'+detected.color+','+detected.color+'dd);box-shadow:0 3px 10px '+detected.color+'33;transition:all 0.3s">👍 تم - فاهم</button>\
+      </div>\
+    </div>';
+
+    document.body.appendChild(pkgBanner);
+    setTimeout(function(){pkgBanner.style.right='16px';},100);
+    /* Auto dismiss after 25 seconds */
+    setTimeout(function(){if(document.getElementById('ez-pkg-alert')){pkgBanner.style.right='-500px';setTimeout(function(){pkgBanner.remove();},600);}},25000);
+
+  }catch(e){console.log('EZ PackageDetect:',e);}
 }
 
 /* ══════════════════════════════════════════
