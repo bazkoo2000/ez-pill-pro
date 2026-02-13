@@ -1,20 +1,30 @@
 javascript:(function(){
-var APP_VERSION='132.0';
+var APP_VERSION='133.0';
 var APP_NAME='EZ_Pill Farmadosis';
 
 /* ══════════════════════════════════════════
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '133.0':{
+    title:'تحديث ذكي 🧠',
+    features:[
+      {icon:'👤',text:'استخلاص اسم الضيف/المريض من Prescription Notes تلقائياً'},
+      {icon:'⚠️',text:'نظام تحذيرات جديد بالكامل - لكل تحذير زرار تطبيق أو تجاهل'},
+      {icon:'💊',text:'اكتشاف الجرعة المزدوجة (2 Undefined/tablets) مع تغيير Dose وتضاعف Size'},
+      {icon:'🔍',text:'بحث ذكي في Import Invoice بالفاتورة أو ERX'},
+      {icon:'🛡️',text:'حماية الفاتورة الحالية من الاستيراد المكرر'},
+      {icon:'📋',text:'زرار تصغير لدايلوج خيارات إضافية'},
+      {icon:'🎉',text:'شاشة What\'s New تظهر مرة واحدة مع كل تحديث'}
+    ]
+  },
   '132.0':{
     title:'تحديث رئيسي 🎉',
     features:[
       {icon:'🎨',text:'واجهة Dialog جديدة بتصميم احترافي'},
       {icon:'💊',text:'دعم كل 6 ساعات (Q6H) → صفين × 12 ساعة'},
-      {icon:'🔍',text:'بحث ذكي في Import Invoice (فاتورة + ERX)'},
       {icon:'📋',text:'جدول جرعات محسن مع تعليم أصناف التكرار ⚡'},
       {icon:'🌐',text:'اكتشاف لغة الجرعات وضبط Patient Language'},
-      {icon:'🛡️',text:'حماية من استيراد الفاتورة الحالية مرتين'},
       {icon:'🖌️',text:'تنسيق احترافي للصفحة والأزرار والجداول'}
     ]
   }
@@ -420,47 +430,12 @@ window.applyWarning=function(idx){
   if(!w) return;
   var card=document.getElementById('warn-card-'+idx);
 
-  function fireEvents(el){
-    el.dispatchEvent(new Event('input',{bubbles:true}));
-    el.dispatchEvent(new Event('change',{bubbles:true}));
-    el.dispatchEvent(new Event('blur',{bubbles:true}));
-    if(typeof angular!=='undefined'){try{angular.element(el).triggerHandler('change');}catch(e){}}
-    if(typeof jQuery!=='undefined'){try{jQuery(el).trigger('change');}catch(e){}}
-  }
-  function setVal(td,v){
-    if(!td) return false;
-    var s=td.querySelector('select');
-    if(s){s.value=String(v);fireEvents(s);return true;}
-    var inp=td.querySelector('input,textarea');
-    if(inp){inp.value=String(v);fireEvents(inp);return true;}
-    td.textContent=String(v);
-    return true;
-  }
-  function getVal(td){
-    if(!td) return 0;
-    var inp=td.querySelector('input,textarea,select');
-    return inp?parseInt(inp.value)||0:parseInt(td.textContent)||0;
-  }
-
   if(w.type==='dose2'){
+    /* Mark row for dose=2 override - continueProcessing will apply it */
     var rd=window._ezRows?window._ezRows[w.rowIndex]:null;
-    if(rd&&rd.tds){
-      var cols=window._ezCols||{};
-      var doseOk=false,sizeOk=false;
-      /* Set dose to 2 */
-      if(cols.di>=0&&rd.tds[cols.di]){
-        doseOk=setVal(rd.tds[cols.di],2);
-      }
-      /* Double the size */
-      if(cols.si>=0&&rd.tds[cols.si]){
-        var curSize=getVal(rd.tds[cols.si]);
-        if(curSize>0){sizeOk=setVal(rd.tds[cols.si],curSize*2);}
-      }
-      if(doseOk||sizeOk){
-        window.ezShowToast('✅ '+rd.itemName+': الجرعة → 2 | الكمية تضاعفت','success');
-      } else {
-        window.ezShowToast('⚠️ لم يتم العثور على خانة الجرعة/الكمية','warning');
-      }
+    if(rd){
+      rd.forceDose2=true;
+      window.ezShowToast('✅ سيتم تطبيق الجرعة المزدوجة عند المتابعة','info');
     }
   } else if(w.type==='days'&&w.onEdit){
     var editInput=document.getElementById('edit-'+idx);
@@ -475,7 +450,7 @@ window.applyWarning=function(idx){
     for(var b=0;b<btns.length;b++) btns[b].remove();
     var badge=document.createElement('div');
     badge.style.cssText='text-align:center;font-size:13px;font-weight:800;color:#059669;padding:6px;background:rgba(16,185,129,0.06);border-radius:8px;margin-top:6px';
-    badge.textContent='✅ تم التطبيق بنجاح';
+    badge.textContent='✅ سيتم التطبيق عند المتابعة';
     card.appendChild(badge);
   }
 };
@@ -1131,7 +1106,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];var r_node=rd.row;var tds_nodes=rd.tds;
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
-      if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getTimeFromWords(rd.note);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
+      if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getTimeFromWords(rd.note);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);window.ezShowToast('✅ '+rd.itemName+': الجرعة → 2 | الكمية × 2','success');}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getTimeFromWords(rd.note);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getTimeFromWords(rd.note);
@@ -1147,6 +1122,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
       else{setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier));setEvry(tds_nodes[ei_main],'24');}
       if(di_main>=0)setDose(tds_nodes[di_main],doseMultiplier>=1?doseMultiplier:1);
       if(!isE12)setTime(r_node,tm2_obj.time);
+      /* Apply forceDose2 override AFTER normal processing */
+      if(rd.forceDose2){
+        if(di_main>=0)setDose(tds_nodes[di_main],2);
+        if(si_main>=0){var curSz=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],curSz*2);}
+        window.ezShowToast('✅ '+rd.itemName+': الجرعة → 2 | الكمية × 2 = '+(curSz*2),'success');
+      }
     }
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
