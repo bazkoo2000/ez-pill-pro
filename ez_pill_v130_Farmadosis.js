@@ -966,7 +966,7 @@ function scanForDuplicateNotes(){
    ★ MAIN PROCESSING ENGINE ★
    ══════════════════════════════════════════ */
 function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
-  warningQueue=[];duplicatedRows=[];duplicatedCount=0;var detectedLanguagesPerRow=[];
+  warningQueue=[];duplicatedRows=[];duplicatedCount=0;var detectedLanguagesPerRow=[];window._ezDose2Applied=null;
   function fire(el){try{if(!el)return;el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));el.dispatchEvent(new Event('blur',{bubbles:true}));}catch(e){}}
   function norm(txt){return(txt||'').toString().trim().replace(/\s+/g,' ');}
   function normL(txt){return norm(txt).toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي').trim();}
@@ -1106,7 +1106,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];var r_node=rd.row;var tds_nodes=rd.tds;
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
-      if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getTimeFromWords(rd.note);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);window.ezShowToast('✅ '+rd.itemName+': الجرعة → 2 | الكمية × 2','success');}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
+      if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getTimeFromWords(rd.note);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getTimeFromWords(rd.note);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getTimeFromWords(rd.note);
@@ -1126,7 +1126,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
       if(rd.forceDose2){
         if(di_main>=0)setDose(tds_nodes[di_main],2);
         if(si_main>=0){var curSz=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],curSz*2);}
-        window.ezShowToast('✅ '+rd.itemName+': الجرعة → 2 | الكمية × 2 = '+(curSz*2),'success');
+        /* Queue safety confirmation */
+        if(!window._ezDose2Applied) window._ezDose2Applied=[];
+        window._ezDose2Applied.push({name:rd.itemName,newSize:curSz*2,dose:2});
       }
     }
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
@@ -1141,6 +1143,42 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(showPostDialog)showPostProcessDialog();
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
+    /* Show safety confirmation for dose2 changes */
+    if(window._ezDose2Applied&&window._ezDose2Applied.length>0){
+      setTimeout(function(){
+        var items=window._ezDose2Applied;
+        var listHtml='';
+        for(var d2=0;d2<items.length;d2++){
+          listHtml+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.1);border-radius:8px;margin-bottom:6px;direction:rtl">';
+          listHtml+='<span style="font-size:16px">💊</span>';
+          listHtml+='<span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+items[d2].name+'</span>';
+          listHtml+='<span style="font-size:11px;font-weight:800;color:#059669;background:rgba(16,185,129,0.08);padding:2px 8px;border-radius:6px">الجرعة: '+items[d2].dose+'</span>';
+          listHtml+='<span style="font-size:11px;font-weight:800;color:#6366f1;background:rgba(99,102,241,0.08);padding:2px 8px;border-radius:6px">الكمية: '+items[d2].newSize+'</span>';
+          listHtml+='</div>';
+        }
+        var safetyBanner=document.createElement('div');
+        safetyBanner.id='ez-safety-confirm';
+        safetyBanner.style.cssText='position:fixed;bottom:-300px;left:50%;transform:translateX(-50%);width:440px;max-width:94vw;z-index:9999998;transition:bottom 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
+        safetyBanner.innerHTML='\
+        <div style="background:#fff;border-radius:18px 18px 0 0;overflow:hidden;box-shadow:0 -12px 40px rgba(245,158,11,0.12),0 -4px 12px rgba(0,0,0,0.06);border:2px solid rgba(245,158,11,0.15);border-bottom:none">\
+          <div style="height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(245,158,11,0.08)">\
+            <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(245,158,11,0.2);flex-shrink:0">🔔</div>\
+            <div style="flex:1"><div style="font-size:13px;font-weight:800;color:#92400e">تأكد من كمية الأدوية التالية</div>\
+            <div style="font-size:10px;font-weight:700;color:#b45309;margin-top:1px">تم تعديل الجرعة والكمية - برجاء المراجعة</div></div>\
+          </div>\
+          <div style="padding:12px 18px">'+listHtml+'</div>\
+          <div style="padding:8px 18px 14px;display:flex;gap:6px">\
+            <button onclick="var el=document.getElementById(\'ez-safety-confirm\');el.style.bottom=\'-300px\';setTimeout(function(){el.remove()},600);window.ezShowToast(\'✅ تم التأكيد\',\'success\')" style="flex:1;height:36px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 3px 10px rgba(16,185,129,0.2);transition:all 0.3s">✅ تم المراجعة - الكميات صحيحة</button>\
+          </div>\
+        </div>';
+        document.body.appendChild(safetyBanner);
+        setTimeout(function(){safetyBanner.style.bottom='0px';},100);
+        /* Auto dismiss after 20 seconds */
+        setTimeout(function(){if(document.getElementById('ez-safety-confirm')){safetyBanner.style.bottom='-300px';setTimeout(function(){safetyBanner.remove();},600);}},20000);
+        window._ezDose2Applied=null;
+      },500);
+    }
     setTimeout(function(){extractAndConfirmName();},800);
   }
 }
@@ -1537,42 +1575,45 @@ function extractAndConfirmName(){
     var nameField=findNameField();
     if(!nameField) return;
 
-    /* Show confirmation dialog */
-    var overlay=document.createElement('div');
-    overlay.id='ez-name-confirm';
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.5);backdrop-filter:blur(6px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:dialogEnter 0.4s ease';
+    /* Show as gentle slide-down banner */
+    var banner=document.createElement('div');
+    banner.id='ez-name-confirm';
+    banner.style.cssText='position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:460px;max-width:94vw;z-index:9999999;transition:top 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
 
-    var card=document.createElement('div');
-    card.style.cssText='background:#fff;border-radius:20px;width:420px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
-
-    card.innerHTML='\
-    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
-    <div style="padding:18px 22px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(129,140,248,0.08)">\
-      <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(245,158,11,0.25),inset 0 1px 0 rgba(255,255,255,0.3)">👤</div>\
-      <div>\
-        <div style="font-size:16px;font-weight:900;color:#1e1b4b">تم اكتشاف اسم في الملاحظات</div>\
-        <div style="font-size:11px;font-weight:700;color:#92400e;margin-top:2px">Prescription Notes</div>\
+    banner.innerHTML='\
+    <div style="background:#fff;border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 12px 40px rgba(99,102,241,0.15),0 4px 12px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);border-top:none">\
+      <div style="height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+      <div style="padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(129,140,248,0.06)">\
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(99,102,241,0.2);flex-shrink:0">👤</div>\
+        <div style="flex:1"><div style="font-size:13px;font-weight:800;color:#1e1b4b">تم اكتشاف اسم في الملاحظات</div></div>\
+        <button id="ez-name-no" style="width:28px;height:28px;border:none;border-radius:8px;font-size:14px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;transition:all 0.25s;flex-shrink:0">✕</button>\
       </div>\
-    </div>\
-    <div style="padding:16px 22px">\
-      <div style="background:rgba(245,158,11,0.06);border:1.5px solid rgba(245,158,11,0.15);border-radius:12px;padding:12px 14px;margin-bottom:14px;direction:rtl">\
-        <div style="font-size:10px;font-weight:800;color:#b45309;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase">📝 النص الأصلي</div>\
-        <div style="font-size:12px;font-weight:700;color:#451a03;line-height:1.7;max-height:80px;overflow-y:auto">'+notesText.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>\
+      <div style="padding:12px 18px">\
+        <div style="background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.08);border-radius:10px;padding:8px 12px;margin-bottom:10px;direction:rtl;max-height:50px;overflow-y:auto">\
+          <div style="font-size:11px;font-weight:700;color:#64748b;line-height:1.6">'+notesText.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>\
+        </div>\
+        <div style="display:flex;align-items:center;gap:10px;direction:rtl">\
+          <div style="flex:1;background:linear-gradient(145deg,#ecfdf5,#d1fae5);border:1.5px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 14px;text-align:center">\
+            <div style="font-size:9px;font-weight:800;color:#047857;letter-spacing:0.5px;margin-bottom:2px">الاسم المستخلص</div>\
+            <div style="font-size:18px;font-weight:900;color:#064e3b" id="ez-extracted-name">'+extractedName+'</div>\
+            <input type="text" id="ez-name-edit" value="'+extractedName+'" style="display:none;width:100%;padding:4px 8px;border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:16px;font-weight:800;color:#064e3b;text-align:center;font-family:Cairo,sans-serif;outline:none;direction:rtl;margin-top:2px" />\
+          </div>\
+        </div>\
       </div>\
-      <div style="background:linear-gradient(145deg,#ecfdf5,#d1fae5);border:1.5px solid rgba(16,185,129,0.2);border-radius:12px;padding:14px;text-align:center">\
-        <div style="font-size:10px;font-weight:800;color:#047857;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase">✨ الاسم المستخلص</div>\
-        <div style="font-size:22px;font-weight:900;color:#064e3b;direction:rtl" id="ez-extracted-name">'+extractedName+'</div>\
-        <input type="text" id="ez-name-edit" value="'+extractedName+'" style="display:none;width:90%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.3);border-radius:10px;font-size:18px;font-weight:800;color:#064e3b;text-align:center;font-family:Cairo,sans-serif;outline:none;direction:rtl;margin-top:6px" />\
+      <div style="padding:8px 18px 14px;display:flex;gap:6px">\
+        <button id="ez-name-ok" style="flex:1;height:38px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 3px 10px rgba(16,185,129,0.2);transition:all 0.3s">✅ تأكيد وكتابة الاسم</button>\
+        <button id="ez-name-edit-btn" style="height:38px;padding:0 12px;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12);transition:all 0.3s;display:flex;align-items:center;justify-content:center">✏️</button>\
       </div>\
-    </div>\
-    <div style="padding:10px 22px 18px;display:flex;gap:8px">\
-      <button id="ez-name-ok" style="flex:1;height:46px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s">✅ تأكيد وكتابة الاسم</button>\
-      <button id="ez-name-edit-btn" style="width:46px;height:46px;border:none;border-radius:12px;font-size:18px;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(129,140,248,0.08);border:1.5px solid rgba(129,140,248,0.15);transition:all 0.3s;display:flex;align-items:center;justify-content:center">✏️</button>\
-      <button id="ez-name-no" style="width:46px;height:46px;border:none;border-radius:12px;font-size:18px;cursor:pointer;font-family:Cairo,sans-serif;color:#ef4444;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.15);transition:all 0.3s;display:flex;align-items:center;justify-content:center">✖</button>\
     </div>';
 
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
+    document.body.appendChild(banner);
+    /* Smooth slide down */
+    setTimeout(function(){banner.style.top='0px';},50);
+
+    function closeBanner(){
+      banner.style.top='-200px';
+      setTimeout(function(){banner.remove();},600);
+    }
 
     /* Edit mode toggle */
     var editMode=false;
@@ -1609,16 +1650,16 @@ function extractAndConfirmName(){
         if(typeof jQuery!=='undefined'){try{jQuery(nameField).trigger('change');}catch(e){}}
         window.ezShowToast('تم كتابة الاسم: '+finalName+' ✅','success');
       }
-      overlay.remove();
+      closeBanner();
     });
 
     /* Reject */
     document.getElementById('ez-name-no').addEventListener('click',function(){
-      overlay.remove();
+      closeBanner();
     });
 
-    /* Click outside to close */
-    overlay.addEventListener('click',function(e){if(e.target===overlay) overlay.remove();});
+    /* Auto-dismiss after 30 seconds if no action */
+    setTimeout(function(){if(document.getElementById('ez-name-confirm'))closeBanner();},30000);
 
   }catch(e){console.log('EZ NameExtract:',e);}
 }
