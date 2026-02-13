@@ -335,15 +335,14 @@ window.ezShowDoses=function(){
    ══════════════════════════════════════════ */
 window.showWarnings=function(warnings,callback){
   if(!warnings||warnings.length===0){callback();return;}
-  var html='<div style="width:480px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1)">';
-  /* Header */
+  var html='<div style="width:500px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1)">';
   html+='<div style="position:relative;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#ef4444,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
   html+='<div style="padding:16px 22px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(129,140,248,0.08)">';
   html+='<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(245,158,11,0.25),inset 0 1px 0 rgba(255,255,255,0.3)">⚠️</div>';
   html+='<div><div style="font-size:16px;font-weight:900;color:#1e1b4b">تحذيرات تحتاج مراجعة</div>';
-  html+='<div style="font-size:11px;font-weight:700;color:#92400e;margin-top:1px">'+warnings.length+' تحذير يحتاج انتباهك</div></div></div>';
-  /* Body */
-  html+='<div style="padding:14px 18px;max-height:400px;overflow-y:auto">';
+  html+='<div style="font-size:11px;font-weight:700;color:#92400e;margin-top:1px">'+warnings.length+' تحذير · اختر لكل تحذير: تطبيق أو تجاهل</div></div></div>';
+  html+='<div style="padding:14px 18px;max-height:420px;overflow-y:auto">';
+
   for(var i=0;i<warnings.length;i++){
     var w=warnings[i];
     var levelConfig={
@@ -353,61 +352,151 @@ window.showWarnings=function(warnings,callback){
     };
     var lc=levelConfig[w.level]||levelConfig.info;
 
-    /* Parse warning to extract item name, reason, detail */
-    var itemName='';var reason='';var detail='';
+    var itemName='';var reason='';var detail='';var actionLabel='';
     var msgText=w.message.replace(/^[^\s]+\s*/,'');
     var itemMatch=msgText.match(/الصنف[:\s]*["""]?([^"""-]+)["""]?/);
     if(itemMatch) itemName=itemMatch[1].trim();
 
-    if(w.message.indexOf('2 tablet')>-1||w.message.indexOf('2 pill')>-1||w.message.indexOf('2 cap')>-1||w.message.indexOf('2 قرص')>-1||w.message.indexOf('2 حبة')>-1){
-      reason='جرعة مزدوجة مكتوبة في الملاحظات';
-      detail='الطبيب كتب "2 tablets/pills" - يعني الجرعة حبتين مش حبة واحدة. تأكد إن الكمية والجرعة مضبوطين.';
-    } else if(w.message.indexOf('يوم')>-1&&w.editable){
-      reason='اختلاف في مدة العلاج';
+    if(w.type==='dose2'){
+      reason='💊 جرعة مزدوجة (2) مكتوبة في الملاحظات';
+      detail='الطبيب كتب جرعة 2 - يعني حبتين في الجرعة الواحدة. لو ضغطت تطبيق: الجرعة هتتغير لـ 2 والكمية هتتضاعف.';
+      actionLabel='تغيير الجرعة لـ 2 وتضاعف الكمية';
+    } else if(w.type==='days'){
       var dayMatch=w.message.match(/"(\d+)\s*يوم"/);
       var selectedMatch=w.message.match(/المحدد\s*(\d+)/);
-      detail='المكتوب في الملاحظات '+(dayMatch?dayMatch[1]:'')+' يوم، لكن أنت محدد '+(selectedMatch?selectedMatch[1]:'')+' يوم. تقدر تعدل من هنا.';
-    } else if(w.message.indexOf('تقسيم صغير')>-1){
-      reason='كمية صغيرة بعد التقسيم';
-      detail='بعد تقسيم الصنف لجرعات متعددة، كل جرعة هتكون كمية قليلة.';
+      reason='📅 اختلاف في مدة العلاج';
+      detail='المكتوب في الملاحظات '+(dayMatch?dayMatch[1]:'')+' يوم، لكن المحدد '+(selectedMatch?selectedMatch[1]:'')+' يوم. لو ضغطت تطبيق: هيتعدل حسب القيمة اللي تحددها.';
+      actionLabel='تطبيق عدد الأيام';
+    } else if(w.type==='smallsplit'){
+      reason='📏 كمية صغيرة بعد التقسيم';
+      detail='بعد تقسيم الصنف لجرعات متعددة كل جرعة هتكون كمية قليلة. للعلم فقط.';
+      actionLabel='';
     } else {
-      reason='يحتاج مراجعة';
+      reason='📌 يحتاج مراجعة';
       detail=msgText;
+      actionLabel='تطبيق';
     }
 
-    html+='<div style="background:'+lc.bg+';border:1.5px solid '+lc.bdr+';border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;animation:fadeSlideUp 0.3s ease '+(0.1+i*0.08)+'s both">';
-    /* Top: icon + item name + label */
-    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
-    html+='<div style="width:30px;height:30px;border-radius:9px;background:'+lc.iconBg+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.1)">'+lc.icon+'</div>';
+    html+='<div id="warn-card-'+i+'" style="background:'+lc.bg+';border:1.5px solid '+lc.bdr+';border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;transition:all 0.3s">';
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    html+='<div style="width:30px;height:30px;border-radius:9px;background:'+lc.iconBg+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.1);flex-shrink:0">'+lc.icon+'</div>';
     if(itemName) html+='<div style="flex:1;font-size:13px;font-weight:800;color:#1e1b4b;direction:rtl">'+itemName+'</div>';
-    html+='<span style="font-size:9px;font-weight:800;color:'+lc.labelColor+';background:'+lc.labelBg+';padding:3px 10px;border-radius:6px;letter-spacing:0.5px">'+lc.label+'</span>';
+    html+='<span style="font-size:9px;font-weight:800;color:'+lc.labelColor+';background:'+lc.labelBg+';padding:3px 10px;border-radius:6px;letter-spacing:0.5px;flex-shrink:0">'+lc.label+'</span>';
     html+='</div>';
-    /* Reason */
-    html+='<div style="font-size:13px;font-weight:800;color:#312e81;margin-bottom:4px;direction:rtl">📌 '+reason+'</div>';
-    /* Detail */
-    html+='<div style="font-size:11.5px;font-weight:700;color:#64748b;line-height:1.7;direction:rtl;padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:8px;border:1px solid rgba(0,0,0,0.04)">'+detail+'</div>';
-    /* Editable field */
+    html+='<div style="font-size:12.5px;font-weight:800;color:#312e81;margin-bottom:4px;direction:rtl">'+reason+'</div>';
+    html+='<div style="font-size:11px;font-weight:700;color:#64748b;line-height:1.7;direction:rtl;padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:8px;border:1px solid rgba(0,0,0,0.04);margin-bottom:8px">'+detail+'</div>';
+
     if(w.editable){
-      html+='<div style="margin-top:10px;display:flex;align-items:center;gap:8px;direction:rtl">';
+      html+='<div style="display:flex;align-items:center;gap:8px;direction:rtl;margin-bottom:8px">';
       html+='<label style="font-size:11px;font-weight:800;color:'+lc.labelColor+'">'+w.editLabel+':</label>';
       html+='<input type="number" id="edit-'+i+'" value="'+w.currentValue+'" min="'+w.minValue+'" max="'+w.maxValue+'" style="width:80px;padding:6px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:14px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" />';
-      html+='<span style="font-size:11px;font-weight:700;color:#94a3b8">يوم</span>';
+      html+='<span style="font-size:11px;font-weight:700;color:#94a3b8">يوم</span></div>';
+    }
+
+    /* Per-warning action buttons */
+    if(w.type!=='smallsplit'){
+      html+='<div style="display:flex;gap:6px;direction:rtl">';
+      html+='<button onclick="window.applyWarning('+i+')" style="flex:1;height:34px;border:none;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 3px 10px rgba(16,185,129,0.2);transition:all 0.3s">✅ '+actionLabel+'</button>';
+      html+='<button onclick="window.skipWarning('+i+')" style="height:34px;padding:0 14px;border:none;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#94a3b8;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.15);transition:all 0.3s">تجاهل</button>';
       html+='</div>';
     }
     html+='</div>';
   }
   html+='</div>';
-  /* Footer buttons */
-  html+='<div style="padding:12px 18px 16px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
-  html+='<button onclick="window.acceptWarnings()" style="flex:1;height:44px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s">✅ تطبيق التعديلات</button>';
-  html+='<button onclick="window.cancelWarnings()" style="flex:1;height:44px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(129,140,248,0.06);border:1.5px solid rgba(129,140,248,0.12);transition:all 0.3s">⏭️ تجاهل الكل</button>';
+  html+='<div style="padding:10px 18px 14px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
+  html+='<button onclick="window.closeWarnings()" style="flex:1;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 14px rgba(99,102,241,0.2);transition:all 0.3s">✅ تم المراجعة - متابعة</button>';
   html+='</div></div>';
+
   var overlay=document.createElement('div');
   overlay.id='warning-overlay';
   overlay.innerHTML=html;
   overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,15,35,0.5);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
   document.body.appendChild(overlay);
   window.warningCallback=callback;
+};
+
+window.applyWarning=function(idx){
+  var w=warningQueue[idx];
+  if(!w) return;
+  var card=document.getElementById('warn-card-'+idx);
+
+  function fireEvents(el){
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+    el.dispatchEvent(new Event('blur',{bubbles:true}));
+    if(typeof angular!=='undefined'){try{angular.element(el).triggerHandler('change');}catch(e){}}
+    if(typeof jQuery!=='undefined'){try{jQuery(el).trigger('change');}catch(e){}}
+  }
+  function setVal(td,v){
+    if(!td) return false;
+    var s=td.querySelector('select');
+    if(s){s.value=String(v);fireEvents(s);return true;}
+    var inp=td.querySelector('input,textarea');
+    if(inp){inp.value=String(v);fireEvents(inp);return true;}
+    td.textContent=String(v);
+    return true;
+  }
+  function getVal(td){
+    if(!td) return 0;
+    var inp=td.querySelector('input,textarea,select');
+    return inp?parseInt(inp.value)||0:parseInt(td.textContent)||0;
+  }
+
+  if(w.type==='dose2'){
+    var rd=window._ezRows?window._ezRows[w.rowIndex]:null;
+    if(rd&&rd.tds){
+      var cols=window._ezCols||{};
+      var doseOk=false,sizeOk=false;
+      /* Set dose to 2 */
+      if(cols.di>=0&&rd.tds[cols.di]){
+        doseOk=setVal(rd.tds[cols.di],2);
+      }
+      /* Double the size */
+      if(cols.si>=0&&rd.tds[cols.si]){
+        var curSize=getVal(rd.tds[cols.si]);
+        if(curSize>0){sizeOk=setVal(rd.tds[cols.si],curSize*2);}
+      }
+      if(doseOk||sizeOk){
+        window.ezShowToast('✅ '+rd.itemName+': الجرعة → 2 | الكمية تضاعفت','success');
+      } else {
+        window.ezShowToast('⚠️ لم يتم العثور على خانة الجرعة/الكمية','warning');
+      }
+    }
+  } else if(w.type==='days'&&w.onEdit){
+    var editInput=document.getElementById('edit-'+idx);
+    if(editInput){w.onEdit(parseInt(editInput.value));}
+    window.ezShowToast('✅ تم تعديل عدد الأيام','success');
+  }
+
+  /* Mark card as applied */
+  if(card){
+    card.style.cssText='background:rgba(16,185,129,0.06)!important;border:1.5px solid rgba(16,185,129,0.25)!important;border-radius:14px;padding:14px 16px;margin-bottom:10px';
+    var btns=card.querySelectorAll('button');
+    for(var b=0;b<btns.length;b++) btns[b].remove();
+    var badge=document.createElement('div');
+    badge.style.cssText='text-align:center;font-size:13px;font-weight:800;color:#059669;padding:6px;background:rgba(16,185,129,0.06);border-radius:8px;margin-top:6px';
+    badge.textContent='✅ تم التطبيق بنجاح';
+    card.appendChild(badge);
+  }
+};
+
+window.skipWarning=function(idx){
+  var card=document.getElementById('warn-card-'+idx);
+  if(card){
+    card.style.cssText='background:rgba(148,163,184,0.03)!important;border:1.5px solid rgba(148,163,184,0.1)!important;border-radius:14px;padding:14px 16px;margin-bottom:10px;opacity:0.4';
+    var btns=card.querySelectorAll('button');
+    for(var b=0;b<btns.length;b++) btns[b].remove();
+    var badge=document.createElement('div');
+    badge.style.cssText='text-align:center;font-size:13px;font-weight:800;color:#94a3b8;padding:6px;background:rgba(148,163,184,0.06);border-radius:8px;margin-top:6px';
+    badge.textContent='⏭️ تم التجاهل';
+    card.appendChild(badge);
+  }
+};
+
+window.closeWarnings=function(){
+  var overlay=document.getElementById('warning-overlay');
+  if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
 };
 
 window.acceptWarnings=function(){
@@ -994,13 +1083,14 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
   var h_main=tb_main.querySelector('tr');var hs_main=h_main.querySelectorAll('th,td');
   var qi_main=idx(hs_main,'qty');var si_main=idx(hs_main,'size');var ni_main=idx(hs_main,'note');var ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');
   var ti_main=idx(hs_main,'time');var di_main=idx(hs_main,'dose');var ci_main=idx(hs_main,'code');var sdi_main=idx(hs_main,'start date');var edi_main=idx(hs_main,'end date');var nm_main=idx(hs_main,'name');if(nm_main<0)nm_main=idx(hs_main,'item');
+  window._ezCols={di:di_main,si:si_main,qi:qi_main,ni:ni_main,ei:ei_main};
   if(qi_main<0||si_main<0||ni_main<0||ei_main<0){alert('❌ لم يتم العثور على الأعمدة المطلوبة');return;}
   if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);ni_main=ti_main+1;if(ti_main<di_main)di_main++;if(ti_main<ei_main)ei_main++;if(ti_main<sdi_main)sdi_main++;if(ti_main<edi_main)edi_main++;}
   if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='120px';hs_main[sdi_main].style.minWidth='120px';}
   if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='120px';hs_main[edi_main].style.minWidth='120px';}
   if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
 
-  var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];
+  var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];window._ezRows=allRowsData;
 
   tb_main.querySelectorAll('tr').forEach(function(r_node,ri_idx){
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
@@ -1021,15 +1111,18 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
     if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
     var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
-    if(/2\s*(tablet|pill|cap|قرص|حبة|كبسولة)/gi.test(original_note)){warningQueue.push({level:'warning',message:'💊 الصنف "'+itemName+'" - مكتوب "2 tablets/pills" في الملاحظات',detail:original_note,editable:false,rowIndex:allRowsData.length});}
     var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);var h_s=!!(itemCode&&weeklyInjections.indexOf(itemCode)>-1);
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
     if(autoDuration){durationInfo=extractDuration(fn_str);if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.floor(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
     allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false});
+    /* Detect dose=2 patterns AFTER push so rowIndex is correct */
+    var dose2pattern=/^2\s+(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
+    var dose2pattern2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
+    if(dose2pattern.test(original_note.trim())||dose2pattern2.test(original_note)){warningQueue.push({level:'warning',message:'💊 الصنف "'+itemName+'" - مكتوب جرعة مزدوجة (2) في الملاحظات',detail:original_note,editable:false,rowIndex:allRowsData.length-1,type:'dose2'});}
   }
 
-  if(enableWarnings){for(var i=0;i<allRowsData.length;i++){var rd=allRowsData[i];if(rd.durationInfo&&rd.durationInfo.hasDuration){var extracted=rd.durationInfo.days;if(extracted!==t){warningQueue.push({level:'warning',message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',editable:true,editLabel:'عدد الأيام',currentValue:extracted,minValue:1,maxValue:365,rowIndex:i,onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)});}}if(rd.hasFixedSize&&rd.dui){var totalSize=fixedSizeCodes[rd.itemCode];var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);var eachPart=rd.dui.type==='q6h'?totalSize*2:Math.floor(totalSize/parts);if(eachPart<5){warningQueue.push({level:'info',message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',editable:false,rowIndex:i});}}}}
+  if(enableWarnings){for(var i=0;i<allRowsData.length;i++){var rd=allRowsData[i];if(rd.durationInfo&&rd.durationInfo.hasDuration){var extracted=rd.durationInfo.days;if(extracted!==t){warningQueue.push({level:'warning',message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',editable:true,editLabel:'عدد الأيام',currentValue:extracted,minValue:1,maxValue:365,rowIndex:i,type:'days',onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)});}}if(rd.hasFixedSize&&rd.dui){var totalSize=fixedSizeCodes[rd.itemCode];var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);var eachPart=rd.dui.type==='q6h'?totalSize*2:Math.floor(totalSize/parts);if(eachPart<5){warningQueue.push({level:'info',message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',editable:false,rowIndex:i,type:'smallsplit'});}}}}
 
   if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
 
