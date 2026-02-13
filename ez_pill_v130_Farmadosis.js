@@ -208,6 +208,100 @@ var duplicatedRows=[];
 var duplicatedCount=0;
 
 /* ══════════════════════════════════════════
+   SHARED UTILITY FUNCTIONS (Single Source)
+   ══════════════════════════════════════════ */
+function _ezFire(el){
+  try{
+    if(!el)return;
+    el.focus();
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+    el.dispatchEvent(new Event('blur',{bubbles:true}));
+    if(typeof angular!=='undefined'){try{angular.element(el).triggerHandler('change');}catch(e){}}
+    if(typeof jQuery!=='undefined'){try{jQuery(el).trigger('change');}catch(e){}}
+  }catch(e){}
+}
+
+function _ezNorm(txt){
+  return(txt||'').toString().trim().replace(/\s+/g,' ');
+}
+
+function _ezNormL(txt){
+  return _ezNorm(txt).toLowerCase()
+    .replace(/[أإآ]/g,'ا')
+    .replace(/ة/g,'هـ')
+    .replace(/ئ/g,'ي')
+    .replace(/ؤ/g,'و')
+    .replace(/ى/g,'ي')
+    .trim();
+}
+
+function _ezGet(td){
+  if(!td) return '';
+  var i=td.querySelector('input,textarea,select');
+  if(i){
+    if(i.tagName==='SELECT'){var o=i.options[i.selectedIndex];return _ezNorm(o?o.textContent:i.value);}
+    return _ezNorm(i.value);
+  }
+  return _ezNorm(td.innerText||td.textContent);
+}
+
+function _ezSet(td,v){
+  if(!td) return;
+  var s=td.querySelector('select');
+  if(s){s.value=String(v);_ezFire(s);return;}
+  var i=td.querySelector('input,textarea');
+  if(i){i.value=v;_ezFire(i);}
+  else td.textContent=v;
+}
+
+/* Column aliases - Point 1: Resilient column detection */
+var COLUMN_ALIASES={
+  'qty':['qty','quantity','كمية','الكمية','qnty','q.ty','عدد'],
+  'size':['size','حجم','الحجم','sz','pack size','pack'],
+  'note':['note','notes','ملاحظة','ملاحظات','remark','remarks','prescription note'],
+  'every':['every','evry','كل','المدة','frequency','freq','interval'],
+  'time':['time','وقت','الوقت','timing'],
+  'dose':['dose','جرعة','الجرعة','dosage','dos'],
+  'code':['code','كود','الكود','item code','barcode','رمز'],
+  'start date':['start date','start','تاريخ البدء','بداية','from'],
+  'end date':['end date','end','تاريخ الانتهاء','نهاية','to','expiry'],
+  'name':['name','item','اسم','الاسم','item name','drug name','medication','drug']
+};
+
+function _ezIdx(ths,name){
+  var key=name.toLowerCase().trim();
+  var aliases=COLUMN_ALIASES[key]||[key];
+  for(var i=0;i<ths.length;i++){
+    var txt=_ezNormL(ths[i].textContent);
+    for(var a=0;a<aliases.length;a++){
+      if(txt===aliases[a]||txt.indexOf(aliases[a])>-1) return i;
+    }
+  }
+  return-1;
+}
+
+/* Find main data table with resilient detection */
+function _ezFindTable(){
+  var tables=document.querySelectorAll('table');
+  for(var i=0;i<tables.length;i++){
+    var ths=tables[i].querySelectorAll('th');
+    if(ths.length>3){
+      var hasQty=_ezIdx(ths,'qty')>=0;
+      var hasNote=_ezIdx(ths,'note')>=0;
+      if(hasQty&&hasNote) return tables[i];
+    }
+  }
+  /* Fallback: largest table */
+  var best=null,bestCols=0;
+  for(var j=0;j<tables.length;j++){
+    var cols=tables[j].querySelectorAll('th').length;
+    if(cols>bestCols){bestCols=cols;best=tables[j];}
+  }
+  return best;
+}
+
+/* ══════════════════════════════════════════
    LANGUAGE DETECTION
    ══════════════════════════════════════════ */
 function detectLanguage(text){
@@ -347,20 +441,13 @@ window.ezSelect=function(el,type,val){
 window.ezShowDoses=function(){
   var existing=document.getElementById('ez-doses-dialog');
   if(existing){existing.remove();return;}
-  var ts=document.querySelectorAll('table'),tb=null;
-  for(var i=0;i<ts.length;i++){
-    if(ts[i].querySelector('th')&&(ts[i].innerText.toLowerCase().includes('qty')||
-       ts[i].innerText.toLowerCase().includes('quantity'))){tb=ts[i];break;}
-  }
+  var tb=_ezFindTable();
   if(!tb){window.ezShowToast('لم يتم العثور على الجدول','error');return;}
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
-  function idxOf(n){
-    for(var i=0;i<hs.length;i++){if(hs[i].textContent.toLowerCase().indexOf(n)>-1)return i;}return-1;
-  }
-  var ni=idxOf('note'),nmi=idxOf('name');
-  if(nmi<0) nmi=idxOf('item');
-  var cdi=idxOf('code');
-  if(ni<0||nmi<0){window.ezShowToast('لم يتم العثور على الأعمدة','error');return;}
+  var ni=_ezIdx(hs,'note'),nmi=_ezIdx(hs,'name');
+  if(nmi<0) nmi=_ezIdx(hs,'item');
+  var cdi=_ezIdx(hs,'code');
+  if(ni<0||nmi<0){window.ezShowToast('أعمدة Note أو Name مش موجودة','error');return;}
   function getVal(td){
     if(!td)return'';
     var inp=td.querySelector('input,textarea,select');
@@ -602,37 +689,10 @@ window.ezSubmit=function(){
    ══════════════════════════════════════════ */
 window.ezUndoDuplicates=function(){
   try{
-    var ts=document.querySelectorAll('table'),tb=null;
-    for(var i=0;i<ts.length;i++){
-      if(ts[i].querySelector('th')&&(ts[i].innerText.toLowerCase().includes('qty')||
-         ts[i].innerText.toLowerCase().includes('quantity'))){tb=ts[i];break;}
-    }
+    var tb=_ezFindTable();
     if(!tb) return;
 
-    function fire(el){
-      if(!el)return;
-      el.focus();
-      el.dispatchEvent(new Event('input',{bubbles:true}));
-      el.dispatchEvent(new Event('change',{bubbles:true}));
-      el.dispatchEvent(new Event('blur',{bubbles:true}));
-    }
-    function normL(t){return(t||'').toString().toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();}
-    function get(td){
-      var i=td.querySelector('input,textarea,select');
-      if(i){
-        if(i.tagName==='SELECT'){var o=i.options[i.selectedIndex];return o?o.textContent:i.value;}
-        return i.value;
-      }
-      return td.innerText||td.textContent;
-    }
-    function set(td,v){
-      var i=td.querySelector('input,textarea');
-      if(i){i.value=v;fire(i);}
-      else{var s=td.querySelector('select');if(s){s.value=String(v);fire(s);}else{td.textContent=v;}}
-    }
-    function idx(ths,n){
-      for(var i=0;i<ths.length;i++){if(normL(ths[i].textContent).indexOf(normL(n))>-1)return i;}return-1;
-    }
+    var fire=_ezFire,normL=_ezNormL,get=_ezGet,set=_ezSet,idx=_ezIdx;
 
     var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
     var ci=idx(hs,'code'),si=idx(hs,'size'),ni=idx(hs,'note'),ei=idx(hs,'evry');
@@ -696,30 +756,15 @@ window.ezNextMonth=function(){
   var sDateElem=document.querySelector('#fstartDate');
   if(!sDateElem) return;
 
-  var ts=document.querySelectorAll('table'),tb=null;
-  for(var i=0;i<ts.length;i++){
-    if(ts[i].innerText.toLowerCase().includes('qty')||ts[i].innerText.toLowerCase().includes('quantity')){tb=ts[i];break;}
-  }
+  var tb=_ezFindTable();
   if(!tb) return;
 
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
-  var si=-1,edi=-1,qi=-1;
-  for(var j=0;j<hs.length;j++){
-    var txt=hs[j].textContent.toLowerCase();
-    if(txt.includes('size')) si=j;
-    if(txt.includes('end date')) edi=j;
-    if(txt.includes('qty')) qi=j;
-  }
+  var si=_ezIdx(hs,'size'),edi=_ezIdx(hs,'end date'),qi=_ezIdx(hs,'qty');
 
   var rows=tb.querySelectorAll('tr');
 
-  function fireEv(el){
-    if(!el)return;
-    el.focus();
-    el.dispatchEvent(new Event('input',{bubbles:true}));
-    el.dispatchEvent(new Event('change',{bubbles:true}));
-    el.dispatchEvent(new Event('blur',{bubbles:true}));
-  }
+  var fireEv=_ezFire;
 
   if(monthCounter===1||monthCounter===2){
     var newStart='';
@@ -773,12 +818,7 @@ window.ezNextMonth=function(){
 window.fixEndDates=function(targetDate,ediIdx){
   var tb=document.querySelector('table');
   if(!tb) return;
-  function fire(el){
-    if(!el)return;el.focus();
-    el.dispatchEvent(new Event('input',{bubbles:true}));
-    el.dispatchEvent(new Event('change',{bubbles:true}));
-    el.dispatchEvent(new Event('blur',{bubbles:true}));
-  }
+  var fire=_ezFire;
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
   rows.forEach(function(r){
     var tds=r.querySelectorAll('td');
@@ -799,13 +839,7 @@ window.closeEndDateAlert=function(){
 /* ══════════════════════════════════════════
    CORE UTILITY FUNCTIONS
    ══════════════════════════════════════════ */
-function fireEvent(el){
-  try{if(!el)return;el.focus();
-  el.dispatchEvent(new Event('input',{bubbles:true}));
-  el.dispatchEvent(new Event('change',{bubbles:true}));
-  el.dispatchEvent(new Event('blur',{bubbles:true}));
-  }catch(e){}
-}
+var fireEvent=_ezFire;
 
 function cleanNote(txt){
   if(!txt) return '';
@@ -1026,11 +1060,9 @@ function shouldDuplicateRow(note){
 }
 
 function scanForDuplicateNotes(){
-  var ts=document.querySelectorAll('table'),tb=null;
-  for(var i=0;i<ts.length;i++){if(ts[i].querySelector('th')&&(ts[i].innerText.toLowerCase().includes('qty')||ts[i].innerText.toLowerCase().includes('quantity'))){tb=ts[i];break;}}
+  var tb=_ezFindTable();
   if(!tb)return false;
-  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');var ni=-1;
-  for(var i=0;i<hs.length;i++){if((hs[i].textContent||'').toLowerCase().replace(/\s+/g,'').indexOf('note')>-1){ni=i;break;}}
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');var ni=_ezIdx(hs,'note');
   if(ni<0)return false;
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
   for(var i=0;i<rows.length;i++){var tds=rows[i].querySelectorAll('td');if(tds.length>ni){var inp=tds[ni].querySelector('input,textarea');var noteText=inp?inp.value:tds[ni].textContent;var cleaned=cleanNote(noteText);var nl=cleaned.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();if(nl&&shouldDuplicateRow(nl))return true;}}
@@ -1042,10 +1074,7 @@ function scanForDuplicateNotes(){
    ══════════════════════════════════════════ */
 function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
   warningQueue=[];duplicatedRows=[];duplicatedCount=0;var detectedLanguagesPerRow=[];window._ezDose2Applied=null;
-  function fire(el){try{if(!el)return;el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));el.dispatchEvent(new Event('blur',{bubbles:true}));}catch(e){}}
-  function norm(txt){return(txt||'').toString().trim().replace(/\s+/g,' ');}
-  function normL(txt){return norm(txt).toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي').trim();}
-  function get(td){if(!td)return'';var i=td.querySelector('input,textarea,select');if(i){if(i.tagName==='SELECT'){var o=i.options[i.selectedIndex];return norm(o?o.textContent:i.value);}return norm(i.value);}return norm(td.innerText||td.textContent);}
+  var fire=_ezFire,norm=_ezNorm,normL=_ezNormL,get=_ezGet,idx=_ezIdx;
   function getCleanCode(td){var text=get(td);var match=text.match(/\d+/);return match?match[0]:'';}
   function setSize(td,v){if(!td)return;var i=td.querySelector('input,textarea');if(i){i.value=v;fire(i);}else{td.textContent=v;}}
   function setEvry(td,v){if(!td)return;var s=td.querySelector('select');if(s){s.value=String(v);fire(s);}else{td.textContent=String(v);}}
@@ -1053,7 +1082,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
   function setTime(r,tm){if(!r||!tm)return;var i=r.querySelector("input[type='time']");if(i){i.value=tm;fire(i);}}
   function setNote(td,v){if(!td)return;var i=td.querySelector('input,textarea');if(i){i.value=v;fire(i);}else{td.textContent=v;}}
   function setStartDate(r,dateStr){if(!r||!dateStr)return;var sdInput=r.querySelector('input[type="date"]');if(!sdInput){var inputs=r.querySelectorAll('input');for(var i=0;i<inputs.length;i++){if(inputs[i].value&&/\d{4}-\d{2}-\d{2}/.test(inputs[i].value)){sdInput=inputs[i];break;}}}if(sdInput){sdInput.value=dateStr;fire(sdInput);}}
-  function idx(ths,n){n=normL(n);for(var i=0;i<ths.length;i++){var txt=normL(ths[i].textContent);if(txt===n||txt.indexOf(n)>-1)return i;}return-1;}
   function setTopStartDate(){var d=new Date();d.setDate(d.getDate()+1);var y=d.getFullYear(),ms=('0'+(d.getMonth()+1)).slice(-2),da=('0'+d.getDate()).slice(-2);var ts2=y+'-'+ms+'-'+da;var s=document.querySelector('#fstartDate');if(s){s.value=ts2;fire(s);return true;}return false;}
   function getNextDayOfWeek(baseDate,targetDay){var base=new Date(baseDate);var currentDay=base.getDay();var daysUntilTarget=(targetDay-currentDay+7)%7;if(daysUntilTarget===0)daysUntilTarget=7;var result=new Date(base);result.setDate(base.getDate()+daysUntilTarget);var y=result.getFullYear();var mm=('0'+(result.getMonth()+1)).slice(-2);var dd=('0'+result.getDate()).slice(-2);return y+'-'+mm+'-'+dd;}
 
@@ -1127,14 +1155,26 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
   function resetCheckmark(r,ci2){if(ci2<0)return;var tds=r.querySelectorAll('td');if(tds.length<=ci2)return;var cb=tds[ci2].querySelector('input[type="checkbox"]');if(cb){cb.checked=false;fire(cb);}}
 
   setTopStartDate();
-  var ts_list=document.querySelectorAll('table');var tb_main=null;
-  for(var i=0;i<ts_list.length;i++){if(ts_list[i].querySelector('th')&&(ts_list[i].innerText.toLowerCase().includes('qty')||ts_list[i].innerText.toLowerCase().includes('quantity'))){tb_main=ts_list[i];break;}}
-  if(!tb_main){alert('❌ لم يتم العثور على الجدول');return;}
+  var tb_main=_ezFindTable();
+  if(!tb_main){window.ezShowToast('❌ لم يتم العثور على جدول الأدوية','error');ezBeep('error');return;}
   var h_main=tb_main.querySelector('tr');var hs_main=h_main.querySelectorAll('th,td');
   var qi_main=idx(hs_main,'qty');var si_main=idx(hs_main,'size');var ni_main=idx(hs_main,'note');var ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');
   var ti_main=idx(hs_main,'time');var di_main=idx(hs_main,'dose');var ci_main=idx(hs_main,'code');var sdi_main=idx(hs_main,'start date');var edi_main=idx(hs_main,'end date');var nm_main=idx(hs_main,'name');if(nm_main<0)nm_main=idx(hs_main,'item');
   window._ezCols={di:di_main,si:si_main,qi:qi_main,ni:ni_main,ei:ei_main};
-  if(qi_main<0||si_main<0||ni_main<0||ei_main<0){alert('❌ لم يتم العثور على الأعمدة المطلوبة');return;}
+  /* Point 2: Detailed error for missing columns */
+  var missingCols=[];
+  if(qi_main<0) missingCols.push('Qty (الكمية)');
+  if(si_main<0) missingCols.push('Size (الحجم)');
+  if(ni_main<0) missingCols.push('Note (الملاحظات)');
+  if(ei_main<0) missingCols.push('Every (التكرار)');
+  if(missingCols.length>0){
+    var availCols=[];for(var ac=0;ac<hs_main.length;ac++){var ct=_ezNorm(hs_main[ac].textContent);if(ct)availCols.push(ct);}
+    window.ezShowToast('❌ أعمدة ناقصة: '+missingCols.join(' + '),'error');
+    ezBeep('error');
+    console.log('EZ Pill - أعمدة ناقصة:',missingCols);
+    console.log('EZ Pill - الأعمدة الموجودة:',availCols);
+    return;
+  }
   if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);ni_main=ti_main+1;if(ti_main<di_main)di_main++;if(ti_main<ei_main)ei_main++;if(ti_main<sdi_main)sdi_main++;if(ti_main<edi_main)edi_main++;}
   if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='120px';hs_main[sdi_main].style.minWidth='120px';}
   if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='120px';hs_main[edi_main].style.minWidth='120px';}
