@@ -1,11 +1,21 @@
 javascript:(function(){
-var APP_VERSION='133.0';
+var APP_VERSION='134.0';
 var APP_NAME='EZ_Pill Farmadosis';
 
 /* ══════════════════════════════════════════
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '134.0':{
+    title:'تحديث ذكي ⚡',
+    features:[
+      {icon:'💾',text:'حفظ الإعدادات تلقائياً - الأشهر والأيام والخيارات تترجع زي ما سبتها'},
+      {icon:'🔁',text:'تنبيه التكرار - لو نفس الصنف موجود أكتر من مرة في الطلب'},
+      {icon:'📊',text:'ملخص الطلب - إحصائيات كاملة بعد المعالجة'},
+      {icon:'🌙',text:'الوضع الليلي (Dark Mode) - للشغل بالليل'},
+      {icon:'🔔',text:'أصوات تنبيه ذكية - تختلف حسب نوع التنبيه'}
+    ]
+  },
   '133.0':{
     title:'تحديث ذكي 🧠',
     features:[
@@ -128,8 +138,55 @@ function showWhatsNew(){
 }
 
 /* ══════════════════════════════════════════
-   FIXED SIZE CODES DATABASE
+   SETTINGS PERSISTENCE (localStorage)
    ══════════════════════════════════════════ */
+var EZ_SETTINGS_KEY='ez_pill_settings';
+function loadSettings(){
+  try{
+    var s=localStorage.getItem(EZ_SETTINGS_KEY);
+    return s?JSON.parse(s):{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false};
+  }catch(e){return{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false};}
+}
+function saveSettings(obj){
+  try{var cur=loadSettings();for(var k in obj)cur[k]=obj[k];localStorage.setItem(EZ_SETTINGS_KEY,JSON.stringify(cur));}catch(e){}
+}
+var savedSettings=loadSettings();
+
+/* ══════════════════════════════════════════
+   SOUND ALERTS (Web Audio API)
+   ══════════════════════════════════════════ */
+function ezBeep(type){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    gain.gain.value=0.08;
+    if(type==='success'){osc.frequency.value=880;osc.type='sine';gain.gain.value=0.06;}
+    else if(type==='warning'){osc.frequency.value=440;osc.type='triangle';gain.gain.value=0.08;}
+    else if(type==='error'){osc.frequency.value=280;osc.type='sawtooth';gain.gain.value=0.05;}
+    else if(type==='info'){osc.frequency.value=660;osc.type='sine';gain.gain.value=0.05;}
+    else{osc.frequency.value=550;osc.type='sine';}
+    osc.start();
+    if(type==='warning'){
+      /* Double beep for warnings */
+      gain.gain.setValueAtTime(0.08,ctx.currentTime);
+      gain.gain.setValueAtTime(0,ctx.currentTime+0.12);
+      gain.gain.setValueAtTime(0.08,ctx.currentTime+0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.35);
+      osc.stop(ctx.currentTime+0.4);
+    } else if(type==='success'){
+      /* Rising tone */
+      osc.frequency.setValueAtTime(660,ctx.currentTime);
+      osc.frequency.setValueAtTime(880,ctx.currentTime+0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.25);
+      osc.stop(ctx.currentTime+0.3);
+    } else {
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.2);
+      osc.stop(ctx.currentTime+0.25);
+    }
+  }catch(e){}
+}
 var fixedSizeCodes={
   '100015980':24,'100015955':24,'100015971':24,'102988654':48,
   '100013423':10,'100013562':20,'101826688':20,'101284170':30,
@@ -208,6 +265,8 @@ window.ezShowToast=function(msg,type){
   document.body.appendChild(t);
   setTimeout(function(){t.classList.add('show');},10);
   setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},300);},3000);
+  /* Sound alert */
+  if(type==='warning'||type==='error') ezBeep(type);
 };
 
 /* ══════════════════════════════════════════
@@ -244,6 +303,14 @@ window.ezMinimizePost=function(){
 window.ezCloseDoses=function(){
   var d=document.getElementById('ez-doses-dialog');
   if(d) d.remove();
+};
+
+window.ezToggleDark=function(){
+  var isDark=document.body.classList.toggle('ez-dark-mode');
+  saveSettings({darkMode:isDark});
+  var btn=document.querySelector('.ez-header-actions .ez-btn-icon[onclick*="ezToggleDark"]');
+  if(btn) btn.textContent=isDark?'☀️':'🌙';
+  ezBeep('info');
 };
 
 window.ezMinimize=function(){
@@ -382,6 +449,10 @@ window.showWarnings=function(warnings,callback){
       reason='📏 كمية صغيرة بعد التقسيم';
       detail='بعد تقسيم الصنف لجرعات متعددة كل جرعة هتكون كمية قليلة. للعلم فقط.';
       actionLabel='';
+    } else if(w.type==='duplicate'){
+      reason='🔁 صنف مكرر في نفس الطلب';
+      detail=w.detail||'نفس الصنف موجود أكتر من مرة. ممكن يكون الدكتور كتبه مرتين بالغلط. راجع واحذف المكرر لو مش محتاجه.';
+      actionLabel='';
     } else {
       reason='📌 يحتاج مراجعة';
       detail=msgText;
@@ -405,7 +476,7 @@ window.showWarnings=function(warnings,callback){
     }
 
     /* Per-warning action buttons */
-    if(w.type!=='smallsplit'){
+    if(w.type!=='smallsplit'&&w.type!=='duplicate'){
       html+='<div style="display:flex;gap:6px;direction:rtl">';
       html+='<button onclick="window.applyWarning('+i+')" style="flex:1;height:34px;border:none;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 3px 10px rgba(16,185,129,0.2);transition:all 0.3s">✅ '+actionLabel+'</button>';
       html+='<button onclick="window.skipWarning('+i+')" style="height:34px;padding:0 14px;border:none;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#94a3b8;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.15);transition:all 0.3s">تجاهل</button>';
@@ -423,6 +494,7 @@ window.showWarnings=function(warnings,callback){
   overlay.innerHTML=html;
   overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,15,35,0.5);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
   document.body.appendChild(overlay);
+  ezBeep('warning');
   window.warningCallback=callback;
 };
 
@@ -508,6 +580,8 @@ window.ezSubmit=function(){
     var autoDuration=document.getElementById('auto-duration')?document.getElementById('auto-duration').checked:true;
     var showWarningsFlag=document.getElementById('show-warnings')?document.getElementById('show-warnings').checked:true;
     var showPostDialog=document.getElementById('show-post-dialog')?document.getElementById('show-post-dialog').checked:false;
+    /* Save settings for next time */
+    saveSettings({m:m,t:t,autoDuration:autoDuration,showWarnings:showWarningsFlag});
     d.remove();
     var loader=document.createElement('div');
     loader.id='ez-loader';
@@ -1098,6 +1172,23 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(dose2pattern.test(original_note.trim())||dose2pattern2.test(original_note)){warningQueue.push({level:'warning',message:'💊 الصنف "'+itemName+'" - مكتوب جرعة مزدوجة (2) في الملاحظات',detail:original_note,editable:false,rowIndex:allRowsData.length-1,type:'dose2'});}
   }
 
+  /* Feature 2: Detect duplicate items (same item code, different notes) */
+  if(enableWarnings){
+    var itemCodeMap={};
+    for(var di2=0;di2<allRowsData.length;di2++){
+      var rd2=allRowsData[di2];
+      var code2=rd2.itemCode;
+      if(!code2) continue;
+      if(itemCodeMap[code2]!==undefined){
+        var prevIdx=itemCodeMap[code2];
+        var prevRd=allRowsData[prevIdx];
+        warningQueue.push({level:'danger',message:'🔁 الصنف "'+rd2.itemName+'" مكرر في الطلب',detail:'موجود في سطر '+(prevIdx+1)+' وسطر '+(di2+1)+(prevRd.note!==rd2.note?' بملاحظات مختلفة':''),editable:false,rowIndex:di2,type:'duplicate',dupPairIndex:prevIdx});
+      } else {
+        itemCodeMap[code2]=di2;
+      }
+    }
+  }
+
   if(enableWarnings){for(var i=0;i<allRowsData.length;i++){var rd=allRowsData[i];if(rd.durationInfo&&rd.durationInfo.hasDuration){var extracted=rd.durationInfo.days;if(extracted!==t){warningQueue.push({level:'warning',message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',editable:true,editLabel:'عدد الأيام',currentValue:extracted,minValue:1,maxValue:365,rowIndex:i,type:'days',onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)});}}if(rd.hasFixedSize&&rd.dui){var totalSize=fixedSizeCodes[rd.itemCode];var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);var eachPart=rd.dui.type==='q6h'?totalSize*2:Math.floor(totalSize/parts);if(eachPart<5){warningQueue.push({level:'info',message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',editable:false,rowIndex:i,type:'smallsplit'});}}}}
 
   if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
@@ -1144,6 +1235,58 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(showPostDialog)showPostProcessDialog();
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
+    ezBeep('success');
+
+    /* Feature 4: Order Summary */
+    var summaryStats={
+      totalItems:allRowsData.length,
+      uniqueItems:uc||allRowsData.length,
+      duplicated:duplicatedCount,
+      skipped:skp_list.length,
+      fixedSize:allRowsData.filter(function(r){return r.hasFixedSize;}).length,
+      weekly:allRowsData.filter(function(r){return r.isWeekly;}).length,
+      dose2Applied:window._ezDose2Applied?window._ezDose2Applied.length:0,
+      daysOverride:allRowsData.filter(function(r){return r.warningOverride;}).length,
+      lang:enC>arC?'English':'Arabic'
+    };
+    setTimeout(function(){
+      var sm=summaryStats;
+      var rows='';
+      function addRow(icon,label,val,color){
+        if(!val&&val!==0) return;
+        rows+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;direction:rtl">';
+        rows+='<span style="font-size:14px;width:22px;text-align:center">'+icon+'</span>';
+        rows+='<span style="flex:1;font-size:11px;font-weight:700;color:#64748b">'+label+'</span>';
+        rows+='<span style="font-size:13px;font-weight:900;color:'+(color||'#1e1b4b')+'">'+val+'</span>';
+        rows+='</div>';
+      }
+      addRow('📦','إجمالي الأصناف',sm.totalItems,'#6366f1');
+      addRow('🏷️','أصناف فريدة',sm.uniqueItems,'#059669');
+      if(sm.duplicated>0) addRow('⚡','أصناف مقسمة (Q6H/Q8H)',sm.duplicated,'#f59e0b');
+      if(sm.skipped>0) addRow('⏭️','أصناف متجاهلة',sm.skipped,'#94a3b8');
+      if(sm.fixedSize>0) addRow('📌','أصناف بحجم ثابت',sm.fixedSize,'#8b5cf6');
+      if(sm.weekly>0) addRow('💉','حقن أسبوعية',sm.weekly,'#06b6d4');
+      if(sm.dose2Applied>0) addRow('💊','تعديل جرعة مزدوجة',sm.dose2Applied,'#ef4444');
+      if(sm.daysOverride>0) addRow('📅','تعديل أيام',sm.daysOverride,'#f59e0b');
+      addRow('🌐','اللغة المكتشفة',sm.lang,'#6366f1');
+
+      var sumEl=document.createElement('div');
+      sumEl.id='ez-summary';
+      sumEl.style.cssText='position:fixed;left:-400px;bottom:80px;width:280px;z-index:9999995;transition:left 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
+      sumEl.innerHTML='\
+      <div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(99,102,241,0.12),0 4px 12px rgba(0,0,0,0.04);border:2px solid rgba(129,140,248,0.12)">\
+        <div style="height:3px;background:linear-gradient(90deg,#10b981,#6366f1,#10b981);background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+        <div style="padding:12px 16px 8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(129,140,248,0.06)">\
+          <div style="font-size:18px">📊</div>\
+          <div style="flex:1;font-size:13px;font-weight:900;color:#1e1b4b">ملخص الطلب</div>\
+          <button onclick="var el=document.getElementById(\'ez-summary\');el.style.left=\'-400px\';setTimeout(function(){el.remove()},600)" style="width:24px;height:24px;border:none;border-radius:7px;font-size:12px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>\
+        </div>\
+        <div style="padding:10px 16px 14px">'+rows+'</div>\
+      </div>';
+      document.body.appendChild(sumEl);
+      setTimeout(function(){sumEl.style.left='16px';},100);
+      setTimeout(function(){if(document.getElementById('ez-summary')){sumEl.style.left='-400px';setTimeout(function(){sumEl.remove();},600);}},15000);
+    },300);
     /* Show safety confirmation for dose2 changes */
     if(window._ezDose2Applied&&window._ezDose2Applied.length>0){
       setTimeout(function(){
@@ -1314,7 +1457,7 @@ function detectPackagingInstructions(){
     </div>';
 
     document.body.appendChild(pkgBanner);
-    setTimeout(function(){pkgBanner.style.right='16px';},100);
+    setTimeout(function(){pkgBanner.style.right='16px';ezBeep('warning');},100);
     /* Auto dismiss after 25 seconds */
     setTimeout(function(){if(document.getElementById('ez-pkg-alert')){pkgBanner.style.right='-500px';setTimeout(function(){pkgBanner.remove();},600);}},25000);
 
@@ -1424,7 +1567,19 @@ s_style.textContent='\
 .ez-toast-warning{border-right:4px solid #f59e0b}\
 .ez-loader-spinner{width:40px;height:40px;border:4px solid #e0e7ff;border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}\
 .ez-loader-text{font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif}\
-table td,table th{border:1px solid rgba(129,140,248,0.08)!important}';
+table td,table th{border:1px solid rgba(129,140,248,0.08)!important}\
+\
+body.ez-dark-mode{background:#0f0f23!important;color:#e2e8f0!important}\
+body.ez-dark-mode *:not(.ez-dialog-v2):not(.ez-dialog-v2 *):not([id^="ez-"]):not([id^="ez-"] *):not(.ez-toast):not(.ez-toast *){background-color:#1a1a2e!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.15)!important}\
+body.ez-dark-mode table{background:#1a1a2e!important}\
+body.ez-dark-mode table th{background:linear-gradient(180deg,#1e1b4b,#0f0f23)!important;color:#c7d2fe!important}\
+body.ez-dark-mode table td{background:#16162a!important;color:#e2e8f0!important}\
+body.ez-dark-mode table tr:hover td{background:#1e1e3a!important}\
+body.ez-dark-mode input,body.ez-dark-mode textarea,body.ez-dark-mode select{background:#16162a!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.2)!important}\
+body.ez-dark-mode .form-control{background:#16162a!important;color:#e2e8f0!important}\
+body.ez-dark-mode a{color:#818cf8!important}\
+body.ez-dark-mode button:not(.ez-pill):not(.ez-btn-primary):not(.ez-btn-cancel):not(.ez-btn-doses):not(.ez-btn-icon):not([onclick*="ez"]){background:#1e1e3a!important;color:#c7d2fe!important;border-color:rgba(129,140,248,0.2)!important}\
+body.ez-dark-mode label,body.ez-dark-mode span{color:#c7d2fe!important}';
 document.head.appendChild(s_style);
 
 /* ══════════════════════════════════════════
@@ -1537,8 +1692,9 @@ var hasDuplicateNotes=scanForDuplicateNotes();
 var d_box=document.createElement('div');
 d_box.id='ez-dialog-box';
 d_box.className='ez-dialog-v2';
-d_box.setAttribute('data-m','1');
-d_box.setAttribute('data-t','30');
+d_box.setAttribute('data-m',String(savedSettings.m||1));
+d_box.setAttribute('data-t',String(savedSettings.t||30));
+var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!==false,_sw=savedSettings.showWarnings!==false,_dk=savedSettings.darkMode||false;
 d_box.innerHTML='\
 <div class="ez-header">\
   <div class="ez-logo-group">\
@@ -1550,29 +1706,30 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <div class="ez-version">v'+APP_VERSION+'</div>\
+    <button class="ez-btn-icon" onclick="window.ezToggleDark()" title="الوضع الليلي" style="font-size:14px">'+(_dk?'☀️':'🌙')+'</button>\
     <button class="ez-btn-icon ez-btn-icon-min" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
 <div class="ez-content">\
   <div class="ez-section-label"><span class="dot"></span> الأشهر</div>\
   <div class="ez-pill-group">\
-    <button class="ez-pill active" onclick="window.ezSelect(this,\'m\',1)">1</button>\
-    <button class="ez-pill" onclick="window.ezSelect(this,\'m\',2)">2</button>\
-    <button class="ez-pill" onclick="window.ezSelect(this,\'m\',3)">3</button>\
+    <button class="ez-pill '+(_m===1?'active':'')+'" onclick="window.ezSelect(this,\'m\',1)">1</button>\
+    <button class="ez-pill '+(_m===2?'active':'')+'" onclick="window.ezSelect(this,\'m\',2)">2</button>\
+    <button class="ez-pill '+(_m===3?'active':'')+'" onclick="window.ezSelect(this,\'m\',3)">3</button>\
   </div>\
   <div class="ez-section-label"><span class="dot"></span> أيام الشهر</div>\
   <div class="ez-pill-group">\
-    <button class="ez-pill" onclick="window.ezSelect(this,\'t\',28)">28</button>\
-    <button class="ez-pill active" onclick="window.ezSelect(this,\'t\',30)">30</button>\
+    <button class="ez-pill '+(_t===28?'active':'')+'" onclick="window.ezSelect(this,\'t\',28)">28</button>\
+    <button class="ez-pill '+(_t===30?'active':'')+'" onclick="window.ezSelect(this,\'t\',30)">30</button>\
   </div>\
   <div class="ez-sep"></div>\
   <label class="ez-toggle-row">\
-    <div class="ez-switch"><input type="checkbox" id="auto-duration" checked><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
+    <div class="ez-switch"><input type="checkbox" id="auto-duration" '+(_ad?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
     <span class="ez-toggle-text">استخراج المدة تلقائياً</span>\
     <span class="ez-toggle-icon">✨</span>\
   </label>\
   <label class="ez-toggle-row">\
-    <div class="ez-switch"><input type="checkbox" id="show-warnings" checked><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
+    <div class="ez-switch"><input type="checkbox" id="show-warnings" '+(_sw?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
     <span class="ez-toggle-text">عرض التحذيرات</span>\
     <span class="ez-toggle-icon">⚠️</span>\
   </label>\
@@ -1590,6 +1747,7 @@ d_box.innerHTML='\
 <div class="ez-footer">EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</div>';
 
 document.body.appendChild(d_box);
+if(_dk) document.body.classList.add('ez-dark-mode');
 
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'){var sub=document.querySelector('.ez-btn-primary');if(sub)sub.click();}
