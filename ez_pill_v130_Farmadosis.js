@@ -335,32 +335,77 @@ window.ezShowDoses=function(){
    ══════════════════════════════════════════ */
 window.showWarnings=function(warnings,callback){
   if(!warnings||warnings.length===0){callback();return;}
-  var html='<div class="ez-shell" style="width:420px;border-radius:20px;padding:2px;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb,#4facfe,#667eea);background-size:400% 400%;animation:meshFlow 8s ease infinite"><div class="ez-frost" style="background:rgba(255,255,255,0.93);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border-radius:18px;overflow:hidden;position:relative">';
-  html+='<div style="padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:center;position:relative;border-bottom:1px solid rgba(102,126,234,0.1)">';
-  html+='<div style="display:flex;align-items:center;gap:9px"><div style="width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 4px 14px rgba(245,158,11,0.3)">⚠️</div>';
-  html+='<div style="font-size:14px;font-weight:900;color:#92400e;font-family:Cairo,sans-serif">تحذيرات تحتاج مراجعة</div></div></div>';
-  html+='<div style="padding:10px 16px 14px">';
+  var html='<div style="width:480px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1)">';
+  /* Header */
+  html+='<div style="position:relative;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#ef4444,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
+  html+='<div style="padding:16px 22px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(129,140,248,0.08)">';
+  html+='<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(245,158,11,0.25),inset 0 1px 0 rgba(255,255,255,0.3)">⚠️</div>';
+  html+='<div><div style="font-size:16px;font-weight:900;color:#1e1b4b">تحذيرات تحتاج مراجعة</div>';
+  html+='<div style="font-size:11px;font-weight:700;color:#92400e;margin-top:1px">'+warnings.length+' تحذير يحتاج انتباهك</div></div></div>';
+  /* Body */
+  html+='<div style="padding:14px 18px;max-height:400px;overflow-y:auto">';
   for(var i=0;i<warnings.length;i++){
     var w=warnings[i];
-    var colors={warning:{bg:'rgba(245,158,11,0.06)',bdr:'rgba(245,158,11,0.12)',bar:'linear-gradient(180deg,#f59e0b,#d97706)'},danger:{bg:'rgba(239,68,68,0.06)',bdr:'rgba(239,68,68,0.12)',bar:'linear-gradient(180deg,#ef4444,#dc2626)'},info:{bg:'rgba(102,126,234,0.06)',bdr:'rgba(102,126,234,0.12)',bar:'linear-gradient(180deg,#667eea,#764ba2)'}};
-    var c=colors[w.level]||colors.info;
-    html+='<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:6px 0;border-radius:10px;background:'+c.bg+';border:1px solid '+c.bdr+';position:relative;overflow:hidden">';
-    html+='<div style="position:absolute;top:0;right:0;width:3px;height:100%;background:'+c.bar+';border-radius:0 3px 3px 0"></div>';
-    html+='<div style="flex:1"><div style="font-size:11px;font-weight:700;color:#3f3d56;line-height:1.5;font-family:Cairo,sans-serif">'+w.message+'</div>';
-    if(w.editable){
-      html+='<div style="margin-top:8px"><label style="display:block;font-size:9px;font-weight:700;color:#8b87b3;margin-bottom:4px;letter-spacing:0.5px">'+w.editLabel+':</label>';
-      html+='<input type="number" id="edit-'+i+'" value="'+w.currentValue+'" min="'+w.minValue+'" max="'+w.maxValue+'" style="width:100%;padding:6px 10px;border:1.5px solid rgba(102,126,234,0.15);border-radius:8px;font-size:13px;font-weight:800;color:#2d2b55;background:rgba(255,255,255,0.6);font-family:Cairo,sans-serif;outline:none"></div>';
+    var levelConfig={
+      warning:{bg:'rgba(245,158,11,0.04)',bdr:'rgba(245,158,11,0.15)',icon:'⚠️',iconBg:'linear-gradient(145deg,#fbbf24,#f59e0b)',labelColor:'#92400e',labelBg:'rgba(245,158,11,0.08)',label:'تحذير'},
+      danger:{bg:'rgba(239,68,68,0.04)',bdr:'rgba(239,68,68,0.15)',icon:'🚨',iconBg:'linear-gradient(145deg,#f87171,#ef4444)',labelColor:'#991b1b',labelBg:'rgba(239,68,68,0.08)',label:'هام'},
+      info:{bg:'rgba(99,102,241,0.04)',bdr:'rgba(99,102,241,0.12)',icon:'ℹ️',iconBg:'linear-gradient(145deg,#818cf8,#6366f1)',labelColor:'#3730a3',labelBg:'rgba(99,102,241,0.08)',label:'معلومة'}
+    };
+    var lc=levelConfig[w.level]||levelConfig.info;
+
+    /* Parse warning to extract item name, reason, detail */
+    var itemName='';var reason='';var detail='';
+    var msgText=w.message.replace(/^[^\s]+\s*/,'');
+    var itemMatch=msgText.match(/الصنف[:\s]*["""]?([^"""-]+)["""]?/);
+    if(itemMatch) itemName=itemMatch[1].trim();
+
+    if(w.message.indexOf('2 tablet')>-1||w.message.indexOf('2 pill')>-1||w.message.indexOf('2 cap')>-1||w.message.indexOf('2 قرص')>-1||w.message.indexOf('2 حبة')>-1){
+      reason='جرعة مزدوجة مكتوبة في الملاحظات';
+      detail='الطبيب كتب "2 tablets/pills" - يعني الجرعة حبتين مش حبة واحدة. تأكد إن الكمية والجرعة مضبوطين.';
+    } else if(w.message.indexOf('يوم')>-1&&w.editable){
+      reason='اختلاف في مدة العلاج';
+      var dayMatch=w.message.match(/"(\d+)\s*يوم"/);
+      var selectedMatch=w.message.match(/المحدد\s*(\d+)/);
+      detail='المكتوب في الملاحظات '+(dayMatch?dayMatch[1]:'')+' يوم، لكن أنت محدد '+(selectedMatch?selectedMatch[1]:'')+' يوم. تقدر تعدل من هنا.';
+    } else if(w.message.indexOf('تقسيم صغير')>-1){
+      reason='كمية صغيرة بعد التقسيم';
+      detail='بعد تقسيم الصنف لجرعات متعددة، كل جرعة هتكون كمية قليلة.';
+    } else {
+      reason='يحتاج مراجعة';
+      detail=msgText;
     }
-    html+='</div></div>';
+
+    html+='<div style="background:'+lc.bg+';border:1.5px solid '+lc.bdr+';border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;animation:fadeSlideUp 0.3s ease '+(0.1+i*0.08)+'s both">';
+    /* Top: icon + item name + label */
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+    html+='<div style="width:30px;height:30px;border-radius:9px;background:'+lc.iconBg+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.1)">'+lc.icon+'</div>';
+    if(itemName) html+='<div style="flex:1;font-size:13px;font-weight:800;color:#1e1b4b;direction:rtl">'+itemName+'</div>';
+    html+='<span style="font-size:9px;font-weight:800;color:'+lc.labelColor+';background:'+lc.labelBg+';padding:3px 10px;border-radius:6px;letter-spacing:0.5px">'+lc.label+'</span>';
+    html+='</div>';
+    /* Reason */
+    html+='<div style="font-size:13px;font-weight:800;color:#312e81;margin-bottom:4px;direction:rtl">📌 '+reason+'</div>';
+    /* Detail */
+    html+='<div style="font-size:11.5px;font-weight:700;color:#64748b;line-height:1.7;direction:rtl;padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:8px;border:1px solid rgba(0,0,0,0.04)">'+detail+'</div>';
+    /* Editable field */
+    if(w.editable){
+      html+='<div style="margin-top:10px;display:flex;align-items:center;gap:8px;direction:rtl">';
+      html+='<label style="font-size:11px;font-weight:800;color:'+lc.labelColor+'">'+w.editLabel+':</label>';
+      html+='<input type="number" id="edit-'+i+'" value="'+w.currentValue+'" min="'+w.minValue+'" max="'+w.maxValue+'" style="width:80px;padding:6px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:14px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" />';
+      html+='<span style="font-size:11px;font-weight:700;color:#94a3b8">يوم</span>';
+      html+='</div>';
+    }
+    html+='</div>';
   }
-  html+='<div style="display:flex;gap:6px;margin-top:12px">';
-  html+='<button onclick="window.acceptWarnings()" style="flex:1;height:38px;border:none;border-radius:11px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 18px rgba(16,185,129,0.25);transition:all 0.3s">✅ تطبيق التعديلات</button>';
-  html+='<button onclick="window.cancelWarnings()" style="flex:1;height:38px;border:1.5px solid rgba(102,126,234,0.12);border-radius:11px;background:rgba(102,126,234,0.03);color:#8b87b3;cursor:pointer;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;transition:all 0.3s">❌ إلغاء</button>';
-  html+='</div></div></div></div>';
+  html+='</div>';
+  /* Footer buttons */
+  html+='<div style="padding:12px 18px 16px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
+  html+='<button onclick="window.acceptWarnings()" style="flex:1;height:44px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s">✅ تطبيق التعديلات</button>';
+  html+='<button onclick="window.cancelWarnings()" style="flex:1;height:44px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(129,140,248,0.06);border:1.5px solid rgba(129,140,248,0.12);transition:all 0.3s">⏭️ تجاهل الكل</button>';
+  html+='</div></div>';
   var overlay=document.createElement('div');
   overlay.id='warning-overlay';
   overlay.innerHTML=html;
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(45,43,58,0.7);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,15,35,0.5);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
   document.body.appendChild(overlay);
   window.warningCallback=callback;
 };
@@ -383,6 +428,7 @@ window.acceptWarnings=function(){
 window.cancelWarnings=function(){
   var overlay=document.getElementById('warning-overlay');
   if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
 };
 
 /* ══════════════════════════════════════════
@@ -975,7 +1021,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
     if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
     var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
-    if(/2\s*(tablet|pill|cap|قرص|حبة|كبسولة)/gi.test(original_note)){warningQueue.push({level:'warning',message:'💊 تحذير: الصنف "'+itemName+'" - يحتوي على "2 tablets/pills" في الملاحظات. تأكد من الجرعة!',editable:false,rowIndex:allRowsData.length});}
+    if(/2\s*(tablet|pill|cap|قرص|حبة|كبسولة)/gi.test(original_note)){warningQueue.push({level:'warning',message:'💊 الصنف "'+itemName+'" - مكتوب "2 tablets/pills" في الملاحظات',detail:original_note,editable:false,rowIndex:allRowsData.length});}
     var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);var h_s=!!(itemCode&&weeklyInjections.indexOf(itemCode)>-1);
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
     if(autoDuration){durationInfo=extractDuration(fn_str);if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.floor(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
@@ -1021,6 +1067,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(showPostDialog)showPostProcessDialog();
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
+    setTimeout(function(){extractAndConfirmName();},800);
   }
 }
 
@@ -1306,7 +1353,7 @@ showWhatsNew();
 /* ══════════════════════════════════════════
    NAME EXTRACTION FROM PRESCRIPTION NOTES
    ══════════════════════════════════════════ */
-(function(){
+function extractAndConfirmName(){
   try{
     /* Find Prescription Notes field */
     function findNotesField(){
@@ -1385,32 +1432,20 @@ showWhatsNew();
 
     /* Find Name input in top form */
     function findNameField(){
-      var inp=document.querySelector('input[name*="name" i]:not([name*="user"]):not([type="hidden"])');
+      /* Direct ID match */
+      var direct=document.getElementById('pname');
+      if(direct) return direct;
+      var inp=document.querySelector('input[id*="name" i]:not([id*="user"]):not([type="hidden"]):not([id*="mobile"]):not([id*="phone"])');
+      if(inp) return inp;
+      inp=document.querySelector('input[placeholder*="Patient Name" i]');
       if(inp) return inp;
       /* Search by label */
-      var allInputs=document.querySelectorAll('input[type="text"]');
-      for(var i=0;i<allInputs.length;i++){
-        var parent=allInputs[i].closest('td,div');
-        if(parent){
-          var prev=parent.previousElementSibling;
-          if(prev&&/^name[:\s]*$/i.test(prev.textContent.trim())) return allInputs[i];
-        }
-      }
-      /* Search by header label proximity */
       var labels=document.querySelectorAll('td,th,label,span');
       for(var i=0;i<labels.length;i++){
         var lt=labels[i].textContent.trim().toLowerCase();
         if(lt==='name:'||lt==='name'){
-          var next=labels[i].nextElementSibling;
-          if(next){
-            var nInp=next.querySelector?next.querySelector('input'):null;
-            if(nInp) return nInp;
-            if(next.tagName==='INPUT') return next;
-          }
           var parent2=labels[i].parentElement;
           if(parent2){
-            var nInp2=parent2.querySelector('input[type="text"]');
-            if(nInp2&&nInp2!==labels[i]) return nInp2;
             var nextTd=parent2.nextElementSibling;
             if(nextTd){var nInp3=nextTd.querySelector('input');if(nInp3) return nInp3;}
           }
@@ -1512,7 +1547,7 @@ showWhatsNew();
     overlay.addEventListener('click',function(e){if(e.target===overlay) overlay.remove();});
 
   }catch(e){console.log('EZ NameExtract:',e);}
-})();
+}
 
 /* ══════════════════════════════════════════
    IMPORT INVOICE - SMART SEARCH
