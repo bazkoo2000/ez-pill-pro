@@ -9,15 +9,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    ══════════════════════════════════════════ */
 var CHANGELOG={
   '136.0':{
-    title:'وضع رمضان 🌙',
+    title:'وضع رمضان + لوحة إعدادات 🌙⚙️',
     features:[
       {icon:'🌙',text:'سويتش وضع رمضان - تحويل الجرعات لأوقات الفطار والسحور'},
-      {icon:'🕌',text:'4 أوقات رمضان: قبل الفطار 18:30 · بعد الفطار 19:00 · قبل السحور 03:00 · بعد السحور 04:00'},
-      {icon:'⚡',text:'كل جرعات رمضان duplicate تلقائياً (غير منتظمة)'},
-      {icon:'🔄',text:'ماتشينج ذكي: العشاء ↔ الفطار · السحور تلقائي'},
-      {icon:'💊',text:'تنبيه الجرعة الواحدة + الأصناف الخاصة (injection/شراب/مرهم/كريم)'},
-      {icon:'📅',text:'حساب التواريخ: الفطار = اليوم التالي · السحور = اليوم التالي +1'},
-      {icon:'⚠️',text:'رسائل تحذيرية للجرعات الغير مفهومة مع إمكانية التعديل'}
+      {icon:'🕌',text:'4 أوقات رمضان: قبل الفطار · بعد الفطار · قبل السحور · بعد السحور'},
+      {icon:'⚙️',text:'لوحة إعدادات محمية برقم سري - تعديل الأوقات والأكواد'},
+      {icon:'💊',text:'إضافة/تعديل/حذف أكواد الأصناف ذات الحجم الثابت'},
+      {icon:'💉',text:'إدارة أكواد الحقن الأسبوعية'},
+      {icon:'⏰',text:'تخصيص جميع أوقات الجرعات (عادية + رمضان)'},
+      {icon:'💾',text:'جميع التعديلات تُحفظ في المتصفح وتبقى حتى بعد الإغلاق'}
     ]
   },
   '135.0':{
@@ -166,6 +166,11 @@ function showWhatsNew(){
    SETTINGS PERSISTENCE (localStorage)
    ══════════════════════════════════════════ */
 var EZ_SETTINGS_KEY='ez_pill_settings';
+var EZ_CUSTOM_KEY='ez_pill_custom';
+/* ── PIN hash (SHA-like simple hash for obfuscation) ── */
+function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'ezh_'+(h>>>0).toString(36);}
+var _EZ_PIN_HASH=_ezHashPin(101093);
+
 function loadSettings(){
   try{
     var s=localStorage.getItem(EZ_SETTINGS_KEY);
@@ -175,7 +180,14 @@ function loadSettings(){
 function saveSettings(obj){
   try{var cur=loadSettings();for(var k in obj)cur[k]=obj[k];localStorage.setItem(EZ_SETTINGS_KEY,JSON.stringify(cur));}catch(e){}
 }
+function loadCustomConfig(){
+  try{var s=localStorage.getItem(EZ_CUSTOM_KEY);return s?JSON.parse(s):{};}catch(e){return{};}
+}
+function saveCustomConfig(obj){
+  try{localStorage.setItem(EZ_CUSTOM_KEY,JSON.stringify(obj));}catch(e){}
+}
 var savedSettings=loadSettings();
+var customConfig=loadCustomConfig();
 
 /* ══════════════════════════════════════════
    SOUND ALERTS (Web Audio API)
@@ -212,7 +224,7 @@ function ezBeep(type){
     }
   }catch(e){}
 }
-var fixedSizeCodes={
+var _defaultFixedSizeCodes={
   '100015980':24,'100015955':24,'100015971':24,'102988654':48,
   '100013423':10,'100013562':20,'101826688':20,'101284170':30,
   '103243857':30,'101859640':20,'100726280':24,'100011436':20,
@@ -223,22 +235,59 @@ var fixedSizeCodes={
   '100023875':20,'100013431':15,'100027201':20,'100016106':10,
   '100010097':20,'100013167':20
 };
+var _defaultWeeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
+var _defaultNormalTimes={empty:'07:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:30',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'15:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:30',bed:'22:00',defaultTime:'09:00'};
+var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00'};
 
-var weeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
+/* Merge defaults with custom overrides */
+var fixedSizeCodes=(function(){var base={};for(var k in _defaultFixedSizeCodes)base[k]=_defaultFixedSizeCodes[k];if(customConfig.fixedSizeCodes){for(var k in customConfig.fixedSizeCodes)base[k]=customConfig.fixedSizeCodes[k];}if(customConfig.removedCodes){for(var i=0;i<customConfig.removedCodes.length;i++)delete base[customConfig.removedCodes[i]];}return base;})();
+
+var weeklyInjections=(function(){var base=_defaultWeeklyInjections.slice();if(customConfig.addedWeekly){for(var i=0;i<customConfig.addedWeekly.length;i++){if(base.indexOf(customConfig.addedWeekly[i])===-1)base.push(customConfig.addedWeekly[i]);}}if(customConfig.removedWeekly){base=base.filter(function(c){return customConfig.removedWeekly.indexOf(c)===-1;});}return base;})();
+
+var NORMAL_TIMES=(function(){var base={};for(var k in _defaultNormalTimes)base[k]=_defaultNormalTimes[k];if(customConfig.normalTimes){for(var k in customConfig.normalTimes)base[k]=customConfig.normalTimes[k];}return base;})();
 
 /* ══════════════════════════════════════════
    RAMADAN MODE CONSTANTS & HELPERS
    ══════════════════════════════════════════ */
-var RAMADAN_TIMES={
-  beforeIftar:'18:30',
-  afterIftar:'19:00',
-  beforeSuhoor:'03:00',
-  afterSuhoor:'04:00'
-};
+var RAMADAN_TIMES=(function(){var base={};for(var k in _defaultRamadanTimes)base[k]=_defaultRamadanTimes[k];if(customConfig.ramadanTimes){for(var k in customConfig.ramadanTimes)base[k]=customConfig.ramadanTimes[k];}return base;})();
 
 /* Map normal meal words to Ramadan equivalents */
 function ramadanMapNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
+
+  /* ── Check custom Ramadan keywords FIRST ── */
+  if(customConfig.customRamadanRules){
+    for(var i=0;i<customConfig.customRamadanRules.length;i++){
+      var cr=customConfig.customRamadanRules[i];
+      try{if(new RegExp(cr.pattern,'i').test(note)){
+        return {meal:cr.meal,label_ar:cr.label_ar||cr.label,label_en:cr.label_en||cr.label,time:cr.time};
+      }}catch(e){}
+    }
+  }
+  /* ── Check custom normal keywords mapped to Ramadan ── */
+  if(customConfig.customTimeRules){
+    for(var i=0;i<customConfig.customTimeRules.length;i++){
+      var cr=customConfig.customTimeRules[i];
+      try{
+        /* Smart matching: normalize both pattern and input for Arabic flexibility */
+        var nNote=(note||'').replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');
+        var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');
+        /* Also try matching without ال التعريف */
+        var nPat2=nPat.replace(/^ال/,'(ال)?');
+        if(new RegExp(nPat,'i').test(note)||new RegExp(nPat2,'i').test(note)){
+          /* Map custom time to nearest Ramadan meal */
+          var h=parseInt(cr.time.split(':')[0]);
+          var meal,lbl_ar,lbl_en,tm;
+          if(h>=15&&h<19){meal='beforeIftar';lbl_ar='قبل الفطار';lbl_en='Before Iftar';tm=RAMADAN_TIMES.beforeIftar;}
+          else if(h>=19||h<1){meal='afterIftar';lbl_ar='بعد الفطار';lbl_en='After Iftar';tm=RAMADAN_TIMES.afterIftar;}
+          else if(h>=1&&h<4){meal='beforeSuhoor';lbl_ar='قبل السحور';lbl_en='Before Suhoor';tm=RAMADAN_TIMES.beforeSuhoor;}
+          else if(h>=4&&h<7){meal='afterSuhoor';lbl_ar='بعد السحور';lbl_en='After Suhoor';tm=RAMADAN_TIMES.afterSuhoor;}
+          else{meal='afterIftar';lbl_ar='بعد الفطار';lbl_en='After Iftar';tm=RAMADAN_TIMES.afterIftar;}
+          return {meal:meal,label_ar:lbl_ar,label_en:lbl_en,time:tm};
+        }
+      }catch(e){}
+    }
+  }
   /* قبل العشاء / before dinner → قبل الفطار */
   if(/قبل.*عشا|قبل.*عشو|قبل.*عشاء|before.*din|before.*sup|before.*dinner|before.*asha/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد العشاء / after dinner → بعد الفطار */
@@ -1146,9 +1195,12 @@ function getTimeFromWords(w){
   var s=(w||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
   var st=s.match(/(?:at|الساعهـ|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'}];
+  var NT=NORMAL_TIMES;
+  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:NT.empty},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:NT.afterBreakfast},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:NT.morning},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:NT.noon},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:NT.beforeLunch},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:NT.afterLunch},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:NT.afternoon},{test:/maghrib|مغرب|المغرب/,time:NT.maghrib},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:NT.beforeDinner},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:NT.afterDinner},{test:/مساء|مسا|evening|eve/,time:NT.evening},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:NT.bed}];
+  /* Custom time rules from settings (checked FIRST for priority) */
+  if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
-  return{time:'09:00'};
+  return{time:NT.defaultTime};
 }
 
 function shouldDuplicateRow(note){
@@ -1369,34 +1421,59 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       var doseRec=smartDoseRecognizer(fn_str);
       var noteMapR=ramadanMapNote(fn_str);
 
+      /* ── SMART FALLBACK: if ramadanMapNote didn't match, try getTimeFromWords.
+         If getTimeFromWords returns a non-default time, the note IS understood,
+         so we can map it to the nearest Ramadan meal silently ── */
+      if(!noteMapR){
+        var twResult=getTimeFromWords(fn_str);
+        if(twResult && twResult.time!==NORMAL_TIMES.defaultTime){
+          /* Note IS recognized by time rules → map to nearest Ramadan meal */
+          var h2=parseInt(twResult.time.split(':')[0]);
+          var meal2,lbl_ar2,lbl_en2,tm2;
+          if(h2>=5&&h2<10){meal2='afterSuhoor';lbl_ar2='بعد السحور';lbl_en2='After Suhoor';tm2=RAMADAN_TIMES.afterSuhoor;}
+          else if(h2>=10&&h2<17){meal2='beforeIftar';lbl_ar2='قبل الفطار';lbl_en2='Before Iftar';tm2=RAMADAN_TIMES.beforeIftar;}
+          else if(h2>=17&&h2<20){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
+          else if(h2>=20||h2<1){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
+          else{meal2='beforeSuhoor';lbl_ar2='قبل السحور';lbl_en2='Before Suhoor';tm2=RAMADAN_TIMES.beforeSuhoor;}
+          noteMapR={meal:meal2,label_ar:lbl_ar2,label_en:lbl_en2,time:tm2};
+        }
+      }
+
+      /* Also check: if note has any meal keywords at all (from smartDoseRecognizer flags) */
+      if(!noteMapR && (doseRec.hasB||doseRec.hasL||doseRec.hasD||doseRec.hasM||doseRec.hasN||doseRec.hasA||doseRec.hasE||doseRec.hasBed||doseRec.hasEmpty)){
+        /* Has meal keywords → map intelligently */
+        if(doseRec.hasB||doseRec.hasM||doseRec.hasEmpty) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+        else if(doseRec.hasL||doseRec.hasN||doseRec.hasA) noteMapR={meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+        else if(doseRec.hasD||doseRec.hasE) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+        else if(doseRec.hasBed) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+      }
+
       /* Weekly/special items: keep normal logic but change time to Ramadan time */
       if(h_s){
-        /* weekly injection: use Ramadan iftar time if note mentions dinner/iftar/evening */
         ramadanInfo={type:'weekly_ramadan',meal:noteMapR?noteMapR.meal:'afterIftar',time:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar};
       }
-      /* Items with count >= 2: force Ramadan duplicate */
+      /* Items with count >= 2: force Ramadan duplicate (فطار + سحور) */
       else if(doseRec.count>=2 && !h_s){
         dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+        /* No warning needed - duplicate is clear */
       }
-      /* OD (once daily): check if it's non-tablet or needs prompt */
+      /* OD (once daily): check if it's non-tablet or single dose */
       else if(doseRec.count===1 && !h_s){
         var isNonTab=isNonTabletItem(itemName);
         if(isNonTab){
-          /* Non-tablet items (injection/syrup/cream/ointment) → treat as duplicate, uncheck and move down */
+          /* Non-tablet items → treat as duplicate, uncheck and move down */
           dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
           ramadanInfo={type:'nontablet_ramadan',forceUncheck:true};
+        } else if(noteMapR){
+          /* Note IS recognized (by any method) → apply Ramadan time silently, NO warning */
+          ramadanInfo={type:'once_ramadan',meal:noteMapR.meal,time:noteMapR.time};
         } else {
-          /* Tablet once daily → single dose, map to Ramadan time */
-          ramadanInfo={type:'once_ramadan',meal:noteMapR?noteMapR.meal:'afterIftar',time:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar};
-          /* Add warning: "تنبيه الجرعة الواحدة" */
-          warningQueue.push({level:'info',message:'🌙 الصنف "'+itemName+'" - جرعة واحدة يومياً في رمضان',detail:'الجرعة: '+fn_str+'\nEvery: 24\nStart Time: '+(noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar)+'\n\nهل تريد تعديل الوقت أو التكرار؟',editable:true,editLabel:'Every (ساعات)',editLabel2:'Start Time',currentValue:24,minValue:1,maxValue:168,rowIndex:allRowsData.length,type:'ramadan_once',ramadanTime:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar,onEdit:(function(idx2,rmInfo){return function(newVal){allRowsData[idx2].ramadanOverrideEvery=newVal;};})(allRowsData.length,ramadanInfo)});
+          /* Note truly NOT recognized by ANY method → warn */
+          ramadanInfo={type:'once_ramadan',meal:'afterIftar',time:RAMADAN_TIMES.afterIftar};
+          var evryVal2=get(tds_nodes[ei_main]);
+          var timeVal2=ti_main>=0?get(tds_nodes[ti_main]):'';
+          warningQueue.push({level:'warning',message:'🌙 جرعة غير واضحة في رمضان: "'+itemName+'"',detail:'الجرعة المكتوبة: '+fn_str+'\nEvery: '+evryVal2+'\nStart Time: '+timeVal2+'\n\nلم يتم التعرف على وقت رمضان. سيتم تعيينها بعد الفطار '+RAMADAN_TIMES.afterIftar+' افتراضياً.',editable:true,editLabel:'Every (ساعات)',currentValue:parseInt(evryVal2)||24,minValue:1,maxValue:168,rowIndex:allRowsData.length,type:'ramadan_unclear',onEdit:(function(idx2){return function(newVal){allRowsData[idx2].ramadanOverrideEvery=newVal;};})(allRowsData.length)});
         }
-      }
-      /* Unrecognized note → warning */
-      if(!noteMapR && doseRec.count<=1 && !h_s && !isNonTabletItem(itemName)){
-        var evryVal=get(tds_nodes[ei_main]);
-        var timeVal=ti_main>=0?get(tds_nodes[ti_main]):'';
-        warningQueue.push({level:'warning',message:'🌙 جرعة غير واضحة في رمضان: "'+itemName+'"',detail:'الجرعة المكتوبة: '+fn_str+'\nEvery: '+evryVal+'\nStart Time: '+timeVal+'\n\nلم يتم التعرف على وقت رمضان المناسب. يرجى المراجعة.',editable:true,editLabel:'Every (ساعات)',currentValue:parseInt(evryVal)||24,minValue:1,maxValue:168,rowIndex:allRowsData.length,type:'ramadan_unclear',onEdit:(function(idx2){return function(newVal){allRowsData[idx2].ramadanOverrideEvery=newVal;};})(allRowsData.length)});
       }
     }
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
@@ -1766,6 +1843,7 @@ function detectPackagingInstructions(){
 var s_style=document.createElement('style');
 s_style.textContent='\
 @keyframes barShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}\
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}\
 @keyframes dialogEnter{from{opacity:0;transform:translate(-50%,-46%) scale(0.95)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}\
 @keyframes shimmer{0%,70%{left:-100%}100%{left:200%}}\
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}\
@@ -2006,6 +2084,287 @@ function beautifyPage(){
 /* ══════════════════════════════════════════
    MAIN DIALOG - NEW PROFESSIONAL DESIGN
    ══════════════════════════════════════════ */
+
+/* ── ADMIN SETTINGS PANEL ── */
+window.ezOpenSettings=function(){
+  if(document.getElementById('ez-settings-overlay')) return;
+  /* PIN prompt */
+  var pinOverlay=document.createElement('div');
+  pinOverlay.id='ez-pin-overlay';
+  pinOverlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.7);backdrop-filter:blur(12px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;animation:ezWnFadeIn 0.3s ease';
+  pinOverlay.innerHTML='<div style="background:#fff;border-radius:22px;width:340px;padding:32px 28px;text-align:center;box-shadow:0 30px 80px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);animation:ezWnSlideUp 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="width:60px;height:60px;border-radius:18px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(99,102,241,0.3)">🔐</div><div style="font-size:18px;font-weight:900;color:#1e1b4b;margin-bottom:4px">لوحة الإعدادات</div><div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:20px">أدخل الرقم السري للمتابعة</div><div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;direction:ltr" id="ez-pin-dots"></div><input type="password" id="ez-pin-input" maxlength="6" style="width:180px;padding:12px 16px;border:2px solid rgba(129,140,248,0.15);border-radius:14px;font-size:24px;font-weight:900;color:#1e1b4b;text-align:center;font-family:Cairo,sans-serif;outline:none;letter-spacing:8px;background:rgba(241,245,249,0.5);transition:all 0.3s" placeholder="••••••" autocomplete="off" /><div id="ez-pin-error" style="font-size:11px;font-weight:800;color:#ef4444;margin-top:8px;height:16px"></div><div style="display:flex;gap:8px;margin-top:16px"><button id="ez-pin-ok" style="flex:1;height:44px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 4px 16px rgba(99,102,241,0.25);transition:all 0.3s">دخول</button><button id="ez-pin-cancel" style="height:44px;padding:0 20px;border:1.5px solid rgba(129,140,248,0.15);border-radius:12px;background:#fff;color:#6366f1;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;transition:all 0.3s">إلغاء</button></div></div>';
+  document.body.appendChild(pinOverlay);
+  var pinInput=document.getElementById('ez-pin-input');
+  setTimeout(function(){pinInput.focus();},100);
+  document.getElementById('ez-pin-cancel').onclick=function(){pinOverlay.remove();};
+  pinOverlay.onclick=function(e){if(e.target===pinOverlay)pinOverlay.remove();};
+  function tryPin(){
+    var val=pinInput.value.trim();
+    if(_ezHashPin(val)===_EZ_PIN_HASH){
+      pinOverlay.remove();
+      _ezShowSettingsPanel();
+    } else {
+      document.getElementById('ez-pin-error').textContent='❌ الرقم السري غلط';
+      pinInput.style.borderColor='#ef4444';pinInput.style.animation='shake 0.4s ease';
+      setTimeout(function(){pinInput.style.borderColor='rgba(129,140,248,0.15)';pinInput.style.animation='';pinInput.value='';pinInput.focus();},800);
+    }
+  }
+  document.getElementById('ez-pin-ok').onclick=tryPin;
+  pinInput.onkeydown=function(e){if(e.key==='Enter')tryPin();if(e.key==='Escape')pinOverlay.remove();};
+};
+
+function _ezShowSettingsPanel(){
+  var cc=loadCustomConfig();
+  var RT=RAMADAN_TIMES;var NT=NORMAL_TIMES;
+
+  var overlay=document.createElement('div');
+  overlay.id='ez-settings-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(10px);z-index:9999998;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;animation:ezWnFadeIn 0.3s ease';
+
+  /* Build Fixed Size Codes table */
+  var fscRows='';var fscKeys=Object.keys(fixedSizeCodes);
+  for(var i=0;i<fscKeys.length;i++){
+    var isCustom=cc.fixedSizeCodes&&cc.fixedSizeCodes[fscKeys[i]]!==undefined;
+    fscRows+='<tr style="'+(isCustom?'background:rgba(16,185,129,0.04)':'')+'"><td style="padding:4px 8px;font-size:12px;font-weight:800;color:#1e1b4b;direction:ltr">'+fscKeys[i]+'</td><td style="padding:4px 8px;text-align:center"><input type="number" class="ez-cfg-fsc-val" data-code="'+fscKeys[i]+'" value="'+fixedSizeCodes[fscKeys[i]]+'" style="width:60px;padding:4px 6px;border:1.5px solid rgba(129,140,248,0.15);border-radius:8px;font-size:13px;font-weight:800;text-align:center;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none" /></td><td style="padding:4px;text-align:center"><button class="ez-cfg-del-fsc" data-code="'+fscKeys[i]+'" style="width:26px;height:26px;border:none;border-radius:7px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:12px">✕</button></td></tr>';
+  }
+
+  /* Build Weekly Injections list */
+  var wiRows='';
+  for(var i=0;i<weeklyInjections.length;i++){
+    var isCustomW=cc.addedWeekly&&cc.addedWeekly.indexOf(weeklyInjections[i])>-1;
+    wiRows+='<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:4px;background:'+(isCustomW?'rgba(16,185,129,0.04)':'rgba(241,245,249,0.5)')+';border-radius:8px;border:1px solid rgba(129,140,248,0.06)"><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b;direction:ltr">'+weeklyInjections[i]+'</span><button class="ez-cfg-del-wi" data-code="'+weeklyInjections[i]+'" style="width:22px;height:22px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px">✕</button></div>';
+  }
+
+  /* Build Custom Keywords list */
+  var kwRows='';
+  var allKwRules=(cc.customTimeRules||[]).concat(cc.customRamadanRules||[]);
+  for(var i=0;i<allKwRules.length;i++){
+    var kr=allKwRules[i];
+    var isRm=cc.customRamadanRules&&cc.customRamadanRules.indexOf(kr)>-1;
+    kwRows+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:'+(isRm?'rgba(251,191,36,0.04)':'rgba(139,92,246,0.04)')+';border-radius:8px;border:1px solid '+(isRm?'rgba(251,191,36,0.12)':'rgba(139,92,246,0.08)')+';direction:rtl"><span style="font-size:12px;font-weight:800;color:#1e1b4b;flex:1">'+kr.pattern+'</span><span style="font-size:11px;font-weight:800;color:#6366f1;background:rgba(99,102,241,0.06);padding:2px 8px;border-radius:6px;direction:ltr">'+kr.time+'</span>'+(kr.label?'<span style="font-size:9px;font-weight:700;color:#94a3b8">'+kr.label+'</span>':'')+'<button class="ez-cfg-del-kw" data-idx="'+i+'" style="width:22px;height:22px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+  }
+  if(allKwRules.length===0) kwRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا توجد كلمات مخصصة بعد</div>';
+
+  function timeInput(id,label,value,icon){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(241,245,249,0.5);border-radius:10px;border:1px solid rgba(129,140,248,0.06);margin-bottom:6px"><span style="font-size:14px;flex-shrink:0">'+icon+'</span><span style="flex:1;font-size:11px;font-weight:700;color:#64748b;direction:rtl">'+label+'</span><input type="time" id="'+id+'" value="'+value+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(129,140,248,0.12);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /></div>';
+  }
+
+  overlay.innerHTML='<div style="background:#fff;border-radius:24px;width:580px;max-width:96vw;max-height:90vh;overflow:hidden;box-shadow:0 30px 80px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);animation:ezWnSlideUp 0.5s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column">\
+    <div style="padding:18px 24px 14px;display:flex;align-items:center;gap:14px;border-bottom:2px solid rgba(129,140,248,0.08);background:linear-gradient(180deg,rgba(99,102,241,0.03),transparent);flex-shrink:0">\
+      <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 20px rgba(99,102,241,0.3)">⚙️</div>\
+      <div style="flex:1"><div style="font-size:17px;font-weight:900;color:#1e1b4b">لوحة الإعدادات المتقدمة</div><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-top:1px">التعديلات تُحفظ تلقائياً في المتصفح</div></div>\
+      <button onclick="document.getElementById(\'ez-settings-overlay\').remove()" style="width:32px;height:32px;border-radius:10px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.04);color:#94a3b8;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>\
+    </div>\
+    <div style="flex:1;overflow-y:auto;padding:16px 22px">\
+      <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap" id="ez-cfg-tabs">\
+        <button class="ez-cfg-tab active" data-tab="ramadan" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🌙 أوقات رمضان</button>\
+        <button class="ez-cfg-tab" data-tab="normal" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">⏰ الأوقات العادية</button>\
+        <button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>\
+        <button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💉 الحقن الأسبوعية</button>\
+        <button class="ez-cfg-tab" data-tab="keywords" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">📝 كلمات مخصصة</button>\
+      </div>\
+      <div id="ez-cfg-panel-ramadan" class="ez-cfg-panel">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان</div>\
+        '+timeInput('cfg-rm-bi','قبل الفطار',RT.beforeIftar,'🌅')+'\
+        '+timeInput('cfg-rm-ai','بعد الفطار',RT.afterIftar,'🍽️')+'\
+        '+timeInput('cfg-rm-bs','قبل السحور',RT.beforeSuhoor,'🌃')+'\
+        '+timeInput('cfg-rm-as','بعد السحور',RT.afterSuhoor,'🌄')+'\
+      </div>\
+      <div id="ez-cfg-panel-normal" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⏰</span> أوقات الجرعات العادية</div>\
+        '+timeInput('cfg-nt-empty','على الريق',NT.empty,'🌅')+'\
+        '+timeInput('cfg-nt-bm','قبل الأكل',NT.beforeMeal,'🍴')+'\
+        '+timeInput('cfg-nt-bb','قبل الفطار',NT.beforeBreakfast,'☀️')+'\
+        '+timeInput('cfg-nt-ab','بعد الفطار',NT.afterBreakfast,'🌤️')+'\
+        '+timeInput('cfg-nt-morn','الصباح',NT.morning,'🌞')+'\
+        '+timeInput('cfg-nt-noon','الظهر',NT.noon,'☀️')+'\
+        '+timeInput('cfg-nt-bl','قبل الغداء',NT.beforeLunch,'🍽️')+'\
+        '+timeInput('cfg-nt-al','بعد الغداء',NT.afterLunch,'🥗')+'\
+        '+timeInput('cfg-nt-aftn','العصر',NT.afternoon,'🌇')+'\
+        '+timeInput('cfg-nt-magh','المغرب',NT.maghrib,'🌆')+'\
+        '+timeInput('cfg-nt-bd','قبل العشاء',NT.beforeDinner,'🌙')+'\
+        '+timeInput('cfg-nt-ad','بعد العشاء',NT.afterDinner,'🍲')+'\
+        '+timeInput('cfg-nt-eve','المساء',NT.evening,'🌃')+'\
+        '+timeInput('cfg-nt-bed','قبل النوم',NT.bed,'😴')+'\
+        '+timeInput('cfg-nt-def','الافتراضي',NT.defaultTime,'⏱️')+'\
+      </div>\
+      <div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💊</span> أكواد الأصناف ذات الحجم الثابت <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+fscKeys.length+' كود</span></div>\
+        <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-code" placeholder="كود الصنف" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><input type="number" id="ez-cfg-new-count" placeholder="العدد" style="width:70px;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /><button id="ez-cfg-add-fsc" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(16,185,129,0.2)">+ إضافة</button></div>\
+        <div style="max-height:280px;overflow-y:auto;border:1px solid rgba(129,140,248,0.08);border-radius:12px"><table style="width:100%;border-collapse:collapse" id="ez-cfg-fsc-table"><thead><tr style="background:linear-gradient(145deg,#f8f7ff,#eef2ff)"><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:right">الكود</th><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:center">العدد</th><th style="padding:8px;width:40px"></th></tr></thead><tbody>'+fscRows+'</tbody></table></div>\
+      </div>\
+      <div id="ez-cfg-panel-weekly" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💉</span> أكواد الحقن الأسبوعية <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+weeklyInjections.length+' كود</span></div>\
+        <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-wi" placeholder="كود الحقنة الأسبوعية" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><button id="ez-cfg-add-wi" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#06b6d4,#0891b2);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(6,182,212,0.2)">+ إضافة</button></div>\
+        <div id="ez-cfg-wi-list">'+wiRows+'</div>\
+      </div>\
+      <div id="ez-cfg-panel-keywords" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📝</span> كلمات مخصصة للجرعات</div>\
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">أضف كلمة أو عبارة موجودة في وصف الجرعة والوقت المقابل لها.<br>النظام سيتعرف عليها تلقائياً سواء في الوضع العادي أو رمضان.<br>مثال: الكلمة "بعد الغروب" → الوقت 18:45</div>\
+        <div style="display:flex;gap:6px;margin-bottom:10px;direction:rtl;flex-wrap:wrap;align-items:end">\
+          <div style="flex:1;min-width:140px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px;letter-spacing:0.5px">الكلمة / العبارة</label><input type="text" id="ez-cfg-new-kw" placeholder="مثال: بعد الغروب" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
+          <div style="width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px;letter-spacing:0.5px">الوقت</label><input type="time" id="ez-cfg-new-kw-time" value="09:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
+          <button id="ez-cfg-add-kw" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#8b5cf6,#7c3aed);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(139,92,246,0.2);white-space:nowrap">+ إضافة</button>\
+        </div>\
+        <div id="ez-cfg-kw-list">'+kwRows+'</div>\
+      </div>\
+    </div>\
+    <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4)">\
+      <button id="ez-cfg-save" style="flex:1;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 16px rgba(16,185,129,0.25);transition:all 0.3s">💾 حفظ التعديلات</button>\
+      <button id="ez-cfg-reset" style="height:46px;padding:0 18px;border:1.5px solid rgba(239,68,68,0.15);border-radius:14px;background:rgba(239,68,68,0.03);color:#ef4444;cursor:pointer;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;transition:all 0.3s">🗑️ استعادة الافتراضي</button>\
+    </div>\
+  </div>';
+
+  document.body.appendChild(overlay);
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+
+  /* Tab switching */
+  var tabs=overlay.querySelectorAll('.ez-cfg-tab');
+  tabs.forEach(function(tab){
+    tab.onclick=function(){
+      tabs.forEach(function(t){t.style.background='#fff';t.style.color='#6366f1';t.classList.remove('active');});
+      this.style.background='linear-gradient(145deg,#6366f1,#4f46e5)';this.style.color='#fff';this.classList.add('active');
+      var panels=overlay.querySelectorAll('.ez-cfg-panel');panels.forEach(function(p){p.style.display='none';});
+      document.getElementById('ez-cfg-panel-'+this.getAttribute('data-tab')).style.display='block';
+    };
+  });
+
+  /* Add Fixed Size Code */
+  document.getElementById('ez-cfg-add-fsc').onclick=function(){
+    var code=document.getElementById('ez-cfg-new-code').value.trim();
+    var count=parseInt(document.getElementById('ez-cfg-new-count').value);
+    if(!code||!count||count<1){window.ezShowToast('أدخل الكود والعدد','warning');return;}
+    var c2=loadCustomConfig();if(!c2.fixedSizeCodes)c2.fixedSizeCodes={};
+    c2.fixedSizeCodes[code]=count;saveCustomConfig(c2);
+    window.ezShowToast('✅ تم إضافة كود '+code+' = '+count,'success');
+    overlay.remove();_ezShowSettingsPanel();
+  };
+
+  /* Delete Fixed Size Code */
+  overlay.querySelectorAll('.ez-cfg-del-fsc').forEach(function(btn){
+    btn.onclick=function(){
+      var code=this.getAttribute('data-code');
+      var c2=loadCustomConfig();if(!c2.removedCodes)c2.removedCodes=[];
+      if(c2.removedCodes.indexOf(code)===-1)c2.removedCodes.push(code);
+      if(c2.fixedSizeCodes)delete c2.fixedSizeCodes[code];
+      saveCustomConfig(c2);
+      window.ezShowToast('🗑️ تم حذف كود '+code,'info');
+      overlay.remove();_ezShowSettingsPanel();
+    };
+  });
+
+  /* Update Fixed Size Code values on change */
+  overlay.querySelectorAll('.ez-cfg-fsc-val').forEach(function(inp){
+    inp.onchange=function(){
+      var code=this.getAttribute('data-code');var val=parseInt(this.value);
+      if(!val||val<1)return;
+      var c2=loadCustomConfig();if(!c2.fixedSizeCodes)c2.fixedSizeCodes={};
+      c2.fixedSizeCodes[code]=val;saveCustomConfig(c2);
+      this.style.borderColor='#10b981';setTimeout(function(){inp.style.borderColor='rgba(129,140,248,0.15)';},1000);
+    };
+  });
+
+  /* Add Weekly Injection */
+  document.getElementById('ez-cfg-add-wi').onclick=function(){
+    var code=document.getElementById('ez-cfg-new-wi').value.trim();
+    if(!code){window.ezShowToast('أدخل الكود','warning');return;}
+    var c2=loadCustomConfig();if(!c2.addedWeekly)c2.addedWeekly=[];
+    if(c2.addedWeekly.indexOf(code)===-1)c2.addedWeekly.push(code);
+    saveCustomConfig(c2);
+    window.ezShowToast('✅ تم إضافة حقنة أسبوعية '+code,'success');
+    overlay.remove();_ezShowSettingsPanel();
+  };
+
+  /* Delete Weekly Injection */
+  overlay.querySelectorAll('.ez-cfg-del-wi').forEach(function(btn){
+    btn.onclick=function(){
+      var code=this.getAttribute('data-code');
+      var c2=loadCustomConfig();if(!c2.removedWeekly)c2.removedWeekly=[];
+      if(c2.removedWeekly.indexOf(code)===-1)c2.removedWeekly.push(code);
+      if(c2.addedWeekly){c2.addedWeekly=c2.addedWeekly.filter(function(c){return c!==code;});}
+      saveCustomConfig(c2);
+      window.ezShowToast('🗑️ تم حذف '+code,'info');
+      overlay.remove();_ezShowSettingsPanel();
+    };
+  });
+
+  /* Add Custom Keyword */
+  document.getElementById('ez-cfg-add-kw').onclick=function(){
+    var kw=document.getElementById('ez-cfg-new-kw').value.trim();
+    var kwTime=document.getElementById('ez-cfg-new-kw-time').value;
+    if(!kw){window.ezShowToast('أدخل الكلمة أو العبارة','warning');return;}
+    /* Escape special regex chars but keep it as a simple text match */
+    var pattern=kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    var c2=loadCustomConfig();
+    if(!c2.customTimeRules)c2.customTimeRules=[];
+    /* Check for duplicate */
+    for(var i=0;i<c2.customTimeRules.length;i++){if(c2.customTimeRules[i].pattern===pattern){window.ezShowToast('الكلمة موجودة بالفعل','warning');return;}}
+    c2.customTimeRules.push({pattern:pattern,time:kwTime,label:kw});
+    saveCustomConfig(c2);
+    window.ezShowToast('✅ تم إضافة "'+kw+'" → '+kwTime,'success');
+    overlay.remove();_ezShowSettingsPanel();
+  };
+
+  /* Delete Custom Keyword */
+  overlay.querySelectorAll('.ez-cfg-del-kw').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(this.getAttribute('data-idx'));
+      var c2=loadCustomConfig();
+      var allRules=(c2.customTimeRules||[]).concat(c2.customRamadanRules||[]);
+      if(idx<(c2.customTimeRules||[]).length){
+        c2.customTimeRules.splice(idx,1);
+      } else {
+        var rmIdx=idx-(c2.customTimeRules||[]).length;
+        if(c2.customRamadanRules)c2.customRamadanRules.splice(rmIdx,1);
+      }
+      saveCustomConfig(c2);
+      window.ezShowToast('🗑️ تم حذف الكلمة المخصصة','info');
+      overlay.remove();_ezShowSettingsPanel();
+    };
+  });
+
+  /* SAVE ALL */
+  document.getElementById('ez-cfg-save').onclick=function(){
+    var c2=loadCustomConfig();
+    /* Ramadan times */
+    c2.ramadanTimes={
+      beforeIftar:document.getElementById('cfg-rm-bi').value,
+      afterIftar:document.getElementById('cfg-rm-ai').value,
+      beforeSuhoor:document.getElementById('cfg-rm-bs').value,
+      afterSuhoor:document.getElementById('cfg-rm-as').value
+    };
+    /* Normal times */
+    c2.normalTimes={
+      empty:document.getElementById('cfg-nt-empty').value,
+      beforeMeal:document.getElementById('cfg-nt-bm').value,
+      beforeBreakfast:document.getElementById('cfg-nt-bb').value,
+      afterBreakfast:document.getElementById('cfg-nt-ab').value,
+      morning:document.getElementById('cfg-nt-morn').value,
+      noon:document.getElementById('cfg-nt-noon').value,
+      beforeLunch:document.getElementById('cfg-nt-bl').value,
+      afterLunch:document.getElementById('cfg-nt-al').value,
+      afternoon:document.getElementById('cfg-nt-aftn').value,
+      maghrib:document.getElementById('cfg-nt-magh').value,
+      beforeDinner:document.getElementById('cfg-nt-bd').value,
+      afterDinner:document.getElementById('cfg-nt-ad').value,
+      evening:document.getElementById('cfg-nt-eve').value,
+      bed:document.getElementById('cfg-nt-bed').value,
+      defaultTime:document.getElementById('cfg-nt-def').value
+    };
+    saveCustomConfig(c2);
+    overlay.remove();
+    window.ezShowToast('✅ تم حفظ جميع الإعدادات - أعد تشغيل الأداة لتطبيقها','success');
+    ezBeep('success');
+  };
+
+  /* RESET */
+  document.getElementById('ez-cfg-reset').onclick=function(){
+    if(!confirm('هل أنت متأكد من استعادة الإعدادات الافتراضية؟ سيتم حذف جميع التعديلات.')) return;
+    localStorage.removeItem(EZ_CUSTOM_KEY);
+    overlay.remove();
+    window.ezShowToast('🔄 تم استعادة الإعدادات الافتراضية - أعد تشغيل الأداة','info');
+  };
+}
 var hasDuplicateNotes=scanForDuplicateNotes();
 var _rm_setting=savedSettings.ramadanMode||false;
 /* In Ramadan mode, most items will be duplicated, so enable post dialog */
@@ -2028,6 +2387,7 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <div class="ez-version">v'+APP_VERSION+'</div>\
+    <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة" style="font-size:14px">⚙️</button>\
     <button class="ez-btn-icon" onclick="window.ezToggleDark()" title="الوضع الليلي" style="font-size:14px">'+(_dk?'☀️':'🌙')+'</button>\
     <button class="ez-btn-icon ez-btn-icon-min" onclick="window.ezMinimize()">−</button>\
   </div>\
