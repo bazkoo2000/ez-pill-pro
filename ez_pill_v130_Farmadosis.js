@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='135.0';
+var APP_VERSION='136.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,18 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.0':{
+    title:'وضع رمضان 🌙',
+    features:[
+      {icon:'🌙',text:'سويتش وضع رمضان - تحويل الجرعات لأوقات الفطار والسحور'},
+      {icon:'🕌',text:'4 أوقات رمضان: قبل الفطار 18:30 · بعد الفطار 19:00 · قبل السحور 03:00 · بعد السحور 04:00'},
+      {icon:'⚡',text:'كل جرعات رمضان duplicate تلقائياً (غير منتظمة)'},
+      {icon:'🔄',text:'ماتشينج ذكي: العشاء ↔ الفطار · السحور تلقائي'},
+      {icon:'💊',text:'تنبيه الجرعة الواحدة + الأصناف الخاصة (injection/شراب/مرهم/كريم)'},
+      {icon:'📅',text:'حساب التواريخ: الفطار = اليوم التالي · السحور = اليوم التالي +1'},
+      {icon:'⚠️',text:'رسائل تحذيرية للجرعات الغير مفهومة مع إمكانية التعديل'}
+    ]
+  },
   '135.0':{
     title:'تصميم جديد بالكامل 🎨',
     features:[
@@ -157,8 +169,8 @@ var EZ_SETTINGS_KEY='ez_pill_settings';
 function loadSettings(){
   try{
     var s=localStorage.getItem(EZ_SETTINGS_KEY);
-    return s?JSON.parse(s):{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false};
-  }catch(e){return{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false};}
+    return s?JSON.parse(s):{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false,ramadanMode:false};
+  }catch(e){return{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false,ramadanMode:false};}
 }
 function saveSettings(obj){
   try{var cur=loadSettings();for(var k in obj)cur[k]=obj[k];localStorage.setItem(EZ_SETTINGS_KEY,JSON.stringify(cur));}catch(e){}
@@ -213,6 +225,86 @@ var fixedSizeCodes={
 };
 
 var weeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
+
+/* ══════════════════════════════════════════
+   RAMADAN MODE CONSTANTS & HELPERS
+   ══════════════════════════════════════════ */
+var RAMADAN_TIMES={
+  beforeIftar:'18:30',
+  afterIftar:'19:00',
+  beforeSuhoor:'03:00',
+  afterSuhoor:'04:00'
+};
+
+/* Map normal meal words to Ramadan equivalents */
+function ramadanMapNote(note){
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
+  /* قبل العشاء / before dinner → قبل الفطار */
+  if(/قبل.*عشا|قبل.*عشو|قبل.*عشاء|before.*din|before.*sup|before.*dinner|before.*asha/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* بعد العشاء / after dinner → بعد الفطار */
+  if(/بعد.*عشا|بعد.*عشو|بعد.*عشاء|after.*din|after.*sup|after.*dinner|after.*asha/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  /* قبل السحور / before suhoor */
+  if(/قبل.*سحور|قبل.*سحر|before.*suhoor|before.*sahoor|before.*sahor/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
+  /* بعد السحور / after suhoor */
+  if(/بعد.*سحور|بعد.*سحر|after.*suhoor|after.*sahoor|after.*sahor/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  /* قبل الفطار / before iftar (explicit) */
+  if(/قبل.*فطار|قبل.*فطر|قبل.*فطور|قبل.*افطار|before.*iftar|before.*bre/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* بعد الفطار / after iftar / breakfast */
+  if(/بعد.*فطار|بعد.*فطر|بعد.*فطور|بعد.*افطار|after.*iftar|after.*bre/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  /* Morning / صباح → بعد السحور */
+  if(/صباح|الصباح|morning|am\b/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  /* Evening / مساء / bed / نوم → بعد الفطار */
+  if(/مساء|مسا|evening|eve|bed|sleep|نوم|النوم|hs\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  /* Noon / ظهر / Lunch / غداء → قبل الفطار (closest meaningful time) */
+  if(/ظهر|الظهر|noon|midday|غدا|غداء|الغدا|الغداء|lunch|lun/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* عصر / afternoon → قبل الفطار */
+  if(/عصر|العصر|asr|afternoon/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* على الريق / empty stomach → قبل السحور */
+  if(/ريق|الريق|empty|fasting|stomach/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
+  /* قبل الأكل / before meal → قبل الفطار */
+  if(/قبل\s*(الاكل|الأكل|الوجبات)|before\s*(meal|food)|ac\b/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* بعد الأكل / after meal → بعد الفطار */
+  if(/بعد\s*(الاكل|الأكل|الوجبات)|after\s*(meal|food)|pc\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  return null;
+}
+
+/* Check if a Ramadan time is Suhoor (past midnight, need +1 extra day) */
+function isRamadanSuhoorTime(meal){
+  return meal==='beforeSuhoor'||meal==='afterSuhoor';
+}
+
+/* Get Ramadan start date for a given meal type */
+function getRamadanStartDate(baseDateStr,meal){
+  if(!baseDateStr) return baseDateStr;
+  var base=new Date(baseDateStr);
+  /* الفطار = اليوم التالي عادي */
+  base.setDate(base.getDate()+1);
+  /* السحور = اليوم التالي +1 لأن الساعة 3-4 صباحاً بعد منتصف الليل */
+  if(isRamadanSuhoorTime(meal)){
+    base.setDate(base.getDate()+1);
+  }
+  var y=base.getFullYear(),ms=('0'+(base.getMonth()+1)).slice(-2),da=('0'+base.getDate()).slice(-2);
+  return y+'-'+ms+'-'+da;
+}
+
+/* Determine Ramadan duplicate type from note (all Ramadan doses with 2 times = duplicate) */
+function ramadanShouldDuplicate(note){
+  var d=smartDoseRecognizer(note);
+  /* BID / مرتين / كل 12 ساعة → duplicate to فطار + سحور */
+  if(d.count===2||d.rawFrequency==='BID'||d.rawFrequency==='Q12H') return {type:'ramadan_two',meals:['iftar','suhoor']};
+  /* TID / 3 مرات / كل 8 → duplicate to فطار + سحور (+ warning) */
+  if(d.count===3||d.rawFrequency==='TID'||d.rawFrequency==='Q8H') return {type:'ramadan_two',meals:['iftar','suhoor']};
+  /* QID / 4 مرات / كل 6 → duplicate to فطار + سحور */
+  if(d.count>=4||d.rawFrequency==='QID'||d.rawFrequency==='Q6H'||d.rawFrequency==='Q4H') return {type:'ramadan_two',meals:['iftar','suhoor']};
+  /* OD / once daily → single, will be handled by the "once daily" prompt */
+  if(d.count===1) return null;
+  return null;
+}
+
+/* Check if item is injection/syrup/ointment/cream (non-oral solid) */
+function isNonTabletItem(itemName){
+  return /injection|حقن|حقنة|حقنه|syrup|شراب|cream|كريم|ointment|مرهم|مره|lotion|لوشن|gel|جل|drop|قطر|قطره|spray|بخاخ|inhaler|بخاخة|suppository|لبوس|solution|محلول|suspension|معلق|emulsion|مستحلب|patch|لصقة|لاصق/i.test(itemName||'');
+}
 
 var warningQueue=[];
 var monthCounter=0;
@@ -680,17 +772,18 @@ window.ezSubmit=function(){
     var autoDuration=document.getElementById('auto-duration')?document.getElementById('auto-duration').checked:true;
     var showWarningsFlag=document.getElementById('show-warnings')?document.getElementById('show-warnings').checked:true;
     var showPostDialog=document.getElementById('show-post-dialog')?document.getElementById('show-post-dialog').checked:false;
+    var ramadanMode=document.getElementById('ramadan-mode')?document.getElementById('ramadan-mode').checked:false;
     /* Save settings for next time */
-    saveSettings({m:m,t:t,autoDuration:autoDuration,showWarnings:showWarningsFlag});
+    saveSettings({m:m,t:t,autoDuration:autoDuration,showWarnings:showWarningsFlag,ramadanMode:ramadanMode});
     d.remove();
     var loader=document.createElement('div');
     loader.id='ez-loader';
-    loader.innerHTML='<div style="display:flex;align-items:center;gap:14px"><div class="ez-loader-spinner"></div><div class="ez-loader-text">جاري المعالجة...</div></div><div style="margin-top:14px;height:4px;background:rgba(129,140,248,0.1);border-radius:4px;overflow:hidden"><div style="height:100%;width:60%;background:linear-gradient(90deg,#6366f1,#818cf8,#6366f1);background-size:200% 100%;animation:barShift 1.5s ease infinite;border-radius:4px"></div></div>';
+    loader.innerHTML='<div style="display:flex;align-items:center;gap:14px"><div class="ez-loader-spinner"></div><div class="ez-loader-text">'+(ramadanMode?'🌙 جاري المعالجة (وضع رمضان)...':'جاري المعالجة...')+'</div></div><div style="margin-top:14px;height:4px;background:rgba(129,140,248,0.1);border-radius:4px;overflow:hidden"><div style="height:100%;width:60%;background:linear-gradient(90deg,#6366f1,#818cf8,#6366f1);background-size:200% 100%;animation:barShift 1.5s ease infinite;border-radius:4px"></div></div>';
     loader.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.97);backdrop-filter:blur(40px);padding:30px 50px;border-radius:24px;box-shadow:0 30px 80px rgba(99,102,241,0.12),0 0 0 1px rgba(129,140,248,0.08);z-index:99998;text-align:center;font-family:Cairo,sans-serif;min-width:260px;animation:dialogEnter 0.4s ease';
     document.body.appendChild(loader);
     setTimeout(function(){
       if(loader) loader.remove();
-      processTable(m,t,autoDuration,showWarningsFlag,showPostDialog);
+      processTable(m,t,autoDuration,showWarningsFlag,showPostDialog,ramadanMode);
     },800);
   } catch(e){
     alert("خطأ: "+e.message);
@@ -1085,8 +1178,8 @@ function scanForDuplicateNotes(){
 /* ══════════════════════════════════════════
    ★ MAIN PROCESSING ENGINE ★
    ══════════════════════════════════════════ */
-function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
-  warningQueue=[];duplicatedRows=[];duplicatedCount=0;var detectedLanguagesPerRow=[];window._ezDose2Applied=null;
+function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode){
+  warningQueue=[];duplicatedRows=[];duplicatedCount=0;var detectedLanguagesPerRow=[];window._ezDose2Applied=null;window._ramadanMode=ramadanMode||false;
   var fire=_ezFire,norm=_ezNorm,normL=_ezNormL,get=_ezGet,idx=_ezIdx;
   function getCleanCode(td){var text=get(td);var match=text.match(/\d+/);return match?match[0]:'';}
   function setSize(td,v){if(!td)return;var i=td.querySelector('input,textarea');if(i){i.value=v;fire(i);}else{td.textContent=v;}}
@@ -1156,6 +1249,60 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(r.parentNode)r.parentNode.removeChild(r);
   }
 
+  /* ── RAMADAN DUPLICATE ROWS ── */
+  function createRamadanDuplicateRows(t_val,r,rInfo,bs,niIdx,si,ei,di,ti,sdi,edi,m_val,tc,ci,qi){
+    var tds=r.querySelectorAll('td');var u_code=getCleanCode(tds[ci]);
+    var on=get(tds[niIdx]);var isEn=/[a-z]/i.test(on)||detectLanguage(on)==='english';
+    var calcQ=1;if(qi>=0){calcQ=parseInt(get(tds[qi]))||1;}
+    var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
+    var tpi=getTwoPillsPerDoseInfo(on);
+
+    /* Ramadan always creates 2 rows: Iftar + Suhoor */
+    var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
+    var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
+
+    /* Size = t_val (days) for each row */
+    var ns=t_val;
+    if(fixedSizeCodes[u_code]){ns=Math.floor(fixedSizeCodes[u_code]/2);var rem=fixedSizeCodes[u_code]%2;setSize(nt1[si],ns+(rem>0?1:0));setSize(nt2[si],ns);}
+    else{setSize(nt1[si],ns);setSize(nt2[si],ns);}
+    setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');
+    if(di>=0){setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
+    if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
+
+    /* Determine before/after from note */
+    var noteMap=ramadanMapNote(on);
+    var isBefore=/قبل|before|ac\b/i.test(on);
+    var iftarLabel,suhoorLabel,iftarTime,suhoorTime;
+    if(isBefore){
+      iftarLabel=isEn?'Before Iftar':'قبل الفطار';
+      suhoorLabel=isEn?'Before Suhoor':'قبل السحور';
+      iftarTime=RAMADAN_TIMES.beforeIftar;
+      suhoorTime=RAMADAN_TIMES.beforeSuhoor;
+    } else {
+      iftarLabel=isEn?'After Iftar':'بعد الفطار';
+      suhoorLabel=isEn?'After Suhoor':'بعد السحور';
+      iftarTime=RAMADAN_TIMES.afterIftar;
+      suhoorTime=RAMADAN_TIMES.afterSuhoor;
+    }
+
+    setNote(nt1[niIdx],'⚡ '+iftarLabel);setNote(nt2[niIdx],'⚡ '+suhoorLabel);
+    setTime(nr1,iftarTime);setTime(nr2,suhoorTime);
+
+    /* Set Ramadan start dates */
+    if(sdi>=0&&defaultStartDate){
+      var iftarSD=getRamadanStartDate(defaultStartDate,'afterIftar');
+      var suhoorSD=getRamadanStartDate(defaultStartDate,'afterSuhoor');
+      setStartDate(nr1,iftarSD);
+      setStartDate(nr2,suhoorSD);
+    }
+
+    r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);
+    var dupRows=[nr1,nr2];
+    var meals=isEn?['Iftar','Suhoor']:['الفطار','السحور'];
+    duplicatedRows.push({originalRow:r,duplicates:dupRows,type:'ramadan_two',meals:meals});duplicatedCount++;
+    if(r.parentNode)r.parentNode.removeChild(r);
+  }
+
   function sortRowsByTime(t_elem,ti_idx,ei_idx){
     if(ti_idx<0)return;var rs=Array.from(t_elem.querySelectorAll('tr'));var he=rs.shift();var rwt=[];var rwot=[];
     rs.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length<=ti_idx){rwot.push(r);return;}var tv=get(tds[ti_idx]);if(!tv||tv.trim()===''){rwot.push(r);return;}rwt.push({row:r,time:tv});});
@@ -1215,10 +1362,47 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
     var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
     var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);var h_s=!!(itemCode&&weeklyInjections.indexOf(itemCode)>-1);
+
+    /* ── RAMADAN MODE OVERRIDES ── */
+    var ramadanInfo=null;
+    if(ramadanMode){
+      var doseRec=smartDoseRecognizer(fn_str);
+      var noteMapR=ramadanMapNote(fn_str);
+
+      /* Weekly/special items: keep normal logic but change time to Ramadan time */
+      if(h_s){
+        /* weekly injection: use Ramadan iftar time if note mentions dinner/iftar/evening */
+        ramadanInfo={type:'weekly_ramadan',meal:noteMapR?noteMapR.meal:'afterIftar',time:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar};
+      }
+      /* Items with count >= 2: force Ramadan duplicate */
+      else if(doseRec.count>=2 && !h_s){
+        dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+      }
+      /* OD (once daily): check if it's non-tablet or needs prompt */
+      else if(doseRec.count===1 && !h_s){
+        var isNonTab=isNonTabletItem(itemName);
+        if(isNonTab){
+          /* Non-tablet items (injection/syrup/cream/ointment) → treat as duplicate, uncheck and move down */
+          dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+          ramadanInfo={type:'nontablet_ramadan',forceUncheck:true};
+        } else {
+          /* Tablet once daily → single dose, map to Ramadan time */
+          ramadanInfo={type:'once_ramadan',meal:noteMapR?noteMapR.meal:'afterIftar',time:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar};
+          /* Add warning: "تنبيه الجرعة الواحدة" */
+          warningQueue.push({level:'info',message:'🌙 الصنف "'+itemName+'" - جرعة واحدة يومياً في رمضان',detail:'الجرعة: '+fn_str+'\nEvery: 24\nStart Time: '+(noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar)+'\n\nهل تريد تعديل الوقت أو التكرار؟',editable:true,editLabel:'Every (ساعات)',editLabel2:'Start Time',currentValue:24,minValue:1,maxValue:168,rowIndex:allRowsData.length,type:'ramadan_once',ramadanTime:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar,onEdit:(function(idx2,rmInfo){return function(newVal){allRowsData[idx2].ramadanOverrideEvery=newVal;};})(allRowsData.length,ramadanInfo)});
+        }
+      }
+      /* Unrecognized note → warning */
+      if(!noteMapR && doseRec.count<=1 && !h_s && !isNonTabletItem(itemName)){
+        var evryVal=get(tds_nodes[ei_main]);
+        var timeVal=ti_main>=0?get(tds_nodes[ti_main]):'';
+        warningQueue.push({level:'warning',message:'🌙 جرعة غير واضحة في رمضان: "'+itemName+'"',detail:'الجرعة المكتوبة: '+fn_str+'\nEvery: '+evryVal+'\nStart Time: '+timeVal+'\n\nلم يتم التعرف على وقت رمضان المناسب. يرجى المراجعة.',editable:true,editLabel:'Every (ساعات)',currentValue:parseInt(evryVal)||24,minValue:1,maxValue:168,rowIndex:allRowsData.length,type:'ramadan_unclear',onEdit:(function(idx2){return function(newVal){allRowsData[idx2].ramadanOverrideEvery=newVal;};})(allRowsData.length)});
+      }
+    }
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
     if(autoDuration){durationInfo=extractDuration(fn_str);if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.floor(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
-    allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false});
+    allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
     /* Detect dose=2 patterns AFTER push so rowIndex is correct */
     var dose2pattern=/^2\s+(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
     var dose2pattern2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
@@ -1248,8 +1432,56 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
 
   function continueProcessing(){
     var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
+    var ramadanRtd=[];/* Ramadan duplicate list */
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];var r_node=rd.row;var tds_nodes=rd.tds;
+
+      /* ── RAMADAN MODE: Ramadan duplicate (فطار + سحور) ── */
+      if(ramadanMode&&rd.dui&&rd.dui.type==='ramadan_two'){
+        if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}
+        /* Non-tablet items: uncheck and move to skip list */
+        if(rd.ramadanInfo&&rd.ramadanInfo.type==='nontablet_ramadan'){
+          var ck=getCheckmarkCellIndex(r_node);
+          resetCheckmark(r_node,ck);
+        }
+        ramadanRtd.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;
+      }
+
+      /* ── RAMADAN MODE: Once daily → single Ramadan time ── */
+      if(ramadanMode&&rd.ramadanInfo&&(rd.ramadanInfo.type==='once_ramadan'||rd.ramadanInfo.type==='weekly_ramadan')){
+        if(rd.ramadanInfo.type==='weekly_ramadan'&&rd.isWeekly){
+          /* Weekly in Ramadan: same logic but Ramadan time */
+          var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;
+          setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');
+          if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}
+          setTime(r_node,rd.ramadanInfo.time);
+          var targetDay=extractDayOfWeek(rd.note);
+          if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}
+          continue;
+        }
+        /* Single dose Ramadan: apply Ramadan time */
+        var rmEvery=rd.ramadanOverrideEvery||24;
+        setEvry(tds_nodes[ei_main],String(rmEvery));
+        setSize(tds_nodes[si_main],rd.calculatedSize);
+        setTime(r_node,rd.ramadanInfo.time);
+        if(di_main>=0){var tpi_once=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_once.dose);}
+        if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
+        /* Set Ramadan start date */
+        if(sdi_main>=0&&defaultStartDate){
+          var rmSD=getRamadanStartDate(defaultStartDate,rd.ramadanInfo.meal);
+          setStartDate(r_node,rmSD);
+        }
+        /* Apply note label */
+        var isEn=detectLanguage(rd.note)==='english';
+        var noteMap=ramadanMapNote(rd.note);
+        if(noteMap){
+          var newLabel=isEn?noteMap.label_en:noteMap.label_ar;
+          setNote(tds_nodes[ni_main],newLabel);
+        }
+        continue;
+      }
+
+      /* ── NORMAL MODE (original logic) ── */
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
       if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getTimeFromWords(rd.note);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getTimeFromWords(rd.note);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
@@ -1277,6 +1509,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
       }
     }
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
+    /* Ramadan duplicates */
+    for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
@@ -1284,8 +1518,17 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog){
     beautifyPage();
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
-    if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡','info');
-    if(showPostDialog)showPostProcessDialog();
+    if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
+    if(showPostDialog||(ramadanMode&&duplicatedCount>0))showPostProcessDialog();
+    /* Ramadan mode notification */
+    if(ramadanMode){
+      var rmBadge=document.createElement('div');
+      rmBadge.id='ez-ramadan-active-badge';
+      rmBadge.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999994;background:linear-gradient(145deg,#1e1b4b,#312e81);color:#fbbf24;padding:8px 24px;border-radius:30px;font-family:Cairo,sans-serif;font-size:13px;font-weight:900;box-shadow:0 6px 20px rgba(30,27,75,0.3),inset 0 1px 0 rgba(255,255,255,0.1);display:flex;align-items:center;gap:8px;animation:fadeSlideUp 0.5s ease;border:1.5px solid rgba(251,191,36,0.3)';
+      rmBadge.innerHTML='<span style="font-size:18px">🌙</span> وضع رمضان مفعّل <span style="font-size:10px;color:rgba(251,191,36,0.6);margin-right:6px">فطار '+RAMADAN_TIMES.afterIftar+' · سحور '+RAMADAN_TIMES.afterSuhoor+'</span>';
+      document.body.appendChild(rmBadge);
+      setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},8000);
+    }
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
     ezBeep('success');
@@ -1568,6 +1811,9 @@ s_style.textContent='\
 .ez-toggle-text .auto-tag{font-size:8px;font-weight:800;color:#fff;background:linear-gradient(135deg,#10b981,#059669);padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:middle}\
 .ez-toggle-icon{font-size:14px;opacity:0.4;transition:all 0.3s}\
 .ez-tog-on .ez-toggle-icon{opacity:1}\
+.ez-ramadan-toggle.ez-tog-on{background:linear-gradient(135deg,rgba(30,27,75,0.06),rgba(251,191,36,0.06))!important;border-color:rgba(251,191,36,0.2)!important}\
+.ez-ramadan-toggle.ez-tog-on .ez-switch-track{background:linear-gradient(145deg,#1e1b4b,#312e81)!important;box-shadow:0 2px 8px rgba(30,27,75,0.4)!important}\
+.ez-ramadan-toggle.ez-tog-on .ez-toggle-text{color:#1e1b4b!important;font-weight:800!important}\
 .ez-actions{display:flex;gap:8px;margin-top:20px}\
 .ez-btn-primary{flex:1;height:52px;border:none;border-radius:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 6px 24px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.15);transition:all 0.4s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden;letter-spacing:0.3px}\
 .ez-btn-primary::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);animation:shimmer 4s ease-in-out infinite}\
@@ -1761,13 +2007,16 @@ function beautifyPage(){
    MAIN DIALOG - NEW PROFESSIONAL DESIGN
    ══════════════════════════════════════════ */
 var hasDuplicateNotes=scanForDuplicateNotes();
+var _rm_setting=savedSettings.ramadanMode||false;
+/* In Ramadan mode, most items will be duplicated, so enable post dialog */
+if(_rm_setting) hasDuplicateNotes=true;
 
 var d_box=document.createElement('div');
 d_box.id='ez-dialog-box';
 d_box.className='ez-dialog-v2';
 d_box.setAttribute('data-m',String(savedSettings.m||1));
 d_box.setAttribute('data-t',String(savedSettings.t||30));
-var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!==false,_sw=savedSettings.showWarnings!==false,_dk=savedSettings.darkMode||false;
+var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!==false,_sw=savedSettings.showWarnings!==false,_dk=savedSettings.darkMode||false,_rm=savedSettings.ramadanMode||false;
 d_box.innerHTML='\
 <div class="ez-header">\
   <div class="ez-logo-group">\
@@ -1810,6 +2059,11 @@ d_box.innerHTML='\
     <div class="ez-switch"><input type="checkbox" id="show-post-dialog" '+(hasDuplicateNotes?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
     <span class="ez-toggle-text">خيارات إضافية'+(hasDuplicateNotes?' <span class="auto-tag">تقسيم مكتشف</span>':'')+'</span>\
     <span class="ez-toggle-icon">⚙️</span>\
+  </label>\
+  <label class="ez-toggle-row ez-ramadan-toggle '+(_rm?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){var ch=t.querySelector(\'input\').checked;t.classList.toggle(\'ez-tog-on\',ch);var badge=document.getElementById(\'ez-ramadan-badge\');if(badge)badge.style.display=ch?\'flex\':\'none\';},10)">\
+    <div class="ez-switch"><input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+'><div class="ez-switch-track ez-ramadan-track"></div><div class="ez-switch-knob"></div></div>\
+    <span class="ez-toggle-text">جرعات شهر رمضان</span>\
+    <span class="ez-toggle-icon">🌙</span>\
   </label>\
   <div class="ez-actions">\
     <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
