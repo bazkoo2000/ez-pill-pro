@@ -2365,42 +2365,77 @@ function _ezShowSettingsPanel(role,userName){
   }
 
   /* Add Custom Keyword for RAMADAN times */
-  if(document.getElementById('ez-cfg-add-kw-ramadan')){
-  document.getElementById('ez-cfg-add-kw-ramadan').onclick=function(){
-    var kw=document.getElementById('ez-cfg-new-kw-ramadan').value.trim();
-    var kwLabel=document.getElementById('ez-cfg-new-kw-ramadan-label').value.trim();
-    var kwTime=document.getElementById('ez-cfg-new-kw-ramadan-time').value;
-    if(!kw){window.ezShowToast('أدخل الكلمة أو العبارة','warning');ezBeep('warning');return;}
-    if(!kwLabel){window.ezShowToast('أدخل اسم الجرعة','warning');ezBeep('warning');return;}
-    /* Escape special regex chars but keep it as a simple text match */
-    var pattern=kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    var c2=loadCustomConfig();
-    if(!c2.customRamadanRules)c2.customRamadanRules=[];
-    /* Check for duplicate in ramadan rules */
-    for(var i=0;i<c2.customRamadanRules.length;i++){
-      if(c2.customRamadanRules[i].pattern===pattern){
-        window.ezShowToast('⚠️ الكلمة موجودة بالفعل في أوقات رمضان','warning');
-        ezBeep('warning');
-        return;
-      }
-    }
-    /* Check for duplicate in normal rules too */
-    if(c2.customTimeRules){
-      for(var i=0;i<c2.customTimeRules.length;i++){
-        if(c2.customTimeRules[i].pattern===pattern){
-          window.ezShowToast('⚠️ الكلمة موجودة بالفعل في الأوقات العادية','warning');
-          ezBeep('warning');
+  var addRamadanBtn=document.getElementById('ez-cfg-add-kw-ramadan');
+  if(addRamadanBtn){
+    console.log('Ramadan button found, attaching event');
+    addRamadanBtn.onclick=function(){
+      try{
+        console.log('Ramadan button clicked');
+        var kwInput=document.getElementById('ez-cfg-new-kw-ramadan');
+        var kwLabelInput=document.getElementById('ez-cfg-new-kw-ramadan-label');
+        var kwTimeInput=document.getElementById('ez-cfg-new-kw-ramadan-time');
+        
+        if(!kwInput||!kwLabelInput||!kwTimeInput){
+          console.error('Missing inputs:',{kw:!!kwInput,label:!!kwLabelInput,time:!!kwTimeInput});
+          window.ezShowToast('❌ خطأ: الحقول غير موجودة','error');
+          ezBeep('error');
           return;
         }
+        
+        var kw=kwInput.value.trim();
+        var kwLabel=kwLabelInput.value.trim();
+        var kwTime=kwTimeInput.value;
+        
+        console.log('Values: kw=',kw,'label=',kwLabel,'time=',kwTime);
+        
+        if(!kw){window.ezShowToast('أدخل الكلمة أو العبارة','warning');ezBeep('warning');return;}
+        if(!kwLabel){window.ezShowToast('أدخل اسم الجرعة','warning');ezBeep('warning');return;}
+        if(!kwTime){window.ezShowToast('أدخل الوقت','warning');ezBeep('warning');return;}
+        
+        /* Escape special regex chars but keep it as a simple text match */
+        var pattern=kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        var c2=loadCustomConfig();
+        if(!c2.customRamadanRules)c2.customRamadanRules=[];
+        
+        console.log('Current ramadan rules:',c2.customRamadanRules.length);
+        
+        /* Check for duplicate in ramadan rules */
+        for(var i=0;i<c2.customRamadanRules.length;i++){
+          if(c2.customRamadanRules[i].pattern===pattern){
+            window.ezShowToast('⚠️ الكلمة موجودة بالفعل في أوقات رمضان','warning');
+            ezBeep('warning');
+            console.log('Duplicate in ramadan');
+            return;
+          }
+        }
+        /* Check for duplicate in normal rules too */
+        if(c2.customTimeRules){
+          for(var i=0;i<c2.customTimeRules.length;i++){
+            if(c2.customTimeRules[i].pattern===pattern){
+              window.ezShowToast('⚠️ الكلمة موجودة بالفعل في الأوقات العادية','warning');
+              ezBeep('warning');
+              console.log('Duplicate in normal');
+              return;
+            }
+          }
+        }
+        /* Save with custom label and time */
+        var newRule={pattern:pattern,meal:'custom',time:kwTime,label:kwLabel,label_ar:kwLabel,label_en:kwLabel};
+        console.log('Saving rule:',newRule);
+        c2.customRamadanRules.push(newRule);
+        saveCustomConfig(c2);
+        console.log('Saved successfully');
+        window.ezShowToast('✅ تم إضافة "'+kw+'" لرمضان → '+kwLabel+' ('+kwTime+')','success');
+        ezBeep('success');
+        overlay.remove();_ezShowSettingsPanel(role,userName);
+      }catch(e){
+        console.error('Error in ramadan add:',e);
+        window.ezShowToast('❌ خطأ: '+e.message,'error');
+        ezBeep('error');
       }
-    }
-    /* Save with custom label and time */
-    c2.customRamadanRules.push({pattern:pattern,meal:'custom',time:kwTime,label:kwLabel,label_ar:kwLabel,label_en:kwLabel});
-    saveCustomConfig(c2);
-    window.ezShowToast('✅ تم إضافة "'+kw+'" لرمضان → '+kwLabel+' ('+kwTime+')','success');
-    ezBeep('success');
-    overlay.remove();_ezShowSettingsPanel(role,userName);
-  };
+    };
+  }else{
+    console.error('Ramadan add button NOT found!');
   }
 
   /* Delete Custom Keyword */
