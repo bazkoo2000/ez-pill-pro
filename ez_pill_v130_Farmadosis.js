@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.1';
+var APP_VERSION='136.2';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,14 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.2':{
+    title:'تصليح حساب تواريخ رمضان 🌙🔧',
+    features:[
+      {icon:'✅',text:'إصلاح حساب تاريخ البدء للجرعات في وضع رمضان'},
+      {icon:'📅',text:'الجرعات العادية (فطار): اليوم الحالي +1 يوم'},
+      {icon:'🌙',text:'جرعات السحور: اليوم الحالي +3 أيام (لأنها بعد منتصف الليل)'}
+    ]
+  },
   '136.0':{
     title:'وضع رمضان + لوحة إعدادات 🌙⚙️',
     features:[
@@ -354,9 +362,11 @@ function getRamadanStartDate(baseDateStr,meal){
   if(!baseDateStr) return baseDateStr;
   var base=new Date(baseDateStr);
   /* الفطار (قبل/بعد) = اليوم التالي (+1) */
-  /* السحور (قبل/بعد) = بعد يومين (+2) لأنه بعد منتصف الليل */
+  /* السحور (قبل/بعد) = بعد 3 أيام (+3) لأنه:
+     - اليوم الحالي + 1 = التاريخ العادي
+     - + 2 يوم إضافي للسحور لأنه بعد منتصف الليل = +3 إجمالي */
   if(isRamadanSuhoorTime(meal)){
-    base.setDate(base.getDate()+2);
+    base.setDate(base.getDate()+3);
   } else {
     base.setDate(base.getDate()+1);
   }
