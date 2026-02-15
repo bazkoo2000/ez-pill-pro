@@ -311,11 +311,17 @@ function ramadanMapNote(note){
   /* بعد السحور / after suhoor */
   if(/بعد.*سحور|بعد.*سحر|after.*suhoor|after.*sahoor|after.*sahor/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
 
-  /* ── THEN check dinner → iftar mapping ── */
-  /* قبل العشاء / before dinner → قبل الفطار */
-  if(/قبل.*عشا|قبل.*عشو|قبل.*عشاء|before.*din|before.*sup|before.*dinner|before.*asha/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
-  /* بعد العشاء / after dinner → بعد الفطار */
-  if(/بعد.*عشا|بعد.*عشو|بعد.*عشاء|after.*din|after.*sup|after.*dinner|after.*asha/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  /* ── Check Iftar (Breakfast in Ramadan) ── */
+  /* قبل الفطار / before iftar */
+  if(/قبل.*فطار|قبل.*فطور|قبل.*افطار|before.*iftar|before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* بعد الفطار / after iftar */
+  if(/بعد.*فطار|بعد.*فطور|بعد.*افطار|after.*iftar|after.*breakfast/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+
+  /* ── Map dinner → Suhoor (NOT Iftar) ── */
+  /* قبل العشاء / before dinner → قبل السحور */
+  if(/قبل.*عشا|قبل.*عشو|قبل.*عشاء|before.*din|before.*sup|before.*dinner|before.*asha/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
+  /* بعد العشاء / after dinner → بعد السحور */
+  if(/بعد.*عشا|بعد.*عشو|بعد.*عشاء|after.*din|after.*sup|after.*dinner|after.*asha/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   if(/بعد.*سحور|بعد.*سحر|after.*suhoor|after.*sahoor|after.*sahor/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   /* قبل الفطار / before iftar (explicit) */
   if(/قبل.*فطار|قبل.*فطر|قبل.*فطور|قبل.*افطار|before.*iftar|before.*bre/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
@@ -2193,7 +2199,8 @@ function _ezShowSettingsPanel(role,userName){
           <div style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:8px">🌙 إضافة لأوقات رمضان</div>\
           <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;align-items:end">\
             <div style="flex:1;min-width:140px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">الكلمة / العبارة</label><input type="text" id="ez-cfg-new-kw-ramadan" placeholder="مثال: بعد التراويح" style="width:100%;padding:8px 10px;border:1.5px solid rgba(251,191,36,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
-            <div style="width:120px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">وقت رمضان</label><select id="ez-cfg-new-kw-ramadan-meal" style="width:100%;padding:8px 6px;border:1.5px solid rgba(251,191,36,0.15);border-radius:10px;font-size:11px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl;background:#fff"><option value="beforeIftar">قبل الفطار</option><option value="afterIftar" selected>بعد الفطار</option><option value="beforeSuhoor">قبل السحور</option><option value="afterSuhoor">بعد السحور</option></select></div>\
+            <div style="width:140px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">اسم الجرعة</label><input type="text" id="ez-cfg-new-kw-ramadan-label" placeholder="مثال: بعد الفطار" style="width:100%;padding:8px 6px;border:1.5px solid rgba(251,191,36,0.15);border-radius:10px;font-size:11px;font-weight:700;font-family:Cairo,sans-serif;outline:none;text-align:center;direction:rtl" /></div>\
+            <div style="width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">الوقت</label><input type="time" id="ez-cfg-new-kw-ramadan-time" value="19:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(251,191,36,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
             <button id="ez-cfg-add-kw-ramadan" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#fbbf24,#f59e0b);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(251,191,36,0.2);white-space:nowrap">+ إضافة</button>\
           </div>\
         </div>\
@@ -2316,20 +2323,20 @@ function _ezShowSettingsPanel(role,userName){
   if(document.getElementById('ez-cfg-add-kw-ramadan')){
   document.getElementById('ez-cfg-add-kw-ramadan').onclick=function(){
     var kw=document.getElementById('ez-cfg-new-kw-ramadan').value.trim();
-    var kwMeal=document.getElementById('ez-cfg-new-kw-ramadan-meal').value;
+    var kwLabel=document.getElementById('ez-cfg-new-kw-ramadan-label').value.trim();
+    var kwTime=document.getElementById('ez-cfg-new-kw-ramadan-time').value;
     if(!kw){window.ezShowToast('أدخل الكلمة أو العبارة','warning');return;}
+    if(!kwLabel){window.ezShowToast('أدخل اسم الجرعة','warning');return;}
     /* Escape special regex chars but keep it as a simple text match */
     var pattern=kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     var c2=loadCustomConfig();
     if(!c2.customRamadanRules)c2.customRamadanRules=[];
     /* Check for duplicate */
     for(var i=0;i<c2.customRamadanRules.length;i++){if(c2.customRamadanRules[i].pattern===pattern){window.ezShowToast('الكلمة موجودة بالفعل','warning');return;}}
-    /* Map meal to label and time */
-    var mealLabels={'beforeIftar':'قبل الفطار','afterIftar':'بعد الفطار','beforeSuhoor':'قبل السحور','afterSuhoor':'بعد السحور'};
-    var mealTime=RAMADAN_TIMES[kwMeal];
-    c2.customRamadanRules.push({pattern:pattern,meal:kwMeal,time:mealTime,label:mealLabels[kwMeal],label_ar:mealLabels[kwMeal],label_en:mealLabels[kwMeal]});
+    /* Save with custom label and time */
+    c2.customRamadanRules.push({pattern:pattern,meal:'custom',time:kwTime,label:kwLabel,label_ar:kwLabel,label_en:kwLabel});
     saveCustomConfig(c2);
-    window.ezShowToast('✅ تم إضافة "'+kw+'" لرمضان → '+mealLabels[kwMeal],'success');
+    window.ezShowToast('✅ تم إضافة "'+kw+'" لرمضان → '+kwLabel+' ('+kwTime+')','success');
     overlay.remove();_ezShowSettingsPanel(role,userName);
   };
   }
