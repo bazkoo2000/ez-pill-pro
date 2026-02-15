@@ -191,7 +191,7 @@ var _EZ_PIN_HASH=_ezHashPin(101093);
 
 /* ── Default Users ── */
 var _DEFAULT_USERS = [
-  { name: 'ali', hash: _ezHashPin(555555) }
+  { name: 'ali', hash: _ezHashPin(666666) }
 ];
 
 /* User management */
@@ -1750,7 +1750,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
     if(genBtn){genBtn.className='ez-gen-csv-btn';var bdg=document.createElement('span');bdg.className='unique-count-badge';bdg.innerHTML='📦 عدد الأصناف: '+uc;genBtn.parentNode.insertBefore(bdg,genBtn.nextSibling);}
-    // beautifyPage(); // DISABLED by Editor
+    beautifyPage();
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
@@ -2092,7 +2092,7 @@ document.head.appendChild(s_style);
 /* ══════════════════════════════════════════
    PAGE BEAUTIFICATION
    ══════════════════════════════════════════ */
-function // beautifyPage(); // DISABLED by Editor{
+function beautifyPage(){
   try{
     document.body.classList.add('ez-page-styled');
     var allTables=document.querySelectorAll('table');
@@ -2814,7 +2814,7 @@ document.addEventListener('keydown',function(e){
 });
 
 makeDraggable(d_box);
-// beautifyPage(); // DISABLED by Editor
+beautifyPage();
 showWhatsNew();
 
 /* ══════════════════════════════════════════
