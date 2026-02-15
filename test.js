@@ -2087,40 +2087,7 @@ document.head.appendChild(s_style);
 /* ══════════════════════════════════════════
    PAGE BEAUTIFICATION
    ══════════════════════════════════════════ */
-function beautifyPage(){/* DISABLED by Editor */}
-
-/* ══════════════════════════════════════════
-   MAIN DIALOG - NEW PROFESSIONAL DESIGN
-   ══════════════════════════════════════════ */
-
-/* ── ADMIN SETTINGS PANEL ── */
-window.ezOpenSettings=function(){
-  if(document.getElementById('ez-settings-overlay')) return;
-  /* PIN prompt */
-  var pinOverlay=document.createElement('div');
-  pinOverlay.id='ez-pin-overlay';
-  pinOverlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.7);backdrop-filter:blur(12px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;animation:ezWnFadeIn 0.3s ease';
-  pinOverlay.innerHTML='<div style="background:#fff;border-radius:22px;width:340px;padding:32px 28px;text-align:center;box-shadow:0 30px 80px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);animation:ezWnSlideUp 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="width:60px;height:60px;border-radius:18px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(99,102,241,0.3)">🔐</div><div style="font-size:18px;font-weight:900;color:#1e1b4b;margin-bottom:4px">لوحة الإعدادات</div><div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:20px">أدخل الرقم السري للمتابعة</div><div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;direction:ltr" id="ez-pin-dots"></div><input type="password" id="ez-pin-input" maxlength="6" style="width:180px;padding:12px 16px;border:2px solid rgba(129,140,248,0.15);border-radius:14px;font-size:24px;font-weight:900;color:#1e1b4b;text-align:center;font-family:Cairo,sans-serif;outline:none;letter-spacing:8px;background:rgba(241,245,249,0.5);transition:all 0.3s" placeholder="••••••" autocomplete="off" /><div id="ez-pin-error" style="font-size:11px;font-weight:800;color:#ef4444;margin-top:8px;height:16px"></div><div style="display:flex;gap:8px;margin-top:16px"><button id="ez-pin-ok" style="flex:1;height:44px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 4px 16px rgba(99,102,241,0.25);transition:all 0.3s">دخول</button><button id="ez-pin-cancel" style="height:44px;padding:0 20px;border:1.5px solid rgba(129,140,248,0.15);border-radius:12px;background:#fff;color:#6366f1;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;transition:all 0.3s">إلغاء</button></div></div>';
-  document.body.appendChild(pinOverlay);
-  var pinInput=document.getElementById('ez-pin-input');
-  setTimeout(function(){pinInput.focus();},100);
-  document.getElementById('ez-pin-cancel').onclick=function(){pinOverlay.remove();};
-  pinOverlay.onclick=function(e){if(e.target===pinOverlay)pinOverlay.remove();};
-  function tryPin(){
-    var val=pinInput.value.trim();
-    var auth=authenticatePin(val);
-    if(auth){
-      pinOverlay.remove();
-      _ezShowSettingsPanel(auth.role,auth.name);
-    } else {
-      document.getElementById('ez-pin-error').textContent='❌ الرقم السري غلط';
-      pinInput.style.borderColor='#ef4444';pinInput.style.animation='shake 0.4s ease';
-      setTimeout(function(){pinInput.style.borderColor='rgba(129,140,248,0.15)';pinInput.style.animation='';pinInput.value='';pinInput.focus();},800);
-    }
-  }
-  document.getElementById('ez-pin-ok').onclick=tryPin;
-  pinInput.onkeydown=function(e){if(e.key==='Enter')tryPin();if(e.key==='Escape')pinOverlay.remove();};
-};
+function beautifyPage(){/* DISABLED by Editor */};
 
 function _ezShowSettingsPanel(role,userName){
   var isAdmin=(role==='admin');
