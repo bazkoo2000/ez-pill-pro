@@ -189,13 +189,13 @@ var EZ_USERS_KEY='ez_pill_users';
 function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'ezh_'+(h>>>0).toString(36);}
 var _EZ_PIN_HASH=_ezHashPin(101093);
 
-/* Default Users */
+/* ── Default Users ── */
 var _DEFAULT_USERS = [
-  { name: 'على', hash: _ezHashPin(555555) }
+  { name: 'ali', hash: _ezHashPin(555555) }
 ];
 
 /* User management */
-function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){saveUsers(_DEFAULT_USERS);return _DEFAULT_USERS;}return[];}catch(e){return[];}}catch(e){return[];}}
+function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){saveUsers(_DEFAULT_USERS);return _DEFAULT_USERS;}return[];}catch(e){return[];}}
 function saveUsers(arr){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(arr));}catch(e){}}
 function authenticatePin(pin){
   var hash=_ezHashPin(pin);
@@ -259,44 +259,11 @@ function ezBeep(type){
   }catch(e){}
 }
 var _defaultFixedSizeCodes={
-  '100009926':24,
-  '100009934':48,
-  '100010097':20,
-  '100010652':30,
-  '100011436':20,
-  '100011743':30,
-  '100013167':20,
-  '100013423':10,
-  '100013431':15,
-  '100013562':20,
-  '100014565':6,
-  '100015947':24,
-  '100015955':24,
-  '100015971':24,
-  '100015980':24,
-  '100016106':10,
-  '100017942':20,
-  '100023592':30,
-  '100023875':20,
-  '100027201':20,
-  '100030493':40,
-  '100633972':20,
-  '100634019':20,
-  '100684294':30,
-  '100726280':24,
-  '101284170':30,
-  '101826688':20,
-  '101859640':20,
-  '102371620':24,
-  '102988654':48,
-  '103169239':20,
-  '103243857':30,
-  '103437918':30,
-  '103683617':30,
+  '100009926':24,  '100009934':48,  '100010097':20,  '100010652':30,  '100011436':20,  '100011743':30,  '100013167':20,  '100013423':10,  '100013431':15,  '100013562':20,  '100014565':6,  '100015947':24,  '100015955':24,  '100015971':24,  '100015980':24,  '100016106':10,  '100017942':20,  '100023592':30,  '100023875':20,  '100027201':20,  '100030493':40,  '100633972':20,  '100634019':20,  '100684294':30,  '100726280':24,  '101284170':30,  '101826688':20,  '101859640':20,  '102371620':24,  '102988654':48,  '103169239':20,  '103243857':30,  '103437918':30,  '103683617':30
 };
 var _defaultWeeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
-var _defaultNormalTimes={empty:'07:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:30',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'15:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:30',bed:'22:00',defaultTime:'09:00',};
-var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00',};
+var _defaultNormalTimes={empty:'07:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:30',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'15:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:30',bed:'22:00',defaultTime:'09:00'};
+var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00'};
 
 /* Merge defaults with custom overrides */
 var fixedSizeCodes=(function(){var base={};for(var k in _defaultFixedSizeCodes)base[k]=_defaultFixedSizeCodes[k];if(customConfig.fixedSizeCodes){for(var k in customConfig.fixedSizeCodes)base[k]=customConfig.fixedSizeCodes[k];}if(customConfig.removedCodes){for(var i=0;i<customConfig.removedCodes.length;i++)delete base[customConfig.removedCodes[i]];}return base;})();
@@ -1783,7 +1750,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
     if(genBtn){genBtn.className='ez-gen-csv-btn';var bdg=document.createElement('span');bdg.className='unique-count-badge';bdg.innerHTML='📦 عدد الأصناف: '+uc;genBtn.parentNode.insertBefore(bdg,genBtn.nextSibling);}
-    // beautifyPage(); // DISABLED
+    // beautifyPage(); // DISABLED by Editor
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
@@ -2125,7 +2092,7 @@ document.head.appendChild(s_style);
 /* ══════════════════════════════════════════
    PAGE BEAUTIFICATION
    ══════════════════════════════════════════ */
-function // beautifyPage(); // DISABLED{
+function // beautifyPage(); // DISABLED by Editor{
   try{
     document.body.classList.add('ez-page-styled');
     var allTables=document.querySelectorAll('table');
@@ -2847,7 +2814,7 @@ document.addEventListener('keydown',function(e){
 });
 
 makeDraggable(d_box);
-// beautifyPage(); // DISABLED
+// beautifyPage(); // DISABLED by Editor
 showWhatsNew();
 
 /* ══════════════════════════════════════════
