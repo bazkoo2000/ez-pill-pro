@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.3';
+var APP_VERSION='136.4';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -694,7 +694,7 @@ window.showWarnings=function(warnings,callback){
   if(!warnings||warnings.length===0){callback();return;}
   var html='<div style="width:500px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1)">';
   html+='<div style="position:relative;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#ef4444,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
-  html+='<div style="padding:16px 22px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(129,140,248,0.08)">';
+  html+='<div style="padding:16px 22px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #252628">';
   html+='<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(245,158,11,0.25),inset 0 1px 0 rgba(255,255,255,0.3)">⚠️</div>';
   html+='<div><div style="font-size:16px;font-weight:900;color:#1e1b4b">تحذيرات تحتاج مراجعة</div>';
   html+='<div style="font-size:11px;font-weight:700;color:#92400e;margin-top:1px">'+warnings.length+' تحذير · اختر لكل تحذير: تطبيق أو تجاهل</div></div></div>';
@@ -1494,8 +1494,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     return;
   }
   if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);ni_main=ti_main+1;if(ti_main<di_main)di_main++;if(ti_main<ei_main)ei_main++;if(ti_main<sdi_main)sdi_main++;if(ti_main<edi_main)edi_main++;}
-  if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='120px';hs_main[sdi_main].style.minWidth='120px';}
-  if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='120px';hs_main[edi_main].style.minWidth='120px';}
+  if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='100px';hs_main[sdi_main].style.minWidth='100px';}
+  if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='100px';hs_main[edi_main].style.minWidth='100px';}
   if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
 
   var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];window._ezRows=allRowsData;
@@ -1511,8 +1511,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   for(var i=0;i<rtp_list.length;i++){
     var r_node=rtp_list[i];var tds_nodes=r_node.querySelectorAll('td');
     if(tds_nodes.length<=Math.max(qi_main,si_main,ni_main,ei_main))continue;
-    if(sdi_main>=0){var sdInp=tds_nodes[sdi_main].querySelector('input');if(sdInp)sdInp.style.width='120px';}
-    if(edi_main>=0){var edInp=tds_nodes[edi_main].querySelector('input');if(edInp)edInp.style.width='120px';}
+    if(sdi_main>=0){var sdInp=tds_nodes[sdi_main].querySelector('input');if(sdInp)sdInp.style.width='100px';}
+    if(edi_main>=0){var edInp=tds_nodes[edi_main].querySelector('input');if(edInp)edInp.style.width='100px';}
     if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
     if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
@@ -1742,7 +1742,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
-    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
+    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='100px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='100px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
     if(genBtn){genBtn.className='ez-gen-csv-btn';var bdg=document.createElement('span');bdg.className='unique-count-badge';bdg.innerHTML='📦 عدد الأصناف: '+uc;genBtn.parentNode.insertBefore(bdg,genBtn.nextSibling);}
     beautifyPage();
@@ -1956,7 +1956,7 @@ s_style.textContent='\
 @keyframes meshFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}\
 .ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:480px;max-width:96vw;z-index:99999;border-radius:28px;background:rgba(255,255,255,0.97);backdrop-filter:blur(40px);box-shadow:0 30px 80px rgba(99,102,241,0.12),0 8px 24px rgba(0,0,0,0.04),0 0 0 1px rgba(129,140,248,0.08),inset 0 1px 0 rgba(255,255,255,0.8);overflow:hidden;animation:dialogEnter 0.8s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
 .ez-dialog-v2::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#a78bfa,#818cf8,#6366f1);background-size:300% 100%;animation:barShift 4s ease infinite;z-index:1}\
-.ez-header{padding:20px 24px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.08);cursor:move}\
+.ez-header{padding:20px 24px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #252628;cursor:move}\
 .ez-logo-group{display:flex;align-items:center;gap:14px}\
 .ez-logo{width:52px;height:52px;border-radius:16px;background:linear-gradient(145deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 24px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2);position:relative;overflow:hidden}\
 .ez-logo::after{content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);animation:shimmer 3s ease infinite}\
@@ -2038,7 +2038,7 @@ s_style.textContent='\
 .ez-page-styled table{border-collapse:separate!important;border-spacing:0!important;width:100%!important;font-family:Cairo,sans-serif!important;border-radius:12px!important;overflow:hidden!important;box-shadow:0 4px 20px rgba(99,102,241,0.08),0 1px 4px rgba(0,0,0,0.04)!important;border:1.5px solid rgba(129,140,248,0.12)!important}\
 .ez-page-styled table th{background:linear-gradient(145deg,#6366f1,#4f46e5)!important;color:#fff!important;font-size:13px!important;font-weight:800!important;padding:10px 6px!important;text-align:center!important;letter-spacing:0.3px!important;border:none!important;border-bottom:2px solid #4338ca!important;border-left:1px solid rgba(255,255,255,0.12)!important;white-space:nowrap!important;text-shadow:0 1px 2px rgba(0,0,0,0.15)!important}\
 .ez-page-styled table th:first-child{border-left:none!important}\
-.ez-page-styled table td{padding:5px 6px!important;font-size:14px!important;font-weight:700!important;color:#1e1b4b!important;border:none!important;border-bottom:1px solid rgba(129,140,248,0.08)!important;border-left:1px solid rgba(129,140,248,0.06)!important;vertical-align:middle!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important}\
+.ez-page-styled table td{padding:5px 6px!important;font-size:14px!important;font-weight:700!important;color:#1e1b4b!important;border:none!important;border-bottom:1px solid #252628!important;border-left:1px solid #252628!important;vertical-align:middle!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important}\
 .ez-page-styled table td:first-child{border-left:none!important}\
 .ez-page-styled table input[type="text"],.ez-page-styled table input[type="number"],.ez-page-styled table input[type="time"],.ez-page-styled table input[type="date"],.ez-page-styled table select,.ez-page-styled table textarea{font-family:Cairo,sans-serif!important;font-weight:700!important;color:#1e1b4b!important;font-size:14px!important;border:1px solid rgba(129,140,248,0.1)!important;border-radius:6px!important;padding:3px 5px!important;background:rgba(255,255,255,0.8)!important;transition:all 0.25s!important}\
 .ez-page-styled table input[type="time"]{min-width:110px!important;font-size:12px!important;padding:3px 4px!important}\
@@ -2087,7 +2087,137 @@ document.head.appendChild(s_style);
 /* ══════════════════════════════════════════
    PAGE BEAUTIFICATION
    ══════════════════════════════════════════ */
-function beautifyPage(){/* DISABLED by Editor */};
+function beautifyPage(){
+  try{
+    document.body.classList.add('ez-page-styled');
+    var allTables=document.querySelectorAll('table');
+
+    /* ── Style top form section ── */
+    var topTable=null;
+    for(var i=0;i<allTables.length;i++){
+      var txt=allTables[i].innerText.toLowerCase();
+      if((txt.indexOf('name')>-1||txt.indexOf('mobile')>-1)&&txt.indexOf('start date')>-1){
+        if(allTables[i].querySelectorAll('tr').length<5){topTable=allTables[i];break;}
+      }
+    }
+    if(topTable){
+      topTable.style.cssText='background:linear-gradient(145deg,#6366f1,#4f46e5)!important;border:2px solid rgba(79,70,229,0.3)!important;border-radius:16px!important;padding:14px 18px!important;box-shadow:0 6px 24px rgba(99,102,241,0.15),0 2px 8px rgba(0,0,0,0.06)!important;margin-bottom:14px!important;overflow:visible!important;border-collapse:separate!important';
+      var topCells=topTable.querySelectorAll('td,th');
+      for(var i=0;i<topCells.length;i++){
+        topCells[i].style.cssText+='border:none!important;padding:4px 8px!important';
+        var txt=(topCells[i].textContent||'').trim();
+        if(txt.endsWith(':')){
+          topCells[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:10px!important;font-weight:900!important;color:#fff!important;letter-spacing:0.8px!important;border:none!important;padding:2px 8px 0!important;white-space:nowrap!important;text-transform:uppercase!important;text-shadow:0 1px 3px rgba(0,0,0,0.15)!important';
+        }
+      }
+      var topInputs=topTable.querySelectorAll('input,select');
+      for(var i=0;i<topInputs.length;i++){
+        topInputs[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:14px!important;font-weight:800!important;color:#1e1b4b!important;border:1.5px solid rgba(255,255,255,0.3)!important;border-radius:10px!important;padding:7px 14px!important;background:#fff!important;transition:all 0.25s!important;outline:none!important;box-shadow:0 2px 8px rgba(0,0,0,0.08)!important;width:100%!important;min-width:120px!important';
+      }
+    }
+
+    /* ── Style main data table columns ── */
+    var dataTable=null;
+    for(var i=0;i<allTables.length;i++){
+      var txt=allTables[i].innerText.toLowerCase();
+      if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){
+        dataTable=allTables[i];break;
+      }
+    }
+    if(dataTable){
+      var ths=dataTable.querySelectorAll('th');
+      var colMap={};
+      for(var i=0;i<ths.length;i++){
+        var t=ths[i].textContent.trim().toLowerCase();
+        colMap[t]=i;
+        if(t==='#') ths[i].innerHTML='#️⃣';
+        else if(t==='code') ths[i].innerHTML='🔑 Code';
+        else if(t==='name'||t==='item') ths[i].innerHTML='💊 Name';
+        else if(t==='qty') ths[i].innerHTML='📦 QTY';
+        else if(t==='size') ths[i].innerHTML='📏 Size';
+        else if(t==='dose') ths[i].innerHTML='💉 Dose';
+        else if(t.indexOf('every')>-1||t.indexOf('evry')>-1) ths[i].innerHTML='⏰ Every';
+        else if(t==='start time') ths[i].innerHTML='🕐 Time';
+        else if(t==='note') ths[i].innerHTML='📝 Note';
+        else if(t==='start date') ths[i].innerHTML='📅 Start';
+        else if(t==='end date') ths[i].innerHTML='📅 End';
+        else if(t==='expiry') ths[i].innerHTML='⏳ Exp';
+        else if(t==='remaining') ths[i].innerHTML='📊';
+        else if(t==='critical') ths[i].innerHTML='🚨';
+        else if(t==='action') ths[i].innerHTML='⚡';
+      }
+      var ri=colMap['remaining'];
+      var nmi2=colMap['name']!==undefined?colMap['name']:colMap['item'];
+      if(ri!==undefined){ths[ri].style.cssText+='width:35px!important;min-width:35px!important;max-width:40px!important;padding:10px 2px!important';}
+      if(nmi2!==undefined){ths[nmi2].style.cssText+='min-width:210px!important';}
+      if(colMap['#']!==undefined){ths[colMap['#']].style.cssText+='width:28px!important;min-width:28px!important;padding:10px 2px!important';}
+      if(colMap['critical']!==undefined){ths[colMap['critical']].style.cssText+='width:40px!important;min-width:40px!important;padding:10px 2px!important';}
+      if(colMap['action']!==undefined){ths[colMap['action']].style.cssText+='width:58px!important;min-width:58px!important';}
+
+      var rows=dataTable.querySelectorAll('tr');
+      for(var r=1;r<rows.length;r++){
+        var tds=rows[r].querySelectorAll('td');
+        if(ri!==undefined&&tds[ri]){tds[ri].style.cssText+='text-align:center!important;width:35px!important;max-width:40px!important;padding:5px 2px!important;font-size:13px!important';}
+        if(nmi2!==undefined&&tds[nmi2]){tds[nmi2].style.cssText+='font-weight:800!important;color:#312e81!important;font-size:14px!important';}
+        if(colMap['critical']!==undefined&&tds[colMap['critical']]){tds[colMap['critical']].style.cssText+='text-align:center!important;width:40px!important;font-size:13px!important;padding:5px 2px!important';}
+      }
+    }
+
+    /* ── Style buttons ── */
+    var allBtns=document.querySelectorAll('button,input[type="button"],input[type="submit"],a.btn,a');
+    for(var i=0;i<allBtns.length;i++){
+      var txt=(allBtns[i].innerText||allBtns[i].value||'').toLowerCase();
+      if(txt.indexOf('import')>-1&&txt.indexOf('invoice')>-1){
+        allBtns[i].style.cssText='background:linear-gradient(145deg,#818cf8,#6366f1)!important;color:#fff!important;border:none!important;padding:8px 20px!important;border-radius:12px!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 4px 14px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important;transition:all 0.3s!important;text-decoration:none!important;display:inline-flex!important;align-items:center!important';
+      }
+      if(txt.indexOf('duplicate')>-1){
+        allBtns[i].style.cssText='background:linear-gradient(145deg,#f59e0b,#d97706)!important;color:#fff!important;border:none!important;padding:4px 12px!important;border-radius:8px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 3px 10px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.2)!important;transition:all 0.3s!important;text-decoration:none!important';
+      }
+    }
+
+    /* ── Delivery Time label ── */
+    var allEls=document.querySelectorAll('span,div,label,td');
+    for(var i=0;i<allEls.length;i++){
+      var txt=(allEls[i].textContent||'').trim();
+      if(txt.indexOf('Delivery Time:')>-1&&txt.length<100){
+        allEls[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:12px!important;font-weight:700!important;color:#4338ca!important;background:rgba(129,140,248,0.06)!important;padding:6px 14px!important;border-radius:10px!important;border:1px solid rgba(129,140,248,0.12)!important;display:inline-block!important;margin:6px 0!important';
+      }
+    }
+  }catch(e){console.log('EZ beautify:',e);}
+}
+
+/* ══════════════════════════════════════════
+   MAIN DIALOG - NEW PROFESSIONAL DESIGN
+   ══════════════════════════════════════════ */
+
+/* ── ADMIN SETTINGS PANEL ── */
+window.ezOpenSettings=function(){
+  if(document.getElementById('ez-settings-overlay')) return;
+  /* PIN prompt */
+  var pinOverlay=document.createElement('div');
+  pinOverlay.id='ez-pin-overlay';
+  pinOverlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.7);backdrop-filter:blur(12px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;animation:ezWnFadeIn 0.3s ease';
+  pinOverlay.innerHTML='<div style="background:#fff;border-radius:22px;width:340px;padding:32px 28px;text-align:center;box-shadow:0 30px 80px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);animation:ezWnSlideUp 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="width:60px;height:60px;border-radius:18px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(99,102,241,0.3)">🔐</div><div style="font-size:18px;font-weight:900;color:#1e1b4b;margin-bottom:4px">لوحة الإعدادات</div><div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:20px">أدخل الرقم السري للمتابعة</div><div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;direction:ltr" id="ez-pin-dots"></div><input type="password" id="ez-pin-input" maxlength="6" style="width:180px;padding:12px 16px;border:2px solid rgba(129,140,248,0.15);border-radius:14px;font-size:24px;font-weight:900;color:#1e1b4b;text-align:center;font-family:Cairo,sans-serif;outline:none;letter-spacing:8px;background:rgba(241,245,249,0.5);transition:all 0.3s" placeholder="••••••" autocomplete="off" /><div id="ez-pin-error" style="font-size:11px;font-weight:800;color:#ef4444;margin-top:8px;height:16px"></div><div style="display:flex;gap:8px;margin-top:16px"><button id="ez-pin-ok" style="flex:1;height:44px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 4px 16px rgba(99,102,241,0.25);transition:all 0.3s">دخول</button><button id="ez-pin-cancel" style="height:44px;padding:0 20px;border:1.5px solid rgba(129,140,248,0.15);border-radius:12px;background:#fff;color:#6366f1;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;transition:all 0.3s">إلغاء</button></div></div>';
+  document.body.appendChild(pinOverlay);
+  var pinInput=document.getElementById('ez-pin-input');
+  setTimeout(function(){pinInput.focus();},100);
+  document.getElementById('ez-pin-cancel').onclick=function(){pinOverlay.remove();};
+  pinOverlay.onclick=function(e){if(e.target===pinOverlay)pinOverlay.remove();};
+  function tryPin(){
+    var val=pinInput.value.trim();
+    var auth=authenticatePin(val);
+    if(auth){
+      pinOverlay.remove();
+      _ezShowSettingsPanel(auth.role,auth.name);
+    } else {
+      document.getElementById('ez-pin-error').textContent='❌ الرقم السري غلط';
+      pinInput.style.borderColor='#ef4444';pinInput.style.animation='shake 0.4s ease';
+      setTimeout(function(){pinInput.style.borderColor='rgba(129,140,248,0.15)';pinInput.style.animation='';pinInput.value='';pinInput.focus();},800);
+    }
+  }
+  document.getElementById('ez-pin-ok').onclick=tryPin;
+  pinInput.onkeydown=function(e){if(e.key==='Enter')tryPin();if(e.key==='Escape')pinOverlay.remove();};
+};
 
 function _ezShowSettingsPanel(role,userName){
   var isAdmin=(role==='admin');
