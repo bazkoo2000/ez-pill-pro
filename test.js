@@ -189,13 +189,8 @@ var EZ_USERS_KEY='ez_pill_users';
 function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'ezh_'+(h>>>0).toString(36);}
 var _EZ_PIN_HASH=_ezHashPin(101093);
 
-/* ── Default Users ── */
-var _DEFAULT_USERS = [
-  { name: 'ali', hash: _ezHashPin(12345) }
-];
-
 /* User management */
-function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){saveUsers(_DEFAULT_USERS);return _DEFAULT_USERS;}return[];}catch(e){return[];}}
+function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){localStorage.setItem(EZ_USERS_KEY,JSON.stringify(_DEFAULT_USERS));return _DEFAULT_USERS;}return[];}catch(e){return[];}}
 function saveUsers(arr){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(arr));}catch(e){}}
 function authenticatePin(pin){
   var hash=_ezHashPin(pin);
