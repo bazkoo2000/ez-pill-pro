@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.2';
+var APP_VERSION='136.3';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.3':{
+    title:'إصلاح الأوقات والتحذيرات 🕐⚠️',
+    features:[
+      {icon:'🕐',text:'إصلاح: "قبل الأكل مرتين" → 8:00 (كان 9:00)'},
+      {icon:'🍽️',text:'إضافة: "قبل/بعد الغذاء" و "الغداء" → 13:00/14:00'},
+      {icon:'⚠️',text:'تحذير للجرعات غير المفهومة'},
+      {icon:'📝',text:'النوت الفاضي → وقت افتراضي 9:00'}
+    ]
+  },
   '136.2':{
     title:'تصليح حساب تواريخ رمضان النهائي 🌙✅',
     features:[
@@ -1265,11 +1274,35 @@ function getTimeFromWords(w){
   var st=s.match(/(?:at|الساعهـ|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
   var NT=NORMAL_TIMES;
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:NT.empty},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:NT.afterBreakfast},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:NT.morning},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:NT.noon},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:NT.beforeLunch},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:NT.afterLunch},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:NT.afternoon},{test:/maghrib|مغرب|المغرب/,time:NT.maghrib},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:NT.beforeDinner},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:NT.afterDinner},{test:/مساء|مسا|evening|eve/,time:NT.evening},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:NT.bed}];
+  
+  /* CRITICAL FIX: "قبل الأكل مرتين" should be beforeMeal (8:00) not morning (9:30) */
+  var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
+  if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
+  
+  var rules=[
+    {test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:NT.empty},
+    {test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal},
+    {test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast},
+    {test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:NT.afterBreakfast},
+    {test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:NT.morning},
+    {test:/\b(noon|midday)\b|ظهر|الظهر/,time:NT.noon},
+    /* FIX: Support both غداء AND غذاء (الغداء/الغذاء) */
+    {test:/قبل\s*(الغدا|الغداء|الغذا|الغذاء|غدا|غداء|غذا|غذاء)|before\s*lunch/,time:NT.beforeLunch},
+    {test:/بعد\s*(الغدا|الغداء|الغذا|الغذاء|غدا|غداء|غذا|غذاء)|after\s*lunch/,time:NT.afterLunch},
+    {test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:NT.afternoon},
+    {test:/maghrib|مغرب|المغرب/,time:NT.maghrib},
+    {test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:NT.beforeDinner},
+    {test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:NT.afterDinner},
+    {test:/مساء|مسا|evening|eve/,time:NT.evening},
+    {test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:NT.bed}
+  ];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
-  return{time:NT.defaultTime};
+  /* If note is empty or very short, return default time */
+  if(!s||s.length<3)return{time:NT.defaultTime,isEmpty:true};
+  /* Unrecognized pattern - return default but flag it */
+  return{time:NT.defaultTime,isUnrecognized:true};
 }
 
 function shouldDuplicateRow(note){
@@ -1579,7 +1612,59 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     }
   }
 
-  if(enableWarnings){for(var i=0;i<allRowsData.length;i++){var rd=allRowsData[i];if(rd.durationInfo&&rd.durationInfo.hasDuration){var extracted=rd.durationInfo.days;if(extracted!==t){warningQueue.push({level:'warning',message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',editable:true,editLabel:'عدد الأيام',currentValue:extracted,minValue:1,maxValue:365,rowIndex:i,type:'days',onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)});}}if(rd.hasFixedSize&&rd.dui){var totalSize=fixedSizeCodes[rd.itemCode];var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);var eachPart=rd.dui.type==='q6h'?totalSize*2:Math.floor(totalSize/parts);if(eachPart<5){warningQueue.push({level:'info',message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',editable:false,rowIndex:i,type:'smallsplit'});}}}}
+  if(enableWarnings){
+    for(var i=0;i<allRowsData.length;i++){
+      var rd=allRowsData[i];
+      
+      /* Check for unrecognized time patterns */
+      if(rd.note&&rd.note.trim().length>=3){
+        var timeResult=getTimeFromWords(rd.note);
+        if(timeResult.isUnrecognized){
+          warningQueue.push({
+            level:'warning',
+            message:'⚠️ الصنف: '+rd.itemName+' - الجرعة غير مفهومة',
+            detail:'النص: "'+rd.note+'" - تم استخدام الوقت الافتراضي '+timeResult.time,
+            editable:false,
+            rowIndex:i,
+            type:'unrecognized_dose'
+          });
+        }
+      }
+      
+      if(rd.durationInfo&&rd.durationInfo.hasDuration){
+        var extracted=rd.durationInfo.days;
+        if(extracted!==t){
+          warningQueue.push({
+            level:'warning',
+            message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',
+            editable:true,
+            editLabel:'عدد الأيام',
+            currentValue:extracted,
+            minValue:1,
+            maxValue:365,
+            rowIndex:i,
+            type:'days',
+            onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)
+          });
+        }
+      }
+      
+      if(rd.hasFixedSize&&rd.dui){
+        var totalSize=fixedSizeCodes[rd.itemCode];
+        var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);
+        var eachPart=rd.dui.type==='q6h'?totalSize*2:Math.floor(totalSize/parts);
+        if(eachPart<5){
+          warningQueue.push({
+            level:'info',
+            message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',
+            editable:false,
+            rowIndex:i,
+            type:'smallsplit'
+          });
+        }
+      }
+    }
+  }
 
   if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
 
