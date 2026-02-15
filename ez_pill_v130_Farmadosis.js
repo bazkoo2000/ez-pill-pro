@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.0';
+var APP_VERSION='136.1';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -167,9 +167,21 @@ function showWhatsNew(){
    ══════════════════════════════════════════ */
 var EZ_SETTINGS_KEY='ez_pill_settings';
 var EZ_CUSTOM_KEY='ez_pill_custom';
+var EZ_USERS_KEY='ez_pill_users';
 /* ── PIN hash (SHA-like simple hash for obfuscation) ── */
 function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'ezh_'+(h>>>0).toString(36);}
 var _EZ_PIN_HASH=_ezHashPin(101093);
+
+/* User management */
+function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);return s?JSON.parse(s):[];}catch(e){return[];}}
+function saveUsers(arr){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(arr));}catch(e){}}
+function authenticatePin(pin){
+  var hash=_ezHashPin(pin);
+  if(hash===_EZ_PIN_HASH) return {role:'admin',name:'Admin'};
+  var users=loadUsers();
+  for(var i=0;i<users.length;i++){if(users[i].hash===hash) return {role:'user',name:users[i].name};}
+  return null;
+}
 
 function loadSettings(){
   try{
@@ -288,6 +300,11 @@ function ramadanMapNote(note){
       }catch(e){}
     }
   }
+  /* ── SPECIAL: Note mentions BOTH iftar AND suhoor → return special marker for duplicate ── */
+  if((/فطار|فطور|فطر|افطار|iftar/i.test(note))&&(/سحور|سحر|suhoor|sahoor/i.test(note))){
+    return {meal:'both',label_ar:'فطار + سحور',label_en:'Iftar + Suhoor',time:RAMADAN_TIMES.afterIftar,isBoth:true};
+  }
+
   /* قبل العشاء / before dinner → قبل الفطار */
   if(/قبل.*عشا|قبل.*عشو|قبل.*عشاء|before.*din|before.*sup|before.*dinner|before.*asha/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد العشاء / after dinner → بعد الفطار */
@@ -326,15 +343,13 @@ function isRamadanSuhoorTime(meal){
 function getRamadanStartDate(baseDateStr,meal){
   if(!baseDateStr) return baseDateStr;
   var base=new Date(baseDateStr);
-  /* الفطار = اليوم التالي عادي */
+  /* الفطار = اليوم التالي عادي (+1) */
   base.setDate(base.getDate()+1);
-  /* السحور = اليوم التالي +1 لأن الساعة 3-4 صباحاً بعد منتصف الليل */
-  if(isRamadanSuhoorTime(meal)){
-    base.setDate(base.getDate()+1);
-  }
-  var y=base.getFullYear(),ms=('0'+(base.getMonth()+1)).slice(-2),da=('0'+base.getDate()).slice(-2);
-  return y+'-'+ms+'-'+da;
+  /* السحور = اليوم التالي أيضاً (+1 فقط) - نفس اليوم التالي لكن وقت مختلف */
+  /* ملاحظة: السحور 3-4 صباحاً هو صباح اليوم التالي نفسه */
+  return _fmtDate(base);
 }
+function _fmtDate(d){var y=d.getFullYear(),ms=('0'+(d.getMonth()+1)).slice(-2),da=('0'+d.getDate()).slice(-2);return y+'-'+ms+'-'+da;}
 
 /* Determine Ramadan duplicate type from note (all Ramadan doses with 2 times = duplicate) */
 function ramadanShouldDuplicate(note){
@@ -1421,54 +1436,49 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       var doseRec=smartDoseRecognizer(fn_str);
       var noteMapR=ramadanMapNote(fn_str);
 
-      /* ── SMART FALLBACK: if ramadanMapNote didn't match, try getTimeFromWords.
-         If getTimeFromWords returns a non-default time, the note IS understood,
-         so we can map it to the nearest Ramadan meal silently ── */
-      if(!noteMapR){
-        var twResult=getTimeFromWords(fn_str);
-        if(twResult && twResult.time!==NORMAL_TIMES.defaultTime){
-          /* Note IS recognized by time rules → map to nearest Ramadan meal */
-          var h2=parseInt(twResult.time.split(':')[0]);
-          var meal2,lbl_ar2,lbl_en2,tm2;
-          if(h2>=5&&h2<10){meal2='afterSuhoor';lbl_ar2='بعد السحور';lbl_en2='After Suhoor';tm2=RAMADAN_TIMES.afterSuhoor;}
-          else if(h2>=10&&h2<17){meal2='beforeIftar';lbl_ar2='قبل الفطار';lbl_en2='Before Iftar';tm2=RAMADAN_TIMES.beforeIftar;}
-          else if(h2>=17&&h2<20){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
-          else if(h2>=20||h2<1){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
-          else{meal2='beforeSuhoor';lbl_ar2='قبل السحور';lbl_en2='Before Suhoor';tm2=RAMADAN_TIMES.beforeSuhoor;}
-          noteMapR={meal:meal2,label_ar:lbl_ar2,label_en:lbl_en2,time:tm2};
-        }
+      /* ── CASE A: Note explicitly mentions BOTH iftar+suhoor → force duplicate even if count=1 ── */
+      if(noteMapR && noteMapR.isBoth){
+        dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+        /* ramadanInfo stays null → will be handled by duplicate logic */
       }
-
-      /* Also check: if note has any meal keywords at all (from smartDoseRecognizer flags) */
-      if(!noteMapR && (doseRec.hasB||doseRec.hasL||doseRec.hasD||doseRec.hasM||doseRec.hasN||doseRec.hasA||doseRec.hasE||doseRec.hasBed||doseRec.hasEmpty)){
-        /* Has meal keywords → map intelligently */
-        if(doseRec.hasB||doseRec.hasM||doseRec.hasEmpty) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
-        else if(doseRec.hasL||doseRec.hasN||doseRec.hasA) noteMapR={meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
-        else if(doseRec.hasD||doseRec.hasE) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
-        else if(doseRec.hasBed) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
-      }
-
-      /* Weekly/special items: keep normal logic but change time to Ramadan time */
-      if(h_s){
+      /* ── CASE B: Weekly items ── */
+      else if(h_s){
         ramadanInfo={type:'weekly_ramadan',meal:noteMapR?noteMapR.meal:'afterIftar',time:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar};
       }
-      /* Items with count >= 2: force Ramadan duplicate (فطار + سحور) */
+      /* ── CASE C: Items with count >= 2: force Ramadan duplicate ── */
       else if(doseRec.count>=2 && !h_s){
         dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
-        /* No warning needed - duplicate is clear */
       }
-      /* OD (once daily): check if it's non-tablet or single dose */
+      /* ── CASE D: Once daily ── */
       else if(doseRec.count===1 && !h_s){
+        /* SMART FALLBACK: try multiple methods to understand the note */
+        if(!noteMapR){
+          var twResult=getTimeFromWords(fn_str);
+          if(twResult && twResult.time!==NORMAL_TIMES.defaultTime){
+            var h2=parseInt(twResult.time.split(':')[0]);
+            var meal2,lbl_ar2,lbl_en2,tm2;
+            if(h2>=5&&h2<10){meal2='afterSuhoor';lbl_ar2='بعد السحور';lbl_en2='After Suhoor';tm2=RAMADAN_TIMES.afterSuhoor;}
+            else if(h2>=10&&h2<17){meal2='beforeIftar';lbl_ar2='قبل الفطار';lbl_en2='Before Iftar';tm2=RAMADAN_TIMES.beforeIftar;}
+            else if(h2>=17&&h2<20){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
+            else if(h2>=20||h2<1){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
+            else{meal2='beforeSuhoor';lbl_ar2='قبل السحور';lbl_en2='Before Suhoor';tm2=RAMADAN_TIMES.beforeSuhoor;}
+            noteMapR={meal:meal2,label_ar:lbl_ar2,label_en:lbl_en2,time:tm2};
+          }
+        }
+        if(!noteMapR && (doseRec.hasB||doseRec.hasL||doseRec.hasD||doseRec.hasM||doseRec.hasN||doseRec.hasA||doseRec.hasE||doseRec.hasBed||doseRec.hasEmpty)){
+          if(doseRec.hasB||doseRec.hasM||doseRec.hasEmpty) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+          else if(doseRec.hasL||doseRec.hasN||doseRec.hasA) noteMapR={meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+          else if(doseRec.hasD||doseRec.hasE) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+          else if(doseRec.hasBed) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+        }
+
         var isNonTab=isNonTabletItem(itemName);
         if(isNonTab){
-          /* Non-tablet items → treat as duplicate, uncheck and move down */
           dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
           ramadanInfo={type:'nontablet_ramadan',forceUncheck:true};
         } else if(noteMapR){
-          /* Note IS recognized (by any method) → apply Ramadan time silently, NO warning */
           ramadanInfo={type:'once_ramadan',meal:noteMapR.meal,time:noteMapR.time};
         } else {
-          /* Note truly NOT recognized by ANY method → warn */
           ramadanInfo={type:'once_ramadan',meal:'afterIftar',time:RAMADAN_TIMES.afterIftar};
           var evryVal2=get(tds_nodes[ei_main]);
           var timeVal2=ti_main>=0?get(tds_nodes[ti_main]):'';
@@ -2100,9 +2110,10 @@ window.ezOpenSettings=function(){
   pinOverlay.onclick=function(e){if(e.target===pinOverlay)pinOverlay.remove();};
   function tryPin(){
     var val=pinInput.value.trim();
-    if(_ezHashPin(val)===_EZ_PIN_HASH){
+    var auth=authenticatePin(val);
+    if(auth){
       pinOverlay.remove();
-      _ezShowSettingsPanel();
+      _ezShowSettingsPanel(auth.role,auth.name);
     } else {
       document.getElementById('ez-pin-error').textContent='❌ الرقم السري غلط';
       pinInput.style.borderColor='#ef4444';pinInput.style.animation='shake 0.4s ease';
@@ -2113,7 +2124,8 @@ window.ezOpenSettings=function(){
   pinInput.onkeydown=function(e){if(e.key==='Enter')tryPin();if(e.key==='Escape')pinOverlay.remove();};
 };
 
-function _ezShowSettingsPanel(){
+function _ezShowSettingsPanel(role,userName){
+  var isAdmin=(role==='admin');
   var cc=loadCustomConfig();
   var RT=RAMADAN_TIMES;var NT=NORMAL_TIMES;
 
@@ -2145,23 +2157,34 @@ function _ezShowSettingsPanel(){
   }
   if(allKwRules.length===0) kwRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا توجد كلمات مخصصة بعد</div>';
 
+  /* Build Users list (admin only) */
+  var usrRows='';var usrRows_count=0;
+  if(isAdmin){
+    var users=loadUsers();usrRows_count=users.length;
+    for(var i=0;i<users.length;i++){
+      usrRows+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.1);direction:rtl"><span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;flex-shrink:0">👤</span><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+users[i].name+'</span><span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 6px;border-radius:4px">مستخدم</span><button class="ez-cfg-del-usr" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+    }
+    if(users.length===0) usrRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا يوجد مستخدمين بعد</div>';
+  }
+
   function timeInput(id,label,value,icon){
     return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(241,245,249,0.5);border-radius:10px;border:1px solid rgba(129,140,248,0.06);margin-bottom:6px"><span style="font-size:14px;flex-shrink:0">'+icon+'</span><span style="flex:1;font-size:11px;font-weight:700;color:#64748b;direction:rtl">'+label+'</span><input type="time" id="'+id+'" value="'+value+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(129,140,248,0.12);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /></div>';
   }
 
   overlay.innerHTML='<div style="background:#fff;border-radius:24px;width:580px;max-width:96vw;max-height:90vh;overflow:hidden;box-shadow:0 30px 80px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);animation:ezWnSlideUp 0.5s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column">\
     <div style="padding:18px 24px 14px;display:flex;align-items:center;gap:14px;border-bottom:2px solid rgba(129,140,248,0.08);background:linear-gradient(180deg,rgba(99,102,241,0.03),transparent);flex-shrink:0">\
-      <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 20px rgba(99,102,241,0.3)">⚙️</div>\
-      <div style="flex:1"><div style="font-size:17px;font-weight:900;color:#1e1b4b">لوحة الإعدادات المتقدمة</div><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-top:1px">التعديلات تُحفظ تلقائياً في المتصفح</div></div>\
+      <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,'+(isAdmin?'#6366f1,#4f46e5':'#10b981,#059669')+');display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 20px '+(isAdmin?'rgba(99,102,241,0.3)':'rgba(16,185,129,0.3)')+'">⚙️</div>\
+      <div style="flex:1"><div style="font-size:17px;font-weight:900;color:#1e1b4b">لوحة الإعدادات</div><div style="font-size:10px;font-weight:700;margin-top:1px;display:flex;align-items:center;gap:6px"><span style="color:#94a3b8">مرحباً</span><span style="color:'+(isAdmin?'#6366f1':'#10b981')+';background:'+(isAdmin?'rgba(99,102,241,0.08)':'rgba(16,185,129,0.08)')+';padding:1px 8px;border-radius:6px;font-size:9px">'+(isAdmin?'🔑 Admin':'👤 '+userName)+'</span></div></div>\
       <button onclick="document.getElementById(\'ez-settings-overlay\').remove()" style="width:32px;height:32px;border-radius:10px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.04);color:#94a3b8;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>\
     </div>\
     <div style="flex:1;overflow-y:auto;padding:16px 22px">\
       <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap" id="ez-cfg-tabs">\
         <button class="ez-cfg-tab active" data-tab="ramadan" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🌙 أوقات رمضان</button>\
         <button class="ez-cfg-tab" data-tab="normal" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">⏰ الأوقات العادية</button>\
-        <button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>\
-        <button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💉 الحقن الأسبوعية</button>\
         <button class="ez-cfg-tab" data-tab="keywords" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">📝 كلمات مخصصة</button>\
+        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>':'')+'\
+        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💉 الحقن الأسبوعية</button>':'')+'\
+        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="users" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">👥 إدارة المستخدمين</button>':'')+'\
       </div>\
       <div id="ez-cfg-panel-ramadan" class="ez-cfg-panel">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان</div>\
@@ -2188,7 +2211,7 @@ function _ezShowSettingsPanel(){
         '+timeInput('cfg-nt-bed','قبل النوم',NT.bed,'😴')+'\
         '+timeInput('cfg-nt-def','الافتراضي',NT.defaultTime,'⏱️')+'\
       </div>\
-      <div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
+      '+(isAdmin?'<div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💊</span> أكواد الأصناف ذات الحجم الثابت <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+fscKeys.length+' كود</span></div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-code" placeholder="كود الصنف" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><input type="number" id="ez-cfg-new-count" placeholder="العدد" style="width:70px;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /><button id="ez-cfg-add-fsc" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(16,185,129,0.2)">+ إضافة</button></div>\
         <div style="max-height:280px;overflow-y:auto;border:1px solid rgba(129,140,248,0.08);border-radius:12px"><table style="width:100%;border-collapse:collapse" id="ez-cfg-fsc-table"><thead><tr style="background:linear-gradient(145deg,#f8f7ff,#eef2ff)"><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:right">الكود</th><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:center">العدد</th><th style="padding:8px;width:40px"></th></tr></thead><tbody>'+fscRows+'</tbody></table></div>\
@@ -2197,7 +2220,7 @@ function _ezShowSettingsPanel(){
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💉</span> أكواد الحقن الأسبوعية <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+weeklyInjections.length+' كود</span></div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-wi" placeholder="كود الحقنة الأسبوعية" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><button id="ez-cfg-add-wi" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#06b6d4,#0891b2);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(6,182,212,0.2)">+ إضافة</button></div>\
         <div id="ez-cfg-wi-list">'+wiRows+'</div>\
-      </div>\
+      </div>':'')+'\
       <div id="ez-cfg-panel-keywords" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📝</span> كلمات مخصصة للجرعات</div>\
         <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">أضف كلمة أو عبارة موجودة في وصف الجرعة والوقت المقابل لها.<br>النظام سيتعرف عليها تلقائياً سواء في الوضع العادي أو رمضان.<br>مثال: الكلمة "بعد الغروب" → الوقت 18:45</div>\
@@ -2208,6 +2231,16 @@ function _ezShowSettingsPanel(){
         </div>\
         <div id="ez-cfg-kw-list">'+kwRows+'</div>\
       </div>\
+      '+(isAdmin?'<div id="ez-cfg-panel-users" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">👥</span> إدارة المستخدمين <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+usrRows_count+' مستخدم</span></div>\
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;padding:6px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">المستخدم يقدر يعدل على الأوقات والكلمات المخصصة فقط. لا يمكنه إنشاء مستخدمين آخرين أو تعديل الأكواد.</div>\
+        <div style="display:flex;gap:6px;margin-bottom:10px;direction:rtl;flex-wrap:wrap;align-items:end">\
+          <div style="flex:1;min-width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">اسم المستخدم</label><input type="text" id="ez-cfg-new-usr-name" placeholder="مثال: أحمد" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
+          <div style="width:120px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">الرقم السري</label><input type="password" id="ez-cfg-new-usr-pin" placeholder="رقم سري" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center;letter-spacing:3px" /></div>\
+          <button id="ez-cfg-add-usr" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#f59e0b,#d97706);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(245,158,11,0.2);white-space:nowrap">+ إضافة مستخدم</button>\
+        </div>\
+        <div id="ez-cfg-usr-list">'+usrRows+'</div>\
+      </div>':'')+'\
     </div>\
     <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4)">\
       <button id="ez-cfg-save" style="flex:1;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 16px rgba(16,185,129,0.25);transition:all 0.3s">💾 حفظ التعديلات</button>\
@@ -2229,7 +2262,8 @@ function _ezShowSettingsPanel(){
     };
   });
 
-  /* Add Fixed Size Code */
+  /* Add Fixed Size Code (admin only) */
+  if(isAdmin && document.getElementById('ez-cfg-add-fsc')){
   document.getElementById('ez-cfg-add-fsc').onclick=function(){
     var code=document.getElementById('ez-cfg-new-code').value.trim();
     var count=parseInt(document.getElementById('ez-cfg-new-count').value);
@@ -2237,7 +2271,7 @@ function _ezShowSettingsPanel(){
     var c2=loadCustomConfig();if(!c2.fixedSizeCodes)c2.fixedSizeCodes={};
     c2.fixedSizeCodes[code]=count;saveCustomConfig(c2);
     window.ezShowToast('✅ تم إضافة كود '+code+' = '+count,'success');
-    overlay.remove();_ezShowSettingsPanel();
+    overlay.remove();_ezShowSettingsPanel(role,userName);
   };
 
   /* Delete Fixed Size Code */
@@ -2249,7 +2283,7 @@ function _ezShowSettingsPanel(){
       if(c2.fixedSizeCodes)delete c2.fixedSizeCodes[code];
       saveCustomConfig(c2);
       window.ezShowToast('🗑️ تم حذف كود '+code,'info');
-      overlay.remove();_ezShowSettingsPanel();
+      overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
 
@@ -2265,6 +2299,7 @@ function _ezShowSettingsPanel(){
   });
 
   /* Add Weekly Injection */
+  if(document.getElementById('ez-cfg-add-wi')){
   document.getElementById('ez-cfg-add-wi').onclick=function(){
     var code=document.getElementById('ez-cfg-new-wi').value.trim();
     if(!code){window.ezShowToast('أدخل الكود','warning');return;}
@@ -2272,8 +2307,8 @@ function _ezShowSettingsPanel(){
     if(c2.addedWeekly.indexOf(code)===-1)c2.addedWeekly.push(code);
     saveCustomConfig(c2);
     window.ezShowToast('✅ تم إضافة حقنة أسبوعية '+code,'success');
-    overlay.remove();_ezShowSettingsPanel();
-  };
+    overlay.remove();_ezShowSettingsPanel(role,userName);
+  };}
 
   /* Delete Weekly Injection */
   overlay.querySelectorAll('.ez-cfg-del-wi').forEach(function(btn){
@@ -2284,9 +2319,10 @@ function _ezShowSettingsPanel(){
       if(c2.addedWeekly){c2.addedWeekly=c2.addedWeekly.filter(function(c){return c!==code;});}
       saveCustomConfig(c2);
       window.ezShowToast('🗑️ تم حذف '+code,'info');
-      overlay.remove();_ezShowSettingsPanel();
+      overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
+  }/* end isAdmin guard for codes+weekly */
 
   /* Add Custom Keyword */
   document.getElementById('ez-cfg-add-kw').onclick=function(){
@@ -2302,7 +2338,7 @@ function _ezShowSettingsPanel(){
     c2.customTimeRules.push({pattern:pattern,time:kwTime,label:kw});
     saveCustomConfig(c2);
     window.ezShowToast('✅ تم إضافة "'+kw+'" → '+kwTime,'success');
-    overlay.remove();_ezShowSettingsPanel();
+    overlay.remove();_ezShowSettingsPanel(role,userName);
   };
 
   /* Delete Custom Keyword */
@@ -2319,7 +2355,36 @@ function _ezShowSettingsPanel(){
       }
       saveCustomConfig(c2);
       window.ezShowToast('🗑️ تم حذف الكلمة المخصصة','info');
-      overlay.remove();_ezShowSettingsPanel();
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  });
+
+  /* Add User (admin only) */
+  if(isAdmin && document.getElementById('ez-cfg-add-usr')){
+    document.getElementById('ez-cfg-add-usr').onclick=function(){
+      var uName=document.getElementById('ez-cfg-new-usr-name').value.trim();
+      var uPin=document.getElementById('ez-cfg-new-usr-pin').value.trim();
+      if(!uName||!uPin){window.ezShowToast('أدخل الاسم والرقم السري','warning');return;}
+      if(uPin.length<4){window.ezShowToast('الرقم السري لازم 4 أرقام على الأقل','warning');return;}
+      var hash=_ezHashPin(uPin);
+      if(hash===_EZ_PIN_HASH){window.ezShowToast('لا يمكن استخدام رقم الأدمن','warning');return;}
+      var users=loadUsers();
+      for(var i=0;i<users.length;i++){if(users[i].hash===hash){window.ezShowToast('الرقم السري مستخدم بالفعل','warning');return;}}
+      users.push({name:uName,hash:hash});saveUsers(users);
+      window.ezShowToast('✅ تم إضافة المستخدم '+uName,'success');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  }
+
+  /* Delete User (admin only) */
+  overlay.querySelectorAll('.ez-cfg-del-usr').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(this.getAttribute('data-idx'));
+      var users=loadUsers();
+      var delName=users[idx]?users[idx].name:'';
+      users.splice(idx,1);saveUsers(users);
+      window.ezShowToast('🗑️ تم حذف المستخدم '+delName,'info');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
 
@@ -2367,8 +2432,8 @@ function _ezShowSettingsPanel(){
 }
 var hasDuplicateNotes=scanForDuplicateNotes();
 var _rm_setting=savedSettings.ramadanMode||false;
-/* In Ramadan mode, most items will be duplicated, so enable post dialog */
-if(_rm_setting) hasDuplicateNotes=true;
+/* Ramadan mode: post dialog is shown ONLY after processing if actual duplicates were created */
+/* We don't force hasDuplicateNotes=true here anymore */
 
 var d_box=document.createElement('div');
 d_box.id='ez-dialog-box';
