@@ -353,9 +353,13 @@ function isRamadanSuhoorTime(meal){
 function getRamadanStartDate(baseDateStr,meal){
   if(!baseDateStr) return baseDateStr;
   var base=new Date(baseDateStr);
-  /* جميع أوقات رمضان = اليوم التالي فقط (+1) */
-  /* الفطار والسحور = نفس اليوم التالي (+1) لكن أوقات مختلفة */
-  base.setDate(base.getDate()+1);
+  /* الفطار (قبل/بعد) = اليوم التالي (+1) */
+  /* السحور (قبل/بعد) = بعد يومين (+2) لأنه بعد منتصف الليل */
+  if(isRamadanSuhoorTime(meal)){
+    base.setDate(base.getDate()+2);
+  } else {
+    base.setDate(base.getDate()+1);
+  }
   return _fmtDate(base);
 }
 function _fmtDate(d){var y=d.getFullYear(),ms=('0'+(d.getMonth()+1)).slice(-2),da=('0'+d.getDate()).slice(-2);return y+'-'+ms+'-'+da;}
@@ -1414,7 +1418,19 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   function sortRowsByTime(t_elem,ti_idx,ei_idx){
     if(ti_idx<0)return;var rs=Array.from(t_elem.querySelectorAll('tr'));var he=rs.shift();var rwt=[];var rwot=[];
     rs.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length<=ti_idx){rwot.push(r);return;}var tv=get(tds[ti_idx]);if(!tv||tv.trim()===''){rwot.push(r);return;}rwt.push({row:r,time:tv});});
-    rwt.sort(function(a,b){var ta=a.time.split(':').map(Number);var tb2=b.time.split(':').map(Number);var diff=(ta[0]*60+ta[1])-(tb2[0]*60+tb2[1]);if(diff===0&&ei_idx>=0){var evA=parseInt(get(a.row.querySelectorAll('td')[ei_idx]))||0;var evB=parseInt(get(b.row.querySelectorAll('td')[ei_idx]))||0;return evB-evA;}return diff;});
+    rwt.sort(function(a,b){
+      var ta=a.time.split(':').map(Number);
+      var tb2=b.time.split(':').map(Number);
+      var timeA=ta[0]*60+ta[1];
+      var timeB=tb2[0]*60+tb2[1];
+      /* في رمضان: السحور (1-5 صباحاً) يجي بعد الفطار (6 مساءً - 12 منتصف الليل) */
+      /* إذا كان وقت A صباحاً مبكر (0-5) ووقت B مساءً/ليلاً (18-23)، A يجي بعد B */
+      if(timeA>=0&&timeA<=300&&timeB>=1080){return 1;}
+      if(timeB>=0&&timeB<=300&&timeA>=1080){return -1;}
+      var diff=timeA-timeB;
+      if(diff===0&&ei_idx>=0){var evA=parseInt(get(a.row.querySelectorAll('td')[ei_idx]))||0;var evB=parseInt(get(b.row.querySelectorAll('td')[ei_idx]))||0;return evB-evA;}
+      return diff;
+    });
     t_elem.innerHTML='';t_elem.appendChild(he);rwt.forEach(function(i){t_elem.appendChild(i.row);});rwot.forEach(function(r){t_elem.appendChild(r);});
   }
 
@@ -2193,14 +2209,26 @@ function _ezShowSettingsPanel(role,userName){
         '+(isAdmin?'<button class="ez-cfg-tab" data-tab="users" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">👥 إدارة المستخدمين</button>':'')+'\
       </div>\
       <div id="ez-cfg-panel-ramadan" class="ez-cfg-panel">\
-        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان</div>\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان الأساسية</div>\
         '+timeInput('cfg-rm-bi','قبل الفطار',RT.beforeIftar,'🌅')+'\
         '+timeInput('cfg-rm-ai','بعد الفطار',RT.afterIftar,'🍽️')+'\
         '+timeInput('cfg-rm-bs','قبل السحور',RT.beforeSuhoor,'🌃')+'\
         '+timeInput('cfg-rm-as','بعد السحور',RT.afterSuhoor,'🌄')+'\
+        '+(function(){
+          var customHtml='';
+          if(cc.customRamadanRules&&cc.customRamadanRules.length>0){
+            customHtml+='<div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(251,191,36,0.12)"><div style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="font-size:14px">✨</span> أوقات مخصصة</div>';
+            for(var i=0;i<cc.customRamadanRules.length;i++){
+              var cr=cc.customRamadanRules[i];
+              customHtml+='<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(251,191,36,0.04);border-radius:10px;border:1px solid rgba(251,191,36,0.08);margin-bottom:6px"><span style="font-size:12px;width:18px;text-align:center">⭐</span><span style="flex:1;font-size:11px;font-weight:700;color:#64748b;direction:rtl">'+cr.label+'</span><input type="time" id="cfg-rm-custom-'+i+'" value="'+cr.time+'" data-pattern="'+cr.pattern+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(251,191,36,0.15);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /><button class="ez-cfg-del-rm-custom" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+            }
+            customHtml+='</div>';
+          }
+          return customHtml;
+        })()+'\
       </div>\
       <div id="ez-cfg-panel-normal" class="ez-cfg-panel" style="display:none">\
-        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⏰</span> أوقات الجرعات العادية</div>\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⏰</span> أوقات الجرعات العادية الأساسية</div>\
         '+timeInput('cfg-nt-empty','على الريق',NT.empty,'🌅')+'\
         '+timeInput('cfg-nt-bm','قبل الأكل',NT.beforeMeal,'🍴')+'\
         '+timeInput('cfg-nt-bb','قبل الفطار',NT.beforeBreakfast,'☀️')+'\
@@ -2216,6 +2244,18 @@ function _ezShowSettingsPanel(role,userName){
         '+timeInput('cfg-nt-eve','المساء',NT.evening,'🌃')+'\
         '+timeInput('cfg-nt-bed','قبل النوم',NT.bed,'😴')+'\
         '+timeInput('cfg-nt-def','الافتراضي',NT.defaultTime,'⏱️')+'\
+        '+(function(){
+          var customHtml='';
+          if(cc.customTimeRules&&cc.customTimeRules.length>0){
+            customHtml+='<div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(129,140,248,0.12)"><div style="font-size:11px;font-weight:800;color:#6366f1;margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="font-size:14px">✨</span> أوقات مخصصة</div>';
+            for(var i=0;i<cc.customTimeRules.length;i++){
+              var cr=cc.customTimeRules[i];
+              customHtml+='<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(139,92,246,0.04);border-radius:10px;border:1px solid rgba(139,92,246,0.08);margin-bottom:6px"><span style="font-size:12px;width:18px;text-align:center">⭐</span><span style="flex:1;font-size:11px;font-weight:700;color:#64748b;direction:rtl">'+cr.label+'</span><input type="time" id="cfg-nt-custom-'+i+'" value="'+cr.time+'" data-pattern="'+cr.pattern+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(139,92,246,0.15);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /><button class="ez-cfg-del-nt-custom" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+            }
+            customHtml+='</div>';
+          }
+          return customHtml;
+        })()+'\
       </div>\
       '+(isAdmin?'<div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💊</span> أكواد الأصناف ذات الحجم الثابت <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+fscKeys.length+' كود</span></div>\
@@ -2386,10 +2426,16 @@ function _ezShowSettingsPanel(role,userName){
         var kwLabel=kwLabelInput.value.trim();
         var kwTime=kwTimeInput.value;
         
+        /* If label is empty, use the keyword as label */
+        if(!kwLabel && kw){
+          kwLabel=kw;
+          console.log('Label empty, using keyword as label:',kwLabel);
+        }
+        
         console.log('Values: kw=',kw,'label=',kwLabel,'time=',kwTime);
         
         if(!kw){window.ezShowToast('أدخل الكلمة أو العبارة','warning');ezBeep('warning');return;}
-        if(!kwLabel){window.ezShowToast('أدخل اسم الجرعة','warning');ezBeep('warning');return;}
+        if(!kwLabel){window.ezShowToast('أدخل اسم الجرعة أو الكلمة','warning');ezBeep('warning');return;}
         if(!kwTime){window.ezShowToast('أدخل الوقت','warning');ezBeep('warning');return;}
         
         /* Escape special regex chars but keep it as a simple text match */
@@ -2458,6 +2504,74 @@ function _ezShowSettingsPanel(role,userName){
       overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
+
+  /* Delete Custom Ramadan time from main panel */
+  overlay.querySelectorAll('.ez-cfg-del-rm-custom').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(this.getAttribute('data-idx'));
+      var c2=loadCustomConfig();
+      if(c2.customRamadanRules&&c2.customRamadanRules[idx]){
+        var label=c2.customRamadanRules[idx].label;
+        c2.customRamadanRules.splice(idx,1);
+        saveCustomConfig(c2);
+        window.ezShowToast('🗑️ تم حذف "'+label+'"','info');
+        overlay.remove();_ezShowSettingsPanel(role,userName);
+      }
+    };
+  });
+
+  /* Delete Custom Normal time from main panel */
+  overlay.querySelectorAll('.ez-cfg-del-nt-custom').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(this.getAttribute('data-idx'));
+      var c2=loadCustomConfig();
+      if(c2.customTimeRules&&c2.customTimeRules[idx]){
+        var label=c2.customTimeRules[idx].label;
+        c2.customTimeRules.splice(idx,1);
+        saveCustomConfig(c2);
+        window.ezShowToast('🗑️ تم حذف "'+label+'"','info');
+        overlay.remove();_ezShowSettingsPanel(role,userName);
+      }
+    };
+  });
+
+  /* Update Custom Ramadan times on change */
+  for(var cri=0;cri<(cc.customRamadanRules||[]).length;cri++){
+    (function(idx){
+      var inp=document.getElementById('cfg-rm-custom-'+idx);
+      if(inp){
+        inp.onchange=function(){
+          var newTime=this.value;
+          var c2=loadCustomConfig();
+          if(c2.customRamadanRules&&c2.customRamadanRules[idx]){
+            c2.customRamadanRules[idx].time=newTime;
+            saveCustomConfig(c2);
+            this.style.borderColor='#10b981';
+            setTimeout(function(){inp.style.borderColor='rgba(251,191,36,0.15)';},1000);
+          }
+        };
+      }
+    })(cri);
+  }
+
+  /* Update Custom Normal times on change */
+  for(var cni=0;cni<(cc.customTimeRules||[]).length;cni++){
+    (function(idx){
+      var inp=document.getElementById('cfg-nt-custom-'+idx);
+      if(inp){
+        inp.onchange=function(){
+          var newTime=this.value;
+          var c2=loadCustomConfig();
+          if(c2.customTimeRules&&c2.customTimeRules[idx]){
+            c2.customTimeRules[idx].time=newTime;
+            saveCustomConfig(c2);
+            this.style.borderColor='#10b981';
+            setTimeout(function(){inp.style.borderColor='rgba(139,92,246,0.15)';},1000);
+          }
+        };
+      }
+    })(cni);
+  }
 
   /* Add User (admin only) */
   if(isAdmin && document.getElementById('ez-cfg-add-usr')){
