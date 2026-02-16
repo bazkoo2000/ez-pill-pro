@@ -2176,12 +2176,12 @@ function _ezShowSettingsPanel(role,userName){
   }
   if(allKwRules.length===0) kwRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا توجد كلمات مخصصة بعد</div>';
 
-  /* Build Users list (admin only) */
+  /* Build Users list */
   var usrRows='';var usrRows_count=0;
-  if(isAdmin){
+  {
     var users=loadUsers();usrRows_count=users.length;
     for(var i=0;i<users.length;i++){
-      usrRows+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.1);direction:rtl"><span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;flex-shrink:0">👤</span><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+users[i].name+'</span><span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 6px;border-radius:4px">مستخدم</span><button class="ez-cfg-del-usr" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+      usrRows+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.1);direction:rtl"><span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;flex-shrink:0">👤</span><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+users[i].name+'</span><span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 6px;border-radius:4px">مستخدم</span>'+(isAdmin?'<button class="ez-cfg-del-usr" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button>':'')+'</div>';
     }
     if(users.length===0) usrRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا يوجد مستخدمين بعد</div>';
   }
@@ -2201,9 +2201,9 @@ function _ezShowSettingsPanel(role,userName){
         <button class="ez-cfg-tab active" data-tab="ramadan" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🌙 أوقات رمضان</button>\
         <button class="ez-cfg-tab" data-tab="normal" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">⏰ الأوقات العادية</button>\
         <button class="ez-cfg-tab" data-tab="keywords" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">📝 كلمات مخصصة</button>\
-        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>':'')+'\
-        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🗓️ الجرعات الأسبوعية</button>':'')+'\
-        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="users" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">👥 إدارة المستخدمين</button>':'')+'\
+        <button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>\
+        <button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🗓️ الجرعات الأسبوعية</button>\
+        <button class="ez-cfg-tab" data-tab="users" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">👥 المستخدمين</button>\
       </div>\
       <div id="ez-cfg-panel-ramadan" class="ez-cfg-panel">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان الأساسية</div>\
@@ -2254,7 +2254,7 @@ function _ezShowSettingsPanel(role,userName){
           return customHtml;
         })()+'\
       </div>\
-      '+(isAdmin?'<div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
+      <div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💊</span> أكواد الأصناف ذات الحجم الثابت <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+fscKeys.length+' كود</span></div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-code" placeholder="كود الصنف" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><input type="number" id="ez-cfg-new-count" placeholder="العدد" style="width:70px;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /><button id="ez-cfg-add-fsc" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(16,185,129,0.2)">+ إضافة</button></div>\
         <div style="max-height:280px;overflow-y:auto;border:1px solid rgba(129,140,248,0.08);border-radius:12px"><table style="width:100%;border-collapse:collapse" id="ez-cfg-fsc-table"><thead><tr style="background:linear-gradient(145deg,#f8f7ff,#eef2ff)"><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:right">الكود</th><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:center">العدد</th><th style="padding:8px;width:40px"></th></tr></thead><tbody>'+fscRows+'</tbody></table></div>\
@@ -2263,7 +2263,7 @@ function _ezShowSettingsPanel(role,userName){
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🗓️</span> أكواد الجرعات الأسبوعية <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+weeklyInjections.length+' كود</span></div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-wi" placeholder="كود الجرعة الأسبوعية" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><button id="ez-cfg-add-wi" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#06b6d4,#0891b2);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(6,182,212,0.2)">+ إضافة</button></div>\
         <div id="ez-cfg-wi-list">'+wiRows+'</div>\
-      </div>':'')+'\
+      </div>\
       <div id="ez-cfg-panel-keywords" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📝</span> كلمات مخصصة للجرعات</div>\
         <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">أضف كلمة أو عبارة مخصصة وحدد نوعها: للأوقات العادية أو لأوقات رمضان.<br>مثال للعادي: "بعد الغروب" → 18:45<br>مثال لرمضان: "بعد التراويح" → بعد الفطار</div>\
@@ -2289,16 +2289,15 @@ function _ezShowSettingsPanel(role,userName){
         \
         <div id="ez-cfg-kw-list">'+kwRows+'</div>\
       </div>\
-      '+(isAdmin?'<div id="ez-cfg-panel-users" class="ez-cfg-panel" style="display:none">\
-        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">👥</span> إدارة المستخدمين <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+usrRows_count+' مستخدم</span></div>\
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;padding:6px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">المستخدم يقدر يعدل على الأوقات والكلمات المخصصة فقط. لا يمكنه إنشاء مستخدمين آخرين أو تعديل الأكواد.</div>\
-        <div style="display:flex;gap:6px;margin-bottom:10px;direction:rtl;flex-wrap:wrap;align-items:end">\
+      <div id="ez-cfg-panel-users" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">👥</span> المستخدمين <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+usrRows_count+' مستخدم</span></div>\
+        '+(isAdmin?'<div style="display:flex;gap:6px;margin-bottom:10px;direction:rtl;flex-wrap:wrap;align-items:end">\
           <div style="flex:1;min-width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">اسم المستخدم</label><input type="text" id="ez-cfg-new-usr-name" placeholder="مثال: أحمد" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
           <div style="width:120px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">الرقم السري</label><input type="password" id="ez-cfg-new-usr-pin" placeholder="رقم سري" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center;letter-spacing:3px" /></div>\
           <button id="ez-cfg-add-usr" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#f59e0b,#d97706);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(245,158,11,0.2);white-space:nowrap">+ إضافة مستخدم</button>\
-        </div>\
+        </div>':'<div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;padding:6px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">إضافة وحذف المستخدمين متاح للأدمن فقط</div>')+'\
         <div id="ez-cfg-usr-list">'+usrRows+'</div>\
-      </div>':'')+'\
+      </div>\
     </div>\
     <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4)">\
       <button id="ez-cfg-save" style="flex:1;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 16px rgba(16,185,129,0.25);transition:all 0.3s">💾 حفظ التعديلات</button>\
@@ -2320,8 +2319,8 @@ function _ezShowSettingsPanel(role,userName){
     };
   });
 
-  /* Add Fixed Size Code (admin only) */
-  if(isAdmin && document.getElementById('ez-cfg-add-fsc')){
+  /* Add Fixed Size Code */
+  if(document.getElementById('ez-cfg-add-fsc')){
   document.getElementById('ez-cfg-add-fsc').onclick=function(){
     var code=document.getElementById('ez-cfg-new-code').value.trim();
     var count=parseInt(document.getElementById('ez-cfg-new-count').value);
@@ -2380,7 +2379,8 @@ function _ezShowSettingsPanel(role,userName){
       overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
-  }/* end isAdmin guard for codes+weekly */
+
+  }/* end codes+weekly block */
 
   /* Add Custom Keyword for NORMAL times */
   if(document.getElementById('ez-cfg-add-kw-normal')){
@@ -2588,6 +2588,7 @@ function _ezShowSettingsPanel(role,userName){
   }
 
   /* Delete User (admin only) */
+  if(isAdmin){
   overlay.querySelectorAll('.ez-cfg-del-usr').forEach(function(btn){
     btn.onclick=function(){
       var idx=parseInt(this.getAttribute('data-idx'));
@@ -2598,6 +2599,7 @@ function _ezShowSettingsPanel(role,userName){
       overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
+  }
 
   /* SAVE ALL */
   document.getElementById('ez-cfg-save').onclick=function(){
