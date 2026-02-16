@@ -399,6 +399,14 @@ function isNonTabletItem(itemName){
 }
 
 var warningQueue=[];
+var _EZ_WARNING_CONFIG={
+  ramadan_unclear:{enabled:true,label:'جرعة غير واضحة في رمضان'},
+  dose2:{enabled:true,label:'جرعة مزدوجة (2) في الملاحظات'},
+  duplicate:{enabled:true,label:'صنف مكرر في الطلب'},
+  unrecognized_dose:{enabled:true,label:'الجرعة غير مفهومة'},
+  days:{enabled:true,label:'عدد الأيام مختلف عن المحدد'},
+  smallsplit:{enabled:true,label:'تقسيم صغير'}
+};
 var monthCounter=0;
 var originalStartDate='';
 var duplicatedRows=[];
@@ -1481,6 +1489,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   setTopStartDate();
   var tb_main=_ezFindTable();
   if(!tb_main){window.ezShowToast('❌ لم يتم العثور على جدول الأدوية','error');ezBeep('error');return;}
+  tb_main.classList.add('ez-data-table');
   var h_main=tb_main.querySelector('tr');var hs_main=h_main.querySelectorAll('th,td');
   var qi_main=idx(hs_main,'qty');var si_main=idx(hs_main,'size');var ni_main=idx(hs_main,'note');var ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');
   var ti_main=idx(hs_main,'time');var di_main=idx(hs_main,'dose');var ci_main=idx(hs_main,'code');var sdi_main=idx(hs_main,'start date');var edi_main=idx(hs_main,'end date');var nm_main=idx(hs_main,'name');if(nm_main<0)nm_main=idx(hs_main,'item');
@@ -1505,8 +1514,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
   if(ti_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ti_main].style.width='100px';hs_main[ti_main].style.minWidth='100px';}
   if(ei_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ei_main].style.width='100px';hs_main[ei_main].style.minWidth='100px';}
-  if(nm_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[nm_main].style.minWidth='280px';}
-  var exp_main=idx(hs_main,'expiry');if(exp_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[exp_main].style.minWidth='75px';}
+  if(nm_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[nm_main].style.minWidth='270px';}
+  var exp_main=idx(hs_main,'expiry');if(exp_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[exp_main].style.minWidth='85px';}
+  if(ci_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ci_main].style.width='90px';hs_main[ci_main].style.minWidth='90px';}
 
   var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];window._ezRows=allRowsData;
 
@@ -1670,6 +1680,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     }
   }
 
+  warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
   if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
 
   function continueProcessing(){
@@ -2076,6 +2087,8 @@ body.ez-dark-mode .ez-btn-cancel{background:rgba(239,68,68,0.06)!important;borde
 body.ez-dark-mode .ez-btn-doses{background:rgba(129,140,248,0.06)!important;border-color:rgba(129,140,248,0.12)!important}\
 body.ez-dark-mode .ez-sep{background:linear-gradient(90deg,transparent,rgba(129,140,248,0.1),transparent)!important}\
 body.ez-dark-mode label,body.ez-dark-mode span{color:#c7d2fe!important}';
+/* Table borders - data table only */
+s_style.textContent+='table.ez-data-table{border-collapse:collapse!important;border:1px solid #bbb!important}table.ez-data-table th,table.ez-data-table td{border:1px solid #bbb!important}';
 document.head.appendChild(s_style);
 
 /* ══════════════════════════════════════════
@@ -2085,12 +2098,7 @@ function beautifyPage(){
   try{
     var dataTable=null;var allTables=document.querySelectorAll('table');
     for(var i=0;i<allTables.length;i++){var txt=allTables[i].innerText.toLowerCase();if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){dataTable=allTables[i];break;}}
-    if(dataTable){
-      dataTable.style.borderCollapse='collapse';
-      dataTable.style.border='1px solid #ccc';
-      var allCells=dataTable.querySelectorAll('th,td');
-      for(var i=0;i<allCells.length;i++){allCells[i].style.border='1px solid #ccc';}
-    }
+    if(dataTable){dataTable.classList.add('ez-data-table');}
   }catch(e){}
 }
 
