@@ -463,6 +463,7 @@ var COLUMN_ALIASES={
   'code':['code','كود','الكود','item code','barcode','رمز'],
   'start date':['start date','تاريخ البدء','بداية','from'],
   'end date':['end date','end','تاريخ الانتهاء','نهاية','to'],
+  'expiry':['expiry','exp','صلاحية','انتهاء الصلاحية'],
   'name':['name','item','اسم','الاسم','item name','drug name','medication','drug']
 };
 
@@ -1504,7 +1505,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
   if(ti_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ti_main].style.width='100px';hs_main[ti_main].style.minWidth='100px';}
   if(ei_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ei_main].style.width='100px';hs_main[ei_main].style.minWidth='100px';}
-  if(nm_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[nm_main].style.minWidth='290px';}
+  if(nm_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[nm_main].style.minWidth='280px';}
+  var exp_main=idx(hs_main,'expiry');if(exp_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[exp_main].style.minWidth='75px';}
 
   var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];window._ezRows=allRowsData;
 
@@ -2079,7 +2081,18 @@ document.head.appendChild(s_style);
 /* ══════════════════════════════════════════
    PAGE BEAUTIFICATION
    ══════════════════════════════════════════ */
-function beautifyPage(){}
+function beautifyPage(){
+  try{
+    var dataTable=null;var allTables=document.querySelectorAll('table');
+    for(var i=0;i<allTables.length;i++){var txt=allTables[i].innerText.toLowerCase();if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){dataTable=allTables[i];break;}}
+    if(dataTable){
+      dataTable.style.borderCollapse='collapse';
+      dataTable.style.border='1px solid #ccc';
+      var allCells=dataTable.querySelectorAll('th,td');
+      for(var i=0;i<allCells.length;i++){allCells[i].style.border='1px solid #ccc';}
+    }
+  }catch(e){}
+}
 
 /* ══════════════════════════════════════════
    MAIN DIALOG - NEW PROFESSIONAL DESIGN
