@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='137.1';
+var APP_VERSION='136.3';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -221,17 +221,6 @@ function saveCustomConfig(obj){
   try{localStorage.setItem(EZ_CUSTOM_KEY,JSON.stringify(obj));}catch(e){}
 }
 var savedSettings=loadSettings();
-/* ── User System (Master Control) ── */
-var EZ_USERS_KEY='ez_pill_users';
-function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'ezh_'+(h>>>0).toString(36);}
-function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){localStorage.setItem(EZ_USERS_KEY,JSON.stringify(_DEFAULT_USERS));return _DEFAULT_USERS;}return[];}catch(e){return[];}}
-function saveUsers(u){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(u));}catch(e){}}
-var _DEFAULT_USERS = [
-  { name: 'اسامه السقا', hash: _ezHashPin(105893) }
-];
-
-var _EZ_RAMADAN_RULES=[{test:/beforeIftar/,time:'18:30',label:'🍽️ قبل الإفطار'},{test:/afterIftar/,time:'19:00',label:'🍴 بعد الإفطار'},{test:/beforeSuhoor/,time:'03:00',label:'🌙 قبل السحور'},{test:/afterSuhoor/,time:'04:00',label:'☀️ بعد السحور'},{test:/بعد التراويح|بعد صلاة التراويح|بعد صلاه التراويح/i,time:'23:00',label:'بعد التراويح'}];
-
 var customConfig=loadCustomConfig();
 
 /* ══════════════════════════════════════════
@@ -1287,7 +1276,23 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\\s*(الاكل|الأكل|meal)|before\\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\\b(morning|am|a\\.m)\\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\\b(noon|midday)\\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\\b(asr|afternoon|pm|p\\.m)\\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\\.s/,time:'22:00'}];
+  var rules=[
+    {test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:NT.empty},
+    {test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal},
+    {test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast},
+    {test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:NT.afterBreakfast},
+    {test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:NT.morning},
+    {test:/\b(noon|midday)\b|ظهر|الظهر/,time:NT.noon},
+    /* FIX: Support both غداء AND غذاء (الغداء/الغذاء) */
+    {test:/قبل\s*(الغدا|الغداء|الغذا|الغذاء|غدا|غداء|غذا|غذاء)|before\s*lunch/,time:NT.beforeLunch},
+    {test:/بعد\s*(الغدا|الغداء|الغذا|الغذاء|غدا|غداء|غذا|غذاء)|after\s*lunch/,time:NT.afterLunch},
+    {test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:NT.afternoon},
+    {test:/maghrib|مغرب|المغرب/,time:NT.maghrib},
+    {test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:NT.beforeDinner},
+    {test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:NT.afterDinner},
+    {test:/مساء|مسا|evening|eve/,time:NT.evening},
+    {test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:NT.bed}
+  ];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -1494,9 +1499,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     return;
   }
   if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);ni_main=ti_main+1;if(ti_main<di_main)di_main++;if(ti_main<ei_main)ei_main++;if(ti_main<sdi_main)sdi_main++;if(ti_main<edi_main)edi_main++;}
-  if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='100px';hs_main[sdi_main].style.minWidth='100px';}
-  if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='100px';hs_main[edi_main].style.minWidth='100px';}
-  if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
 
   var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];window._ezRows=allRowsData;
 
@@ -1511,9 +1513,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   for(var i=0;i<rtp_list.length;i++){
     var r_node=rtp_list[i];var tds_nodes=r_node.querySelectorAll('td');
     if(tds_nodes.length<=Math.max(qi_main,si_main,ni_main,ei_main))continue;
-    if(sdi_main>=0){var sdInp=tds_nodes[sdi_main].querySelector('input');if(sdInp)sdInp.style.width='100px';}
-    if(edi_main>=0){var edInp=tds_nodes[edi_main].querySelector('input');if(edInp)edInp.style.width='100px';}
-    if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
     if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
@@ -1742,7 +1741,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
-    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='100px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='100px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
+    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
     if(genBtn){genBtn.className='ez-gen-csv-btn';var bdg=document.createElement('span');bdg.className='unique-count-badge';bdg.innerHTML='📦 عدد الأصناف: '+uc;genBtn.parentNode.insertBefore(bdg,genBtn.nextSibling);}
     beautifyPage();
@@ -2087,7 +2086,104 @@ document.head.appendChild(s_style);
 /* ══════════════════════════════════════════
    PAGE BEAUTIFICATION
    ══════════════════════════════════════════ */
-function beautifyPage(){/* DISABLED by Master Control */}
+function beautifyPage(){
+  try{
+    document.body.classList.add('ez-page-styled');
+    var allTables=document.querySelectorAll('table');
+
+    /* ── Style top form section ── */
+    var topTable=null;
+    for(var i=0;i<allTables.length;i++){
+      var txt=allTables[i].innerText.toLowerCase();
+      if((txt.indexOf('name')>-1||txt.indexOf('mobile')>-1)&&txt.indexOf('start date')>-1){
+        if(allTables[i].querySelectorAll('tr').length<5){topTable=allTables[i];break;}
+      }
+    }
+    if(topTable){
+      topTable.style.cssText='background:linear-gradient(145deg,#6366f1,#4f46e5)!important;border:2px solid rgba(79,70,229,0.3)!important;border-radius:16px!important;padding:14px 18px!important;box-shadow:0 6px 24px rgba(99,102,241,0.15),0 2px 8px rgba(0,0,0,0.06)!important;margin-bottom:14px!important;overflow:visible!important;border-collapse:separate!important';
+      var topCells=topTable.querySelectorAll('td,th');
+      for(var i=0;i<topCells.length;i++){
+        topCells[i].style.cssText+='border:none!important;padding:4px 8px!important';
+        var txt=(topCells[i].textContent||'').trim();
+        if(txt.endsWith(':')){
+          topCells[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:10px!important;font-weight:900!important;color:#fff!important;letter-spacing:0.8px!important;border:none!important;padding:2px 8px 0!important;white-space:nowrap!important;text-transform:uppercase!important;text-shadow:0 1px 3px rgba(0,0,0,0.15)!important';
+        }
+      }
+      var topInputs=topTable.querySelectorAll('input,select');
+      for(var i=0;i<topInputs.length;i++){
+        topInputs[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:14px!important;font-weight:800!important;color:#1e1b4b!important;border:1.5px solid rgba(255,255,255,0.3)!important;border-radius:10px!important;padding:7px 14px!important;background:#fff!important;transition:all 0.25s!important;outline:none!important;box-shadow:0 2px 8px rgba(0,0,0,0.08)!important;width:100%!important;min-width:120px!important';
+      }
+    }
+
+    /* ── Style main data table columns ── */
+    var dataTable=null;
+    for(var i=0;i<allTables.length;i++){
+      var txt=allTables[i].innerText.toLowerCase();
+      if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){
+        dataTable=allTables[i];break;
+      }
+    }
+    if(dataTable){
+      var ths=dataTable.querySelectorAll('th');
+      var colMap={};
+      for(var i=0;i<ths.length;i++){
+        var t=ths[i].textContent.trim().toLowerCase();
+        colMap[t]=i;
+        if(t==='#') ths[i].innerHTML='#️⃣';
+        else if(t==='code') ths[i].innerHTML='🔑 Code';
+        else if(t==='name'||t==='item') ths[i].innerHTML='💊 Name';
+        else if(t==='qty') ths[i].innerHTML='📦 QTY';
+        else if(t==='size') ths[i].innerHTML='📏 Size';
+        else if(t==='dose') ths[i].innerHTML='💉 Dose';
+        else if(t.indexOf('every')>-1||t.indexOf('evry')>-1) ths[i].innerHTML='⏰ Every';
+        else if(t==='start time') ths[i].innerHTML='🕐 Time';
+        else if(t==='note') ths[i].innerHTML='📝 Note';
+        else if(t==='start date') ths[i].innerHTML='📅 Start';
+        else if(t==='end date') ths[i].innerHTML='📅 End';
+        else if(t==='expiry') ths[i].innerHTML='⏳ Exp';
+        else if(t==='remaining') ths[i].innerHTML='📊';
+        else if(t==='critical') ths[i].innerHTML='🚨';
+        else if(t==='action') ths[i].innerHTML='⚡';
+      }
+      var ri=colMap['remaining'];
+      var nmi2=colMap['name']!==undefined?colMap['name']:colMap['item'];
+      if(ri!==undefined){ths[ri].style.cssText+='width:35px!important;min-width:35px!important;max-width:40px!important;padding:10px 2px!important';}
+      if(nmi2!==undefined){ths[nmi2].style.cssText+='min-width:210px!important';}
+      if(colMap['#']!==undefined){ths[colMap['#']].style.cssText+='width:28px!important;min-width:28px!important;padding:10px 2px!important';}
+      if(colMap['critical']!==undefined){ths[colMap['critical']].style.cssText+='width:40px!important;min-width:40px!important;padding:10px 2px!important';}
+      if(colMap['action']!==undefined){ths[colMap['action']].style.cssText+='width:58px!important;min-width:58px!important';}
+
+      var rows=dataTable.querySelectorAll('tr');
+      for(var r=1;r<rows.length;r++){
+        var tds=rows[r].querySelectorAll('td');
+        if(ri!==undefined&&tds[ri]){tds[ri].style.cssText+='text-align:center!important;width:35px!important;max-width:40px!important;padding:5px 2px!important;font-size:13px!important';}
+        if(nmi2!==undefined&&tds[nmi2]){tds[nmi2].style.cssText+='font-weight:800!important;color:#312e81!important;font-size:14px!important';}
+        if(colMap['critical']!==undefined&&tds[colMap['critical']]){tds[colMap['critical']].style.cssText+='text-align:center!important;width:40px!important;font-size:13px!important;padding:5px 2px!important';}
+      }
+    }
+
+    /* ── Style buttons ── */
+    var allBtns=document.querySelectorAll('button,input[type="button"],input[type="submit"],a.btn,a');
+    for(var i=0;i<allBtns.length;i++){
+      var txt=(allBtns[i].innerText||allBtns[i].value||'').toLowerCase();
+      if(txt.indexOf('import')>-1&&txt.indexOf('invoice')>-1){
+        allBtns[i].style.cssText='background:linear-gradient(145deg,#818cf8,#6366f1)!important;color:#fff!important;border:none!important;padding:8px 20px!important;border-radius:12px!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 4px 14px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important;transition:all 0.3s!important;text-decoration:none!important;display:inline-flex!important;align-items:center!important';
+      }
+      if(txt.indexOf('duplicate')>-1){
+        allBtns[i].style.cssText='background:linear-gradient(145deg,#f59e0b,#d97706)!important;color:#fff!important;border:none!important;padding:4px 12px!important;border-radius:8px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 3px 10px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.2)!important;transition:all 0.3s!important;text-decoration:none!important';
+      }
+    }
+
+    /* ── Delivery Time label ── */
+    var allEls=document.querySelectorAll('span,div,label,td');
+    for(var i=0;i<allEls.length;i++){
+      var txt=(allEls[i].textContent||'').trim();
+      if(txt.indexOf('Delivery Time:')>-1&&txt.length<100){
+        allEls[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:12px!important;font-weight:700!important;color:#4338ca!important;background:rgba(129,140,248,0.06)!important;padding:6px 14px!important;border-radius:10px!important;border:1px solid rgba(129,140,248,0.12)!important;display:inline-block!important;margin:6px 0!important';
+      }
+    }
+  }catch(e){console.log('EZ beautify:',e);}
+}
 
 /* ══════════════════════════════════════════
    MAIN DIALOG - NEW PROFESSIONAL DESIGN
