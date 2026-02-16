@@ -221,6 +221,17 @@ function saveCustomConfig(obj){
   try{localStorage.setItem(EZ_CUSTOM_KEY,JSON.stringify(obj));}catch(e){}
 }
 var savedSettings=loadSettings();
+/* ── User System (Master Control) ── */
+var EZ_USERS_KEY='ez_pill_users';
+function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'ezh_'+(h>>>0).toString(36);}
+function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){localStorage.setItem(EZ_USERS_KEY,JSON.stringify(_DEFAULT_USERS));return _DEFAULT_USERS;}return[];}catch(e){return[];}}
+function saveUsers(u){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(u));}catch(e){}}
+var _DEFAULT_USERS = [
+  { name: 'اسامه السقا', hash: _ezHashPin(105893) }
+];
+
+var _EZ_RAMADAN_RULES=[{test:/beforeIftar/,time:'18:30',label:'قبل الإفطار'},{test:/afterIftar/,time:'19:00',label:'بعد الإفطار'},{test:/beforeSuhoor/,time:'03:00',label:'قبل السحور'},{test:/afterSuhoor/,time:'04:00',label:'بعد السحور'}];
+
 var customConfig=loadCustomConfig();
 
 /* ══════════════════════════════════════════
@@ -399,6 +410,14 @@ function isNonTabletItem(itemName){
 }
 
 var warningQueue=[];
+var _EZ_WARNING_CONFIG={
+  ramadan_unclear:{enabled:true,label:'جرعة غير واضحة في رمضان'},
+  dose2:{enabled:true,label:'جرعة مزدوجة (2) في الملاحظات'},
+  duplicate:{enabled:true,label:'صنف مكرر في الطلب'},
+  unrecognized_dose:{enabled:true,label:'الجرعة غير مفهومة'},
+  days:{enabled:true,label:'عدد الأيام مختلف عن المحدد'},
+  smallsplit:{enabled:true,label:'تقسيم صغير'}
+};
 var monthCounter=0;
 var originalStartDate='';
 var duplicatedRows=[];
@@ -458,11 +477,12 @@ var COLUMN_ALIASES={
   'size':['size','حجم','الحجم','sz','pack size','pack'],
   'note':['note','notes','ملاحظة','ملاحظات','remark','remarks','prescription note'],
   'every':['every','evry','كل','المدة','frequency','freq','interval'],
-  'time':['time','وقت','الوقت','timing'],
+  'time':['start time','time','وقت','الوقت','timing'],
   'dose':['dose','جرعة','الجرعة','dosage','dos'],
   'code':['code','كود','الكود','item code','barcode','رمز'],
-  'start date':['start date','start','تاريخ البدء','بداية','from'],
-  'end date':['end date','end','تاريخ الانتهاء','نهاية','to','expiry'],
+  'start date':['start date','تاريخ البدء','بداية','from'],
+  'end date':['end date','end','تاريخ الانتهاء','نهاية','to'],
+  'expiry':['expiry','exp','صلاحية','انتهاء الصلاحية'],
   'name':['name','item','اسم','الاسم','item name','drug name','medication','drug']
 };
 
@@ -1276,23 +1296,7 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[
-    {test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:NT.empty},
-    {test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal},
-    {test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast},
-    {test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:NT.afterBreakfast},
-    {test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:NT.morning},
-    {test:/\b(noon|midday)\b|ظهر|الظهر/,time:NT.noon},
-    /* FIX: Support both غداء AND غذاء (الغداء/الغذاء) */
-    {test:/قبل\s*(الغدا|الغداء|الغذا|الغذاء|غدا|غداء|غذا|غذاء)|before\s*lunch/,time:NT.beforeLunch},
-    {test:/بعد\s*(الغدا|الغداء|الغذا|الغذاء|غدا|غداء|غذا|غذاء)|after\s*lunch/,time:NT.afterLunch},
-    {test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:NT.afternoon},
-    {test:/maghrib|مغرب|المغرب/,time:NT.maghrib},
-    {test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:NT.beforeDinner},
-    {test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:NT.afterDinner},
-    {test:/مساء|مسا|evening|eve/,time:NT.evening},
-    {test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:NT.bed}
-  ];
+  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\\s*(الاكل|الأكل|meal)|before\\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\\b(morning|am|a\\.m)\\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\\b(noon|midday)\\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\\b(asr|afternoon|pm|p\\.m)\\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\\.s/,time:'22:00'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -1480,6 +1484,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   setTopStartDate();
   var tb_main=_ezFindTable();
   if(!tb_main){window.ezShowToast('❌ لم يتم العثور على جدول الأدوية','error');ezBeep('error');return;}
+  tb_main.classList.add('ez-data-table');
   var h_main=tb_main.querySelector('tr');var hs_main=h_main.querySelectorAll('th,td');
   var qi_main=idx(hs_main,'qty');var si_main=idx(hs_main,'size');var ni_main=idx(hs_main,'note');var ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');
   var ti_main=idx(hs_main,'time');var di_main=idx(hs_main,'dose');var ci_main=idx(hs_main,'code');var sdi_main=idx(hs_main,'start date');var edi_main=idx(hs_main,'end date');var nm_main=idx(hs_main,'name');if(nm_main<0)nm_main=idx(hs_main,'item');
@@ -1498,10 +1503,15 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     console.log('EZ Pill - الأعمدة الموجودة:',availCols);
     return;
   }
-  if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);ni_main=ti_main+1;if(ti_main<di_main)di_main++;if(ti_main<ei_main)ei_main++;if(ti_main<sdi_main)sdi_main++;if(ti_main<edi_main)edi_main++;}
-  if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='120px';hs_main[sdi_main].style.minWidth='120px';}
-  if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='120px';hs_main[edi_main].style.minWidth='120px';}
+  if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);hs_main=h_main.querySelectorAll('th,td');ni_main=idx(hs_main,'note');di_main=idx(hs_main,'dose');ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');sdi_main=idx(hs_main,'start date');edi_main=idx(hs_main,'end date');}
+  if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='110px';hs_main[sdi_main].style.minWidth='110px';}
+  if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='110px';hs_main[edi_main].style.minWidth='110px';}
   if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
+  if(ti_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ti_main].style.width='100px';hs_main[ti_main].style.minWidth='100px';}
+  if(ei_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ei_main].style.width='90px';hs_main[ei_main].style.minWidth='90px';}
+  if(nm_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[nm_main].style.minWidth='280px';}
+  var exp_main=idx(hs_main,'expiry');if(exp_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[exp_main].style.minWidth='85px';}
+  if(ci_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ci_main].style.width='90px';hs_main[ci_main].style.minWidth='90px';}
 
   var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];window._ezRows=allRowsData;
 
@@ -1516,8 +1526,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   for(var i=0;i<rtp_list.length;i++){
     var r_node=rtp_list[i];var tds_nodes=r_node.querySelectorAll('td');
     if(tds_nodes.length<=Math.max(qi_main,si_main,ni_main,ei_main))continue;
-    if(sdi_main>=0){var sdInp=tds_nodes[sdi_main].querySelector('input');if(sdInp)sdInp.style.width='120px';}
-    if(edi_main>=0){var edInp=tds_nodes[edi_main].querySelector('input');if(edInp)edInp.style.width='120px';}
+    if(sdi_main>=0){var sdInp=tds_nodes[sdi_main].querySelector('input');if(sdInp)sdInp.style.width='110px';}
+    if(edi_main>=0){var edInp=tds_nodes[edi_main].querySelector('input');if(edInp)edInp.style.width='110px';}
+    if(ti_main>=0){var tiInp=tds_nodes[ti_main].querySelector('input');if(tiInp)tiInp.style.width='100px';}
+    if(ei_main>=0){var eiInp=tds_nodes[ei_main].querySelector('input,select');if(eiInp)eiInp.style.width='90px';}
     if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
     if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
@@ -1663,6 +1675,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     }
   }
 
+  warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
   if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
 
   function continueProcessing(){
@@ -1747,9 +1760,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
-    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='120px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='120px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);var fo=processedCodes[u_code_skp];if(fo&&ccn!==fo.note){nInp2.style.backgroundColor='rgba(240,147,251,0.12)';nInp2.style.border='2px solid rgba(118,75,162,0.4)';var fi=fo.row.querySelectorAll('td')[ni_main].querySelector('input,textarea');if(fi){fi.style.backgroundColor='rgba(240,147,251,0.12)';fi.style.border='2px solid rgba(118,75,162,0.4)';}}}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
-    var uc=showUniqueItemsCount(tb_main,ci_main);var genBtn=Array.from(document.querySelectorAll('button,input')).find(function(b){return(b.innerText||b.value||'').toLowerCase().includes('generate csv');});
-    if(genBtn){genBtn.className='ez-gen-csv-btn';var bdg=document.createElement('span');bdg.className='unique-count-badge';bdg.innerHTML='📦 عدد الأصناف: '+uc;genBtn.parentNode.insertBefore(bdg,genBtn.nextSibling);}
+    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='110px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='110px';}if(ti_main>=0&&tds_nodes[ti_main]){var tiInp2=tds_nodes[ti_main].querySelector('input');if(tiInp2)tiInp2.style.width='100px';}if(ei_main>=0&&tds_nodes[ei_main]){var eiInp2=tds_nodes[ei_main].querySelector('input,select');if(eiInp2)eiInp2.style.width='90px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
+    var uc=showUniqueItemsCount(tb_main,ci_main);
     beautifyPage();
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
@@ -2037,18 +2049,6 @@ s_style.textContent='\
 .ez-doses-footer{padding:12px 22px;display:flex;gap:8px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)}\
 .ez-btn-close-doses{flex:1;height:42px;border:1.5px solid rgba(129,140,248,0.15);border-radius:12px;background:linear-gradient(145deg,#fff,#f8fafc);color:#6366f1;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;transition:all 0.25s;box-shadow:0 2px 6px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8)}\
 .ez-btn-close-doses:hover{border-color:#818cf8;color:#4338ca;background:rgba(129,140,248,0.06)}\
-.unique-count-badge{background:linear-gradient(145deg,#818cf8,#6366f1);color:#fff;padding:0 16px;border-radius:12px;font-size:13px;font-weight:800;margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;height:34px;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}\
-.ez-gen-csv-btn{background:linear-gradient(145deg,#10b981,#059669)!important;color:#fff!important;border:none!important;padding:0 22px!important;height:34px!important;border-radius:12px!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 4px 14px rgba(16,185,129,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important;transition:all 0.3s!important;letter-spacing:0.3px!important;vertical-align:middle!important}\
-.ez-gen-csv-btn:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(16,185,129,0.3),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important}\
-.ez-page-styled table{border-collapse:separate!important;border-spacing:0!important;width:100%!important;font-family:Cairo,sans-serif!important;border-radius:12px!important;overflow:hidden!important;box-shadow:0 4px 20px rgba(99,102,241,0.08),0 1px 4px rgba(0,0,0,0.04)!important;border:1.5px solid rgba(129,140,248,0.12)!important}\
-.ez-page-styled table th{background:linear-gradient(145deg,#6366f1,#4f46e5)!important;color:#fff!important;font-size:13px!important;font-weight:800!important;padding:10px 6px!important;text-align:center!important;letter-spacing:0.3px!important;border:none!important;border-bottom:2px solid #4338ca!important;border-left:1px solid rgba(255,255,255,0.12)!important;white-space:nowrap!important;text-shadow:0 1px 2px rgba(0,0,0,0.15)!important}\
-.ez-page-styled table th:first-child{border-left:none!important}\
-.ez-page-styled table td{padding:5px 6px!important;font-size:14px!important;font-weight:700!important;color:#1e1b4b!important;border:none!important;border-bottom:1px solid rgba(129,140,248,0.08)!important;border-left:1px solid rgba(129,140,248,0.06)!important;vertical-align:middle!important;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)!important}\
-.ez-page-styled table td:first-child{border-left:none!important}\
-.ez-page-styled table input[type="text"],.ez-page-styled table input[type="number"],.ez-page-styled table input[type="time"],.ez-page-styled table input[type="date"],.ez-page-styled table select,.ez-page-styled table textarea{font-family:Cairo,sans-serif!important;font-weight:700!important;color:#1e1b4b!important;font-size:14px!important;border:1px solid rgba(129,140,248,0.1)!important;border-radius:6px!important;padding:3px 5px!important;background:rgba(255,255,255,0.8)!important;transition:all 0.25s!important}\
-.ez-page-styled table input[type="time"]{min-width:110px!important;font-size:12px!important;padding:3px 4px!important}\
-.ez-page-styled table input:focus,.ez-page-styled table select:focus,.ez-page-styled table textarea:focus{border-color:#818cf8!important;box-shadow:0 0 0 2px rgba(129,140,248,0.1)!important;background:#fff!important}\
-.ez-page-styled table input[type="checkbox"]{width:18px!important;height:18px!important;accent-color:#6366f1!important;cursor:pointer!important}\
 .ez-toast{position:fixed;bottom:30px;right:30px;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);padding:12px 16px;border-radius:14px;box-shadow:0 10px 35px rgba(45,43,58,0.12),0 2px 8px rgba(0,0,0,0.06);z-index:999999;display:flex;align-items:center;gap:10px;font-family:Cairo,sans-serif;transform:translateX(400px);opacity:0;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);border:1px solid rgba(129,140,248,0.1)}\
 .ez-toast.show{transform:translateX(0);opacity:1}\
 .ez-toast-icon{font-size:18px}\
@@ -2059,14 +2059,9 @@ s_style.textContent='\
 .ez-toast-warning{border-right:4px solid #f59e0b}\
 .ez-loader-spinner{width:22px;height:22px;border:3px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite}\
 .ez-loader-text{font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif}\
-table td,table th{border:1px solid rgba(129,140,248,0.08)!important}\
 \
 body.ez-dark-mode{background:#0f0f23!important;color:#e2e8f0!important}\
 body.ez-dark-mode *:not(.ez-dialog-v2):not(.ez-dialog-v2 *):not([id^="ez-"]):not([id^="ez-"] *):not(.ez-toast):not(.ez-toast *){background-color:#1a1a2e!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.15)!important}\
-body.ez-dark-mode table{background:#1a1a2e!important}\
-body.ez-dark-mode table th{background:linear-gradient(180deg,#1e1b4b,#0f0f23)!important;color:#c7d2fe!important}\
-body.ez-dark-mode table td{background:#16162a!important;color:#e2e8f0!important}\
-body.ez-dark-mode table tr:hover td{background:#1e1e3a!important}\
 body.ez-dark-mode input,body.ez-dark-mode textarea,body.ez-dark-mode select{background:#16162a!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.2)!important}\
 body.ez-dark-mode .form-control{background:#16162a!important;color:#e2e8f0!important}\
 body.ez-dark-mode a{color:#818cf8!important}\
@@ -2087,6 +2082,8 @@ body.ez-dark-mode .ez-btn-cancel{background:rgba(239,68,68,0.06)!important;borde
 body.ez-dark-mode .ez-btn-doses{background:rgba(129,140,248,0.06)!important;border-color:rgba(129,140,248,0.12)!important}\
 body.ez-dark-mode .ez-sep{background:linear-gradient(90deg,transparent,rgba(129,140,248,0.1),transparent)!important}\
 body.ez-dark-mode label,body.ez-dark-mode span{color:#c7d2fe!important}';
+/* Table borders - data table only */
+s_style.textContent+='table.ez-data-table{border-collapse:collapse!important;border:1px solid #bbb!important}table.ez-data-table th,table.ez-data-table td{border:1px solid #bbb!important}';
 document.head.appendChild(s_style);
 
 /* ══════════════════════════════════════════
@@ -2094,101 +2091,10 @@ document.head.appendChild(s_style);
    ══════════════════════════════════════════ */
 function beautifyPage(){
   try{
-    document.body.classList.add('ez-page-styled');
-    var allTables=document.querySelectorAll('table');
-
-    /* ── Style top form section ── */
-    var topTable=null;
-    for(var i=0;i<allTables.length;i++){
-      var txt=allTables[i].innerText.toLowerCase();
-      if((txt.indexOf('name')>-1||txt.indexOf('mobile')>-1)&&txt.indexOf('start date')>-1){
-        if(allTables[i].querySelectorAll('tr').length<5){topTable=allTables[i];break;}
-      }
-    }
-    if(topTable){
-      topTable.style.cssText='background:linear-gradient(145deg,#6366f1,#4f46e5)!important;border:2px solid rgba(79,70,229,0.3)!important;border-radius:16px!important;padding:14px 18px!important;box-shadow:0 6px 24px rgba(99,102,241,0.15),0 2px 8px rgba(0,0,0,0.06)!important;margin-bottom:14px!important;overflow:visible!important;border-collapse:separate!important';
-      var topCells=topTable.querySelectorAll('td,th');
-      for(var i=0;i<topCells.length;i++){
-        topCells[i].style.cssText+='border:none!important;padding:4px 8px!important';
-        var txt=(topCells[i].textContent||'').trim();
-        if(txt.endsWith(':')){
-          topCells[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:10px!important;font-weight:900!important;color:#fff!important;letter-spacing:0.8px!important;border:none!important;padding:2px 8px 0!important;white-space:nowrap!important;text-transform:uppercase!important;text-shadow:0 1px 3px rgba(0,0,0,0.15)!important';
-        }
-      }
-      var topInputs=topTable.querySelectorAll('input,select');
-      for(var i=0;i<topInputs.length;i++){
-        topInputs[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:14px!important;font-weight:800!important;color:#1e1b4b!important;border:1.5px solid rgba(255,255,255,0.3)!important;border-radius:10px!important;padding:7px 14px!important;background:#fff!important;transition:all 0.25s!important;outline:none!important;box-shadow:0 2px 8px rgba(0,0,0,0.08)!important;width:100%!important;min-width:120px!important';
-      }
-    }
-
-    /* ── Style main data table columns ── */
-    var dataTable=null;
-    for(var i=0;i<allTables.length;i++){
-      var txt=allTables[i].innerText.toLowerCase();
-      if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){
-        dataTable=allTables[i];break;
-      }
-    }
-    if(dataTable){
-      var ths=dataTable.querySelectorAll('th');
-      var colMap={};
-      for(var i=0;i<ths.length;i++){
-        var t=ths[i].textContent.trim().toLowerCase();
-        colMap[t]=i;
-        if(t==='#') ths[i].innerHTML='#️⃣';
-        else if(t==='code') ths[i].innerHTML='🔑 Code';
-        else if(t==='name'||t==='item') ths[i].innerHTML='💊 Name';
-        else if(t==='qty') ths[i].innerHTML='📦 QTY';
-        else if(t==='size') ths[i].innerHTML='📏 Size';
-        else if(t==='dose') ths[i].innerHTML='💉 Dose';
-        else if(t.indexOf('every')>-1||t.indexOf('evry')>-1) ths[i].innerHTML='⏰ Every';
-        else if(t==='start time') ths[i].innerHTML='🕐 Time';
-        else if(t==='note') ths[i].innerHTML='📝 Note';
-        else if(t==='start date') ths[i].innerHTML='📅 Start';
-        else if(t==='end date') ths[i].innerHTML='📅 End';
-        else if(t==='expiry') ths[i].innerHTML='⏳ Exp';
-        else if(t==='remaining') ths[i].innerHTML='📊';
-        else if(t==='critical') ths[i].innerHTML='🚨';
-        else if(t==='action') ths[i].innerHTML='⚡';
-      }
-      var ri=colMap['remaining'];
-      var nmi2=colMap['name']!==undefined?colMap['name']:colMap['item'];
-      if(ri!==undefined){ths[ri].style.cssText+='width:35px!important;min-width:35px!important;max-width:40px!important;padding:10px 2px!important';}
-      if(nmi2!==undefined){ths[nmi2].style.cssText+='min-width:210px!important';}
-      if(colMap['#']!==undefined){ths[colMap['#']].style.cssText+='width:28px!important;min-width:28px!important;padding:10px 2px!important';}
-      if(colMap['critical']!==undefined){ths[colMap['critical']].style.cssText+='width:40px!important;min-width:40px!important;padding:10px 2px!important';}
-      if(colMap['action']!==undefined){ths[colMap['action']].style.cssText+='width:58px!important;min-width:58px!important';}
-
-      var rows=dataTable.querySelectorAll('tr');
-      for(var r=1;r<rows.length;r++){
-        var tds=rows[r].querySelectorAll('td');
-        if(ri!==undefined&&tds[ri]){tds[ri].style.cssText+='text-align:center!important;width:35px!important;max-width:40px!important;padding:5px 2px!important;font-size:13px!important';}
-        if(nmi2!==undefined&&tds[nmi2]){tds[nmi2].style.cssText+='font-weight:800!important;color:#312e81!important;font-size:14px!important';}
-        if(colMap['critical']!==undefined&&tds[colMap['critical']]){tds[colMap['critical']].style.cssText+='text-align:center!important;width:40px!important;font-size:13px!important;padding:5px 2px!important';}
-      }
-    }
-
-    /* ── Style buttons ── */
-    var allBtns=document.querySelectorAll('button,input[type="button"],input[type="submit"],a.btn,a');
-    for(var i=0;i<allBtns.length;i++){
-      var txt=(allBtns[i].innerText||allBtns[i].value||'').toLowerCase();
-      if(txt.indexOf('import')>-1&&txt.indexOf('invoice')>-1){
-        allBtns[i].style.cssText='background:linear-gradient(145deg,#818cf8,#6366f1)!important;color:#fff!important;border:none!important;padding:8px 20px!important;border-radius:12px!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 4px 14px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1)!important;transition:all 0.3s!important;text-decoration:none!important;display:inline-flex!important;align-items:center!important';
-      }
-      if(txt.indexOf('duplicate')>-1){
-        allBtns[i].style.cssText='background:linear-gradient(145deg,#f59e0b,#d97706)!important;color:#fff!important;border:none!important;padding:4px 12px!important;border-radius:8px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;font-family:Cairo,sans-serif!important;box-shadow:0 3px 10px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.2)!important;transition:all 0.3s!important;text-decoration:none!important';
-      }
-    }
-
-    /* ── Delivery Time label ── */
-    var allEls=document.querySelectorAll('span,div,label,td');
-    for(var i=0;i<allEls.length;i++){
-      var txt=(allEls[i].textContent||'').trim();
-      if(txt.indexOf('Delivery Time:')>-1&&txt.length<100){
-        allEls[i].style.cssText='font-family:Cairo,sans-serif!important;font-size:12px!important;font-weight:700!important;color:#4338ca!important;background:rgba(129,140,248,0.06)!important;padding:6px 14px!important;border-radius:10px!important;border:1px solid rgba(129,140,248,0.12)!important;display:inline-block!important;margin:6px 0!important';
-      }
-    }
-  }catch(e){console.log('EZ beautify:',e);}
+    var dataTable=null;var allTables=document.querySelectorAll('table');
+    for(var i=0;i<allTables.length;i++){var txt=allTables[i].innerText.toLowerCase();if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){dataTable=allTables[i];break;}}
+    if(dataTable){dataTable.classList.add('ez-data-table');}
+  }catch(e){}
 }
 
 /* ══════════════════════════════════════════
@@ -2270,12 +2176,12 @@ function _ezShowSettingsPanel(role,userName){
   }
   if(allKwRules.length===0) kwRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا توجد كلمات مخصصة بعد</div>';
 
-  /* Build Users list (admin only) */
+  /* Build Users list */
   var usrRows='';var usrRows_count=0;
-  if(isAdmin){
+  {
     var users=loadUsers();usrRows_count=users.length;
     for(var i=0;i<users.length;i++){
-      usrRows+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.1);direction:rtl"><span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;flex-shrink:0">👤</span><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+users[i].name+'</span><span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 6px;border-radius:4px">مستخدم</span><button class="ez-cfg-del-usr" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+      usrRows+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.1);direction:rtl"><span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;flex-shrink:0">👤</span><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+users[i].name+'</span><span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 6px;border-radius:4px">مستخدم</span>'+(isAdmin?'<button class="ez-cfg-del-usr" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button>':'')+'</div>';
     }
     if(users.length===0) usrRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا يوجد مستخدمين بعد</div>';
   }
@@ -2295,9 +2201,9 @@ function _ezShowSettingsPanel(role,userName){
         <button class="ez-cfg-tab active" data-tab="ramadan" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🌙 أوقات رمضان</button>\
         <button class="ez-cfg-tab" data-tab="normal" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">⏰ الأوقات العادية</button>\
         <button class="ez-cfg-tab" data-tab="keywords" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">📝 كلمات مخصصة</button>\
-        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>':'')+'\
-        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🗓️ الجرعات الأسبوعية</button>':'')+'\
-        '+(isAdmin?'<button class="ez-cfg-tab" data-tab="users" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">👥 إدارة المستخدمين</button>':'')+'\
+        <button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>\
+        <button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🗓️ الجرعات الأسبوعية</button>\
+        <button class="ez-cfg-tab" data-tab="users" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">👥 المستخدمين</button>\
       </div>\
       <div id="ez-cfg-panel-ramadan" class="ez-cfg-panel">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان الأساسية</div>\
@@ -2348,7 +2254,7 @@ function _ezShowSettingsPanel(role,userName){
           return customHtml;
         })()+'\
       </div>\
-      '+(isAdmin?'<div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
+      <div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💊</span> أكواد الأصناف ذات الحجم الثابت <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+fscKeys.length+' كود</span></div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-code" placeholder="كود الصنف" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><input type="number" id="ez-cfg-new-count" placeholder="العدد" style="width:70px;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /><button id="ez-cfg-add-fsc" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(16,185,129,0.2)">+ إضافة</button></div>\
         <div style="max-height:280px;overflow-y:auto;border:1px solid rgba(129,140,248,0.08);border-radius:12px"><table style="width:100%;border-collapse:collapse" id="ez-cfg-fsc-table"><thead><tr style="background:linear-gradient(145deg,#f8f7ff,#eef2ff)"><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:right">الكود</th><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:center">العدد</th><th style="padding:8px;width:40px"></th></tr></thead><tbody>'+fscRows+'</tbody></table></div>\
@@ -2357,7 +2263,7 @@ function _ezShowSettingsPanel(role,userName){
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🗓️</span> أكواد الجرعات الأسبوعية <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+weeklyInjections.length+' كود</span></div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-wi" placeholder="كود الجرعة الأسبوعية" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><button id="ez-cfg-add-wi" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#06b6d4,#0891b2);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(6,182,212,0.2)">+ إضافة</button></div>\
         <div id="ez-cfg-wi-list">'+wiRows+'</div>\
-      </div>':'')+'\
+      </div>\
       <div id="ez-cfg-panel-keywords" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📝</span> كلمات مخصصة للجرعات</div>\
         <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">أضف كلمة أو عبارة مخصصة وحدد نوعها: للأوقات العادية أو لأوقات رمضان.<br>مثال للعادي: "بعد الغروب" → 18:45<br>مثال لرمضان: "بعد التراويح" → بعد الفطار</div>\
@@ -2383,16 +2289,15 @@ function _ezShowSettingsPanel(role,userName){
         \
         <div id="ez-cfg-kw-list">'+kwRows+'</div>\
       </div>\
-      '+(isAdmin?'<div id="ez-cfg-panel-users" class="ez-cfg-panel" style="display:none">\
-        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">👥</span> إدارة المستخدمين <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+usrRows_count+' مستخدم</span></div>\
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;padding:6px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">المستخدم يقدر يعدل على الأوقات والكلمات المخصصة فقط. لا يمكنه إنشاء مستخدمين آخرين أو تعديل الأكواد.</div>\
-        <div style="display:flex;gap:6px;margin-bottom:10px;direction:rtl;flex-wrap:wrap;align-items:end">\
+      <div id="ez-cfg-panel-users" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">👥</span> المستخدمين <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+usrRows_count+' مستخدم</span></div>\
+        '+(isAdmin?'<div style="display:flex;gap:6px;margin-bottom:10px;direction:rtl;flex-wrap:wrap;align-items:end">\
           <div style="flex:1;min-width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">اسم المستخدم</label><input type="text" id="ez-cfg-new-usr-name" placeholder="مثال: أحمد" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
           <div style="width:120px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">الرقم السري</label><input type="password" id="ez-cfg-new-usr-pin" placeholder="رقم سري" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center;letter-spacing:3px" /></div>\
           <button id="ez-cfg-add-usr" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#f59e0b,#d97706);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(245,158,11,0.2);white-space:nowrap">+ إضافة مستخدم</button>\
-        </div>\
+        </div>':'<div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;padding:6px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">إضافة وحذف المستخدمين متاح للأدمن فقط</div>')+'\
         <div id="ez-cfg-usr-list">'+usrRows+'</div>\
-      </div>':'')+'\
+      </div>\
     </div>\
     <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4)">\
       <button id="ez-cfg-save" style="flex:1;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 16px rgba(16,185,129,0.25);transition:all 0.3s">💾 حفظ التعديلات</button>\
@@ -2414,8 +2319,8 @@ function _ezShowSettingsPanel(role,userName){
     };
   });
 
-  /* Add Fixed Size Code (admin only) */
-  if(isAdmin && document.getElementById('ez-cfg-add-fsc')){
+  /* Add Fixed Size Code */
+  if(document.getElementById('ez-cfg-add-fsc')){
   document.getElementById('ez-cfg-add-fsc').onclick=function(){
     var code=document.getElementById('ez-cfg-new-code').value.trim();
     var count=parseInt(document.getElementById('ez-cfg-new-count').value);
@@ -2474,7 +2379,8 @@ function _ezShowSettingsPanel(role,userName){
       overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
-  }/* end isAdmin guard for codes+weekly */
+
+  }/* end codes+weekly block */
 
   /* Add Custom Keyword for NORMAL times */
   if(document.getElementById('ez-cfg-add-kw-normal')){
@@ -2682,6 +2588,7 @@ function _ezShowSettingsPanel(role,userName){
   }
 
   /* Delete User (admin only) */
+  if(isAdmin){
   overlay.querySelectorAll('.ez-cfg-del-usr').forEach(function(btn){
     btn.onclick=function(){
       var idx=parseInt(this.getAttribute('data-idx'));
@@ -2692,6 +2599,7 @@ function _ezShowSettingsPanel(role,userName){
       overlay.remove();_ezShowSettingsPanel(role,userName);
     };
   });
+  }
 
   /* SAVE ALL */
   document.getElementById('ez-cfg-save').onclick=function(){
