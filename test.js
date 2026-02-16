@@ -458,11 +458,11 @@ var COLUMN_ALIASES={
   'size':['size','حجم','الحجم','sz','pack size','pack'],
   'note':['note','notes','ملاحظة','ملاحظات','remark','remarks','prescription note'],
   'every':['every','evry','كل','المدة','frequency','freq','interval'],
-  'time':['time','وقت','الوقت','timing'],
+  'time':['start time','time','وقت','الوقت','timing'],
   'dose':['dose','جرعة','الجرعة','dosage','dos'],
   'code':['code','كود','الكود','item code','barcode','رمز'],
-  'start date':['start date','start','تاريخ البدء','بداية','from'],
-  'end date':['end date','end','تاريخ الانتهاء','نهاية','to','expiry'],
+  'start date':['start date','تاريخ البدء','بداية','from'],
+  'end date':['end date','end','تاريخ الانتهاء','نهاية','to'],
   'name':['name','item','اسم','الاسم','item name','drug name','medication','drug']
 };
 
@@ -1498,7 +1498,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     console.log('EZ Pill - الأعمدة الموجودة:',availCols);
     return;
   }
-  if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);ni_main=ti_main+1;if(ti_main<di_main)di_main++;if(ti_main<ei_main)ei_main++;if(ti_main<sdi_main)sdi_main++;if(ti_main<edi_main)edi_main++;}
+  if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);hs_main=h_main.querySelectorAll('th,td');ni_main=idx(hs_main,'note');di_main=idx(hs_main,'dose');ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');sdi_main=idx(hs_main,'start date');edi_main=idx(hs_main,'end date');}
   if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='110px';hs_main[sdi_main].style.minWidth='110px';}
   if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='110px';hs_main[edi_main].style.minWidth='110px';}
   if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
