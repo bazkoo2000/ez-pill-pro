@@ -118,7 +118,6 @@ javascript:(function(){
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
 
-      // حساب الإحصائيات الأولية
       const allValid = packedRows.filter(r =>
         r.onl.toUpperCase() !== 'NA' &&
         r.onl.toUpperCase() !== 'N/A' &&
@@ -136,7 +135,6 @@ javascript:(function(){
           </div>
 
           <div style="padding:20px 24px">
-            <!-- فلتر الصيدلية -->
             <div style="margin-bottom:16px">
               <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px">
                 🏥 فلتر حسب الصيدلية <span style="font-size:11px;color:#94a3b8;font-weight:500">(اختياري)</span>
@@ -150,7 +148,6 @@ javascript:(function(){
               </div>
             </div>
 
-            <!-- إحصائيات ديناميكية -->
             <div id="ali_export_stats">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px">
                 <span style="color:#64748b;font-weight:600">إجمالي Packed</span>
@@ -174,7 +171,6 @@ javascript:(function(){
               </div>
             </div>
 
-            <!-- معاينة الملفات -->
             <div id="ali_files_preview" style="margin-top:12px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:12px;padding:12px;max-height:100px;overflow-y:auto">
               <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:6px">📋 معاينة الملفات:</div>
               <div id="ali_files_list" style="font-size:12px;color:#64748b;font-family:monospace;direction:ltr;text-align:left">
@@ -192,7 +188,6 @@ javascript:(function(){
 
       document.body.appendChild(overlay);
 
-      // ─── تحديث ديناميكي عند الكتابة في فلتر الصيدلية ───
       const filterInput = overlay.querySelector('#ali_pharmacy_filter');
       const filteredSpan = overlay.querySelector('#ali_exp_filtered');
       const filesSpan = overlay.querySelector('#ali_exp_files');
@@ -210,7 +205,6 @@ javascript:(function(){
         filesList.innerHTML = generateFilesPreview(matched, code);
         btnCount.innerText = numFiles;
 
-        // تلوين الحقل
         if (code.length > 0 && matched.length === 0) {
           filterInput.style.borderColor = '#ef4444';
           filterInput.style.background = '#fef2f2';
@@ -223,10 +217,8 @@ javascript:(function(){
         }
       });
 
-      // Focus
       filterInput.focus();
 
-      // ─── أحداث الأزرار ───
       overlay.querySelector('#ali_exp_cancel').addEventListener('click', () => {
         overlay.remove();
         resolve({ action: 'cancel', orders: [] });
@@ -241,20 +233,16 @@ javascript:(function(){
     });
   }
 
-  // ─── فلترة حسب كود الصيدلية ───
   function getFilteredOrders(validRows, pharmacyCode) {
     if (!pharmacyCode || pharmacyCode.trim() === '') return validRows;
     const code = pharmacyCode.trim();
     return validRows.filter(r => {
-      // رقم الفاتورة يبدأ بـ 0 ثم كود الصيدلية
       const invoice = r.id.trim();
-      // نزيل الصفر الأول ونقارن
       const afterZero = invoice.startsWith('0') ? invoice.substring(1) : invoice;
       return afterZero.startsWith(code);
     });
   }
 
-  // ─── معاينة أسماء الملفات ───
   function generateFilesPreview(orders, pharmacyCode) {
     if (orders.length === 0) {
       return '<div style="color:#ef4444;font-weight:600;text-align:center;font-family:Tajawal,sans-serif;direction:rtl">لا توجد طلبات مطابقة</div>';
@@ -274,7 +262,6 @@ javascript:(function(){
     return html;
   }
 
-  // ─── تنزيل الملفات المقسمة ───
   function downloadSplitFiles(orders, pharmacyCode) {
     const numFiles = Math.ceil(orders.length / MAX_PER_FILE);
     const prefix = pharmacyCode ? pharmacyCode + '_' : '';
@@ -288,7 +275,6 @@ javascript:(function(){
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
 
-      // تأخير بسيط بين كل تحميل عشان المتصفح ما يحظرش
       setTimeout(() => {
         const a = document.createElement('a');
         a.href = url;
@@ -429,7 +415,87 @@ javascript:(function(){
   document.getElementById('ali_close').addEventListener('click',e=>{e.stopPropagation();panel.style.animation='aliSlideIn 0.3s reverse';setTimeout(()=>panel.remove(),280)});
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
-  // ─── Scan ───
+  // ══════════════════════════════════════════════════════════════════
+  // ─── الإصلاح الرئيسي: دالة البحث عن زر الصفحة التالية ───
+  // ══════════════════════════════════════════════════════════════════
+  function findNextPageButton(nextPageNum) {
+    // === المحاولة 1: البحث عن رقم الصفحة التالية مباشرة في أي رابط أو زر ===
+    const allClickable = document.querySelectorAll('a, button, li, span, input[type="button"], [role="button"], [onclick]');
+    for (const el of allClickable) {
+      const txt = el.innerText.trim();
+      if (txt === String(nextPageNum)) {
+        // تأكد إنه فعلاً عنصر pagination مش أي رقم عشوائي في الصفحة
+        const parent = el.closest('nav, ul, .pagination, .paging, .page-nav, [class*="pag"], [class*="page"], [id*="pag"], [id*="page"]');
+        if (parent) return el;
+        // لو مافيش parent واضح، شوف لو الـ href فيه page
+        if (el.href && /page/i.test(el.href)) return el;
+        // لو العنصر جوا ul/nav
+        if (el.closest('ul') || el.closest('nav')) return el;
+      }
+    }
+
+    // === المحاولة 2: البحث عن رقم الصفحة في أي مكان (fallback أوسع) ===
+    for (const el of allClickable) {
+      const txt = el.innerText.trim();
+      if (txt === String(nextPageNum) && el.offsetParent !== null) {
+        return el;
+      }
+    }
+
+    // === المحاولة 3: البحث عن أزرار "التالي" / "Next" / أسهم ===
+    const nextPatterns = ['>', '›', '»', '>>', 'next', 'التالي', 'التالى', '→', '⟩', '⮞'];
+    for (const el of allClickable) {
+      const txt = el.innerText.trim().toLowerCase();
+      for (const pattern of nextPatterns) {
+        if (txt === pattern || txt === pattern.toLowerCase()) return el;
+      }
+      // شيك على title و aria-label
+      const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
+      const title = (el.getAttribute('title') || '').toLowerCase();
+      if (ariaLabel.includes('next') || ariaLabel.includes('التالي') || title.includes('next') || title.includes('التالي')) return el;
+      // شيك على class
+      const cls = (el.className || '').toLowerCase();
+      if (cls.includes('next') || cls.includes('forward')) return el;
+    }
+
+    // === المحاولة 4: لو فيه active page، خد اللي بعدها ===
+    const paginationContainers = document.querySelectorAll('nav, .pagination, .paging, [class*="pag"], [id*="pag"], ul');
+    for (const container of paginationContainers) {
+      const items = container.querySelectorAll('a, button, li, span');
+      let foundActive = false;
+      for (const item of items) {
+        if (foundActive) {
+          const txt = item.innerText.trim();
+          // تأكد إنه رقم أو سهم
+          if (/^\d+$/.test(txt) || nextPatterns.includes(txt)) return item;
+          // لو فيه رابط جواه
+          const innerLink = item.querySelector('a');
+          if (innerLink) return innerLink;
+        }
+        // شيك هل ده الـ active page
+        const cls = (item.className || '').toLowerCase();
+        const isActive = cls.includes('active') || cls.includes('current') || cls.includes('selected') ||
+                         item.getAttribute('aria-current') === 'page' ||
+                         (item.tagName === 'SPAN' && /^\d+$/.test(item.innerText.trim()));
+        if (isActive && item.innerText.trim() === String(nextPageNum - 1)) {
+          foundActive = true;
+        }
+      }
+    }
+
+    // === المحاولة 5: البحث عن رابط فيه page=N في الـ href ===
+    const allLinks = document.querySelectorAll('a[href]');
+    for (const link of allLinks) {
+      const href = link.href || '';
+      // page=8, pageNum=8, p=8, etc.
+      const pageMatch = href.match(/[?&](page|pageNum|pagenum|p|pg|pn)=(\d+)/i);
+      if (pageMatch && parseInt(pageMatch[2]) === nextPageNum) return link;
+    }
+
+    return null;
+  }
+
+  // ─── Scan (مع الإصلاح) ───
   function scanPage(curr, total) {
     const fill = document.getElementById('p-fill');
     if(fill)fill.style.width=((curr/total)*100)+'%';
@@ -455,12 +521,84 @@ javascript:(function(){
       }
     });
     updateStats();
-    if(curr<total){
-      const links=document.querySelectorAll('.pagination a,.pagination li,.pagination span');
-      let nxt=null;
-      for(const l of links){const t=l.innerText.trim();if(t===String(curr+1)||t==='>'||t==='Next'){nxt=l;break}}
-      if(nxt){nxt.click();setTimeout(()=>scanPage(curr+1,total),11000)}else finishScan();
-    }else finishScan();
+
+    if(curr < total){
+      const nxt = findNextPageButton(curr + 1);
+      if(nxt){
+        console.log('[مُنهي الطلبات] الانتقال للصفحة', curr + 1, '— العنصر:', nxt.tagName, nxt.innerText.trim());
+        nxt.click();
+        setTimeout(()=>scanPage(curr+1, total), 11000);
+      } else {
+        // === Fallback أخير: لو مالقاش الزر، يحاول يعدّل الـ URL مباشرة ===
+        console.warn('[مُنهي الطلبات] لم يتم العثور على زر الصفحة', curr + 1, '— محاولة عبر URL...');
+        const currentUrl = window.location.href;
+        let newUrl = null;
+
+        // جرب يغير page parameter في الـ URL
+        if (/[?&](page|pageNum|pagenum|p|pg|pn)=\d+/i.test(currentUrl)) {
+          newUrl = currentUrl.replace(/([?&](page|pageNum|pagenum|p|pg|pn)=)\d+/i, '$1' + (curr + 1));
+        } else if (currentUrl.includes('?')) {
+          newUrl = currentUrl + '&page=' + (curr + 1);
+        } else {
+          newUrl = currentUrl + '?page=' + (curr + 1);
+        }
+
+        if (newUrl && newUrl !== currentUrl) {
+          console.log('[مُنهي الطلبات] تحميل URL:', newUrl);
+          setStatus(`الصفحة ${curr+1}: تحميل عبر URL...`, 'working');
+
+          // استخدم fetch بدل تغيير الصفحة عشان ما نخسرش البيانات
+          fetch(newUrl)
+            .then(resp => resp.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+              const remoteRows = doc.querySelectorAll('table tr');
+              remoteRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if(cells.length>1 && cells[0].innerText.trim().indexOf('0')===0){
+                  const key = cells[0].innerText.trim();
+                  if(!state.visitedSet.has(key)){
+                    state.visitedSet.add(key);
+                    const txt = row.innerText.toLowerCase();
+                    const isR = txt.includes('received'), isP = txt.includes('packed');
+                    let hId = "";
+                    const lnk = row.querySelector('a');
+                    if(lnk){
+                      const hrefVal = lnk.getAttribute('href') || '';
+                      if(hrefVal.includes('head_id=')) hId = hrefVal.split('head_id=')[1].split('&')[0];
+                    }
+                    const clone = row.cloneNode(true);
+                    if(isR) clone.style.background='rgba(16,185,129,0.08)';
+                    if(isP) clone.style.background='rgba(245,158,11,0.08)';
+                    state.savedRows.push({id:key, onl:cells[1].innerText.trim(), node:clone, st:isR?'received':(isP?'packed':'other'), hid:hId});
+                  }
+                }
+              });
+              updateStats();
+              setStatus(`تم تحليل الصفحة ${curr+1} عبر fetch — ${state.savedRows.length} طلب`, 'working');
+              if(curr + 1 < total){
+                setTimeout(() => scanPage(curr+1, total), 2000);
+              } else {
+                finishScan();
+              }
+            })
+            .catch(err => {
+              console.error('[مُنهي الطلبات] فشل fetch الصفحة:', err);
+              setStatus(`⚠️ توقف عند صفحة ${curr} — لم يتم العثور على التالي`, 'error');
+              showToast(`توقف عند صفحة ${curr} من ${total}. جاري إكمال ما تم جمعه...`, 'warning');
+              finishScan();
+            });
+          return; // مهم عشان ما ننادي finishScan مرتين
+        }
+
+        setStatus(`⚠️ توقف عند صفحة ${curr} — لم يتم العثور على زر التالي`, 'error');
+        showToast(`توقف عند صفحة ${curr} من ${total}. جاري إكمال ما تم جمعه...`, 'warning');
+        finishScan();
+      }
+    } else {
+      finishScan();
+    }
   }
 
   // ─── Finish ───
