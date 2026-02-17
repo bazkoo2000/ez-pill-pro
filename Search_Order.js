@@ -169,7 +169,7 @@ javascript:(function(){
               '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
               '<div style="display:flex;align-items:center;gap:6px">' +
                 '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-                '<input type="number" id="p_lim" value="' + defaultPages + '" min="1" style="width:48px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
+                '<input type="number" id="p_lim" value="99" min="1" style="width:48px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
               '</div>' +
             '</div>' +
             '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
@@ -288,7 +288,7 @@ javascript:(function(){
     return { newCount: newCount, noArgs: noArgsCount };
   }
   // ═══════════════════════════════════════════
-  // Page Scanner
+  // Page Scanner - المعدل الجديد (يجيب كل الصفحات حتى 99)
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
   function scanPage(curr, total, isSync) {
@@ -303,32 +303,40 @@ javascript:(function(){
     var result = collectFromCurrentPage();
     totalNoArgs += result.noArgs;
     updateStats();
+    // إيقاف مبكر لو مفيش طلبات جديدة (حماية)
+    if (curr > 5 && result.newCount === 0) {
+      finishScan(isSync);
+      return;
+    }
     if (curr < total) {
-      var allLinks = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
       var nxt = null;
-      for (var i = 0; i < allLinks.length; i++) {
-        if (allLinks[i].innerText.trim() == String(curr + 1)) {
-          nxt = allLinks[i];
+      // أولوية أولى: زر التالي (يدعم 25-100 صفحة حتى لو الأرقام مخفية)
+      var candidates = document.querySelectorAll('.pagination a, .pagination li>a, .pagination .next>a, a[rel="next"], .next, button.next, a');
+      for (var j = 0; j < candidates.length; j++) {
+        var el = candidates[j];
+        var txt = (el.innerText || el.textContent || '').trim();
+        var cls = (el.className || '').toLowerCase();
+        if (txt === '»' || txt === '›' || txt === 'التالي' || txt === 'التالية' || 
+            txt.toLowerCase() === 'next' || cls.includes('next') || 
+            el.getAttribute('rel') === 'next' ||
+            (el.parentElement && (el.parentElement.className || '').toLowerCase().includes('next'))) {
+          nxt = el;
           break;
         }
       }
+      // احتياطي: رقم الصفحة التالية
       if (!nxt) {
-        var candidates = document.querySelectorAll('.pagination a, .pagination li>a, .pagination .next>a, a[rel="next"], .next');
-        for (var j = 0; j < candidates.length; j++) {
-          var el = candidates[j];
-          var txt = (el.innerText || '').trim();
-          if (txt === '»' || txt === '›' || txt === 'التالي' || txt === 'التالية' || txt.toLowerCase() === 'next' ||
-              (el.classList && el.classList.contains('next')) ||
-              (el.parentElement && el.parentElement.classList && el.parentElement.classList.contains('next')) ||
-              el.getAttribute('rel') === 'next') {
-            nxt = el;
+        var allLinks = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
+        for (var i = 0; i < allLinks.length; i++) {
+          if (allLinks[i].innerText.trim() == String(curr + 1)) {
+            nxt = allLinks[i];
             break;
           }
         }
       }
       if (nxt) {
         nxt.click();
-        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 12000);
+        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 15000);
       } else {
         finishScan(isSync);
       }
@@ -369,29 +377,24 @@ javascript:(function(){
     // بناء واجهة البحث
     var mainBody = document.getElementById('ali_main_body');
     mainBody.innerHTML =
-      // بحث بالفاتورة مع 0 ثابت
       '<div style="margin-bottom:10px">' +
         '<div style="position:relative">' +
           '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;color:#94a3b8;z-index:1;pointer-events:none;font-family:monospace">0</span>' +
           '<input type="text" id="ali_sI" placeholder="أدخل الأرقام بعد الـ 0 (كود الصيدلية = أول 4 أرقام)..." style="width:100%;padding:14px 16px 14px 34px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:Segoe UI,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700;box-sizing:border-box">' +
         '</div>' +
       '</div>' +
-      // بحث بالطلب
       '<div style="margin-bottom:10px">' +
         '<div style="position:relative">' +
           '<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;z-index:1;pointer-events:none">🔗</span>' +
           '<input type="text" id="ali_sO" placeholder="بحث برقم الطلب (ERX)..." style="width:100%;padding:14px 42px 14px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:Segoe UI,Roboto,sans-serif;outline:none;background:#f8fafc;color:#1e293b;direction:rtl;transition:all 0.25s;font-weight:600;box-sizing:border-box">' +
         '</div>' +
       '</div>' +
-      // عداد النتائج
       '<div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:2px 0 12px">' +
         'عرض ' + state.savedRows.length + ' من ' + state.savedRows.length + ' نتيجة' +
       '</div>' +
-      // زر الفتح
       '<button id="ali_btn_open" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 15px rgba(16,185,129,0.3);transition:all 0.3s;margin-bottom:8px">' +
         '⚡ ابحث أولاً ثم افتح المطابق' +
       '</button>' +
-      // زر المزامنة
       '<button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:13px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">' +
         '🔄 مزامنة (تحديث + حذف المُغلق + إضافة الجديد)' +
       '</button>';
@@ -554,7 +557,7 @@ javascript:(function(){
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
-      var pages = parseInt(document.getElementById('p_lim').value) || 1;
+      var pages = parseInt(document.getElementById('p_lim').value) || 99;
       scanPage(1, pages, true);
     });
   }
@@ -568,6 +571,7 @@ javascript:(function(){
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
     totalNoArgs = 0;
-    scanPage(1, parseInt(document.getElementById('p_lim').value) || 1, false);
+    var pages = parseInt(document.getElementById('p_lim').value) || 99;
+    scanPage(1, pages, false);
   });
 })();
