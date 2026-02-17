@@ -894,9 +894,9 @@ javascript:(function(){
     `;
 
     // Search
-    const tables=document.querySelectorAll('table');
-    let target2=tables[0];
-    if(target2){for(const t of tables)if(t.innerText.length>target2.innerText.length)target2=t}
+    const tables2=document.querySelectorAll('table');
+    let target2=tables2[0];
+    if(target2){for(const t of tables2)if(t.innerText.length>target2.innerText.length)target2=t}
     const tbody2=target2?(target2.querySelector('tbody')||target2):null;
     const sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sC=document.getElementById('ali_search_count');
     function filterTbl(){
