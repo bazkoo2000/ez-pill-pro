@@ -35,7 +35,8 @@ javascript:(function(){
     isProcessing: false,
     isSyncing: false,
     openedCount: 0,
-    tbody: null
+    tbody: null,
+    noNewStreak: 0
   };
   // حساب عدد الصفحات من الـ Pagination
   const pNodes = Array.from(document.querySelectorAll('.pagination a, .pagination li, .pagination span'))
@@ -169,7 +170,7 @@ javascript:(function(){
               '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
               '<div style="display:flex;align-items:center;gap:6px">' +
                 '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-                '<input type="number" id="p_lim" value="99" min="1" style="width:48px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
+                '<input type="number" id="p_lim" value="200" min="1" style="width:48px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
               '</div>' +
             '</div>' +
             '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
@@ -237,6 +238,37 @@ javascript:(function(){
       timer = setTimeout(fn, delay);
     };
   }
+  // كشف زر التالي الذكي (الإصلاح الرئيسي)
+  function findNextButton() {
+    const selectors = [
+      '.pagination .next a', '.pagination li.next a', '.pagination li.next button',
+      'a[rel="next"]', '.next a', 'a.next', 'button.next',
+      'a[title*="التالي"]', 'a[title*="التالية"]',
+      '.pagination a:last-of-type'
+    ];
+    for (let sel of selectors) {
+      const els = document.querySelectorAll(sel);
+      for (let el of els) {
+        if (isButtonEnabled(el)) return el;
+      }
+    }
+    const links = document.querySelectorAll('.pagination a, .pagination button, .pagination li a');
+    for (let el of links) {
+      const text = (el.innerText || el.textContent || '').trim().toLowerCase();
+      if (text === '»' || text === '›' || text.includes('التال') || text === 'next') {
+        if (isButtonEnabled(el)) return el;
+      }
+    }
+    return null;
+  }
+  function isButtonEnabled(el) {
+    if (!el) return false;
+    return !el.disabled &&
+           el.getAttribute('disabled') !== 'true' &&
+           el.getAttribute('aria-disabled') !== 'true' &&
+           !el.classList.contains('disabled') &&
+           !(el.parentElement && el.parentElement.classList.contains('disabled'));
+  }
   // ═══════════════════════════════════════════
   // Header Events
   // ═══════════════════════════════════════════
@@ -288,7 +320,7 @@ javascript:(function(){
     return { newCount: newCount, noArgs: noArgsCount };
   }
   // ═══════════════════════════════════════════
-  // Page Scanner - المعدل الجديد (يجيب كل الصفحات حتى 99)
+  // Page Scanner
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
   function scanPage(curr, total, isSync) {
@@ -303,28 +335,19 @@ javascript:(function(){
     var result = collectFromCurrentPage();
     totalNoArgs += result.noArgs;
     updateStats();
-    // إيقاف مبكر لو مفيش طلبات جديدة (حماية)
-    if (curr > 5 && result.newCount === 0) {
-      finishScan(isSync);
-      return;
+    // إيقاف آمن لو 3 صفحات متتالية بدون جديد
+    if (result.newCount === 0) {
+      state.noNewStreak++;
+      if (state.noNewStreak >= 3) {
+        finishScan(isSync);
+        return;
+      }
+    } else {
+      state.noNewStreak = 0;
     }
     if (curr < total) {
-      var nxt = null;
-      // أولوية أولى: زر التالي (يدعم 25-100 صفحة حتى لو الأرقام مخفية)
-      var candidates = document.querySelectorAll('.pagination a, .pagination li>a, .pagination .next>a, a[rel="next"], .next, button.next, a');
-      for (var j = 0; j < candidates.length; j++) {
-        var el = candidates[j];
-        var txt = (el.innerText || el.textContent || '').trim();
-        var cls = (el.className || '').toLowerCase();
-        if (txt === '»' || txt === '›' || txt === 'التالي' || txt === 'التالية' || 
-            txt.toLowerCase() === 'next' || cls.includes('next') || 
-            el.getAttribute('rel') === 'next' ||
-            (el.parentElement && (el.parentElement.className || '').toLowerCase().includes('next'))) {
-          nxt = el;
-          break;
-        }
-      }
-      // احتياطي: رقم الصفحة التالية
+      var nxt = findNextButton();
+      // fallback للطريقة القديمة
       if (!nxt) {
         var allLinks = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
         for (var i = 0; i < allLinks.length; i++) {
@@ -336,7 +359,7 @@ javascript:(function(){
       }
       if (nxt) {
         nxt.click();
-        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 15000);
+        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 18000);
       } else {
         finishScan(isSync);
       }
@@ -363,7 +386,6 @@ javascript:(function(){
       state.tbody.appendChild(state.savedRows[i].node);
     }
     updateStats(state.savedRows.length);
-    // تنبيه الطلبات بدون args
     if (totalNoArgs > 0) {
       showToast(totalNoArgs + ' طلب بدون بيانات فتح (لن يتم فتحها)', 'warning');
     }
@@ -374,7 +396,7 @@ javascript:(function(){
       setStatus('تم التجميع — ' + state.savedRows.length + ' طلب جاهز', 'done');
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
-    // بناء واجهة البحث
+    // بناء واجهة البحث (نفسها بالظبط)
     var mainBody = document.getElementById('ali_main_body');
     mainBody.innerHTML =
       '<div style="margin-bottom:10px">' +
@@ -398,7 +420,7 @@ javascript:(function(){
       '<button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:13px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">' +
         '🔄 مزامنة (تحديث + حذف المُغلق + إضافة الجديد)' +
       '</button>';
-    // ─── Search Logic ───
+    // ─── Search Logic ─── (نفسها)
     var sI = document.getElementById('ali_sI');
     var sO = document.getElementById('ali_sO');
     var searchCount = document.getElementById('ali_search_count');
@@ -463,7 +485,7 @@ javascript:(function(){
     var debouncedFilter = debounce(filterResults, 150);
     sI.addEventListener('input', debouncedFilter);
     sO.addEventListener('input', debouncedFilter);
-    // ─── Open Button ───
+    // ─── Open Button ─── (بدون دايلوج)
     openBtn.addEventListener('click', async function() {
       var rawInvoice = sI.value.trim();
       var orderSearch = sO.value.trim().toLowerCase();
@@ -478,16 +500,10 @@ javascript:(function(){
       var openable = currentMatches.filter(function(r) { return r.args !== null; });
       var skipped = currentMatches.length - openable.length;
       if (openable.length === 0) {
-        if (skipped > 0) {
-          showToast(skipped + ' طلب مطابق لكن بدون بيانات فتح!', 'error');
-        } else {
-          showToast('لا توجد طلبات مطابقة!', 'warning');
-        }
+        showToast(skipped > 0 ? skipped + ' طلب مطابق لكن بدون بيانات فتح!' : 'لا توجد طلبات مطابقة!', skipped > 0 ? 'error' : 'warning');
         return;
       }
-      if (skipped > 0) {
-        showToast('⚠️ تم تخطي ' + skipped + ' طلب بدون بيانات فتح', 'warning');
-      }
+      if (skipped > 0) showToast('⚠️ تم تخطي ' + skipped + ' طلب بدون بيانات فتح', 'warning');
       openBtn.disabled = true;
       openBtn.style.opacity = '0.6';
       openBtn.style.cursor = 'not-allowed';
@@ -556,8 +572,9 @@ javascript:(function(){
       showToast('جاري المزامنة...', 'info');
       state.visitedSet.clear();
       state.savedRows = [];
+      state.noNewStreak = 0;
       totalNoArgs = 0;
-      var pages = parseInt(document.getElementById('p_lim').value) || 99;
+      var pages = parseInt(document.getElementById('p_lim').value) || 200;
       scanPage(1, pages, true);
     });
   }
@@ -570,8 +587,9 @@ javascript:(function(){
     this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري التجميع...';
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
+    state.noNewStreak = 0;
     totalNoArgs = 0;
-    var pages = parseInt(document.getElementById('p_lim').value) || 99;
+    var pages = parseInt(document.getElementById('p_lim').value) || 200;
     scanPage(1, pages, false);
   });
 })();
