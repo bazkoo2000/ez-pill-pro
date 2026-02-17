@@ -313,7 +313,6 @@ javascript:(function(){
         }
       }
       if (!nxt) {
-        // فال باك لزر التالي - يدعم 25 صفحة وأكتر بدون توقف
         var candidates = document.querySelectorAll('.pagination a, .pagination li>a, .pagination .next>a, a[rel="next"], .next');
         for (var j = 0; j < candidates.length; j++) {
           var el = candidates[j];
@@ -404,7 +403,6 @@ javascript:(function(){
     var currentMatches = [];
     function filterResults() {
       var rawInvoice = sI.value.trim();
-      // إضافة 0 للمقارنة فقط — بدون تغيير محتوى الخانة
       var invoiceSearch = rawInvoice !== '' ? '0' + rawInvoice : '';
       var orderSearch = sO.value.trim().toLowerCase();
       state.tbody.innerHTML = '';
@@ -424,7 +422,6 @@ javascript:(function(){
       }
       searchCount.innerText = 'عرض ' + shown + ' من ' + state.savedRows.length + ' نتيجة';
       updateStats(shown);
-      // تحديث زر الفتح
       if (hasFilter && currentMatches.length > 0) {
         var openable = currentMatches.filter(function(r) { return r.args !== null; }).length;
         openBtn.innerHTML = '⚡ فتح المطابق (' + openable + ' طلب)';
@@ -439,7 +436,6 @@ javascript:(function(){
         openBtn.style.opacity = '0.7';
         openBtn.style.cursor = 'not-allowed';
       }
-      // تلوين خانة الفاتورة
       if (rawInvoice.length > 0 && shown === 0) {
         sI.style.borderColor = '#ef4444';
         sI.style.background = '#fef2f2';
@@ -450,7 +446,6 @@ javascript:(function(){
         sI.style.borderColor = '#e2e8f0';
         sI.style.background = '#f8fafc';
       }
-      // تلوين خانة الطلب
       if (orderSearch.length > 0 && shown === 0) {
         sO.style.borderColor = '#ef4444';
         sO.style.background = '#fef2f2';
@@ -477,7 +472,6 @@ javascript:(function(){
         setTimeout(function() { sI.style.animation = ''; }, 1500);
         return;
       }
-      // فلترة اللي يتفتحوا (عندهم args)
       var openable = currentMatches.filter(function(r) { return r.args !== null; });
       var skipped = currentMatches.length - openable.length;
       if (openable.length === 0) {
@@ -488,33 +482,9 @@ javascript:(function(){
         }
         return;
       }
-      // دايلوج تأكيد
-      var dialogInfo = [
-        { label: 'عدد الطلبات', value: openable.length + ' طلب', color: '#10b981' },
-        { label: 'الوقت المتوقع', value: '~' + Math.ceil(openable.length * 1.2) + ' ثانية', color: '#f59e0b' }
-      ];
-      if (rawInvoice) {
-        dialogInfo.push({ label: 'فلتر الفاتورة', value: '0' + rawInvoice, color: '#3b82f6' });
-      }
-      if (orderSearch) {
-        dialogInfo.push({ label: 'فلتر الطلب', value: orderSearch, color: '#8b5cf6' });
-      }
       if (skipped > 0) {
-        dialogInfo.push({ label: '⚠️ تم تخطي', value: skipped + ' طلب (بدون بيانات)', color: '#ef4444' });
+        showToast('⚠️ تم تخطي ' + skipped + ' طلب بدون بيانات فتح', 'warning');
       }
-      var result = await showDialog({
-        icon: '📂',
-        iconColor: 'blue',
-        title: 'فتح الطلبات المطابقة',
-        desc: 'سيتم فتح ' + openable.length + ' طلب في نوافذ منفصلة',
-        info: dialogInfo,
-        buttons: [
-          { text: 'إلغاء', value: 'cancel' },
-          { text: '✅ تأكيد الفتح', value: 'confirm', style: 'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(16,185,129,0.3)' }
-        ]
-      });
-      if (result !== 'confirm') return;
-      // بدء الفتح
       openBtn.disabled = true;
       openBtn.style.opacity = '0.6';
       openBtn.style.cursor = 'not-allowed';
@@ -526,11 +496,12 @@ javascript:(function(){
         var url = base + "?onlineNumber=" + item.args[0].replace("ERX", "") +
           "&Invoice=" + item.args[1] + "&typee=" + item.args[2] + "&head_id=" + item.args[3];
         try {
-          var w = window.open(url, "_blank", "noopener,noreferrer");
+          var w = window.open(url, "_blank");
           if (w) {
             opened++;
             state.openedCount++;
-            window.focus();   // الحفاظ على التركيز على الصفحة الرئيسية
+            window.focus();
+            try { w.blur(); } catch(e){}
           } else {
             failed++;
           }
@@ -544,39 +515,10 @@ javascript:(function(){
           await new Promise(function(resolve) { setTimeout(resolve, 1200); });
         }
       }
-      // نتيجة الفتح
-      if (failed > 0) {
-        await showDialog({
-          icon: '⚠️',
-          iconColor: 'red',
-          title: 'تنبيه',
-          desc: 'تعذر فتح ' + failed + ' نافذة — تأكد من السماح بالنوافذ المنبثقة',
-          info: [
-            { label: 'تم فتحها', value: opened.toString(), color: '#10b981' },
-            { label: 'فشلت', value: failed.toString(), color: '#ef4444' }
-          ],
-          buttons: [
-            { text: '👍 حسناً', value: 'ok', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white' }
-          ]
-        });
-      } else {
-        await showDialog({
-          icon: '🎉',
-          iconColor: 'green',
-          title: 'تم بنجاح!',
-          desc: 'تم فتح جميع الطلبات المطابقة',
-          info: [
-            { label: 'تم فتحها', value: opened + ' طلب', color: '#10b981' },
-            { label: 'إجمالي المفتوح', value: state.openedCount + ' طلب', color: '#3b82f6' }
-          ],
-          buttons: [
-            { text: '👍 إغلاق', value: 'ok', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white' }
-          ]
-        });
-      }
-      showToast('تم فتح ' + opened + ' طلب', opened > 0 ? 'success' : 'error');
+      showToast('تم فتح ' + opened + ' طلب (فشل ' + failed + ')', opened > 0 ? 'success' : 'error');
       setStatus('تم فتح ' + opened + ' — الإجمالي: ' + state.openedCount, 'done');
       openBtn.disabled = false;
+      openBtn.innerHTML = '⚡ فتح المطابق (' + openable.length + ' طلب)';
       filterResults();
     });
     // ─── Sync Button ───
@@ -609,7 +551,6 @@ javascript:(function(){
       syncBtn.style.borderColor = '#3b82f6';
       syncBtn.style.color = '#1d4ed8';
       showToast('جاري المزامنة...', 'info');
-      // مسح وإعادة تجميع
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
