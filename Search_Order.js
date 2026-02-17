@@ -2,22 +2,30 @@ javascript:(function(){
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════════
-  // EZ-PILL PRO v4.3 — إصلاح مشكلة الصفحات
-  // المطور: علي الباز
+  // EZ-PILL PRO v4.1 - النسخة المطوّرة والمصلّحة
+  // المطور الأصلي: علي الباز
   // ═══════════════════════════════════════════════════════════════════
   //
   // ┌─────────────────────────────────────────────────────────────────┐
-  // │  إصلاحات v4.3                                                 │
+  // │  إصلاحات v4.1                                                 │
   // ├─────────────────────────────────────────────────────────────────┤
-  // │  ✅ رجوع لنفس selector بتاع v4.1 (.pagination li)            │
-  // │  ✅ وضع "مسح لا نهائي" — يفضل يدوّر لحد ما يخلص             │
-  // │  ✅ لو مفيش داتا جديدة في صفحة → يوقف تلقائي                 │
-  // │  ✅ Scan Log لمتابعة كل خطوة                                  │
-  // │  ✅ window.focus() بعد فتح كل طلب                             │
+  // │  ✅ إزالة سطر javascript الزائد                               │
+  // │  ✅ إصلاح منطق الـ 0 في البحث (لا يغير قيمة الـ input)        │
+  // │  ✅ حذف دالة smartSync الميتة                                  │
+  // │  ✅ إضافة تنبيه للطلبات بدون args                              │
+  // │  ✅ إضافة Debounce للبحث                                       │
+  // │  ✅ حماية من تشغيل المزامنة مرتين                              │
+  // │  ✅ عداد أوضح لما مفيش فلتر                                   │
+  // │  ✅ تحسين الأنيميشن بـ requestAnimationFrame                   │
+  // │  ✅ إضافة عداد الطلبات بدون args + تحذير                      │
+  // │  ✅ إضافة زر "فتح الكل" + "فتح المطابق"                      │
+  // │  ✅ تلوين ذكي لخانة البحث                                     │
+  // │  ✅ حساب الصفحات التلقائي أدق                                 │
+  // │  ✅ دايلوج إنجاز المزامنة مع مقارنة (قبل/بعد)                │
   // └─────────────────────────────────────────────────────────────────┘
 
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.3';
+  const VERSION = '4.1';
   const VER_KEY = 'ezpill_ver';
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -161,7 +169,7 @@ javascript:(function(){
           '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">EZ-PILL PRO</h3>' +
         '</div>' +
         '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.3</span>' +
+          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.1</span>' +
         '</div>' +
       '</div>' +
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">' +
@@ -173,21 +181,19 @@ javascript:(function(){
         '<div id="ali_main_body">' +
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-              '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات (0 = لا نهائي)</span>' +
+              '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
               '<div style="display:flex;align-items:center;gap:6px">' +
                 '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-                '<input type="number" id="p_lim" value="0" min="0" style="width:48px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
+                '<input type="number" id="p_lim" value="' + defaultPages + '" min="1" style="width:48px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
               '</div>' +
             '</div>' +
-            '<div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:8px">0 = مسح كل الصفحات تلقائياً حتى النهاية</div>' +
             '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
               '<div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd);border-radius:10px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1)"></div>' +
             '</div>' +
           '</div>' +
-          '<div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">' +
-            '<span>✅</span><span>جاهز — اضغط بدء (0 = مسح لا نهائي)</span>' +
+          '<div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">' +
+            '<span>✅</span><span>جاهز لبدء تجميع البيانات</span>' +
           '</div>' +
-          '<div id="ali_scan_log" style="display:none;background:#1e293b;border-radius:12px;padding:10px;margin-bottom:12px;max-height:120px;overflow-y:auto;font-size:11px;color:#94a3b8;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div>' +
           '<button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">' +
             '🚀 بدء تجميع البيانات' +
           '</button>' +
@@ -223,7 +229,7 @@ javascript:(function(){
     var iconHTML = c.icon === 'spinner'
       ? '<div style="width:16px;height:16px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite;flex-shrink:0"></div>'
       : '<span>' + c.icon + '</span>';
-    el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:600;background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.border + ';transition:all 0.3s';
+    el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.border + ';transition:all 0.3s';
     el.innerHTML = iconHTML + '<span>' + text + '</span>';
   }
 
@@ -243,19 +249,13 @@ javascript:(function(){
     animNum('stat_opened', state.openedCount);
   }
 
+  // Debounce
   function debounce(fn, delay) {
     var timer;
-    return function() { clearTimeout(timer); timer = setTimeout(fn, delay); };
-  }
-
-  function addScanLog(msg) {
-    var el = document.getElementById('ali_scan_log');
-    if (!el) return;
-    el.style.display = 'block';
-    var d = document.createElement('div');
-    d.textContent = msg;
-    el.appendChild(d);
-    el.scrollTop = el.scrollHeight;
+    return function() {
+      clearTimeout(timer);
+      timer = setTimeout(fn, delay);
+    };
   }
 
   // ═══════════════════════════════════════════
@@ -278,7 +278,7 @@ javascript:(function(){
   });
 
   // ═══════════════════════════════════════════
-  //  Data Collection — نفس v4.1 بالظبط
+  //  Data Collection
   // ═══════════════════════════════════════════
   function collectFromCurrentPage() {
     var newCount = 0;
@@ -313,62 +313,37 @@ javascript:(function(){
     return { newCount: newCount, noArgs: noArgsCount };
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  //  Page Scanner — نفس v4.1 selector + وضع لا نهائي
-  //
-  //  الفرق: لو الصفحات = 0 → يفضل يدوّر لحد ما:
-  //    1. مفيش داتا جديدة
-  //    2. مش لاقي زر الصفحة التالية
-  //    3. حد أقصى 50 صفحة (أمان)
-  // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  //  Page Scanner
+  // ═══════════════════════════════════════════
   var totalNoArgs = 0;
 
   function scanPage(curr, total, isSync) {
     state.isProcessing = true;
-
-    var isInfinite = (total === 0);
-    var displayTotal = isInfinite ? '∞' : total;
-
     var fill = document.getElementById('p-fill');
-    if (fill) {
-      if (isInfinite) {
-        // بالس أنيميشن للوضع اللانهائي
-        fill.style.width = '100%';
-        fill.style.opacity = '0.4';
-        fill.style.animation = 'aliBlink 1.5s infinite';
-      } else {
-        fill.style.width = ((curr / total) * 100) + '%';
-        fill.style.opacity = '1';
-        fill.style.animation = '';
-      }
-    }
+    if (fill) fill.style.width = ((curr / total) * 100) + '%';
 
     if (isSync) {
-      setStatus('مزامنة الصفحة ' + curr + '/' + displayTotal + '...', 'sync');
+      setStatus('مزامنة الصفحة ' + curr + ' من ' + total + '...', 'sync');
     } else {
-      setStatus('تحليل الصفحة ' + curr + '/' + displayTotal + ' — ' + state.savedRows.length + ' طلب', 'working');
+      setStatus('تحليل الصفحة ' + curr + ' من ' + total + ' ... تم رصد ' + state.savedRows.length + ' طلب', 'working');
     }
 
-    var beforeCount = state.savedRows.length;
     var result = collectFromCurrentPage();
-    var newInThisPage = state.savedRows.length - beforeCount;
     totalNoArgs += result.noArgs;
     updateStats();
 
-    addScanLog('📄 صفحة ' + curr + ': +' + newInThisPage + ' جديد (إجمالي: ' + state.savedRows.length + ')');
+    // ══════ DEBUG — افتح Console (F12) لو حبيت تشوف إيه بيحصل ══════
+    console.log('[EZ-PILL] صفحة ' + curr + '/' + total + ' → جديد: ' + result.newCount + ' | إجمالي: ' + state.savedRows.length);
 
-    // هل نكمل؟
-    var shouldContinue = false;
-    if (isInfinite) {
-      // وضع لا نهائي: نكمل لو لقينا داتا جديدة + مش وصلنا 50
-      shouldContinue = (newInThisPage > 0 && curr < 50);
-    } else {
-      shouldContinue = (curr < total);
-    }
-
-    if (shouldContinue) {
-      // ═══ نفس selector بتاع v4.1 بالظبط ═══
+    if (curr < total) {
       var allLinks = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
+
+      // DEBUG: سجّل كل عناصر الـ pagination
+      var pTexts = [];
+      for (var p = 0; p < allLinks.length; p++) { pTexts.push(allLinks[p].innerText.trim()); }
+      console.log('[EZ-PILL] pagination elements: [' + pTexts.join(', ') + ']');
+
       var nxt = null;
       for (var i = 0; i < allLinks.length; i++) {
         if (allLinks[i].innerText.trim() == String(curr + 1)) {
@@ -377,39 +352,28 @@ javascript:(function(){
         }
       }
 
-      if (nxt) {
-        nxt.click();
-        addScanLog('⏳ ضغط صفحة ' + (curr + 1) + ' — انتظار 11 ثانية...');
-        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 11000);
-      } else {
-        // مش لاقي الرقم — جرّب Next / >
-        var nextBtn = null;
+      // ══════ FIX: لو مش لاقي الرقم، جرّب > أو Next ══════
+      if (!nxt) {
+        console.log('[EZ-PILL] ⚠️ مش لاقي رقم ' + (curr + 1) + ' — بجرّب Next/> ...');
         var nextTexts = ['>', '»', '>>', 'Next', 'next', 'التالي', '›'];
         for (var j = 0; j < allLinks.length; j++) {
           var txt = allLinks[j].innerText.trim();
           for (var k = 0; k < nextTexts.length; k++) {
-            if (txt === nextTexts[k]) { nextBtn = allLinks[j]; break; }
+            if (txt === nextTexts[k]) { nxt = allLinks[j]; break; }
           }
-          if (nextBtn) break;
+          if (nxt) break;
         }
+      }
 
-        if (nextBtn) {
-          nextBtn.click();
-          addScanLog('⏳ ضغط [' + nextBtn.innerText.trim() + '] — انتظار 11 ثانية...');
-          setTimeout(function() { scanPage(curr + 1, total, isSync); }, 11000);
-        } else {
-          addScanLog('🏁 مفيش صفحات تانية — انتهى عند صفحة ' + curr);
-          if (isInfinite && newInThisPage === 0) {
-            addScanLog('✅ توقف تلقائي: مفيش داتا جديدة');
-          }
-          finishScan(isSync);
-        }
+      if (nxt) {
+        console.log('[EZ-PILL] ✅ ضغط: "' + nxt.innerText.trim() + '"');
+        nxt.click();
+        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 11000);
+      } else {
+        console.log('[EZ-PILL] ❌ مفيش زر صفحة تالية — توقف');
+        finishScan(isSync);
       }
     } else {
-      if (isInfinite && newInThisPage === 0) {
-        addScanLog('✅ توقف تلقائي: صفحة ' + curr + ' فاضية');
-      }
-      addScanLog('🎉 تم فحص ' + curr + ' صفحة!');
       finishScan(isSync);
     }
   }
@@ -420,10 +384,6 @@ javascript:(function(){
   function finishScan(isSync) {
     state.isProcessing = false;
     state.isSyncing = false;
-
-    // progress bar reset
-    var fill = document.getElementById('p-fill');
-    if (fill) { fill.style.width = '100%'; fill.style.opacity = '1'; fill.style.animation = ''; }
 
     // ترتيب الجدول الأصلي
     var tables = document.querySelectorAll('table');
@@ -456,6 +416,7 @@ javascript:(function(){
     // بناء واجهة البحث
     var mainBody = document.getElementById('ali_main_body');
     mainBody.innerHTML =
+      // بحث بالفاتورة مع 0 ثابت
       '<div style="margin-bottom:10px">' +
         '<div style="position:relative">' +
           '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;color:#94a3b8;z-index:1;pointer-events:none;font-family:monospace">0</span>' +
@@ -463,6 +424,7 @@ javascript:(function(){
         '</div>' +
       '</div>' +
 
+      // بحث بالطلب
       '<div style="margin-bottom:10px">' +
         '<div style="position:relative">' +
           '<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;z-index:1;pointer-events:none">🔗</span>' +
@@ -470,14 +432,17 @@ javascript:(function(){
         '</div>' +
       '</div>' +
 
+      // عداد النتائج
       '<div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:2px 0 12px">' +
         'عرض ' + state.savedRows.length + ' من ' + state.savedRows.length + ' نتيجة' +
       '</div>' +
 
+      // زر الفتح
       '<button id="ali_btn_open" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 15px rgba(16,185,129,0.3);transition:all 0.3s;margin-bottom:8px">' +
         '⚡ ابحث أولاً ثم افتح المطابق' +
       '</button>' +
 
+      // زر المزامنة
       '<button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:13px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">' +
         '🔄 مزامنة (تحديث + حذف المُغلق + إضافة الجديد)' +
       '</button>';
@@ -491,6 +456,7 @@ javascript:(function(){
 
     function filterResults() {
       var rawInvoice = sI.value.trim();
+      // إضافة 0 للمقارنة فقط — بدون تغيير محتوى الخانة
       var invoiceSearch = rawInvoice !== '' ? '0' + rawInvoice : '';
       var orderSearch = sO.value.trim().toLowerCase();
 
@@ -515,6 +481,7 @@ javascript:(function(){
       searchCount.innerText = 'عرض ' + shown + ' من ' + state.savedRows.length + ' نتيجة';
       updateStats(shown);
 
+      // تحديث زر الفتح
       if (hasFilter && currentMatches.length > 0) {
         var openable = currentMatches.filter(function(r) { return r.args !== null; }).length;
         openBtn.innerHTML = '⚡ فتح المطابق (' + openable + ' طلب)';
@@ -530,10 +497,29 @@ javascript:(function(){
         openBtn.style.cursor = 'not-allowed';
       }
 
-      sI.style.borderColor = rawInvoice.length > 0 ? (shown > 0 ? '#10b981' : '#ef4444') : '#e2e8f0';
-      sI.style.background = rawInvoice.length > 0 ? (shown > 0 ? '#f0fdf4' : '#fef2f2') : '#f8fafc';
-      sO.style.borderColor = orderSearch.length > 0 ? (shown > 0 ? '#10b981' : '#ef4444') : '#e2e8f0';
-      sO.style.background = orderSearch.length > 0 ? (shown > 0 ? '#f0fdf4' : '#fef2f2') : '#f8fafc';
+      // تلوين خانة الفاتورة
+      if (rawInvoice.length > 0 && shown === 0) {
+        sI.style.borderColor = '#ef4444';
+        sI.style.background = '#fef2f2';
+      } else if (rawInvoice.length > 0 && shown > 0) {
+        sI.style.borderColor = '#10b981';
+        sI.style.background = '#f0fdf4';
+      } else {
+        sI.style.borderColor = '#e2e8f0';
+        sI.style.background = '#f8fafc';
+      }
+
+      // تلوين خانة الطلب
+      if (orderSearch.length > 0 && shown === 0) {
+        sO.style.borderColor = '#ef4444';
+        sO.style.background = '#fef2f2';
+      } else if (orderSearch.length > 0 && shown > 0) {
+        sO.style.borderColor = '#10b981';
+        sO.style.background = '#f0fdf4';
+      } else {
+        sO.style.borderColor = '#e2e8f0';
+        sO.style.background = '#f8fafc';
+      }
     }
 
     var debouncedFilter = debounce(filterResults, 150);
@@ -554,6 +540,7 @@ javascript:(function(){
         return;
       }
 
+      // فلترة اللي يتفتحوا (عندهم args)
       var openable = currentMatches.filter(function(r) { return r.args !== null; });
       var skipped = currentMatches.length - openable.length;
 
@@ -566,10 +553,18 @@ javascript:(function(){
         return;
       }
 
+      // دايلوج تأكيد
       var dialogInfo = [
         { label: 'عدد الطلبات', value: openable.length + ' طلب', color: '#10b981' },
         { label: 'الوقت المتوقع', value: '~' + Math.ceil(openable.length * 1.2) + ' ثانية', color: '#f59e0b' }
       ];
+
+      if (rawInvoice) {
+        dialogInfo.push({ label: 'فلتر الفاتورة', value: '0' + rawInvoice, color: '#3b82f6' });
+      }
+      if (orderSearch) {
+        dialogInfo.push({ label: 'فلتر الطلب', value: orderSearch, color: '#8b5cf6' });
+      }
       if (skipped > 0) {
         dialogInfo.push({ label: '⚠️ تم تخطي', value: skipped + ' طلب (بدون بيانات)', color: '#ef4444' });
       }
@@ -578,7 +573,7 @@ javascript:(function(){
         icon: '📂',
         iconColor: 'blue',
         title: 'فتح الطلبات المطابقة',
-        desc: 'سيتم فتح ' + openable.length + ' طلب — الصفحة الرئيسية ستبقى أمامك',
+        desc: 'سيتم فتح ' + openable.length + ' طلب في نوافذ منفصلة',
         info: dialogInfo,
         buttons: [
           { text: 'إلغاء', value: 'cancel' },
@@ -588,6 +583,7 @@ javascript:(function(){
 
       if (result !== 'confirm') return;
 
+      // بدء الفتح
       openBtn.disabled = true;
       openBtn.style.opacity = '0.6';
       openBtn.style.cursor = 'not-allowed';
@@ -606,8 +602,6 @@ javascript:(function(){
           if (w) {
             opened++;
             state.openedCount++;
-            w.blur();
-            window.focus();
           } else {
             failed++;
           }
@@ -624,13 +618,40 @@ javascript:(function(){
         }
       }
 
+      // نتيجة الفتح
       if (failed > 0) {
-        showToast('تم فتح ' + opened + ' — فشل ' + failed + ' (فعّل النوافذ المنبثقة)', 'warning');
+        await showDialog({
+          icon: '⚠️',
+          iconColor: 'red',
+          title: 'تنبيه',
+          desc: 'تعذر فتح ' + failed + ' نافذة — تأكد من السماح بالنوافذ المنبثقة',
+          info: [
+            { label: 'تم فتحها', value: opened.toString(), color: '#10b981' },
+            { label: 'فشلت', value: failed.toString(), color: '#ef4444' }
+          ],
+          buttons: [
+            { text: '👍 حسناً', value: 'ok', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white' }
+          ]
+        });
       } else {
-        showToast('تم فتح ' + opened + ' طلب بنجاح', 'success');
+        await showDialog({
+          icon: '🎉',
+          iconColor: 'green',
+          title: 'تم بنجاح!',
+          desc: 'تم فتح جميع الطلبات المطابقة',
+          info: [
+            { label: 'تم فتحها', value: opened + ' طلب', color: '#10b981' },
+            { label: 'إجمالي المفتوح', value: state.openedCount + ' طلب', color: '#3b82f6' }
+          ],
+          buttons: [
+            { text: '👍 إغلاق', value: 'ok', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white' }
+          ]
+        });
       }
 
+      showToast('تم فتح ' + opened + ' طلب', opened > 0 ? 'success' : 'error');
       setStatus('تم فتح ' + opened + ' — الإجمالي: ' + state.openedCount, 'done');
+
       openBtn.disabled = false;
       filterResults();
     });
@@ -652,7 +673,8 @@ javascript:(function(){
         desc: 'سيتم إعادة فحص الصفحات لتحديث القائمة',
         info: [
           { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
-          { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' }
+          { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' },
+          { label: 'الصفحات', value: (document.getElementById('p_lim').value || '1') + ' صفحة', color: '#f59e0b' }
         ],
         buttons: [
           { text: 'إلغاء', value: 'cancel' },
@@ -670,15 +692,13 @@ javascript:(function(){
 
       showToast('جاري المزامنة...', 'info');
 
+      // مسح وإعادة تجميع
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
 
-      var logEl = document.getElementById('ali_scan_log');
-      if (logEl) logEl.innerHTML = '';
-
-      // المزامنة دائماً لا نهائية (0)
-      scanPage(1, 0, true);
+      var pages = parseInt(document.getElementById('p_lim').value) || 1;
+      scanPage(1, pages, true);
     });
   }
 
@@ -692,25 +712,7 @@ javascript:(function(){
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
     totalNoArgs = 0;
-
-    var pages = parseInt(document.getElementById('p_lim').value);
-    if (isNaN(pages) || pages < 0) pages = 0;
-
-    var logEl = document.getElementById('ali_scan_log');
-    if (logEl) logEl.innerHTML = '';
-
-    addScanLog('🚀 بدء المسح — وضع: ' + (pages === 0 ? 'لا نهائي (حتى النهاية)' : pages + ' صفحة'));
-
-    // تسجيل عناصر الـ pagination للتشخيص
-    var paginationEls = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
-    addScanLog('🔍 عناصر pagination: ' + paginationEls.length + ' عنصر');
-    var pTexts = [];
-    for (var p = 0; p < Math.min(paginationEls.length, 15); p++) {
-      pTexts.push('"' + paginationEls[p].innerText.trim() + '"');
-    }
-    if (pTexts.length > 0) addScanLog('   → ' + pTexts.join(', '));
-
-    scanPage(1, pages, false);
+    scanPage(1, parseInt(document.getElementById('p_lim').value) || 1, false);
   });
 
 })();
