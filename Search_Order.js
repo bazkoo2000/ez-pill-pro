@@ -45,7 +45,27 @@ javascript:(function(){
   const pNodes = Array.from(document.querySelectorAll('.pagination a, .pagination li, .pagination span'))
     .map(el => parseInt(el.innerText.trim()))
     .filter(n => !isNaN(n) && n > 0);
-  const defaultPages = pNodes.length > 0 ? Math.max(...pNodes) : 1;
+  var defaultPages = pNodes.length > 0 ? Math.max(...pNodes) : 1;
+
+  // ═══ FIX: كشف عدد الطلبات والصفحات من nextOrdersTableMenu ═══
+  var _autoDetected = (function() {
+    var btn = document.querySelector('a[onclick*="nextOrdersTableMenu"]');
+    if (btn) {
+      var m = btn.getAttribute('onclick').match(/nextOrdersTableMenu\(\d+,(\d+)\)/);
+      if (m) {
+        var totalOrders = parseInt(m[1]);
+        var rowsNow = document.querySelectorAll('table tr td:first-child').length;
+        var perPage = rowsNow > 0 ? rowsNow : 10;
+        var totalPages = Math.ceil(totalOrders / perPage);
+        return { totalOrders: totalOrders, perPage: perPage, totalPages: totalPages };
+      }
+    }
+    return null;
+  })();
+  if (_autoDetected) {
+    defaultPages = _autoDetected.totalPages;
+    state._totalOrders = _autoDetected.totalOrders;
+  }
 
   // ═══════════════════════════════════════════
   //  Toast Notifications
@@ -333,46 +353,21 @@ javascript:(function(){
     totalNoArgs += result.noArgs;
     updateStats();
 
-    // ══════ DEBUG — افتح Console (F12) لو حبيت تشوف إيه بيحصل ══════
-    console.log('[EZ-PILL] صفحة ' + curr + '/' + total + ' → جديد: ' + result.newCount + ' | إجمالي: ' + state.savedRows.length);
-
     if (curr < total) {
-      var allLinks = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
-
-      // DEBUG: سجّل كل عناصر الـ pagination
-      var pTexts = [];
-      for (var p = 0; p < allLinks.length; p++) { pTexts.push(allLinks[p].innerText.trim()); }
-      console.log('[EZ-PILL] pagination elements: [' + pTexts.join(', ') + ']');
-
-      var nxt = null;
-      for (var i = 0; i < allLinks.length; i++) {
-        if (allLinks[i].innerText.trim() == String(curr + 1)) {
-          nxt = allLinks[i];
-          break;
-        }
-      }
-
-      // ══════ FIX: لو مش لاقي الرقم، جرّب > أو Next ══════
-      if (!nxt) {
-        console.log('[EZ-PILL] ⚠️ مش لاقي رقم ' + (curr + 1) + ' — بجرّب Next/> ...');
-        var nextTexts = ['>', '»', '>>', 'Next', 'next', 'التالي', '›'];
-        for (var j = 0; j < allLinks.length; j++) {
-          var txt = allLinks[j].innerText.trim();
-          for (var k = 0; k < nextTexts.length; k++) {
-            if (txt === nextTexts[k]) { nxt = allLinks[j]; break; }
-          }
-          if (nxt) break;
-        }
-      }
-
-      if (nxt) {
-        console.log('[EZ-PILL] ✅ ضغط: "' + nxt.innerText.trim() + '"');
-        nxt.click();
-        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 11000);
+      // ═══ FIX: نادي nextOrdersTableMenu مباشرة بدل الدوران على أزرار ═══
+      if (typeof nextOrdersTableMenu === 'function') {
+        nextOrdersTableMenu(curr + 1, state._totalOrders || total * 10);
       } else {
-        console.log('[EZ-PILL] ❌ مفيش زر صفحة تالية — توقف');
-        finishScan(isSync);
+        // fallback: دوّر على الزر بالطريقة القديمة
+        var allLinks = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
+        var nxt = null;
+        for (var i = 0; i < allLinks.length; i++) {
+          if (allLinks[i].innerText.trim() == String(curr + 1)) { nxt = allLinks[i]; break; }
+        }
+        if (nxt) { nxt.click(); }
+        else { finishScan(isSync); return; }
       }
+      setTimeout(function() { scanPage(curr + 1, total, isSync); }, 11000);
     } else {
       finishScan(isSync);
     }
