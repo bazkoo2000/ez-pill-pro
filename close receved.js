@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// مُنهي الطلبات v3.2 - إصلاح شامل لجمع البيانات بدقة متناهية
+// تقفيل الطلبات v3.2 - إصلاح شامل لجمع البيانات بدقة متناهية
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -332,7 +332,7 @@ javascript:(function(){
             <span id="ali_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer">−</span>
             <span id="ali_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>
           </div>
-          <h3 style="font-size:20px;font-weight:900;margin:0">مُنهي الطلبات</h3>
+          <h3 style="font-size:20px;font-weight:900;margin:0">تقفيل الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
           <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.2 Precision</span>
