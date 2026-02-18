@@ -1,189 +1,109 @@
-javascript:(function () {
-    /* ═══════════════════════════════════════════════════════
-     * رادار علي الباز المكتمل — الإصدار الذهبي V14.0
-     * دمج محرك V9 القوي مع تصميم V10 الزجاجي
-     * ═══════════════════════════════════════════════════════ */
-
-    var existingUI = document.getElementById('radar-ui');
-    if (existingUI) existingUI.remove();
-    var existingStyle = document.getElementById('radar-styles');
-    if (existingStyle) existingStyle.remove();
-
-    var BASE_URL = 'https://rtlapps.nahdi.sa/ez_pill_web/';
-    var READY_STATUSES = ['readypack'];
-    var ALL_STATUSES = ['readypack', 'packed', 'delivered', 'all', 'new', 'canceled'];
-    var TAB_OPEN_DELAY_MS = 1000;
-
-    var collectedLinks = [];
-    var isSearching = false;
-
-    var styleElement = document.createElement('style');
-    styleElement.id = 'radar-styles';
-    styleElement.textContent = `
-        #radar-ui{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:95%;max-width:880px;background:rgba(255,255,255,0.85);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.5);border-radius:24px;z-index:999999;box-shadow:0 20px 60px rgba(0,0,0,0.15);direction:rtl;font-family:Segoe UI,Tahoma,sans-serif;max-height:90vh;overflow:hidden;animation:radarIn .4s ease-out}
-        @keyframes radarIn{from{opacity:0;transform:translate(-50%,-45%) scale(0.95)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
-        .radar-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:rgba(255,255,255,0.4);border-bottom:1px solid rgba(0,0,0,0.05)}
-        .radar-logo{width:42px;height:42px;background:linear-gradient(135deg,#3b82f6,#10b981);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(59,130,246,0.2)}
-        .radar-body{padding:24px;overflow:auto;max-height:calc(90vh - 85px)}
-        .radar-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-        .radar-input-wrap{display:flex;border:1.5px solid rgba(0,0,0,0.1);border-radius:12px;overflow:hidden;background:#fff;margin-top:8px}
-        .radar-prefix{padding:12px;background:#3b82f6;color:#fff;font-weight:bold;min-width:45px;text-align:center}
-        .radar-input{flex:1;border:none;padding:12px;outline:none;font-size:14px;font-weight:600}
-        .radar-mode-btn{flex:1;padding:12px;border-radius:12px;border:1.5px solid rgba(0,0,0,0.06);background:#f8fafc;cursor:pointer;font-weight:bold;color:#64748b;transition:0.3s}
-        .radar-mode-btn.active{background:rgba(59,130,246,0.1);border-color:#3b82f6;color:#3b82f6}
-        .radar-start{grid-column:span 2;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-weight:bold;cursor:pointer;margin-top:10px;box-shadow:0 4px 15px rgba(59,130,246,0.3)}
-        .radar-progress-wrap{margin-top:20px;height:8px;border-radius:10px;background:#eee;overflow:hidden;display:none}
-        .radar-progress-bar{width:0%;height:100%;background:linear-gradient(90deg,#3b82f6,#10b981);transition:width 0.3s}
-        #radar-table{width:100%;border-collapse:separate;border-spacing:0 8px;margin-top:15px}
-        #radar-table th{color:#64748b;font-size:11px;padding:10px;text-transform:uppercase}
-        #radar-table td{background:rgba(255,255,255,0.7);padding:12px;text-align:center;border-radius:10px;font-size:13px;box-shadow:0 2px 5px rgba(0,0,0,0.02)}
-        .radar-badge{padding:4px 10px;border-radius:15px;background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:bold}
-        .radar-btn-action{flex:1;padding:11px;border-radius:12px;border:1.5px solid #3b82f6;background:rgba(59,130,246,0.05);color:#3b82f6;font-weight:bold;cursor:pointer;transition:0.2s}
+javascript:(function(){
+    const d=document;
+    if(d.getElementById('baz-ui'))d.getElementById('baz-ui').remove();
+    const s=d.createElement('style');
+    s.innerHTML=`
+        #baz-ui{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:95%;max-width:900px;background:#fff;z-index:999999;padding:25px;border-radius:20px;box-shadow:0 0 60px rgba(0,0,0,0.5);direction:rtl;font-family:sans-serif;max-height:85vh;overflow:auto;border-top:10px solid #1a73e8}
+        #baz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+        .search-container{display:grid;grid-template-columns:1fr 1fr;gap:15px;background:#f8f9fa;padding:20px;border-radius:15px;border:1px solid #eee}
+        .prefix{background:#1a73e8;color:#fff;padding:10px;border-radius:8px;font-weight:bold;min-width:45px;text-align:center}
+        input{flex:1;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:16px;outline:none}
+        .options-group{grid-column:span 2;display:flex;justify-content:center;gap:30px;margin-top:10px;padding:10px;background:#fff;border-radius:10px;border:1px dashed #1a73e8}
+        .options-group label{cursor:pointer;font-weight:bold;color:#444;display:flex;align-items:center;gap:8px}
+        .progress-wrap{width:100%;background:#eee;border-radius:10px;height:12px;margin:15px 0;display:none}
+        .progress-bar{width:0%;height:100%;background:#34a853;transition:width 0.2s}
+        .btn{padding:12px;border:none;border-radius:10px;cursor:pointer;font-weight:bold}
+        #baz-table{width:100%;border-collapse:collapse;margin-top:20px}
+        #baz-table th{background:#f1f3f4;color:#1a73e8;padding:12px;border-bottom:2px solid #1a73e8;position:sticky;top:0}
+        #baz-table td{padding:10px;border-bottom:1px solid #eee;text-align:center}
+        .status-badge{padding:4px 8px;border-radius:12px;font-size:11px;font-weight:bold;background:#e3f2fd;color:#1565c0}
     `;
-    document.head.appendChild(styleElement);
-
-    var ui = document.createElement('div');
-    ui.id = 'radar-ui';
-    ui.innerHTML = `
-        <div class="radar-header"><div style="display:flex;gap:12px;align-items:center"><div class="radar-logo">📡</div><div><h2 style="margin:0;font-size:18px">رادار علي الباز V14.0</h2><div style="font-size:11px;color:#64748b">إصدار التجميع الذهبي - المظبوط</div></div></div><button id="radar-close" style="border:none;background:none;cursor:pointer;font-size:20px;color:#94a3b8">✕</button></div>
-        <div class="radar-body">
-            <div class="radar-grid">
-                <div class="radar-field"><label style="font-weight:bold;font-size:12px;color:#64748b">الفاتورة / الصيدلية</label><div class="radar-input-wrap"><span class="radar-prefix">0</span><input class="radar-input" id="radar-store" placeholder="كود الصيدلية..."></div></div>
-                <div class="radar-field"><label style="font-weight:bold;font-size:12px;color:#64748b">رقم الطلب</label><div class="radar-input-wrap"><span class="radar-prefix">ERX</span><input class="radar-input" id="radar-order" placeholder="رقم الطلب..."></div></div>
-                <div class="radar-modes" style="grid-column:span 2;display:flex;gap:10px"><button class="radar-mode-btn active" data-mode="ready">Ready to Pack</button><button class="radar-mode-btn" data-mode="all">بحث في كافة الحالات</button></div>
-                <button class="radar-start" id="radar-start">بدء التجميع الشامل 📡</button>
-                <button class="radar-start" id="radar-cancel" style="background:#ef4444;display:none">إيقاف المسح ⏹</button>
+    d.head.appendChild(s);
+    const ui=d.createElement('div');
+    ui.id='baz-ui';
+    ui.innerHTML=`
+        <div id="baz-header"><h2>🚀 رادار علي الباز V15.0 - مجمّع الأرشيف</h2><button class="btn" style="background:#f44336;color:#fff" onclick="this.parentElement.parentElement.remove()">X</button></div>
+        <div class="search-container">
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-weight:bold;color:#1a73e8">الفاتورة / الصيدلية:</label><div style="display:flex;gap:5px"><span class="prefix">0</span><input type="text" id="baz-store" placeholder="كود الصيدلية..."></div></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-weight:bold;color:#1a73e8">رقم الطلب:</label><div style="display:flex;gap:5px"><span class="prefix">ERX</span><input type="text" id="baz-order" placeholder="الأرقام فقط..."></div></div>
+            <div class="options-group">
+                <label><input type="radio" name="search-mode" value="ready" checked> Ready to Pack (فقط)</label>
+                <label><input type="radio" name="search-mode" value="all"> تمشيط كافة الحالات</label>
             </div>
-            <div class="radar-progress-wrap" id="radar-progress-wrap"><div class="radar-progress-bar" id="radar-progress-bar"></div></div>
-            <div id="radar-status" style="text-align:center;margin:15px 0;font-weight:bold;color:#3b82f6;min-height:20px"></div>
-            <div id="radar-action-row" style="display:none;gap:10px;margin-bottom:15px"><button class="radar-btn-action" id="radar-open-all">فتح كافة النتائج المجمّعة</button><button class="radar-btn-action" id="radar-export" style="border-color:#f97316;color:#f97316">تصدير CSV</button></div>
-            <div id="radar-results"></div>
-        </div>`;
-    document.body.appendChild(ui);
+            <button id="baz-run" class="btn" style="background:#34a853;color:#fff;grid-column:span 2;margin-top:10px">بدء التجميع الشامل 📡</button>
+        </div>
+        <div id="baz-p-wrap" class="progress-wrap"><div id="baz-p-bar" class="progress-bar"></div></div>
+        <div id="baz-st" style="text-align:center;margin:10px 0;font-weight:bold;color:#1a73e8"></div>
+        <button id="baz-all" class="btn" style="background:#1a73e8;color:#fff;width:100%;display:none;margin-bottom:10px">🔓 فتح كافة النتائج المكتشفة</button>
+        <div id="baz-res"></div>
+    `;
+    d.body.appendChild(ui);
 
-    /* Actions */
-    document.getElementById('radar-close').onclick = () => { isSearching = false; ui.remove(); };
-    document.querySelectorAll('.radar-mode-btn[data-mode]').forEach(btn => {
-        btn.onclick = function() {
-            document.querySelectorAll('.radar-mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        };
-    });
-    document.getElementById('radar-start').onclick = startSearch;
-    document.getElementById('radar-cancel').onclick = () => { isSearching = false; };
-    document.getElementById('radar-open-all').onclick = openAllResults;
-    document.getElementById('radar-export').onclick = exportCSV;
-
-    var STATUS_MAP = { readypack: 'جاهز', packed: 'معبأ', delivered: 'تم التسليم', new: 'جديد', canceled: 'ملغى' };
-
-    async function startSearch() {
-        if (isSearching) return;
-        var sv = document.getElementById('radar-store').value.trim();
-        var ov = document.getElementById('radar-order').value.trim();
-        if (!sv && !ov) return;
+    let links = [];
+    const runSearch=async()=>{
+        const sVal=d.getElementById('baz-store').value.trim(), oVal=d.getElementById('baz-order').value.trim();
+        if(!sVal && !oVal) return;
+        const mode = d.querySelector('input[name="search-mode"]:checked').value;
+        const query = oVal ? 'ERX' + oVal : '0' + sVal;
+        const st=d.getElementById('baz-st'), rs=d.getElementById('baz-res'), pBar=d.getElementById('baz-p-bar'), pWrap=d.getElementById('baz-p-wrap'), btnAll=d.getElementById('baz-all');
         
-        var mode = document.querySelector('.radar-mode-btn.active').dataset.mode;
-        var query = ov ? 'ERX' + ov : '0' + sv;
-        var statuses = mode === 'ready' ? READY_STATUSES : ALL_STATUSES;
-        
-        isSearching = true; collectedLinks = []; 
-        document.getElementById('radar-results').innerHTML = ''; 
-        document.getElementById('radar-action-row').style.display = 'none';
-        document.getElementById('radar-start').style.display = 'none';
-        document.getElementById('radar-cancel').style.display = 'block';
-        document.getElementById('radar-progress-wrap').style.display = 'block';
-        
-        var count = 0, seen = new Set();
+        rs.innerHTML=''; pWrap.style.display='block'; btnAll.style.display='none'; links=[];
+        let count=0, seen=new Set();
+        const base='https://rtlapps.nahdi.sa/ez_pill_web/';
+        const statuses = mode === 'ready' ? ['readypack'] : ['readypack', 'packed', 'delivered', 'all', 'new', 'canceled'];
 
         try {
-            for (var si = 0; si < statuses.length; si++) {
-                if (!isSearching) break;
-                var st = statuses[si];
-                
-                /* محرك V9 المظبوط: طلب أول صفحة لمعرفة الإجمالي */
-                var first = await fetch(BASE_URL + 'Home/getOrders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: st, pageSelected: 1, searchby: '' })
-                });
-                var firstData = await first.json();
-                var totalPages = Math.ceil((firstData.total_orders || 0) / 10) || 1;
+            for(let status of statuses) {
+                st.innerHTML = `📡 جاري تمشيط حالة [${status}]...`;
+                /* محرك V9 القوي: فحص الصفحة الأولى لمعرفة العدد */
+                const fReq = await fetch(base+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status,pageSelected:1,searchby:''})});
+                const fRes = await fReq.json();
+                /* إذا السيرفر أعطى صفر، سنجبره على فحص 30 صفحة على الأقل لليقين */
+                const totalP = Math.ceil((fRes.total_orders || 0) / 10) || 30;
 
-                for (var p = 1; p <= totalPages; p++) {
-                    if (!isSearching) break;
+                for(let p=1;p<=totalP;p++){
+                    pBar.style.width = (p/totalP*100) + '%';
+                    st.innerHTML = `🔍 فحص [${status}] صفحة ${p} من ${totalP}... (وجدنا: ${count})`;
+                    const r=await fetch(base+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status,pageSelected:p,searchby:''})});
+                    const res=await r.json();
                     
-                    document.getElementById('radar-status').textContent = `🔍 [${STATUS_MAP[st] || st}] صفحة ${p} من ${totalPages}... (وجدنا: ${count})`;
-                    document.getElementById('radar-progress-bar').style.width = ((si / statuses.length) + (p / totalPages / statuses.length)) * 100 + '%';
+                    let list = [];
+                    try { list = JSON.parse(res.orders_list); } catch(e) { list = []; }
+                    if(!list || list.length==0) break;
 
-                    var resp = (p === 1) ? firstData : await (await fetch(BASE_URL + 'Home/getOrders', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ status: st, pageSelected: p, searchby: '' })
-                    })).json();
-                    
-                    var list = [];
-                    try { list = JSON.parse(resp.orders_list); } catch(e) { list = []; }
-                    if (!list || list.length === 0) break;
-
-                    /* الفلترة المحلية القوية */
-                    var matches = list.filter(o => (String(o.Invoice || '')).includes(query) || (String(o.onlineNumber || '')).includes(query));
-                    if (matches.length) {
-                        ensureTable();
-                        matches.forEach(o => {
-                            if (seen.has(o.Invoice)) return;
-                            seen.add(o.Invoice); count++;
-                            var url = BASE_URL + `getEZPill_Details?onlineNumber=${String(o.onlineNumber).replace(/ERX/gi,'')}&Invoice=${o.Invoice}&typee=${o.typee}&head_id=${o.head_id}`;
-                            collectedLinks.push(url);
-                            addRow(o, url, count);
+                    const matches = list.filter(i => (String(i.Invoice || '')).includes(query) || (String(i.onlineNumber || '')).includes(query));
+                    if(matches.length>0){
+                        if(!d.getElementById('baz-table')){
+                            rs.innerHTML=`<table id="baz-table"><thead><tr><th>الطلب</th><th>العميل</th><th>الفاتورة</th><th>الحالة</th><th>فتح</th></tr></thead><tbody id="baz-tb"></tbody></table>`;
+                        }
+                        matches.forEach(i=>{
+                            if(!seen.has(i.Invoice)){
+                                seen.add(i.Invoice); count++;
+                                const url=base+`getEZPill_Details?onlineNumber=${i.onlineNumber.replace(/ERX/gi,'')}&Invoice=${i.Invoice}&typee=${i.typee}&head_id=${i.head_id}`;
+                                links.push(url);
+                                const row=d.getElementById('baz-tb').insertRow(-1);
+                                row.innerHTML=`<td><b>${i.onlineNumber}</b></td><td>${i.guestName}</td><td>${i.Invoice}</td><td><span class="status-badge">${i.status}</span></td><td><a href="${url}" target="_blank" style="color:#34a853;font-weight:bold">فتح ✅</a></td>`;
+                            }
                         });
                     }
                 }
             }
-        } catch (e) { document.getElementById('radar-status').textContent = '❌ خطأ في الاتصال'; }
+        } catch(e) { st.innerHTML="❌ خطأ في الاتصال بالسيرفر"; }
         
-        isSearching = false;
-        document.getElementById('radar-start').style.display = 'block';
-        document.getElementById('radar-cancel').style.display = 'none';
-        document.getElementById('radar-progress-wrap').style.display = 'none';
+        pWrap.style.display='none';
+        st.innerHTML=count?`✅ تم بنجاح! وجدنا (${count}) نتيجة لـ "${query}"`:`❌ لم نجد نتائج لـ "${query}"`;
+        if(count>0) btnAll.style.display='block';
+    };
 
-        if (count > 0) {
-            document.getElementById('radar-status').textContent = `✅ تم تجميع (${count}) نتيجة بنجاح!`;
-            document.getElementById('radar-action-row').style.display = 'flex';
-        } else {
-            document.getElementById('radar-status').textContent = `❌ لم نجد نتائج لـ "${query}"`;
+    d.getElementById('baz-run').onclick=runSearch;
+    d.querySelectorAll('input[type="text"]').forEach(el=>el.onkeypress=(e)=>{if(e.key==='Enter')runSearch()});
+    d.getElementById('baz-all').onclick=async()=>{
+        if(confirm(`فتح ${links.length} تابات بتتابع ثانية؟`)){
+            for(let i=0; i<links.length; i++){
+                d.getElementById('baz-st').innerHTML=`🚀 فتح (${i+1} من ${links.length})...`;
+                window.open(links[i], '_blank');
+                await new Promise(r => setTimeout(r, 1000));
+            }
         }
-    }
-
-    function ensureTable() {
-        if (document.getElementById('radar-table')) return;
-        document.getElementById('radar-results').innerHTML = '<table id="radar-table"><thead><tr><th>#</th><th>الطلب</th><th>العميل</th><th>الفاتورة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="radar-tbody"></tbody></table>';
-    }
-
-    function addRow(o, url, idx) {
-        var tb = document.getElementById('radar-tbody');
-        var r = tb.insertRow(-1);
-        r.innerHTML = `<td>${idx}</td><td><b>${o.onlineNumber}</b></td><td>${o.guestName}</td><td>${o.Invoice}</td><td><span class="radar-badge">${STATUS_MAP[String(o.status).toLowerCase()] || o.status}</span></td><td><a href="${url}" target="_blank" style="text-decoration:none;color:#fff;background:#3b82f6;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:bold">فتح ✅</a></td>`;
-    }
-
-    async function openAllResults() {
-        if (!confirm(`فتح ${collectedLinks.length} تابات؟`)) return;
-        for (var i = 0; i < collectedLinks.length; i++) {
-            window.open(collectedLinks[i], '_blank');
-            await new Promise(r => setTimeout(r, TAB_OPEN_DELAY_MS));
-        }
-    }
-
-    function exportCSV() {
-        var rows = [['#', 'Order', 'Customer', 'Invoice', 'Status']];
-        document.querySelectorAll('#radar-table tbody tr').forEach(tr => {
-            var cols = []; tr.querySelectorAll('td').forEach((td, i) => { if(i<5) cols.push(td.innerText); });
-            rows.push(cols);
-        });
-        var csv = '\uFEFF' + rows.map(e => e.join(',')).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Nahdi_Report_${new Date().toLocaleDateString()}.csv`;
-        link.click();
-    }
+    };
 })();
