@@ -1,14 +1,12 @@
-javascript:(function(){
-    /* ═══════════════════════════════════════════════════════
-     * رادار علي الباز V19.0 — إصدار تحديث البيانات الحي
-     * إجبار السيرفر على إرسال أحدث البيانات + تمشيط 50 صفحة
-     * ═══════════════════════════════════════════════════════ */
-
+/* ═══════════════════════════════════════════════════════
+ * رادار علي الباز المعتمد — استدعاء خارجي V19.0
+ * ═══════════════════════════════════════════════════════ */
+(function(){
     const d=document;
     if(d.getElementById('baz-ui'))d.getElementById('baz-ui').remove();
     const s=d.createElement('style');
     s.innerHTML=`
-        #baz-ui{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:95%;max-width:880px;background:rgba(255,255,255,0.9);backdrop-filter:blur(25px);border-radius:24px;z-index:999999;box-shadow:0 30px 100px rgba(0,0,0,0.3);direction:rtl;font-family:sans-serif;max-height:92vh;overflow:auto;border-top:10px solid #1a73e8}
+        #baz-ui{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:95%;max-width:880px;background:rgba(255,255,255,0.95);backdrop-filter:blur(30px);border-radius:24px;z-index:999999;box-shadow:0 30px 100px rgba(0,0,0,0.3);direction:rtl;font-family:sans-serif;max-height:92vh;overflow:auto;border-top:10px solid #1a73e8}
         .baz-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:rgba(255,255,255,0.5);border-bottom:1px solid rgba(0,0,0,0.05)}
         .baz-body{padding:24px;overflow:auto}
         .baz-input-wrap{display:flex;border:2px solid #1a73e8;border-radius:12px;overflow:hidden;background:#fff;margin-bottom:15px}
@@ -26,10 +24,10 @@ javascript:(function(){
     const ui=d.createElement('div');
     ui.id='baz-ui';
     ui.innerHTML=`
-        <div class="baz-header"><div><h2 style="margin:0;color:#1a73e8">🚀 رادار علي الباز V19.0</h2><div style="font-size:11px;color:#64748b">إصدار تخطي "الكاش" والتمشيط العميق</div></div><button style="border:none;background:none;cursor:pointer;font-size:20px" onclick="this.parentElement.parentElement.remove()">✕</button></div>
+        <div class="baz-header"><div><h2 style="margin:0;color:#1a73e8">🚀 رادار علي الباز V19.0</h2><div style="font-size:11px;color:#64748b">إصدار التحديث الحي — GitHub Hosted</div></div><button style="border:none;background:none;cursor:pointer;font-size:20px" onclick="this.parentElement.parentElement.remove()">✕</button></div>
         <div class="baz-body">
             <div style="display:flex;flex-direction:column;gap:5px"><label style="font-weight:bold;color:#1a73e8;font-size:13px">كود الصيدلية / الفاتورة</label><div class="baz-input-wrap"><span class="baz-prefix">0</span><input class="baz-input" id="baz-store" placeholder="مثلاً: 1300" autocomplete="off"></div></div>
-            <button class="baz-start" id="baz-run">بدء التجميع الشامل (تحديث حي) 📡</button>
+            <button class="baz-start" id="baz-run">بدء التجميع الشامل 📡</button>
             <div class="baz-p-wrap" id="baz-p-wrap"><div class="baz-p-bar" id="baz-p-bar"></div></div>
             <div id="baz-st" style="text-align:center;margin:15px 0;font-weight:bold;color:#1a73e8"></div>
             <button class="baz-start" id="baz-all" style="background:#1a73e8;display:none;margin-bottom:15px">🔓 فتح كافة النتائج المكتشفة</button>
@@ -43,29 +41,22 @@ javascript:(function(){
         if(!sVal) return;
         const query = '0' + sVal;
         const st=d.getElementById('baz-st'), rs=d.getElementById('baz-res'), pBar=d.getElementById('baz-p-bar'), pWrap=d.getElementById('baz-p-wrap'), btnAll=d.getElementById('baz-all');
-        
         rs.innerHTML=''; pWrap.style.display='block'; btnAll.style.display='none'; links=[];
         let count=0, seen=new Set();
         const base='https://rtlapps.nahdi.sa/ez_pill_web/';
 
         try {
-            /* سنفحص 50 صفحة غصب عن السيرفر وبدون كاش */
             for(let p=1; p<=50; p++) {
                 st.innerHTML = `🔄 تمشيط حي للصفحة [${p}]... (وجدنا: ${count})`;
                 pBar.style.width = (p/50*100) + '%';
-                
-                /* إضافة t=Date.now لمنع الكاش نهائياً */
                 const r = await fetch(base + `Home/getOrders?t=${Date.now()}`, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
                     body:JSON.stringify({status:'readypack', pageSelected: p, searchby:''})
                 });
                 const res = await r.json();
-                
                 let o = [];
                 try { o = JSON.parse(res.orders_list); } catch(e) { o = []; }
-
-                /* لو الصفحة فاضية فعلاً، نوقف */
                 if(!o || o.length == 0) break;
 
                 const matches = o.filter(i => (String(i.Invoice || '')).includes(query));
@@ -83,13 +74,11 @@ javascript:(function(){
                         }
                     });
                 }
-                /* لو الصفحة فيها أقل من 10، غالباً دي آخر صفحة */
                 if(o.length < 10) break;
             }
-        } catch(e) { st.innerHTML="❌ خطأ في الاتصال (تحقق من GlobalProtect)"; }
-        
+        } catch(e) { st.innerHTML="❌ خطأ في الاتصال"; }
         pWrap.style.display='none';
-        st.innerHTML=count?`✅ مبروك يا علي! جمعنا (${count}) فاتورة من الأرشيف الحي`:`❌ لم نجد نتائج لـ "${query}"`;
+        st.innerHTML=count?`✅ تم التجميع! وجدنا (${count}) نتيجة`:`❌ لم نجد نتائج لـ "${query}"`;
         if(count>0) btnAll.style.display='block';
     };
 
