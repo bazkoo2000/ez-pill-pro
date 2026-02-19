@@ -9,12 +9,13 @@ var APP_NAME='EZ_Pill Farmadosis';
    ══════════════════════════════════════════ */
 var CHANGELOG={
   '136.4':{
-    title:'أوقات بدء مخصصة للأكواد 🕐',
+    title:'أوقات وتكرار مخصص للأكواد 🕐',
     features:[
-      {icon:'🕐',text:'إضافة: تاب جديد "أوقات الأكواد" في الإعدادات المحمية'},
-      {icon:'💊',text:'تعيين وقت بدء مخصص لكل كود صنف'},
-      {icon:'⏰',text:'لو النوت فاضي → يستخدم وقت الكود بدل الافتراضي 9:00'},
-      {icon:'⚠️',text:'التحذيرات تتجاهل الأكواد اللي ليها وقت مخصص'}
+      {icon:'🕐',text:'تاب جديد "أوقات الأكواد" في الإعدادات المحمية'},
+      {icon:'💊',text:'تعيين وقت بدء + تكرار (every) لكل كود صنف'},
+      {icon:'🔁',text:'مثال: كود معين → 08:00 + كل 12 ساعة (مرتين)'},
+      {icon:'⏰',text:'نوت فاضي → يستخدم إعدادات الكود بدل الافتراضي'},
+      {icon:'⚠️',text:'نوت مش مفهوم → تحذير عادي (مش بيستخدم إعدادات الكود)'}
     ]
   },
   '136.3':{
@@ -293,7 +294,7 @@ var weeklyInjections=(function(){var base=_defaultWeeklyInjections.slice();if(cu
 var NORMAL_TIMES=(function(){var base={};for(var k in _defaultNormalTimes)base[k]=_defaultNormalTimes[k];if(customConfig.normalTimes){for(var k in customConfig.normalTimes)base[k]=customConfig.normalTimes[k];}return base;})();
 
 /* Code-specific start times (used when note is empty/unrecognized instead of default 9:00) */
-var CODE_START_TIMES=(function(){var base={};if(customConfig.codeStartTimes){for(var k in customConfig.codeStartTimes)base[k]=customConfig.codeStartTimes[k];}return base;})();
+var CODE_START_TIMES=(function(){var base={};if(customConfig.codeStartTimes){for(var k in customConfig.codeStartTimes){var v=customConfig.codeStartTimes[k];if(typeof v==='string')base[k]={time:v,every:24};else base[k]=v;}}return base;})();
 
 /* ══════════════════════════════════════════
    RAMADAN MODE CONSTANTS & HELPERS
@@ -1318,10 +1319,11 @@ function getTimeFromWords(w){
   return{time:NT.defaultTime,isUnrecognized:true};
 }
 
-/* Code-aware time: override default time with code-specific start time if note is empty/unrecognized */
+/* Code-aware time: override default time with code-specific start time ONLY if note is empty (no dose) */
 function getCodeAwareTime(timeResult,itemCode){
-  if((timeResult.isEmpty||timeResult.isUnrecognized)&&itemCode&&CODE_START_TIMES[itemCode]){
-    return{time:CODE_START_TIMES[itemCode],isCodeTime:true};
+  if(timeResult.isEmpty&&itemCode&&CODE_START_TIMES[itemCode]){
+    var cst=CODE_START_TIMES[itemCode];
+    return{time:cst.time,every:cst.every||24,isCodeTime:true};
   }
   return timeResult;
 }
@@ -1648,7 +1650,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       /* Check for unrecognized time patterns */
       if(rd.note&&rd.note.trim().length>=3){
         var timeResult=getTimeFromWords(rd.note);
-        if(timeResult.isUnrecognized&&!(rd.itemCode&&CODE_START_TIMES[rd.itemCode])){
+        if(timeResult.isUnrecognized){
           warningQueue.push({
             level:'warning',
             message:'⚠️ الصنف: '+rd.itemName+' - الجرعة غير مفهومة',
@@ -1751,7 +1753,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
       /* ── NORMAL MODE (original logic) ── */
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
-      if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
+      if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
@@ -1767,6 +1769,13 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else{setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier));setEvry(tds_nodes[ei_main],'24');}
       if(di_main>=0)setDose(tds_nodes[di_main],doseMultiplier>=1?doseMultiplier:1);
       if(!isE12)setTime(r_node,tm2_obj.time);
+      /* Code-aware every override: if note was empty/unrecognized and code has custom every */
+      if(tm2_obj.isCodeTime&&tm2_obj.every){
+        var codeEvry=tm2_obj.every;
+        var codeTPD=Math.floor(24/codeEvry);if(codeTPD<1)codeTPD=1;
+        setEvry(tds_nodes[ei_main],String(codeEvry));
+        setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*codeTPD));
+      }
       /* Apply forceDose2 override AFTER normal processing */
       if(rd.forceDose2){
         if(di_main>=0)setDose(tds_nodes[di_main],2);
@@ -2201,8 +2210,11 @@ function _ezShowSettingsPanel(role,userName){
 
   /* Build Code Start Times list */
   var cstRows='';var cstKeys=Object.keys(CODE_START_TIMES);
+  var _evryOptions=[{v:'24',l:'24 (مرة/يوم)'},{v:'12',l:'12 (مرتين)'},{v:'8',l:'8 (3 مرات)'},{v:'6',l:'6 (4 مرات)'},{v:'48',l:'48 (يوم ويوم)'},{v:'168',l:'168 (أسبوعي)'}];
+  function _buildEvrySelect(cls,code,val){var h='<select class="'+cls+'" data-code="'+code+'" style="width:130px;padding:4px 6px;border:1.5px solid rgba(6,182,212,0.15);border-radius:8px;font-size:11px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;direction:rtl">';for(var j=0;j<_evryOptions.length;j++){h+='<option value="'+_evryOptions[j].v+'"'+(String(val)===_evryOptions[j].v?' selected':'')+'>كل '+_evryOptions[j].l+'</option>';}h+='</select>';return h;}
   for(var i=0;i<cstKeys.length;i++){
-    cstRows+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:rgba(6,182,212,0.04);border-radius:8px;border:1px solid rgba(6,182,212,0.1);direction:ltr"><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+cstKeys[i]+'</span><input type="time" class="ez-cfg-cst-val" data-code="'+cstKeys[i]+'" value="'+CODE_START_TIMES[cstKeys[i]]+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(6,182,212,0.15);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /><button class="ez-cfg-del-cst" data-code="'+cstKeys[i]+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+    var cstVal=CODE_START_TIMES[cstKeys[i]];
+    cstRows+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:rgba(6,182,212,0.04);border-radius:8px;border:1px solid rgba(6,182,212,0.1);direction:ltr"><span style="min-width:90px;font-size:12px;font-weight:800;color:#1e1b4b">'+cstKeys[i]+'</span><input type="time" class="ez-cfg-cst-val" data-code="'+cstKeys[i]+'" value="'+cstVal.time+'" style="width:100px;padding:4px 8px;border:1.5px solid rgba(6,182,212,0.15);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" />'+_buildEvrySelect('ez-cfg-cst-evry',cstKeys[i],cstVal.every||24)+'<button class="ez-cfg-del-cst" data-code="'+cstKeys[i]+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
   }
   if(cstKeys.length===0) cstRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا توجد أوقات مخصصة للأكواد بعد</div>';
   {
@@ -2319,10 +2331,11 @@ function _ezShowSettingsPanel(role,userName){
       </div>\
       <div id="ez-cfg-panel-codetimes" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🕐</span> أوقات بدء مخصصة للأكواد <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+cstKeys.length+' كود</span></div>\
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(6,182,212,0.03);border-radius:8px;border:1px solid rgba(6,182,212,0.08)">أضف كود صنف معين ووقت بدء مخصص ليه.<br>لو النوت فاضي أو مش مفهوم → هيستخدم الوقت المخصص للكود بدل الافتراضي (9:00).<br>⚠️ الأولوية: لو النوت فيه جرعة مفهومة → هيتجاهل وقت الكود.</div>\
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(6,182,212,0.03);border-radius:8px;border:1px solid rgba(6,182,212,0.08)">أضف كود صنف معين ووقت بدء + تكرار مخصص ليه.<br>لو النوت <b>فاضي تماماً</b> → هيستخدم الوقت والتكرار المخصص بدل الافتراضي.<br>لو النوت فيه جرعة <b>مش مفهومة</b> → هيظهر تحذير عادي ومش هيستخدم إعدادات الكود.<br>⚠️ الأولوية: لو النوت فيه جرعة مفهومة → هيتجاهل إعدادات الكود.</div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr;align-items:end">\
           <div style="flex:1"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">كود الصنف</label><input type="text" id="ez-cfg-new-cst-code" placeholder="مثال: 102785890" style="width:100%;padding:8px 12px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /></div>\
-          <div style="width:110px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">وقت البدء</label><input type="time" id="ez-cfg-new-cst-time" value="09:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
+          <div style="width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">وقت البدء</label><input type="time" id="ez-cfg-new-cst-time" value="09:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
+          <div style="width:130px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">كل كام ساعة</label><select id="ez-cfg-new-cst-evry" style="width:100%;padding:8px 6px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:11px;font-weight:800;font-family:Cairo,sans-serif;outline:none;direction:rtl"><option value="24">24 (مرة/يوم)</option><option value="12">12 (مرتين)</option><option value="8">8 (3 مرات)</option><option value="6">6 (4 مرات)</option><option value="48">48 (يوم ويوم)</option><option value="168">168 (أسبوعي)</option></select></div>\
           <button id="ez-cfg-add-cst" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#06b6d4,#0891b2);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(6,182,212,0.2);white-space:nowrap">+ إضافة</button>\
         </div>\
         <div id="ez-cfg-cst-list">'+cstRows+'</div>\
@@ -2644,11 +2657,13 @@ function _ezShowSettingsPanel(role,userName){
     document.getElementById('ez-cfg-add-cst').onclick=function(){
       var code=document.getElementById('ez-cfg-new-cst-code').value.trim().replace(/\D/g,'');
       var time=document.getElementById('ez-cfg-new-cst-time').value;
+      var evry=parseInt(document.getElementById('ez-cfg-new-cst-evry').value)||24;
       if(!code){window.ezShowToast('أدخل كود الصنف','warning');ezBeep('warning');return;}
       if(!time){window.ezShowToast('أدخل وقت البدء','warning');ezBeep('warning');return;}
       var c2=loadCustomConfig();if(!c2.codeStartTimes)c2.codeStartTimes={};
-      c2.codeStartTimes[code]=time;saveCustomConfig(c2);
-      window.ezShowToast('✅ تم إضافة وقت بدء للكود '+code+' → '+time,'success');
+      c2.codeStartTimes[code]={time:time,every:evry};saveCustomConfig(c2);
+      var evryLabel=evry===24?'مرة/يوم':evry===12?'مرتين':evry===8?'3 مرات':evry===6?'4 مرات':'كل '+evry+'س';
+      window.ezShowToast('✅ تم إضافة الكود '+code+' → '+time+' ('+evryLabel+')','success');
       ezBeep('success');
       overlay.remove();_ezShowSettingsPanel(role,userName);
     };
@@ -2672,7 +2687,25 @@ function _ezShowSettingsPanel(role,userName){
       var code=this.getAttribute('data-code');var val=this.value;
       if(!val)return;
       var c2=loadCustomConfig();if(!c2.codeStartTimes)c2.codeStartTimes={};
-      c2.codeStartTimes[code]=val;saveCustomConfig(c2);
+      var cur=c2.codeStartTimes[code];
+      if(typeof cur==='string')cur={time:cur,every:24};
+      else if(!cur)cur={time:val,every:24};
+      cur.time=val;
+      c2.codeStartTimes[code]=cur;saveCustomConfig(c2);
+      this.style.borderColor='#10b981';var ref=this;setTimeout(function(){ref.style.borderColor='rgba(6,182,212,0.15)';},1000);
+    };
+  });
+
+  /* Update Code Start Every on change */
+  overlay.querySelectorAll('.ez-cfg-cst-evry').forEach(function(sel){
+    sel.onchange=function(){
+      var code=this.getAttribute('data-code');var val=parseInt(this.value)||24;
+      var c2=loadCustomConfig();if(!c2.codeStartTimes)c2.codeStartTimes={};
+      var cur=c2.codeStartTimes[code];
+      if(typeof cur==='string')cur={time:cur,every:24};
+      else if(!cur)cur={time:'09:00',every:val};
+      cur.every=val;
+      c2.codeStartTimes[code]=cur;saveCustomConfig(c2);
       this.style.borderColor='#10b981';var ref=this;setTimeout(function(){ref.style.borderColor='rgba(6,182,212,0.15)';},1000);
     };
   });
@@ -2707,7 +2740,7 @@ function _ezShowSettingsPanel(role,userName){
     };
     saveCustomConfig(c2);
     /* Refresh CODE_START_TIMES in memory */
-    if(c2.codeStartTimes){for(var k in c2.codeStartTimes)CODE_START_TIMES[k]=c2.codeStartTimes[k];}
+    if(c2.codeStartTimes){for(var k in c2.codeStartTimes){var v=c2.codeStartTimes[k];if(typeof v==='string')CODE_START_TIMES[k]={time:v,every:24};else CODE_START_TIMES[k]=v;}}
     overlay.remove();
     window.ezShowToast('✅ تم حفظ جميع الإعدادات - أعد تشغيل الأداة لتطبيقها','success');
     ezBeep('success');
