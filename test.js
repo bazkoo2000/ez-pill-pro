@@ -1,3514 +1,3303 @@
-// =============================================
-//  MEDICATIONS DATA - 3507 items
-//  Generated: 2/19/2026, 4:25:02 AM
-// =============================================
-const MEDICATIONS = [
-  {code:"100024042",name:"Concor-Cor 2.5 mg Tablet 30pcs"},
-  {code:"100031023",name:"Glucophage 1000 mg Tablet 30pcs"},
-  {code:"100615256",name:"Lipanthyl 145 mg Tablet 30pcs"},
-  {code:"101068830",name:"Forxiga Tablets 10 mg 28 Tablets"},
-  {code:"101075415",name:"Jardiance Tablets 25 mg 30 Tab"},
-  {code:"100029855",name:"Diamicron-Mr 30 mg Tablet 30pcs"},
-  {code:"100965871",name:"Trajenta 5 mg 30 Tablets"},
-  {code:"100630632",name:"Nebilet 5 mg Tablet 28pcs"},
-  {code:"100616451",name:"Galvus Met 50/1000 mg Tabets 60"},
-  {code:"100032763",name:"Actos 30 mg Tablet 30pcs"},
-  {code:"100632718",name:"Co-Diovan 160/12.5 mg Tablet 28P"},
-  {code:"101255230",name:"Synjardy 12.5/1000 Mg 60 Tablets"},
-  {code:"100031242",name:"Ezetrol 10 mg Tablet 28pcs"},
-  {code:"100630042",name:"Diovan 160 mg Tablet 28pcs"},
-  {code:"100633420",name:"Coversyl 5 mg Tablet 30pcs"},
-  {code:"100630026",name:"Diovan 80 mg Tablet 28pcs"},
-  {code:"101075407",name:"Jardiance tablets 10 mg 30Tab"},
-  {code:"100648103",name:"Exforge Hct 10mg/160mg/12.5mg Tablets 28"},
-  {code:"100621189",name:"Janumet 50/850mg Tablets 56"},
-  {code:"100633622",name:"Natrilix-Sr 1.5 mg Tablet 30pcs"},
-  {code:"100630683",name:"Micardis 80 mg Tablet 28pcs"},
-  {code:"100633631",name:"Aldactone 25 mg Tablet 20pcs"},
-  {code:"100023672",name:"Coveram 5/5 mg Tablet 30pcs"},
-  {code:"100996976",name:"Twynsta 80/5mg 28 Tablets"},
-  {code:"100029775",name:"Trental 400 mg Tablet 20pcs"},
-  {code:"100629800",name:"Atacand 16 mg Tablet 28pcs"},
-  {code:"100633286",name:"Vastarel Mr 35 mg Tablet 60pcs"},
-  {code:"100629818",name:"Atacand 8 mg Tablet 28pcs"},
-  {code:"100630131",name:"Olmetec 20 mg Tablet 28pcs"},
-  {code:"100031251",name:"Lipanthyl 200 mg Capsule"},
-  {code:"100026259",name:"Inegy 20 mg/10 mg Tablet 28pcs"},
-  {code:"100632734",name:"Micardis-Plus 80/12.5 mg Tablet 28pcs"},
-  {code:"101281219",name:"Atozet 10 mg/20 mg 30 tablet"},
-  {code:"101318181",name:"Xigduo XR 5/1000 mg 56 tablet"},
-  {code:"100023701",name:"Coveram 10/10 mg Tablet 30pcs"},
-  {code:"101285228",name:"Xigduo XR 10/1000 mg 28 tablet"},
-  {code:"100862311",name:"Sevikar 20/5 mg Tablet 28 Piece"},
-  {code:"100630122",name:"Micardis 40 mg Tablet 28pcs"},
-  {code:"100033635",name:"Bi-Preterax 5 mg/1.25 mg Tablet 30pcs"},
-  {code:"100025521",name:"Inderal 40 mg Tablet"},
-  {code:"100887593",name:"Brilinta 90mg 56tablets"},
-  {code:"101023957",name:"Entresto 50mg 28 Tablets"},
-  {code:"100630051",name:"Olmetec 40 mg Tablet 28pcs"},
-  {code:"100025539",name:"Inderal 10 mg Tablet"},
-  {code:"100023699",name:"Coveram 10mg/5mg Tablet 30pcs"},
-  {code:"100862302",name:"Sevikar 40/5 mg Tablet 28 piece"},
-  {code:"100601663",name:"Pradaxa 110 mg Capsule 30pcs"},
-  {code:"100630392",name:"Olmetec 20/12.5 mg Tablet 28pcs"},
-  {code:"101594910",name:"Arena Plus 300/25 mg 30 Tablet"},
-  {code:"100907793",name:"Kombiglyze-XR Tablets 2.5/1000mg 60 Pcs"},
-  {code:"100983657",name:"Eliquis 5mg 60 Tablets"},
-  {code:"101255256",name:"Synjardy 5/1000 Mg 60 Tablets"},
-  {code:"100630608",name:"Riacavilol 25 mg Tablet 30pcs"},
-  {code:"100630405",name:"Olmetec 40/12.5 mg Tablet 28pcs"},
-  {code:"100983649",name:"Eliquis 2.5mg 60 Tablets"},
-  {code:"100648082",name:"Exforge Hct 10mg/160mg/25mg Tablets 28"},
-  {code:"100604821",name:"Co-Diovan 320/12.5 mg Tablet 28pcs"},
-  {code:"100996968",name:"Twynsta 80/10mg 28 Tablets"},
-  {code:"100862329",name:"Sevikar 40/10 mg Tablet 28 piece"},
-  {code:"101255248",name:"Synjardy 12.5/850 Mg 60 Tablets"},
-  {code:"100864316",name:"Gliptamet 50/1000 mg Tablet 56 piece"},
-  {code:"101059167",name:"Glados 30 mg 30 Tablet"},
-  {code:"100640208",name:"Co-Tabuvan 160/12.5 mg Tablets 30"},
-  {code:"100697280",name:"Cardex 2.5 mg Tablet 30"},
-  {code:"100606317",name:"Selecta 2.5 mg Tablet 30pcs"},
-  {code:"101325218",name:"Ezechol 10 mg 30 Tablets"},
-  {code:"100641171",name:"Tabuvan 160mg Tablets 30"},
-  {code:"100641163",name:"Tabuvan 80mg Tablets 30"},
-  {code:"100864341",name:"Gliptamet 50/850 mg Tablet 56 Piece"},
-  {code:"101146201",name:"Claz MR 30 mg 30 Tablets"},
-  {code:"101641667",name:"Divinus 10 mg 30 Tablet"},
-  {code:"100606341",name:"Selecta Plus 5mg/12.5 mg Tablet 20pcs"},
-  {code:"100025555",name:"Lopresor 50 mg Tablet 40pcs"},
-  {code:"100032296",name:"Glim 4 mg Tablet 30pcs"},
-  {code:"100032368",name:"Physiotens 0.4 mg Tablet 28pcs"},
-  {code:"100629973",name:"Nootropil 800 mg Tab 30pcs"},
-  {code:"100630595",name:"Riacavilol 12.5 mg Tablet 30pcs"},
-  {code:"100629842",name:"Blopress 8 mg Tablet 28pcs"},
-  {code:"100632751",name:"Sortiva-H 50/12.5 mg Tablet 30pcs"},
-  {code:"101163968",name:"Tenoryl 5 mg 30 Tablets"},
-  {code:"100629851",name:"Blopress 16 mg Tablet 28pcs"},
-  {code:"101066105",name:"Jalra M tablet 50/1000 mg 60 tablets"},
-  {code:"101204053",name:"Actosmet 15 mg/850 mg 56 Tablets"},
-  {code:"100630587",name:"Riacavilol 6.25 mg Tablet 30pcs"},
-  {code:"100033627",name:"Preterax 2.5/0.625 mg Tablet 30pcs"},
-  {code:"100632638",name:"Esidrex 25 mg Tablet 20pcs"},
-  {code:"100632742",name:"Teveten-Plus 600/12.5 mg Tablet 28pcs"},
-  {code:"100025547",name:"Lopresor 100 mg Tablet 20pcs"},
-  {code:"100024755",name:"Lescol-XL 80 mg Tablet 28pcs"},
-  {code:"100023066",name:"Lorvast 10 mg Tablet 30pcs"},
-  {code:"100027083",name:"Astatin 10 mg Tablet 30pcs"},
-  {code:"100023031",name:"Tovast 10 mg Tablet 30pcs"},
-  {code:"101059175",name:"Atorlip 10 mg 30 Tablet"},
-  {code:"101225903",name:"Lipicure 10 mg 30 Tablet"},
-  {code:"100027391",name:"Atorva 10 mg Tablet 30pcs"},
-  {code:"100632620",name:"Lasix 40 mg Tablet 20pcs"},
-  {code:"100022733",name:"Crestor 10 mg Tablet 28pcs"},
-  {code:"100823750",name:"Ivarin 10 mg Tablet 30"},
-  {code:"101256232",name:"Rozavi 10 Mg 28 Tablets"},
-  {code:"101043931",name:"Diamicron-Mr 60 mg 30 Tablet"},
-  {code:"100633438",name:"Coversyl 10 mg Tablet 30pcs"},
-  {code:"100619409",name:"Glucophage XR 750mg Tablets 30"},
-  {code:"101225891",name:"Formit Xr 750 mg 30 Tablets"},
-  {code:"101225882",name:"Formit Xr 750 mg 60 Tablets"},
-  {code:"100887278",name:"Xarelto Tablets 10 mg 10 Pcs"},
-  {code:"100031306",name:"Glucophage 850 mg Tablet 30pcs"},
-  {code:"100633462",name:"Amlor 10 mg Capsule 30pcs"},
-  {code:"100633139",name:"Amvasc 10 mg Capsule 30pcs"},
-  {code:"100957555",name:"Amlopine 10 mg 30 Caps"},
-  {code:"100632793",name:"Exforge 5/160 mg Tablet 28pcs"},
-  {code:"100697301",name:"Lotevan 5/ 160 mg Tablet 30"},
-  {code:"100022709",name:"Crestor 20 mg Tablet 28pcs"},
-  {code:"100823741",name:"Ivarin 20 mg Tablet 30"},
-  {code:"100022881",name:"Concor 5 mg Tablet 30pcs"},
-  {code:"100606325",name:"Selecta 5 mg Tablet 30pcs"},
-  {code:"100632726",name:"Co-Diovan 160/25 mg Tablet 28pcs"},
-  {code:"100629834",name:"Cozaar 50 mg Tablet 28pcs"},
-  {code:"100630114",name:"Sortiva 50 mg Tablet 30pcs"},
-  {code:"100031365",name:"Glucovance 500/2.5 mg Tablet 30pcs"},
-  {code:"100023357",name:"Lorvast 20 mg Tablet 30pcs"},
-  {code:"100023040",name:"Tovast 20 mg Tablet 30pcs"},
-  {code:"100027091",name:"Astatin 20 mg Tablet 30pcs"},
-  {code:"100027403",name:"Atorva 20 mg Tablet 30pcs"},
-  {code:"101225911",name:"Lipicure 20 mg 30 Tablets"},
-  {code:"100031955",name:"Januvia 100 mg Tablet 28pcs"},
-  {code:"100031314",name:"Glucophage 500 mg Tablet 50pcs"},
-  {code:"100616443",name:"Galvus Met 50/850 mg Tablets 60"},
-  {code:"100032536",name:"Amaryl 3 mg Tablet 30pcs"},
-  {code:"100630384",name:"Diovan 40 mg Tablet 28pcs"},
-  {code:"100648091",name:"Exforge Hct 5mg/160mg/12.5mg Tablets 28"},
-  {code:"100632806",name:"Exforge 10/160 mg Tablet 28pcs"},
-  {code:"100633171",name:"Amlor 5 mg Capsule 30pcs"},
-  {code:"100633500",name:"Amlopine 5 mg Capsule 30pcs"},
-  {code:"100633155",name:"Amvasc 5 mg Capsule 30pcs"},
-  {code:"100627396",name:"Amlocard 5mg Tablets 30"},
-  {code:"100029880",name:"Glucovance 500/5 mg Tablet 30pcs"},
-  {code:"100630296",name:"Plavix 75 mg Tablet 28pcs"},
-  {code:"100632961",name:"Lorvast 40 mg Tablet 30pcs"},
-  {code:"100027104",name:"Astatin 40 mg Tablet 30pcs"},
-  {code:"100023058",name:"Tovast 40 mg Tablet 30pcs"},
-  {code:"100633121",name:"Amvasc 2.5 mg Capsule 30pcs"},
-  {code:"100032501",name:"Amaryl 2 mg Tablet 30pcs"},
-  {code:"100031357",name:"Amaryl 1 mg Tablet 30pcs"},
-  {code:"100632451",name:"Co-Diovan 80/12.5 mg Tablet 28pcs"},
-  {code:"100887260",name:"Xarelto 20mg 28tablet"},
-  {code:"100029337",name:"Actos 15 mg Tablet 30pcs"},
-  {code:"100632435",name:"Atacand-Plus 16/12.5 mg Tablet 28pcs"},
-  {code:"100629826",name:"Cozaar 100 mg Tablet 28pcs"},
-  {code:"100031293",name:"Zocor 20 mg Tablet 28pcs"},
-  {code:"100005950",name:"Omacor 1000 mg Capsule 28P"},
-  {code:"100632259",name:"Diflucan 150 mg Capsule 1P"},
-  {code:"100022611",name:"Caduet 5/10 mg Tablet 30pcs"},
-  {code:"101302171",name:"Neurobion 30 Coated Tablets"},
-  {code:"100025053",name:"Nexium 40 mg Tablet 28P"},
-  {code:"101281227",name:"????? 10 ????/10 ???? 30 ???"},
-  {code:"100030821",name:"Glim 3 mg Tablet 30P"},
-  {code:"101225356",name:"Duetact 30/2 mg 30 Tablets"},
-  {code:"100655805",name:"Ramipril Sandoz 5mg Tablet 20"},
-  {code:"100648074",name:"Exforge Hct 5Mg/160Mg/25Mg Tablets 28"},
-  {code:"100630691",name:"Adalat-La 30 Mg 30 Tablets"},
-  {code:"101177956",name:"??????? ??????? 100 ???? 60 ???"},
-  {code:"100660145",name:"ARENA 150MG TABLET 30"},
-  {code:"100651046",name:"VEXAL XR 37.5MG CAPSULES 14"},
-  {code:"100008211",name:"Euthyrox 25 mcg Tablet 100pcs"},
-  {code:"100008851",name:"Methycobal 500 Mcg 30 Tab"},
-  {code:"100009011",name:"Euthyrox 100mcg Tablet 100pcs"},
-  {code:"100004893",name:"One-Alpha 1 Mcg Capsule 100pcs"},
-  {code:"100004906",name:"One-Alpha 0.25 Mcg Capsule 30pcs"},
-  {code:"100004957",name:"Pyridoxin 40 mg 20 Tablets"},
-  {code:"100004973",name:"Wheat-Germ-Oil 300 mg Capsule 30pcs"},
-  {code:"100005044",name:"Kalsis 500 mg Capsule 30pcs"},
-  {code:"100005052",name:"Osteocare Tablet 30 Tab"},
-  {code:"100005108",name:"Gloclav 625 mg Tablet 20pcs"},
-  {code:"100005191",name:"One-Alpha 0.25 Mcg Capsule 100pcs"},
-  {code:"100005319",name:"Gentaplex Capsule 36pcs"},
-  {code:"100005343",name:"Ok4 Capsule 30pcs"},
-  {code:"100005351",name:"Aphrofem Capsule 40pcs"},
-  {code:"100005589",name:"Feromin 190 mg 30 Tab"},
-  {code:"100005685",name:"Gloclav 1 gm Tablet 14pcs"},
-  {code:"100005731",name:"Itrazol 100 mg Capsule 15pcs"},
-  {code:"100005749",name:"Tracon 100 mg Capsule 4pcs"},
-  {code:"100005757",name:"Tracon 100 mg Capsule 15pcs"},
-  {code:"100005781",name:"Fungimid 150 mg Capsule 1pc"},
-  {code:"100005802",name:"Lamisil 250 mg Tablet 28pcs"},
-  {code:"100005829",name:"Ciprocin 500 mg Tablet 10pcs"},
-  {code:"100005861",name:"Ciproflacin 500 mg Tablet 10pcs"},
-  {code:"100005917",name:"Cipromid 500 mg Tablet 10pcs"},
-  {code:"100005941",name:"Maxepa-Forte 640 mg Capsule 30pcs"},
-  {code:"100005976",name:"Ferose-F 30 Tab"},
-  {code:"100005984",name:"Ferose 100 mg 30 Tab"},
-  {code:"100006055",name:"Zamur 500 mg Tablet 10pcs"},
-  {code:"100006071",name:"U-Cef 500 mg Tablet 10pcs"},
-  {code:"100006119",name:"Ciprobay 500 mg Tablet 10pcs"},
-  {code:"100006135",name:"Ciprocin 250 mg Tablet 10pcs"},
-  {code:"100006143",name:"Ciproxen 500 mg Tablet 10pcs"},
-  {code:"100006151",name:"Sarf 750 mg Tablet 10pcs"},
-  {code:"100006207",name:"Ciproquin 500 mg Tablet 10pcs"},
-  {code:"100006231",name:"Amoclan-Fort 625 mg Tablet 15pcs"},
-  {code:"100006258",name:"Gloclav 375 mg Tablet 20pcs"},
-  {code:"100006266",name:"Julmentin 375 mg Tablet 20pcs"},
-  {code:"100006274",name:"Amoclan 375 mg Tablet 20pcs"},
-  {code:"100006338",name:"Sevenseas-Oad Capsule 60pcs"},
-  {code:"100006354",name:"Stresstabs-Zinc 30 Tab"},
-  {code:"100006434",name:"Medrol 4 mg Tablet 30pcs"},
-  {code:"100006451",name:"Prednisolon 5 mg Tablet 30pcs"},
-  {code:"100006557",name:"Augmentin 625 mg Tablet 20pcs"},
-  {code:"100006581",name:"Zinnat 500 mg Tablet 10pcs"},
-  {code:"100006590",name:"Cefutil 250 mg Tablet 10pcs"},
-  {code:"100006629",name:"Zinnat 250 mg 14 Tablet"},
-  {code:"100006645",name:"Cefuzime 250 mg Tablet 10pcs"},
-  {code:"100006901",name:"Lamisil 250 mg Tablet 14pcs"},
-  {code:"100006910",name:"Lamifen 250 mg Tablet 7pcs"},
-  {code:"100007031",name:"Sevenseas-Vitrite-Iron Capsule 60pcs"},
-  {code:"100007082",name:"Vitamin-B-Complex 40 Tab"},
-  {code:"100007120",name:"Cloracef-Forte 500 mg Capsule 16pcs"},
-  {code:"100007138",name:"Cloracef 250 mg Capsule 16pcs"},
-  {code:"100007146",name:"Cephadar-Forte 500 mg Capsule 20pcs"},
-  {code:"100007162",name:"Omnicef 300 mg Capsule 10pcs"},
-  {code:"100007197",name:"Lamifen 250 mg Tablet 14pcs"},
-  {code:"100007226",name:"Vibramycin 100 mg Tablet 10pcs"},
-  {code:"100007269",name:"Ciproxen 250 mg Tablet 10pcs"},
-  {code:"100007277",name:"Cipropharm 500 mg Tablet 10pcs"},
-  {code:"100007285",name:"Minirin-Melt 60 Mcg Tablet 30pcs"},
-  {code:"100007293",name:"Factive 320 mg Tablet 5pcs"},
-  {code:"100007306",name:"Factive 320 mg Tablet 7pcs"},
-  {code:"100007314",name:"Emicipro 500 mg Tablet 10pcs"},
-  {code:"100007365",name:"Azi-Once 250 mg Capsule 6pcs"},
-  {code:"100007373",name:"Pollen-B Tablet 30pcs"},
-  {code:"100007429",name:"Pharmaton Capsule 30pcs"},
-  {code:"100007437",name:"V2-Plus 24 Capsules"},
-  {code:"100007605",name:"Sarf 500 mg Tablet 10pcs"},
-  {code:"100007613",name:"Ciflox 500 mg Tablet 10pcs"},
-  {code:"100007621",name:"Ciprodar 500 mg Tablet 10pcs"},
-  {code:"100007664",name:"Azomycin 250 mg Capsule 6pcs"},
-  {code:"100007672",name:"Amoclan 1 gm Tablet 14pcs"},
-  {code:"100007681",name:"Julmentin-Forte 625 mg Tablet 20pcs"},
-  {code:"100007699",name:"Augmentin 1 gm Tablet 14pcs"},
-  {code:"100007701",name:"Augmentin 375 mg Tablet 20pcs"},
-  {code:"100007710",name:"Megamox 1 gm Tablet 14pcs"},
-  {code:"100007728",name:"Megamox 375 mg Tablet 20pcs"},
-  {code:"100007736",name:"Curam 625 mg Tablet 20pcs"},
-  {code:"100007744",name:"Ospamox 500 mg Tablet 20pcs"},
-  {code:"100007752",name:"Klavox 1 gm Tablet 14pcs"},
-  {code:"100007816",name:"Neurorubine-Forte 20 Tab"},
-  {code:"100007921",name:"Eltroxin 50 Mcg Tablet 100pcs"},
-  {code:"100007939",name:"Eltroxin 100 Mcg Tablet 100pcs"},
-  {code:"100008051",name:"Zinoximor 500 mg Tablet 14pcs"},
-  {code:"100008077",name:"Zinoximor 250 mg Tablet 14pcs"},
-  {code:"100008085",name:"Tabiclor-Mr 750 mg Tablets 10pcs"},
-  {code:"100008106",name:"Biodroxil 1 gm Tablet 12pcs"},
-  {code:"100008131",name:"Tri-B 20 Tablets"},
-  {code:"100008157",name:"Neuro-B 20 Tab"},
-  {code:"100008229",name:"Euthyrox 50 mcg Tablet 100P"},
-  {code:"100008253",name:"Erythrodar-Forte 400 mg Tablet 20pcs"},
-  {code:"100008288",name:"Klacid 250 mg Tablet 14pcs"},
-  {code:"100008296",name:"Klacid-XL 500 mg Tablet 7pcs"},
-  {code:"100008309",name:"Klacid 500 mg Tablet 14pcs"},
-  {code:"100008376",name:"Doxycin 100 mg Capsule 10pcs"},
-  {code:"100008384",name:"Duradox 100 mg Capsule 10pcs"},
-  {code:"100008392",name:"Apo-Doxy 100 mg Capsule 10pcs"},
-  {code:"100008405",name:"Minirin-Melt 120 Mcg Tablet 30pcs"},
-  {code:"100008413",name:"Neomercazol 5 mg Tablet 100pcs"},
-  {code:"100008608",name:"Midroxil 500 mg Capsule 12pcs"},
-  {code:"100008616",name:"Suprax 200 mg Capsule 8pcs"},
-  {code:"100008675",name:"Tabocine 100 mg Capsule 10pcs"},
-  {code:"100008739",name:"Avalox 400 mg Tablet 5pcs"},
-  {code:"100008755",name:"Ciproxen 750 mg Tablet 10pcs"},
-  {code:"100008763",name:"Zithromax 250 mg Capsule 6pcs"},
-  {code:"100008780",name:"Dalacin-C 300 mg Capsule 16pcs"},
-  {code:"100008801",name:"Dalacin-C 150 mg Capsule 16pcs"},
-  {code:"100008819",name:"Zetron 250 mg Capsule 6pcs"},
-  {code:"100008827",name:"Zimax 250 mg Capsule 6pcs"},
-  {code:"100008835",name:"Zocin 250 mg Capsule 6pcs"},
-  {code:"100008843",name:"Klavox 375 mg Tablet 20pcs"},
-  {code:"100009029",name:"Euthyrox 150 Mcg Tablet 100pcs"},
-  {code:"100009037",name:"Avalox 400 mg Tablet 7pcs"},
-  {code:"100009053",name:"Quinox 500 mg Tablet 10pcs"},
-  {code:"100009061",name:"Tarivid 200 mg Tablet 10pcs"},
-  {code:"100009070",name:"Cipromax 750 mg Tablet 10pcs"},
-  {code:"100009141",name:"Klavox 625 mg Tablet 20pcs"},
-  {code:"100009168",name:"Curam 1 gm Tablet 14pcs"},
-  {code:"100009176",name:"Julmentin-2x 1 gm Tablet 15pcs"},
-  {code:"100009184",name:"Augmentin-Sr 1000/62.50 mg Tablet 16pcs"},
-  {code:"100009192",name:"Coamox-Mepha/Acino 1 gm Tablet 12pcs"},
-  {code:"100009205",name:"Cefutil 500 mg Tablet 10pcs"},
-  {code:"100009221",name:"Ceclor-Mr 750 mg Tablet 10pcs"},
-  {code:"100009248",name:"Bion3 30 Tab"},
-  {code:"100009387",name:"Immulant Capsule 20pcs"},
-  {code:"100009395",name:"Clamycin 500 mg Tablet 14pcs"},
-  {code:"100009504",name:"Meiact 200 mg Tablet 20pcs"},
-  {code:"100009512",name:"Cefodox 200 mg Tablet 14pcs"},
-  {code:"100009521",name:"Daroxime 250 mg Tablet 10pcs"},
-  {code:"100009539",name:"Daroxime 500 mg Tablet 10pcs"},
-  {code:"100009555",name:"Keflex 500 mg Tablet 20pcs"},
-  {code:"100009619",name:"Nutra-Chrom 200 Mcg 20 Tablets"},
-  {code:"100009678",name:"Fefol Capsule 30pcs"},
-  {code:"100009707",name:"Clamycin 250 mg Tablet 14pcs"},
-  {code:"100009723",name:"Claritt 500 mg Tablet 14pcs"},
-  {code:"100009731",name:"Claritt 250 mg Tablet 14pcs"},
-  {code:"100009854",name:"Bactrim-Forte 800/160 mg Tablet 10pcs"},
-  {code:"100009897",name:"Leponex 25 mg Tablet 50pcs"},
-  {code:"100009918",name:"Leponex 100 mg Tablet 50pcs"},
-  {code:"100009926",name:"Panadrex 500 mg Tablet 24pcs"},
-  {code:"100009934",name:"Panadrex 500 mg Tablet 48pcs"},
-  {code:"100009951",name:"Panadol-Extend 665 mg Tablet 18pcs"},
-  {code:"100009985",name:"Coxicam 15 mg Tablet 10pcs"},
-  {code:"100010020",name:"Diclogesic 25 mg Tablet 20pcs"},
-  {code:"100010038",name:"Coxicam 7.5 mg Tablet 30pcs"},
-  {code:"100010046",name:"Surgam 300 mg Tablet 20pcs"},
-  {code:"100010071",name:"Infla-Ban 50 mg Tablet 20pcs"},
-  {code:"100010097",name:"Proxen 500 mg Tablet 20pcs"},
-  {code:"100010100",name:"Profinal 400 mg Tablet 24pcs"},
-  {code:"100010151",name:"Fosamax 70 mg Tablet 4pcs"},
-  {code:"100010185",name:"Pk-Merz 100 mg Tablet 100pcs"},
-  {code:"100010206",name:"Sifrol 0.18 mg Tablet 30pcs"},
-  {code:"100010214",name:"Sifrol 0.7 mg Tablet 30pcs"},
-  {code:"100010222",name:"Stalevo 50/12.5/200 mg Tablet 30pcs"},
-  {code:"100010231",name:"Stalevo 100/25/200 mg Tablet 30pcs"},
-  {code:"100010281",name:"Voltic 50 mg Tablet 20pcs"},
-  {code:"100010311",name:"Votrex 50 mg Tablet 20pcs"},
-  {code:"100010329",name:"Olfen 50 mg Tablet 20pcs"},
-  {code:"100010345",name:"Profinal 600 mg Tablet 20pcs"},
-  {code:"100010433",name:"Cetralon 10 mg Tablet 10pcs"},
-  {code:"100010450",name:"Bonviva 150 mg Tablet 1pc"},
-  {code:"100010468",name:"Lendomax 70 mg Tablet 4pcs"},
-  {code:"100010476",name:"Alendro 70 mg Tablet 4pcs"},
-  {code:"100010484",name:"Spiriva 18 Mcg Inhalation Capsule 30pcs"},
-  {code:"100010628",name:"Profinal 200 mg Tablet 20pcs"},
-  {code:"100010652",name:"Relaxon Capsule 30pcs"},
-  {code:"100010679",name:"Sirdalud 2 mg Tablet 30pcs"},
-  {code:"100010687",name:"Sirdalud 4 mg Tablet 30pcs"},
-  {code:"100010695",name:"Parafon Capsule 30pcs"},
-  {code:"100010708",name:"Paraxon Capsule 30pcs"},
-  {code:"100010716",name:"Myogesic Tablet 20pcs"},
-  {code:"100010741",name:"Clara 10 mg Tablet 10pcs"},
-  {code:"100010783",name:"Cipram 20 mg Tablet 28pcs"},
-  {code:"100010804",name:"Seroxat 20 mg Tablet 30pcs"},
-  {code:"100010812",name:"Cipralex 10 mg Tablet 28pcs"},
-  {code:"100010855",name:"Relpax 40 mg Tablet 3pcs"},
-  {code:"100010863",name:"Relpax 40 mg Tablet 6pcs"},
-  {code:"100010935",name:"Periactin 4 mg Tablet 20pcs"},
-  {code:"100010951",name:"Finallerg 10 mg Tablet 10pcs"},
-  {code:"100010960",name:"Loramax 10 mg Tablet 10pcs"},
-  {code:"100011031",name:"Lamictal 25 mg Tablet 30pcs"},
-  {code:"100011049",name:"Lamictal 50 mg Tablet 30pcs"},
-  {code:"100011057",name:"Topamax 100 mg Tablet 60pcs"},
-  {code:"100011065",name:"Depakine-Chrono 500 mg Tablet 30pcs"},
-  {code:"100011081",name:"Depakine 200 mg Tablet 40pcs"},
-  {code:"100011090",name:"Voltaren 25 mg Tablet 30pcs"},
-  {code:"100011102",name:"Voltaren 50 mg Tablet 20 pcs"},
-  {code:"100011225",name:"Proxepain 220 mg Tablet 20pcs"},
-  {code:"100011241",name:"Stalevo 150/37.5/200 mg Tablet 30pcs"},
-  {code:"100011268",name:"Dogmatil 50 mg Capsule 30pcs"},
-  {code:"100011276",name:"Solian 200 mg Tablet 30pcs"},
-  {code:"100011284",name:"Solian 50 mg Tablet 30pcs"},
-  {code:"100011292",name:"Anafranil 25 mg Tablet 30pcs"},
-  {code:"100011330",name:"Anafranil 10 mg Tablet 30pcs"},
-  {code:"100011356",name:"Faverin 50 mg Tablet 60pcs"},
-  {code:"100011364",name:"Faverin 100 mg Tablet 30pcs"},
-  {code:"100011372",name:"Lustral 50 mg Tablet 30pcs"},
-  {code:"100011428",name:"Ketofan 25 mg Tablet 20pcs"},
-  {code:"100011436",name:"Divido 75 mg Capsule 20pcs"},
-  {code:"100011452",name:"Moven 15 Mg Capsule 30pcs"},
-  {code:"100011591",name:"Dogmatil 200 mg Tablet 12pcs"},
-  {code:"100011612",name:"Genprid 50 mg Capsule 30pcs"},
-  {code:"100011680",name:"Panadol-Actifast 500 mg Tablet 20pcs"},
-  {code:"100011698",name:"Proxen 250 mg Tablet 20pcs"},
-  {code:"100011719",name:"Rumafen 50 mg Tablet 20pcs"},
-  {code:"100011743",name:"Brufen 400 mg Tablet 30 pcs"},
-  {code:"100011751",name:"Nufen 400 mg Tablet 30pcs"},
-  {code:"100011760",name:"Lioresal 10 mg Tablet 50pcs"},
-  {code:"100011778",name:"Lioresal 25 mg Tablet 50pcs"},
-  {code:"100012092",name:"Solpadeine Capsule 24pcs"},
-  {code:"100012236",name:"Seroquel 300 mg Tablet 30pcs"},
-  {code:"100012375",name:"Cataflam 50 mg Tablet 20pcs"},
-  {code:"100012383",name:"Cataflam 50 mg Tablet 10pcs"},
-  {code:"100012391",name:"Mobic 15 mg Tablet 30pcs"},
-  {code:"100012404",name:"Profenid-L.P 200 mg Tablet 14pcs"},
-  {code:"100012421",name:"Dolvic-K 50 mg Tablet 20pcs"},
-  {code:"100012439",name:"Profinal-Xp Caplet 20pcs"},
-  {code:"100012501",name:"Seroxat-CR 25 mg Tablet 30pcs"},
-  {code:"100012578",name:"Plaquenil 200 mg Tab 60pcs"},
-  {code:"100012586",name:"Arava 10 mg Tablet 30pcs"},
-  {code:"100012594",name:"Mestinon 60 mg Tablet"},
-  {code:"100012607",name:"Exelon 1.5 mg Capsule 28pcs"},
-  {code:"100012703",name:"Joflam 50 mg Tablet 20pcs"},
-  {code:"100012797",name:"Efexor-XR 75 mg Capsule 14pcs"},
-  {code:"100012800",name:"Efexor-XR 150 mg Capsule 14pcs"},
-  {code:"100012818",name:"Citalogen 10 mg Tablet 30pcs"},
-  {code:"100012826",name:"Citalogen 20 mg Tablet 30pcs"},
-  {code:"100012834",name:"Citalogen 40 mg Tablet 30pcs"},
-  {code:"100012842",name:"Cymbalta 60 mg Capsule 28pcs"},
-  {code:"100012851",name:"Diclomax 50 mg Tablet 20pcs"},
-  {code:"100012869",name:"Brufen 600 mg Tablet 30pcs"},
-  {code:"100012877",name:"Clofen 50 mg Tablet 20pcs"},
-  {code:"100012885",name:"Mobic 7.5 mg Tablet 10pcs"},
-  {code:"100012893",name:"Exelon 3 mg Capsule 28pcs"},
-  {code:"100013124",name:"Aspirin 300 mg Tablet 30pcs"},
-  {code:"100013167",name:"Fevadol-Plus Tablet 20pcs"},
-  {code:"100013183",name:"Advil 200 mg Tablet 24pcs"},
-  {code:"100013191",name:"Profenid 100 mg Tablet 30pcs"},
-  {code:"100013221",name:"Xefo 8 mg Tablet 20pcs"},
-  {code:"100013239",name:"Riaproxen 500 mg Tablet 20pcs"},
-  {code:"100013247",name:"Fenam Forte 500 mg Tablet 20 pcs"},
-  {code:"100013271",name:"Solpadeine Soluble Tablet 20pcs"},
-  {code:"100013423",name:"Lorine 10 mg Tablet 10pcs"},
-  {code:"100013431",name:"Telfast 120 mg Tablet 15pcs"},
-  {code:"100013440",name:"Loraday 10 mg Tablet 10pcs"},
-  {code:"100013511",name:"Olfen-Sr 100 mg Capsule 10pcs"},
-  {code:"100013538",name:"Piascledine 300 mg Capsule 15pcs"},
-  {code:"100013562",name:"Prof 400 mg Tablet 30pcs"},
-  {code:"100013571",name:"Mafepain 500 mg Tablet 20pcs"},
-  {code:"100013589",name:"Prof 600 mg Tablet 30pcs"},
-  {code:"100013693",name:"Champix 0.5 / 1 mg Tablet 25pcs"},
-  {code:"100013706",name:"Champix 1 mg Tablet 28pcs"},
-  {code:"100013757",name:"Aerius 5 mg Tablet 18pcs"},
-  {code:"100013765",name:"Xyzal 5 mg Tablet 20pcs"},
-  {code:"100013773",name:"Lamictal 100 mg Tablet 30pcs"},
-  {code:"100013781",name:"Depakine 500 mg Tablet 40pcs"},
-  {code:"100013790",name:"Lamictal 25 mg Dispersable Tablet 56pcs"},
-  {code:"100013802",name:"Lamictal 5 mg Dispersable Tablet 28pcs"},
-  {code:"100013811",name:"Carbatol 200 mg Tablet 30pcs"},
-  {code:"100013829",name:"Topamax 25 mg Tablet 60pcs"},
-  {code:"100013837",name:"Lamictal 100 mg Dispersable Tablet 56pcs"},
-  {code:"100014063",name:"Anazol 250 mg Tablet 20pcs"},
-  {code:"100014071",name:"Fasigyn 500 mg Tablet 4pcs"},
-  {code:"100014080",name:"Anazol 500 mg Tablet 20pcs"},
-  {code:"100014098",name:"Flagyl 250 mg Tablet 20pcs"},
-  {code:"100014101",name:"Flagyl 500 mg Tablet 14pcs"},
-  {code:"100014119",name:"Amrizole 250 mg Tablet 20pcs"},
-  {code:"100014160",name:"Panadol-Cold&Flu Caplet 24pcs"},
-  {code:"100014178",name:"Panadol-Cold&Flu-Day Caplet 24pcs"},
-  {code:"100014434",name:"Hepsera 10 mg Tablet 30pcs"},
-  {code:"100014493",name:"Capocard 50 mg Tablet 20pcs"},
-  {code:"100014514",name:"Tenol 50 mg Tablet 30pcs"},
-  {code:"100014522",name:"Tenol 100 mg Tablet 30pcs"},
-  {code:"100014565",name:"Imodium Capsule 6pcs"},
-  {code:"100014645",name:"Dizinil 50 mg Tablet 20pcs"},
-  {code:"100014670",name:"Navidoxine 25/50 mg Tablet 10pcs"},
-  {code:"100014696",name:"Xenical 120 mg Capsule 84 Cap"},
-  {code:"100014725",name:"Hyposec 20 mg Capsule 14pcs"},
-  {code:"100014733",name:"Peptazol 30 mg Capsule 28pcs"},
-  {code:"100014741",name:"Omiz 20 mg Capsule 14pcs"},
-  {code:"100014750",name:"Omiz 10 mg Capsule 14pcs"},
-  {code:"100014768",name:"Omeprex 20 mg Capsule 28pcs"},
-  {code:"100014776",name:"Peptazol 30 mg Capsule 14pcs"},
-  {code:"100014784",name:"Peptazol 15 mg Capsule 14pcs"},
-  {code:"100015007",name:"Chlorohistol 4 mg Tablet 20pcs"},
-  {code:"100015015",name:"Histop 4 mg Tablet 20pcs"},
-  {code:"100015023",name:"Allerfin 4 mg Tablet"},
-  {code:"100015074",name:"Tidilor 10 mg Tablet 10pcs"},
-  {code:"100015138",name:"Seroquel 100 mg Tablet 60pcs"},
-  {code:"100015146",name:"Seroquel 200 mg Tablet 60pcs"},
-  {code:"100015197",name:"Seroxat-CR 12.5 mg Tablet 30pcs"},
-  {code:"100015200",name:"Riasertal 50 mg Tablet 30pcs"},
-  {code:"100015218",name:"Riasertal 100 mg Tablet 30pcs"},
-  {code:"100015226",name:"Mirzagen 15 mg Tablet 30pcs"},
-  {code:"100015234",name:"Mirzagen 30 mg Tablet 30pcs"},
-  {code:"100015251",name:"Reminyl 4 mg Tablet 14pcs"},
-  {code:"100015285",name:"Ebixa 10 mg Tablet 28pcs"},
-  {code:"100015314",name:"Flozak 20 mg Capsule 30pcs"},
-  {code:"100015331",name:"Tegretol-CR 200 mg Tablet 50pcs"},
-  {code:"100015349",name:"Tegretol-CR 400 mg Tablet 30pcs"},
-  {code:"100015373",name:"Rofenac-D 50 mg Dispersable Tablet 20pcs"},
-  {code:"100015381",name:"Rofenac 100 mg Tablet 10pcs"},
-  {code:"100015390",name:"Rofenac 50 mg Tablet 20pcs"},
-  {code:"100015402",name:"Rapidus 25 mg Tablet 20pcs"},
-  {code:"100015429",name:"Zyprexa 5 mg Tablet 28pcs"},
-  {code:"100015437",name:"Genprid 200 mg Tablet 20pcs"},
-  {code:"100015470",name:"Risperdal 2 mg Tablet 60pcs"},
-  {code:"100015496",name:"Fevadol-Extra Tablet 20pcs"},
-  {code:"100015509",name:"Tylenol-Forte 500 mg Tablet 20pcs"},
-  {code:"100015525",name:"Cipralex 20 mg Tablet 28pcs"},
-  {code:"100015541",name:"Neurontin 300 mg Capsule 50pcs"},
-  {code:"100015550",name:"Feldene 20 mg Dispersable Tablet 10pcs"},
-  {code:"100015568",name:"Jazofen 400 mg Tablet 30pcs"},
-  {code:"100015576",name:"Diclogesic 50 mg Tablet 20pcs"},
-  {code:"100015592",name:"Ponstan-Forte 500 mg Tablet 20 pcs"},
-  {code:"100015605",name:"Diclogesic-Retard 100 mg Tablet 10pcs"},
-  {code:"100015744",name:"Keppra 500 mg Tablet 30pcs"},
-  {code:"100015752",name:"Tegretol 200 mg Tablet 50pcs"},
-  {code:"100015779",name:"Trileptal 300 mg Tablet 50pcs"},
-  {code:"100015787",name:"Trileptal 600 mg Tablet 50pcs"},
-  {code:"100015816",name:"Fevadol 500 mg Tablet 20pcs"},
-  {code:"100015875",name:"Emidol Tablet 24pcs"},
-  {code:"100015947",name:"Panadol 500 mg Caplet 24 pcs"},
-  {code:"100015955",name:"Adol 500 mg Caplet 24pcs"},
-  {code:"100015971",name:"Adol-Extra Caplet 24pcs"},
-  {code:"100015980",name:"Panadol-Extra Tablet 24 pcs"},
-  {code:"100016069",name:"Zolpigen 10 mg Tablet 20pcs"},
-  {code:"100016077",name:"Telfast 180 mg Tablet 15pcs"},
-  {code:"100016085",name:"Zyrtec 10 mg Tablet 10pcs"},
-  {code:"100016093",name:"Fexodine 180 mg Tablet 14pcs"},
-  {code:"100016106",name:"Artiz 10 mg Tablet 10pcs"},
-  {code:"100016131",name:"Zertazine 10 mg Tablet 10pcs"},
-  {code:"100016149",name:"Zertazine 10 mg Tablet 20pcs"},
-  {code:"100016157",name:"Fexodine 120 mg Tablet 14pcs"},
-  {code:"100016181",name:"Rantudil-Forte 60 mg Capsule 20pcs"},
-  {code:"100016202",name:"Diclogesic-Retard 100 mg Capsule 12pcs"},
-  {code:"100016253",name:"Panadol-Night Caplet 20pcs"},
-  {code:"100016384",name:"Songha-Night 30 Tab"},
-  {code:"100016392",name:"Remeron 30 mg Tablet 30pcs"},
-  {code:"100016421",name:"Prozac 20 mg Capsule 28pcs"},
-  {code:"100016430",name:"Salipax 20 mg Capsule 30pcs"},
-  {code:"100016481",name:"Imigran 50 mg Tablet 2pcs"},
-  {code:"100016499",name:"Imigran 100 mg Tablet 2pcs"},
-  {code:"100016501",name:"Imigran 50 mg Tablet 6pcs"},
-  {code:"100016510",name:"Imigran 100 mg Tablet 6pcs"},
-  {code:"100016624",name:"Risperdal 2 mg Tablet 20pcs"},
-  {code:"100016641",name:"Neurontin 400 mg Capsule 50pcs"},
-  {code:"100016659",name:"Epanutin 100 mg Capsule 100pcs"},
-  {code:"100016667",name:"Lyrica 50 mg Capsule 21pcs"},
-  {code:"100016675",name:"Lyrica 75 mg Capsule 14pcs"},
-  {code:"100016683",name:"Lyrica 150 mg Capsule 56pcs"},
-  {code:"100016691",name:"Lyrica 300 mg Capsule 56pcs"},
-  {code:"100016801",name:"Apo-Diclo 50 mg Tablet 20pcs"},
-  {code:"100016843",name:"I-Profen 400 mg Tablet 30pcs"},
-  {code:"100016851",name:"Roxonin 60 mg Tablet 20pcs"},
-  {code:"100016860",name:"Coxicam 7.5 mg Tablet 10pcs"},
-  {code:"100016878",name:"Emifenac 50 mg Tablet 20pcs"},
-  {code:"100016886",name:"Trivastal-Retard 50 mg Tablet 30pcs"},
-  {code:"100016958",name:"Flixotide 2 mg Nebules 10pcs 2 ml"},
-  {code:"100017125",name:"Clarinase Tablet 14 pcs"},
-  {code:"100017133",name:"Rinofed Tablet 30pcs"},
-  {code:"100017221",name:"Euphyllin-Retard 250 mg Tablet 20pcs"},
-  {code:"100017281",name:"Panadol-Sinus Caplet 24pcs"},
-  {code:"100017416",name:"Riazole 500 mg Tablet 20pcs"},
-  {code:"100017441",name:"Glovit-Cal 30 Tablets"},
-  {code:"100017694",name:"Flazol 500 mg Tablet 20pcs"},
-  {code:"100017707",name:"Protogyn 500 mg Tablet 4pcs"},
-  {code:"100017723",name:"Negazole 250 mg Tablet 20pcs"},
-  {code:"100017731",name:"Negazole 500 mg Tablet 20pcs"},
-  {code:"100017791",name:"Klacid-XL 500 mg Tablet 14pcs"},
-  {code:"100017811",name:"Clarex 500 mg Tablet 14pcs"},
-  {code:"100017820",name:"Claritt-XL 500 mg Tablet 7pcs"},
-  {code:"100017838",name:"Eracid 250 mg Tablet 14pcs"},
-  {code:"100017854",name:"Clarixin 500 mg Tablet 14pcs"},
-  {code:"100017897",name:"Arcoxia 60 mg Tablet 28pcs"},
-  {code:"100017900",name:"Voltaren-Retard 100 mg Tablet 10pcs"},
-  {code:"100017918",name:"Arcoxia 120 mg Tablet 7pcs"},
-  {code:"100017926",name:"Arcoxia 90 mg Tablet 28pcs"},
-  {code:"100017934",name:"Sapofen 400 mg Tablet 20pcs"},
-  {code:"100017942",name:"Rapidus 50 mg Tablet 20pcs"},
-  {code:"100017951",name:"Sapofen 600 mg Tablet 30pcs"},
-  {code:"100018224",name:"Clenil-Forte 250 Mcg Inhaler 200pcs"},
-  {code:"100018241",name:"Butalin 4 mg Tablet 20pcs"},
-  {code:"100018267",name:"Butalin 2 mg Tablet 20pcs"},
-  {code:"100018339",name:"Oselta 75 mg Capsule 10pcs"},
-  {code:"100018355",name:"Valtrex 500 mg Tablet 42pcs"},
-  {code:"100018401",name:"Advil-Cold&Sinus Caplet 20pcs"},
-  {code:"100018507",name:"Pulmotropic Elixir 100 ml"},
-  {code:"100018574",name:"Symbicort 160 Mcg Turbuhaler"},
-  {code:"100018582",name:"Seretide 250 Mcg Diskus 60pcs"},
-  {code:"100018654",name:"Zovirax 200 mg Tablet 25pcs"},
-  {code:"100018662",name:"Zovirax 800 mg Tablet 35pcs"},
-  {code:"100018671",name:"Zovirax 400 mg Tablet 70pcs"},
-  {code:"100018689",name:"Valtrex 500 mg Tablet 10pcs"},
-  {code:"100018697",name:"Famvir 125 mg Tablet 10pcs"},
-  {code:"100018777",name:"Rinofed-Plus Tablet 30pcs"},
-  {code:"100018785",name:"Fludrex Tablet 24pcs"},
-  {code:"100019121",name:"Orofar Tablet 24pcs With Gift"},
-  {code:"100019235",name:"Albenda 200 mg Tablet 2pcs"},
-  {code:"100019243",name:"Vermox 100 mg Tablet 6pcs"},
-  {code:"100019702",name:"Seretide 100 Mcg Diskus 60pcs"},
-  {code:"100019729",name:"Seretide 500 Mcg Diskus 60pcs"},
-  {code:"100019753",name:"Cirrus 120/5 mg Tablet 14pcs"},
-  {code:"100019796",name:"Famvir 250 mg Tablet 21pcs"},
-  {code:"100019809",name:"Virustat 200 mg Tablet 30pcs"},
-  {code:"100019825",name:"Megamox 625 mg Tablet 20pcs"},
-  {code:"100019833",name:"Glomox 500 mg Capsule 20pcs"},
-  {code:"100019868",name:"Flutab Tablet 20 Pcs"},
-  {code:"100019905",name:"Flixotide 0.5 mg Nebules 10pcs 2 ml"},
-  {code:"100020164",name:"Neorin 5 mg Tablet 20pcs"},
-  {code:"100020181",name:"Loradad 10 mg Tablet 10pcs"},
-  {code:"100020199",name:"Lorahist 10 mg Tablet 10pcs"},
-  {code:"100020201",name:"Claritine 10 mg Tablet 10 pcs"},
-  {code:"100020210",name:"Glora 10 mg Tablet 10pcs"},
-  {code:"100020279",name:"Butalin 100 Mcg Inhaler 200 Doses"},
-  {code:"100020359",name:"Biltricide 600 mg Tablet 4pcs"},
-  {code:"100020480",name:"Ezolvin 8 mg Tablet 20pcs"},
-  {code:"100020501",name:"Bisolvon 8 mg Tablet 20pcs"},
-  {code:"100020519",name:"Mucosolvan 30 mg Tablet 20pcs"},
-  {code:"100020640",name:"Resochin Tablet 10pcs"},
-  {code:"100020674",name:"Mephaquin 250 mg Tablet 6pcs"},
-  {code:"100021378",name:"Pulmicort 200 Mcg Turbuhaler"},
-  {code:"100021554",name:"Furazole 250/200 Tablet 20pcs"},
-  {code:"100021651",name:"Singulair 10 mg Tablet 28pcs"},
-  {code:"100021837",name:"Rifinah 300 mg/150 mg Tablet 8pcs"},
-  {code:"100021888",name:"Zeffix 100 mg Tablet 28pcs"},
-  {code:"100021976",name:"Ventolin Rotahaler"},
-  {code:"100022258",name:"Renitec 10 mg Tablet 28pcs"},
-  {code:"100022266",name:"Renitec 5 mg Tablet 28pcs"},
-  {code:"100022282",name:"Capoten 25 mg Tablet 20pcs"},
-  {code:"100022320",name:"Concor-Plus 5/12.5 mg Tablet 20pcs"},
-  {code:"100022442",name:"Omedar 20 mg Tablet 14pcs"},
-  {code:"100022477",name:"Gastrofait 500 mg Tablet 20pcs"},
-  {code:"100022485",name:"Razon 40 mg Tablet 14pcs"},
-  {code:"100022549",name:"Coumadin 5 mg Tablet 100pcs"},
-  {code:"100022557",name:"Betaserc 8 mg Tablet 100pcs"},
-  {code:"100022565",name:"Betagen 8 mg Tablet 50pcs"},
-  {code:"100022573",name:"Betagen 16 mg Tablet 30pcs"},
-  {code:"100022581",name:"Betaserc 24 mg Tablet 50pcs"},
-  {code:"100022602",name:"Tenoretic Tablet"},
-  {code:"100022696",name:"Zocor 10 mg Tablet 30pcs"},
-  {code:"100022717",name:"Lipitor 10 mg Tablet 30pcs"},
-  {code:"100022725",name:"Lopid 600 mg Tablet 30pcs"},
-  {code:"100022741",name:"Zocor 40 mg Tablet 30pcs"},
-  {code:"100022792",name:"Ranidine 150 mg Tablet 20pcs"},
-  {code:"100022813",name:"Pantomax 40 mg Tablet 15pcs"},
-  {code:"100022821",name:"Pantomax 40 mg Tablet 30pcs"},
-  {code:"100022856",name:"Toprazole 20 mg Tablet 15pcs"},
-  {code:"100022864",name:"Pariet 20 mg Tablet 14pcs"},
-  {code:"100022899",name:"Concor 10 mg Tablet 30pcs"},
-  {code:"100023007",name:"Lipomax 10 mg Tablet 30pcs"},
-  {code:"100023015",name:"Lipomax 20 mg Tablet 30pcs"},
-  {code:"100023023",name:"Lipomax 40 mg Tablet 30pcs"},
-  {code:"100023154",name:"Coumadin 7.5 mg Tablet 100pcs"},
-  {code:"100023162",name:"Coumadin 10 mg Tablet 100pcs"},
-  {code:"100023171",name:"Rabezole 10 mg Tablet 14pcs"},
-  {code:"100023189",name:"Rabezole 20 mg Tablet 14pcs"},
-  {code:"100023373",name:"Capoten 50 mg Tablet 20pcs"},
-  {code:"100023517",name:"Rennie Tablet 48 pcs"},
-  {code:"100023568",name:"Motilium 10 mg Tablet 30pcs"},
-  {code:"100023576",name:"Premosan 10 mg Tablet 20pcs"},
-  {code:"100023584",name:"Primperan 10 mg Tablet 20pcs"},
-  {code:"100023592",name:"Dompy 10 mg Tablet 30pcs"},
-  {code:"100023605",name:"Prokinin 10mg Tablet 30pcs"},
-  {code:"100023648",name:"Co-Renitec 20/12.5 mg Tablet 30pcs"},
-  {code:"100023681",name:"Coveram 5/10 mg Tablet 30pcs"},
-  {code:"100023779",name:"Nolvadex 10 mg Tablet 30pcs"},
-  {code:"100023787",name:"Androcur 50 mg Tablet 20pcs"},
-  {code:"100023824",name:"Spasmotalin 100 mg Tablet 20pcs"},
-  {code:"100023841",name:"Mebagen 135 mg Tablet 30pcs"},
-  {code:"100023859",name:"Riaspasm 10 mg Tablet 20pcs"},
-  {code:"100023875",name:"Buscopan 10 mg Tablet 20pcs"},
-  {code:"100023883",name:"Dicetel 50 mg Tablet 20pcs"},
-  {code:"100023891",name:"Nospasm 10 mg Tablet 30pcs"},
-  {code:"100023947",name:"Nadine 150 mg Tablet 20pcs"},
-  {code:"100023955",name:"Nadine 300 mg Tablet 10pcs"},
-  {code:"100023980",name:"Ultrazole 30 mg Capsule 14pcs"},
-  {code:"100024000",name:"Normoten 50 mg Tablet 28pcs"},
-  {code:"100024026",name:"Hypoten 50 mg Tablet 28pcs"},
-  {code:"100024051",name:"Dilatrend 25 mg Tablet 30pcs"},
-  {code:"100024069",name:"Normoten 100 mg Tablet 28pcs"},
-  {code:"100024077",name:"Normoten 100 mg Tablet 14pcs"},
-  {code:"100024106",name:"Sandimmun-Neoral 25 mg Capsule 50pcs"},
-  {code:"100024149",name:"Imuran 50 mg Tablet 100pcs"},
-  {code:"100024157",name:"Sandimmun-Neoral 100 mg Capsule"},
-  {code:"100024165",name:"Prograf 1 mg Capsule 100pcs"},
-  {code:"100024173",name:"Myfortic 360 mg Tablet 120pcs"},
-  {code:"100024181",name:"Ranimax 75 mg Tablet 10pcs"},
-  {code:"100024245",name:"Gastrozole 20 mg Capsule 14pcs"},
-  {code:"100024253",name:"Risek 20 mg Capsule 14pcs"},
-  {code:"100024288",name:"Proton 20 mg  14 Tablet"},
-  {code:"100024317",name:"Mosegor 0.5 mg Tablet 30pcs"},
-  {code:"100024341",name:"Ursofalk Capsule 50pcs"},
-  {code:"100024368",name:"Tenormin 100 mg Tablet 28pcs"},
-  {code:"100024587",name:"Takepron 15 mg Capsule 14pcs"},
-  {code:"100024616",name:"Epirazole 20 mg Capsule 14pcs"},
-  {code:"100024624",name:"Takepron 30 mg Capsule 14pcs"},
-  {code:"100024641",name:"Duspatalin 200 mg Capsule 30pcs"},
-  {code:"100024659",name:"Zymogen Tablet 30pcs"},
-  {code:"100024683",name:"Digest 24 Capsules"},
-  {code:"100024691",name:"Aero-Digest Capsule 24pcs"},
-  {code:"100024747",name:"Cimedine 200 mg Tablet 20pcs"},
-  {code:"100024819",name:"Simvagen 10 mg Tablet 30pcs"},
-  {code:"100024827",name:"Simvagen 20 mg Tablet 30pcs"},
-  {code:"100024958",name:"Verine 135 mg Tablet 30pcs"},
-  {code:"100024991",name:"Meva 135 mg Tablet 30pcs"},
-  {code:"100025002",name:"Verine-Sr 200 mg Capsule 30pcs"},
-  {code:"100025029",name:"Zydac 150 mg Tablet 20pcs"},
-  {code:"100025037",name:"Tanidina 150 mg Tablet 20pcs"},
-  {code:"100025045",name:"Nexium 40 mg Tablet 14pcs"},
-  {code:"100025061",name:"Pantozol 20 mg Tablet 30pcs"},
-  {code:"100025070",name:"Nexium 20 mg Tablet 14pcs"},
-  {code:"100025096",name:"Losec-Mups 10 mg Tablet 14pcs"},
-  {code:"100025141",name:"Linopril 20 mg Tablet 28pcs"},
-  {code:"100025150",name:"Angiotec 5 mg Tablet 30pcs"},
-  {code:"100025168",name:"Angiotec 10 mg Tablet 30pcs"},
-  {code:"100025176",name:"Angiotec 20 mg Tablet 20pcs"},
-  {code:"100025184",name:"Zinopril 10 mg Tablet 28pcs"},
-  {code:"100025192",name:"Zinopril 20 mg Tablet 28pcs"},
-  {code:"100025205",name:"Tenormin 50 mg Tablet 28pcs"},
-  {code:"100025299",name:"Methotrexat 2.5 mg Tablet 50pcs"},
-  {code:"100025352",name:"Aciloc 20 mg Capsule 14pcs"},
-  {code:"100025379",name:"Aciloc 40 mg Capsule 14pcs"},
-  {code:"100025387",name:"Aciloc 20 mg Capsule 7pcs"},
-  {code:"100025395",name:"Ranimax 75 mg Tablet 20pcs"},
-  {code:"100025408",name:"Pantozol 20 mg Tablet 15pcs"},
-  {code:"100025424",name:"Nexium 20 mg Tablet 28pcs"},
-  {code:"100025432",name:"Pantozol 40 mg Tablet 30pcs"},
-  {code:"100025459",name:"Famodar 20 mg Tablet 30pcs"},
-  {code:"100025475",name:"Cimedine 400 mg Tablet 24pcs"},
-  {code:"100025491",name:"Glotac 150 mg Tablet 20pcs"},
-  {code:"100025504",name:"Tenormin 100 mg Tablet 14pcs"},
-  {code:"100025731",name:"Zantac 75 mg Tablet 12pcs"},
-  {code:"100025740",name:"Gaviscon Tablet 16pcs Peppermint"},
-  {code:"100025774",name:"Colpermin Capsule 20pcs"},
-  {code:"100025782",name:"Zantac 150 mg Tablet 20pcs"},
-  {code:"100025791",name:"Pantozol 40 mg Tablet 15pcs"},
-  {code:"100025820",name:"Ranimax 150 mg Tablet 20pcs"},
-  {code:"100025838",name:"Losec-Mups 20 mg Tablet 14pcs"},
-  {code:"100025862",name:"Ranid 150 mg Tablet 20pcs"},
-  {code:"100025942",name:"Simvaten 10 mg Tablet 30pcs"},
-  {code:"100025951",name:"Simvaten 20 mg Tablet 30pcs"},
-  {code:"100025969",name:"Simvaten 40 mg Tablet 30pcs"},
-  {code:"100026030",name:"Dulcolax 5 mg Tablet 30pcs"},
-  {code:"100026048",name:"Bekunis Tablet 45pcs"},
-  {code:"100026056",name:"Neocarbon Capsule 30pcs"},
-  {code:"100026101",name:"Eucarbon Tablet 100pcs"},
-  {code:"100026136",name:"Disflatyl Tablet 30pcs"},
-  {code:"100026144",name:"Proton 40 mg Tablet 28pcs"},
-  {code:"100026152",name:"Proton 40 mg Tablet 14pcs"},
-  {code:"100026195",name:"Apo-Ranitidine 300 mg Tablet 10pcs"},
-  {code:"100026224",name:"Toprazole 40 mg Tablet 15pcs"},
-  {code:"100026232",name:"Toprazole 40 mg Tablet 30pcs"},
-  {code:"100026267",name:"Inegy 40 mg/10 mg Tablet 28pcs"},
-  {code:"100026283",name:"Simva 10 mg Tablet 30pcs"},
-  {code:"100026312",name:"Linopril 10 mg Tablet 28pcs"},
-  {code:"100026347",name:"Sennalax 12 mg Tablet 20pcs"},
-  {code:"100026371",name:"Fleet Enema 66.6 ml Children"},
-  {code:"100026380",name:"Fleet Enema 133 ml Adult"},
-  {code:"100026435",name:"De-Nol 120 mg 40 Tablet"},
-  {code:"100026478",name:"Protexin-Balance Capsule 60pcs"},
-  {code:"100026540",name:"Pantomax 20 mg Tablet 15pcs"},
-  {code:"100026558",name:"Pantomax 20 mg Tablet 30pcs"},
-  {code:"100026566",name:"Lanzor 30 mg Capsule 15pcs"},
-  {code:"100026574",name:"Omeprex 20 mg Capsule 14pcs"},
-  {code:"100026611",name:"Zestril 10 mg Tablet 28pcs"},
-  {code:"100026620",name:"Zestril 20 mg Tablet 28pcs"},
-  {code:"100026638",name:"Fixit 150 mg Capsule 14pcs"},
-  {code:"100026785",name:"Chitocal Capsule 60pcs"},
-  {code:"100026793",name:"Neopuntia 500 mg Capsule 60pcs"},
-  {code:"100026814",name:"Hepaticum 140 mg 30 Capsules"},
-  {code:"100026911",name:"Fixit 150 mg Capsule 28pcs"},
-  {code:"100026937",name:"Gasec 20 mg Capsule 14pcs"},
-  {code:"100026953",name:"Gasec 20 mg Capsule 28pcs"},
-  {code:"100026961",name:"Omezyn 20 mg Capsule 15pcs"},
-  {code:"100026988",name:"Gasec 40 mg Capsule 14pcs"},
-  {code:"100026996",name:"Gasec 40 mg Capsule 28pcs"},
-  {code:"100027067",name:"Simva 20 mg Tablet 30pcs"},
-  {code:"100027075",name:"Simva 40 mg Tablet 30pcs"},
-  {code:"100027121",name:"Legalon 70 mg 80 Tab"},
-  {code:"100027198",name:"Asacol 400 mg Tablet 50pcs"},
-  {code:"100027201",name:"Scopinal 10 mg Tablet 20pcs"},
-  {code:"100027315",name:"Zydac 150 mg Tablet 10pcs"},
-  {code:"100027323",name:"Zydac 300 mg Tablet 10pcs"},
-  {code:"100027340",name:"Rantag 150 mg Tablet 20pcs"},
-  {code:"100027411",name:"Atorva 40 mg Tablet 30pcs"},
-  {code:"100027438",name:"Zestril 5 mg Tablet 28pcs"},
-  {code:"100027446",name:"Capocard 25 mg Tablet 20pcs"},
-  {code:"100027471",name:"Renitec 20 mg Tablet 28pcs"},
-  {code:"100027497",name:"Salazopyrin Tablet"},
-  {code:"100027518",name:"Asacol 800 mg Tablet 50pcs"},
-  {code:"100027526",name:"Salofalk 500 mg Tablet 50pcs"},
-  {code:"100027825",name:"Clomid 50 mg Tablet 10pcs"},
-  {code:"100027841",name:"Proviron 25 mg Tablet 20pcs"},
-  {code:"100028035",name:"Evista 60 mg Tablet 28pcs"},
-  {code:"100028051",name:"Avodart 0.5 mg Capsule 30pcs"},
-  {code:"100028060",name:"Mepapon Capsule 30pcs"},
-  {code:"100028086",name:"Proscar 5 mg Tablet 28pcs"},
-  {code:"100028115",name:"Cardura 4 mg Tablet 20pcs"},
-  {code:"100028385",name:"Zyloric 100 mg Tablet 50pcs"},
-  {code:"100028393",name:"Cardura 1 mg Tablet 20pcs"},
-  {code:"100028625",name:"Mirena Loop 1pc"},
-  {code:"100028713",name:"No-Uric 100 mg Tablet 50pcs"},
-  {code:"100028721",name:"No-Uric 300 mg Tablet 20pcs"},
-  {code:"100029046",name:"Dicynone 500 mg Tablet 20pcs"},
-  {code:"100029054",name:"Daflon 500 mg Tablet 30pcs"},
-  {code:"100029169",name:"Detrusitol 2 mg Tablet 28pcs"},
-  {code:"100029177",name:"Vesicare 5 mg Tablet 30pcs"},
-  {code:"100029185",name:"Vesicare 10 mg Tablet 30pcs"},
-  {code:"100029265",name:"Methergin 0.125 mg Tablet 30pcs"},
-  {code:"100029273",name:"Metfor 500 mg Tablet 50pcs"},
-  {code:"100029281",name:"Daonil 5 mg Tablet 30pcs"},
-  {code:"100029290",name:"Novonorm 0.5 mg Tablet 30pcs"},
-  {code:"100029302",name:"Novonorm 1 mg Tablet 30pcs"},
-  {code:"100029311",name:"Novonorm 2 mg Tablet 30pcs"},
-  {code:"100029353",name:"Doxium 500 mg Capsule 30pcs"},
-  {code:"100029388",name:"Isobide 20 mg Capsule 20pcs"},
-  {code:"100029396",name:"Isobide 40 mg Capsule 20pcs"},
-  {code:"100029417",name:"Bio-Marine 60 Capsules"},
-  {code:"100029564",name:"Xatral-XL 10 mg Tablet 30pcs"},
-  {code:"100029601",name:"Omnic-Ocas 0.4 mg Tablet 30pcs"},
-  {code:"100029724",name:"Bio-Quinone-Q10 30 mg 30 Capsule"},
-  {code:"100029759",name:"Ginexin-F 40 Tab"},
-  {code:"100029812",name:"Glucobay 50 mg Tablet 30pcs"},
-  {code:"100030194",name:"Glucobay 100 mg Tablet 30pcs"},
-  {code:"100030442",name:"Climen Tablet 21pcs"},
-  {code:"100030493",name:"Reparil 20 mg Tablet 40pcs"},
-  {code:"100030733",name:"Levitra 20 mg Tablet 4pcs"},
-  {code:"100030750",name:"Glorion 2 mg Tablet 30pcs"},
-  {code:"100030768",name:"Glorion 3 mg Tablet 30pcs"},
-  {code:"100030776",name:"Glorion 4 mg Tablet 30pcs"},
-  {code:"100030805",name:"Glim 1 mg Tablet 30pcs"},
-  {code:"100030813",name:"Glim 2 mg Tablet 30pcs"},
-  {code:"100031007",name:"Logynon Tablet 21pcs"},
-  {code:"100031031",name:"Minidiab 5 mg Tablet 30pcs"},
-  {code:"100031074",name:"Viagra 50 mg Tablet 4pcs"},
-  {code:"100031082",name:"Cialis 20 mg Tablet 4pcs"},
-  {code:"100031091",name:"Snafi 20 mg Tablet 4 pcs"},
-  {code:"100031285",name:"Lipitor 40 mg Tablet 30pcs"},
-  {code:"100031349",name:"Metfor 850 mg Tablet 60pcs"},
-  {code:"100031912",name:"Duphastone 10 mg Tablet 20pcs"},
-  {code:"100032034",name:"Coumadin 2 mg Tablet 100pcs"},
-  {code:"100032042",name:"Coumadin 2.5 mg Tablet 100pcs"},
-  {code:"100032122",name:"Microlut Tablet 35pcs"},
-  {code:"100032131",name:"Yasmin Tablet 21pcs"},
-  {code:"100032149",name:"Cilest 250/35 Tablet 21pcs"},
-  {code:"100032253",name:"Dialon 500 mg Tablet 48pcs"},
-  {code:"100032350",name:"Aldomet 250 mg Tablet 30pcs"},
-  {code:"100032376",name:"Physiotens 0.2 mg Tablet 28pcs"},
-  {code:"100032421",name:"Betaserc 16 mg Tablet 40pcs"},
-  {code:"100032448",name:"Gynera Tablet 21pcs"},
-  {code:"100032456",name:"Gracial Tablet 22pcs"},
-  {code:"100032464",name:"Marvelon Tablet 21pcs"},
-  {code:"100032472",name:"Cerazette .075 mg Tablet 28pcs"},
-  {code:"100032528",name:"Formit 500 mg Tablet 50pcs"},
-  {code:"100032739",name:"Avandia 4 mg Tablet 14pcs"},
-  {code:"100032771",name:"Doabetic 5 mg Tablet 30pcs"},
-  {code:"100032819",name:"Glaze 80 mg Tablet 60pcs"},
-  {code:"100032835",name:"Metaphage 500 mg Tablet 50pcs"},
-  {code:"100032843",name:"Glaze 80 mg Tablet 20pcs"},
-  {code:"100032851",name:"Diatab 5 mg Tablet 30pcs"},
-  {code:"100033061",name:"Orgametril Tablet 30pcs"},
-  {code:"100033088",name:"Primolut-N Tablet 30pcs"},
-  {code:"100033096",name:"Dostinex 0.5 mg Tablet 8pcs"},
-  {code:"100033328",name:"Glucagen 1 mg Hypokit Filled With Water"},
-  {code:"100033361",name:"Potassium-Chloride 20 mg Additive"},
-  {code:"100033387",name:"Calcium-Chloride 10% Abboject"},
-  {code:"100033395",name:"Dostinex 0.5 mg Tablet 2pcs"},
-  {code:"100033408",name:"Parlodel 2.5 mg Tablet 30pcs"},
-  {code:"100033432",name:"Genurin-Semplice-Forte Tablet 30pcs"},
-  {code:"100033571",name:"Blopress-Plus 8/12.5 mg Tablet 28pcs"},
-  {code:"100033580",name:"Torvacol 10 mg Tablet 30pcs"},
-  {code:"100033598",name:"Torvacol 20 mg Tablet 30pcs"},
-  {code:"100033601",name:"Torvacol 40 mg Tablet 30pcs"},
-  {code:"100033643",name:"Dynamisan Tablet 30pcs With Gift"},
-  {code:"100033651",name:"Aspirin-Protect 100 mg Tablet 20pcs"},
-  {code:"100033660",name:"Lacine 50 mg Tablet 30pcs"},
-  {code:"100033678",name:"Blopress-Plus 16/12.5 mg Tablet 28pcs"},
-  {code:"100033686",name:"Marnys-Ginseng 1000 mg Capsule 30pcs"},
-  {code:"100033694",name:"Bio-Carotene 1500- 60 Capsules"},
-  {code:"100033707",name:"Isoflavones 125 mg 30 Capsules"},
-  {code:"100033740",name:"Vitacal 30 Tab"},
-  {code:"100033774",name:"Detrusitol-Retard 4 mg Capsule 14pcs"},
-  {code:"100033782",name:"Propolis 1000 mg Capsule 30pcs"},
-  {code:"100033791",name:"Oximal 7.5 mg Tablet 30pcs"},
-  {code:"100033803",name:"Joint-Care-Max Tablet & Capsule 30+30p"},
-  {code:"100033811",name:"Oximal 15 mg Tablet 30pcs"},
-  {code:"100033820",name:"Oflam 50 mg Tablet 20pcs"},
-  {code:"100033871",name:"Lorinase Tablet 14pcs"},
-  {code:"100033977",name:"Histan (Zistan) 4 Mg Tablet 20pcs"},
-  {code:"100033985",name:"Biscor 5 mg Tablet 30pcs"},
-  {code:"100034005",name:"Marnys Castor-Oil Capsule 60 pcs"},
-  {code:"100034021",name:"Pantover 40 mg Tablet 15pcs"},
-  {code:"100034048",name:"Navidine 150 mg Tablet 30pcs"},
-  {code:"100034099",name:"Bio-Fiber-80 Tablet 60 Tab"},
-  {code:"100034136",name:"Bio-Biloba Tablet 60pcs"},
-  {code:"100034144",name:"Bio-Garlic 300 mg Tablet 60pcs"},
-  {code:"100034152",name:"Fenogal 200 mg Capsule 30pcs"},
-  {code:"100036123",name:"Larimam Milk Nutritional Supplement Vanilla 400 gm"},
-  {code:"100036131",name:"Mamil Mama Vanilla 400gm"},
-  {code:"100036414",name:"Mamil Mama Plus Chocolat 400gm"},
-  {code:"100036431",name:"Hipp Natal Care For Pregnancy 2 Pc * 12 * 200 ml"},
-  {code:"100036457",name:"Dumil Mama Plus Strawbery 400g"},
-  {code:"100036465",name:"Ladymil Vanilla Milk 24x400gm"},
-  {code:"100036617",name:"Sahha Mama Milk 400 gm 24C"},
-  {code:"100036828",name:"Babina Mum Vanilla 24x400gm"},
-  {code:"100036836",name:"Ladymil Chocolate 24x400gm"},
-  {code:"100036844",name:"Ladymil Strawberry 24x400gm"},
-  {code:"100327326",name:"Thermamax 3pcs For Menstrual Cramp"},
-  {code:"100420061",name:"Vit-E 1000 Soft Gel 60 Cap"},
-  {code:"100420070",name:"Vit-E 400 Soft Gel 60 Cap"},
-  {code:"100426826",name:"Ginkgo Power / Biloba 50/Cap"},
-  {code:"100426834",name:"Bita Carotene 60/Cap"},
-  {code:"100426842",name:"Magnesium Caps 450 mg 100 pcs"},
-  {code:"100426957",name:"Diet Fuel 60/Cap"},
-  {code:"100427327",name:"Iron Caps 18mg 100/Cap"},
-  {code:"100427343",name:"L-Arginine 500mg 50/Cap"},
-  {code:"100427351",name:"Primrose-Power 1300mg 30/Cap"},
-  {code:"100427360",name:"Bee Pollen 100/Cap"},
-  {code:"100427378",name:"Garlic Odorless Bulb 60 Cap"},
-  {code:"100430180",name:"Queen 2000 Capsule 30pcs Royal Jelly 2000+Yohimbe"},
-  {code:"100430198",name:"Nigella-Royal-Jelly-Garlic 30 Capsules"},
-  {code:"100430358",name:"Otaci Pastille 16pcs Lemon"},
-  {code:"100430382",name:"Otaci Pastille 16pcs Echinacea"},
-  {code:"100430391",name:"Otaci Pastille 16pcs Orange"},
-  {code:"100430403",name:"Otaci Pastille 16pcs Honey & Lemon"},
-  {code:"100430411",name:"Otaci Pastille 16pcs Cherry"},
-  {code:"100430420",name:"Otaci Pastille 16pcs Salvia"},
-  {code:"100430438",name:"Otaci Pastille 16pcs Okamenthol"},
-  {code:"100430446",name:"Otaci Pastille 16pcs Liquorice"},
-  {code:"100430454",name:"Otaci Pastille 16pcs Strawberry"},
-  {code:"100430462",name:"Otaci Pastille 16pcs Ginger & Lemon"},
-  {code:"100430471",name:"Otaci Pastille 16pcs Ginger & Orange"},
-  {code:"100430489",name:"Otaci Pastille 16pcs Ginger & Strawberry"},
-  {code:"100430497",name:"Throat Refresh Eucaluptus +Vit C 38.4 gm"},
-  {code:"100430500",name:"Throat Refresh Orange +Vit C 38.4 gm"},
-  {code:"100430518",name:"Throat Refresh Lemon/Honey +Vit C 38.4 gm"},
-  {code:"100430526",name:"Throat Refresh Lemon/Honey +Vit C Sugar Free 38.4 gm"},
-  {code:"100430542",name:"Throat Refresh Orange +Vit C Sugar Free 38.4 gm"},
-  {code:"100430551",name:"Hair-Dal 60 Tablets"},
-  {code:"100430569",name:"Arkopharma-Charbon Capsule 45 pcs"},
-  {code:"100430577",name:"Mucivital 430 mg Capsule 45pcs"},
-  {code:"100430585",name:"Arkopharma-Sene 290 mg Capsule 45pcs"},
-  {code:"100430593",name:"Arkopharma-Harpadol 435 Capsule 45pcs"},
-  {code:"100430649",name:"Foliron-Plus Capsule 30pcs"},
-  {code:"100430673",name:"Arkopharma-Artichaut 200 mg 45 Capsules"},
-  {code:"100430681",name:"Arkopharma-Horse-Chestnut Capsule 45pcs"},
-  {code:"100430690",name:"Arkopharma-Passiflore 300 mg Capsule 45pcs"},
-  {code:"100430702",name:"Arkopharma-St-Johns-Wort 185 mg Capsule 45pcs"},
-  {code:"100430711",name:"Arkopharma-Valerian 350 mg Capsule 45pcs"},
-  {code:"100430745",name:"Arkopharma-Indol-Ail 430 mg Capsule 45pcs"},
-  {code:"100430770",name:"Bio-Caps-Plus Capsule 60pcs"},
-  {code:"100430788",name:"Arkopharma-Ginkgo 45 Capsules"},
-  {code:"100430796",name:"Arkopharma-Phytosoya Capsule 60pcs"},
-  {code:"100430817",name:"Arkopharma Cod Liver Oil Caps"},
-  {code:"100436784",name:"Pre-Natal Formula 60/Cap"},
-  {code:"100436792",name:"Women Power 100/Cap"},
-  {code:"100438958",name:"Arkopharma-Brewers-Yeast 445 mg Capsule 45pcs"},
-  {code:"100439011",name:"Bio-Yeast-Forte 72 Tablets"},
-  {code:"100439037",name:"Bio-Yeast 60 Tablets"},
-  {code:"100439045",name:"Triglistab 30 Capsules"},
-  {code:"100439061",name:"Arkopharma-Cupaline 445 mg Capsule 45pcs"},
-  {code:"100443474",name:"Yeasttab 50/Tab"},
-  {code:"100443482",name:"Folic Acid 800mcg 200/Tab"},
-  {code:"100443503",name:"Folic Acid 500mcg 200/Tab"},
-  {code:"100443511",name:"Ferrovit 30 Tab"},
-  {code:"100443520",name:"Magnesium 400 mg Oxi"},
-  {code:"100443589",name:"Glucosamine Fuel 60/Tab"},
-  {code:"100443597",name:"Joint Health 30/Tab"},
-  {code:"100443626",name:"Melatonin Caps 3mg 60/Cap"},
-  {code:"100443642",name:"Good-Nite 473mg 60/Cap"},
-  {code:"100446528",name:"L-Cystin Caps 500 mg 30 Caps/17"},
-  {code:"100446536",name:"Yohimbe Fuel 50/Cap"},
-  {code:"100446552",name:"Vigore 1000 30/Cap"},
-  {code:"100446561",name:"Yohimbe Power 400mg 60 Cap"},
-  {code:"100446958",name:"Metabolift 60/Cap"},
-  {code:"100447045",name:"Ripped Power 100/Cap"},
-  {code:"100447192",name:"Nutritional Yeast 16oz"},
-  {code:"100447361",name:"Ostrich Fat 125m(Wadi Al-Nahil"},
-  {code:"100447969",name:"V - Royal Capsules 30 pcs"},
-  {code:"100453672",name:"Marnys-Espgingal Capsule 30pcs"},
-  {code:"100453681",name:"Reman Queen Jelly Royal 500mg"},
-  {code:"100453699",name:"Golden Royal 1000mg Black 30pcss"},
-  {code:"100453701",name:"Marnys-Korean-Ginseng 500 mg Capsule 30 pcs"},
-  {code:"100453710",name:"K-Gin Korean Ginseng 30/Caps"},
-  {code:"100454018",name:"Yohimbe Power 100/Cap"},
-  {code:"100454042",name:"Dhea American 100/Cap"},
-  {code:"100454051",name:"Male Formula 60/Cap"},
-  {code:"100454069",name:"Ginseng Damiana 100 Cap"},
-  {code:"100454122",name:"Mega One Daily 30 Cap"},
-  {code:"100454157",name:"Allergy A & D 100/Cap"},
-  {code:"100454253",name:"Vigorex Forte 60/Cap"},
-  {code:"100454270",name:"American Royal Power 3000 30pcss"},
-  {code:"100454288",name:"Man Enhancement 60/Cap"},
-  {code:"100454376",name:"Vit.C 1000 100/Cap"},
-  {code:"100454384",name:"Vitamin C-500 100/Cap"},
-  {code:"100454413",name:"Buffered Vit.C-1000 50/Tab"},
-  {code:"100454464",name:"Dextrose 5% Glass 24x100ml"},
-  {code:"100454472",name:"Zinc Caps 30mg 100/Cap"},
-  {code:"100454481",name:"Potassium Caps 90/Cap"},
-  {code:"100454499",name:"Bio Caps Reman,S 60/Cap"},
-  {code:"100454501",name:"Zinc 50mg 60/Cap"},
-  {code:"100454683",name:"Coq10 Coenzyme Q10 50/Cap"},
-  {code:"100454739",name:"Diet Power 100/Cap"},
-  {code:"100454747",name:"Citramax Caps 60/Cap"},
-  {code:"100454755",name:"Weight Control 60/Cap"},
-  {code:"100455053",name:"Thermogenic Power 60/Cap"},
-  {code:"100455310",name:"Dhea Male Formula 60/Cap"},
-  {code:"100455580",name:"Copper Caps 100/Cap"},
-  {code:"100455598",name:"Niacin Power 60/Cap"},
-  {code:"100455635",name:"B12 Vitamin 1000 mg 60 Tablets"},
-  {code:"100455651",name:"Biovital Royal Jelly 30/Cap"},
-  {code:"100455660",name:"Melatonin Caps 3mg 120/Cap"},
-  {code:"100455678",name:"Folic Acid 800mcg 100/Cap"},
-  {code:"100455977",name:"Antioxidant 30/Cap"},
-  {code:"100456099",name:"Alkaline Nasal Wash 90gm"},
-  {code:"100456259",name:"Ripped Fuel 60 Cap"},
-  {code:"100456363",name:"Excel Capsule Royal Jelly 30pcs"},
-  {code:"100456371",name:"Golden Royal 1000mg Brown 60pcss"},
-  {code:"100456380",name:"Royal J.Fosginjal 50 pcs Marnys"},
-  {code:"100456398",name:"Biomax Royal Jelly 30/Cap"},
-  {code:"100456401",name:"Korean Red Ginseng Caps 50/Cap"},
-  {code:"100456566",name:"Super E Plus Selenium 50/Cap"},
-  {code:"100457067",name:"Avalon Muscle Pain Relief 100m"},
-  {code:"100457155",name:"Deep-Heat Rub 35 gm"},
-  {code:"100457219",name:"Deep-Heat Rub 100 gm"},
-  {code:"100457227",name:"Deep-Heat Rub 67 gm"},
-  {code:"100457761",name:"Dhea-Male Formula 30/Cap"},
-  {code:"100457930",name:"Salonpas-E Plaster 1X50pcs"},
-  {code:"100457956",name:"Platines Magnetiques"},
-  {code:"100457972",name:"Salonpas Plaster S/S 20x10pcs"},
-  {code:"100468858",name:"Omega-3 Fish Oil 50/Softgels"},
-  {code:"100468866",name:"Calcitone 30 Tablets"},
-  {code:"100468882",name:"Cebrovit-Sun-Naturals Tablet 30pcs"},
-  {code:"100468920",name:"Boswellin 50/Tab"},
-  {code:"100469025",name:"Melatonin 3mg 100/Tab"},
-  {code:"100469279",name:"Dhea-Women,S Formula 30/Cap"},
-  {code:"100469287",name:"Vigorex Femme 30/Cap"},
-  {code:"100469295",name:"Marnys-Omega-3-Salamon-Oil Capsule 60pcs"},
-  {code:"100471491",name:"Joint Fuel 60/Cap"},
-  {code:"100471791",name:"Joint Health 90/Cap"},
-  {code:"100471803",name:"Joint Health 120/Cap"},
-  {code:"100471811",name:"Chondroitin Sulfate 600mg 60/Cap"},
-  {code:"100471820",name:"Joint Factors 60/Cap"},
-  {code:"100471838",name:"Joint Health 60/Cap"},
-  {code:"100471846",name:"Glucosamine Sulfate 750mg 30/Cap"},
-  {code:"100471862",name:"Immune Protector 60/Cap"},
-  {code:"100472486",name:"Saw Palmetto & Pygeum 60/Cap"},
-  {code:"100472494",name:"Prostate Health 100/Cap"},
-  {code:"100472507",name:"Gtf Chromium 200mcg 30/Tab"},
-  {code:"100472865",name:"Kwai Highly Conc.Garlic 100tab"},
-  {code:"100473323",name:"Methyl Salicylate Oint.Com 30m"},
-  {code:"100473358",name:"St.John,S Power 60/Cap"},
-  {code:"100474094",name:"Calcium 1000 60/Tab"},
-  {code:"100474203",name:"Mega Fish Oil 1000mg 50/Soft Gels"},
-  {code:"100475880",name:"L-Cystine 500mg 60/Cap"},
-  {code:"100475898",name:"Sofex Neo Cystine 180 Capsulas"},
-  {code:"100475960",name:"Vitamin C 500mg 60/Tab"},
-  {code:"100475978",name:"Vita-Ladies 30 Tab"},
-  {code:"100475994",name:"Marnys-Vision-Natura Capsule 30pcs"},
-  {code:"100476006",name:"Mega 3 Fish Oil 30 Soft Gel"},
-  {code:"100476209",name:"B6 Caps 100mg 100/Cap"},
-  {code:"100476217",name:"Neuro-Tone 30 Tablets"},
-  {code:"100479901",name:"Supreme Royal Jelly 30/Cap"},
-  {code:"100479910",name:"Royal G Plus 1000mg USA 30cap"},
-  {code:"100479936",name:"Marnys-Royal-Jelly 1000 mg Capsule 30pcs"},
-  {code:"100480427",name:"Victoria 1500mg USA 30cap"},
-  {code:"100480435",name:"Victoria 2000mg USA 30cap"},
-  {code:"100480451",name:"Regency-1000 Royal Jelly 15 pcs"},
-  {code:"100480460",name:"Royal Jelly Mega 300 Marnys"},
-  {code:"100480486",name:"Arkopharma Ginsatonic Caps"},
-  {code:"100480494",name:"Korean Ginsing 50cap Marnys"},
-  {code:"100480507",name:"Marnys-Fosgingal Capsule 30pcs"},
-  {code:"100480603",name:"Calcium 500 Tabs 90/Tab"},
-  {code:"100480611",name:"Potassium Glucpnate 595 mg 60 Tab"},
-  {code:"100480638",name:"Boiron Horse Chestnut 50/Cap"},
-  {code:"100480654",name:"Cholesterol Deffenc 60/Cap"},
-  {code:"100480671",name:"Vit-C 2000mg 100/Cap"},
-  {code:"100480697",name:"Biotin 1000mcg 60/Cap"},
-  {code:"100480726",name:"Dong-Quai Power 60/Cap"},
-  {code:"100480961",name:"Saw Palmetto Caps 100/Cap"},
-  {code:"100481024",name:"Glucose-D Dawa,S 24x454gm"},
-  {code:"100481041",name:"Biotin Caps 600mg 100/Cap"},
-  {code:"100481059",name:"Dong Quai Root 100/Cap"},
-  {code:"100482078",name:"Royalbene USA 30/Tab"},
-  {code:"100483046",name:"Montagne Aches Away 325"},
-  {code:"100483071",name:"Tiger Balm Balm 19.4 gm"},
-  {code:"100483089",name:"Axe Oil S/S 600x3ml"},
-  {code:"100504492",name:"Digestyl Capsules 60 Cap"},
-  {code:"100505621",name:"Castor Oil Amira 12x50ml"},
-  {code:"100505639",name:"Castor Oil Greenwood 12x60ml"},
-  {code:"100505647",name:"Castor Oil 60 ml (Zg)"},
-  {code:"100505680",name:"A-Lax Tablet 30pcs"},
-  {code:"100519723",name:"Hair Factor 50/Cap"},
-  {code:"100519731",name:"Hair Formula 60/Cap"},
-  {code:"100521145",name:"Hair Factors 100/Tab"},
-  {code:"100546967",name:"Baby Teething Pain Relief - 12/P"},
-  {code:"100546975",name:"Childrens Mouth Sore Relief -12/P"},
-  {code:"100594512",name:"Tooth & Gum Sensitivity Relioef - 12/P"},
-  {code:"100594563",name:"Clove Oil 10ml (Hayat)"},
-  {code:"100594694",name:"Clove Oil 10 ml (Zg)"},
-  {code:"100597625",name:"Vicks Inhaler"},
-  {code:"100597650",name:"Black Seed Vapo Rub Vapour Rub 100 ml"},
-  {code:"100597668",name:"Vicks Vaporub 100 gm"},
-  {code:"100597676",name:"Vicks Vaporub 50 gm"},
-  {code:"100598433",name:"Wadi-Alnahil Castor Oil Mint 60 ml"},
-  {code:"100598724",name:"Ostrich Oil Natural 12x80ml"},
-  {code:"100599250",name:"Ricola Bag Menthol 24x75gm"},
-  {code:"100599760",name:"Vicks Box Blackcurrant 20x40gm"},
-  {code:"100600177",name:"Vicks Box Menthol 20x40gm"},
-  {code:"100601655",name:"Pradaxa 75 mg Capsule 30pcs"},
-  {code:"100601671",name:"Co-Aprovel 300/25 mg Tablet 28pcs"},
-  {code:"100601698",name:"Arava 20 mg Tablet 30pcs"},
-  {code:"100602578",name:"Norprolac 75 Mcg Tablet 30pcs"},
-  {code:"100602623",name:"Fluxetyl 20 mg Capsule 28pcs"},
-  {code:"100603829",name:"Lipodar 10"},
-  {code:"100603837",name:"Lipodar 20"},
-  {code:"100604303",name:"Marnys-Cumin-Mar Blackumin-Oil Capsule 60pcs"},
-  {code:"100604311",name:"Marnys-Circulmar Garlic Oil Capsule 60pcs"},
-  {code:"100604813",name:"Galvus 50 mg Tablet 28pcs"},
-  {code:"100604830",name:"Co-Diovan 320/25 mg Tablet 28pcs"},
-  {code:"100604961",name:"Invega 3 mg Tablet 28pcs"},
-  {code:"100604979",name:"Invega 6 mg Tablet 28pcs"},
-  {code:"100604987",name:"Invega 9 mg Tablet 28pcs"},
-  {code:"100605023",name:"Valcyte 450 mg Tablet 60pcs"},
-  {code:"100605091",name:"Nutri-Natal 30 Cap"},
-  {code:"100606296",name:"Maxim 400 mg Tablet 5pcs"},
-  {code:"100606309",name:"Maxim 400 mg Tablet 7pcs"},
-  {code:"100606333",name:"Selecta 10 mg Tablet 30pcs"},
-  {code:"100606368",name:"Voltic-D 50 mg Dispersable Tablet 20pcs"},
-  {code:"100606376",name:"Fast-Flam 50 mg Tablet 20 pcs"},
-  {code:"100608048",name:"Azinc Optimal"},
-  {code:"100608232",name:"Paroxat 10 mg Tablet 30pcs"},
-  {code:"100608259",name:"Azinc Optimal 60 Cap"},
-  {code:"100609500",name:"Paroxat 20 mg Tablet 30pcs"},
-  {code:"100609518",name:"Paroxat 30 mg Tablet 30pcs"},
-  {code:"100609956",name:"Wadi-Alnahil Castor Oil Strawberry  60 ml"},
-  {code:"100609972",name:"Wadi-Alnahil Castor Oil With Cinnamon 60 ml"},
-  {code:"100611175",name:"Dorofen Capsule 40pcs"},
-  {code:"100611255",name:"Hymox 875 mg Tablet 14pcs"},
-  {code:"100611554",name:"Arkopharma-Azinc-Optimal Capsule 60pcs"},
-  {code:"100611722",name:"Sinemet 25/250 mg Tablet 20 pcs"},
-  {code:"100611925",name:"Uniprost 4 mg Tablet 20pcs"},
-  {code:"100612266",name:"Lorine-Fm 10 mg Tablet 10pcs"},
-  {code:"100613390",name:"Cobal 500 Mcg 30 Tablets"},
-  {code:"100613402",name:"Fattache-Forte Capsule 60pcs"},
-  {code:"100613728",name:"Sedacid 20 mg Tablet 14pcs"},
-  {code:"100613736",name:"Budiair 200 Mcg Inhaler 200 Doses"},
-  {code:"100613752",name:"Regulon Tablet 21pcs"},
-  {code:"100613761",name:"Regulon Tablet 63pcs"},
-  {code:"100613779",name:"Postinor 0.75 mg Tablet 2 Tablets"},
-  {code:"100613787",name:"Lanfast 30 mg Capsule 15pcs"},
-  {code:"100614288",name:"Oramax 150 mg Capsule 1pc"},
-  {code:"100614608",name:"Mododom Tablet 20pcs"},
-  {code:"100614624",name:"Kordel-Phyto-Femme Capsule 30 pcs"},
-  {code:"100614632",name:"Kordel-Gin-X-2000 mg 30 Cap"},
-  {code:"100614641",name:"Kordel-No-Ubosa Capsule 30 pcs"},
-  {code:"100614675",name:"Otricold Tablet 20pcs"},
-  {code:"100614755",name:"Priorin-N Capsule 60pcs"},
-  {code:"100614763",name:"Sulfad 1 gm 30 Tablets"},
-  {code:"100614771",name:"Kordel-Postaguard Capsule 30 pcs"},
-  {code:"100615248",name:"Glymide 5 Tablet 30pcs"},
-  {code:"100616144",name:"Pantium 40mg Tablets 30\'S"},
-  {code:"100616179",name:"Pantoloc 40mg Tablets 15\'S"},
-  {code:"100616195",name:"Hemamax 30 Tab"},
-  {code:"100616208",name:"Hemamax-F 30 Tab"},
-  {code:"100616321",name:"Evit 400mg Capsules 30"},
-  {code:"100616427",name:"Wellbutrin XL 300mg Tablets 30"},
-  {code:"100616435",name:"Wellbutrin XL 150mg Tablets 30"},
-  {code:"100616558",name:"Promoise Milk For Pregnant Moms 400gm 6C"},
-  {code:"100617227",name:"Paraffin Oil 60ml"},
-  {code:"100617260",name:"Adol Compound Caplet 20 Pcs"},
-  {code:"100617825",name:"Renalof 325mg Capsules 60"},
-  {code:"100617868",name:"Respal 2mg Caplets 20"},
-  {code:"100617876",name:"Omaceph 500mg Capsules 20"},
-  {code:"100617884",name:"Respal 4mg Caplets 20"},
-  {code:"100617905",name:"Lecital 20mg Caplets 30"},
-  {code:"100617913",name:"Omacip 500mg Tablets 10"},
-  {code:"100617921",name:"Lecital 40mg Caplets 30"},
-  {code:"100617930",name:"Viscor 20mg Tablets 30"},
-  {code:"100618975",name:"Viagra 100mg Tablets 4"},
-  {code:"100619222",name:"Castor Oil Orang"},
-  {code:"100620119",name:"Claritt XL 500mg Tablets 14"},
-  {code:"100625577",name:"Golden-Royal-Jelly 1000 mg Capsule 30pcs"},
-  {code:"100626182",name:"Nutralife Super Citrimax 60 Capsules"},
-  {code:"100626457",name:"Mucinex Tablet 600 mg 20pcs"},
-  {code:"100626561",name:"Folvyte 400 Mcg 60 Tab"},
-  {code:"100626916",name:"Uvamin Retard 100mg Capsule 20pcs"},
-  {code:"100626924",name:"Zelax 10mg Caplets 30pcs"},
-  {code:"100626932",name:"Zelax 20mg Caplets 30pcs"},
-  {code:"100627100",name:"Glimephan 3mg Tablets 30\'S"},
-  {code:"100627118",name:"Glimephan 4mg Tablets 30\'S"},
-  {code:"100627290",name:"Osteo-Mepha/Acino Tab 4\'S"},
-  {code:"100627302",name:"Fexotel Tablet 120 mg 14pcs"},
-  {code:"100627601",name:"Glimephan 1mg Tablets 30\'S"},
-  {code:"100627935",name:"Entapro 10mg Tab 30pcs"},
-  {code:"100627943",name:"Entapro 20mg Tab 30pcs"},
-  {code:"100628823",name:"Diclac 75 mg Tablet 20pcs"},
-  {code:"100628866",name:"Kordel-Ginkgo-Biloba 2500 mg Capsule 30 pcs"},
-  {code:"100629789",name:"Aprovel 300 mg Tablet 28pcs"},
-  {code:"100629797",name:"Aprovel 150 mg Tablet 28pcs"},
-  {code:"100629869",name:"Dilatrend 6.25 mg Tablet 30pcs"},
-  {code:"100630000",name:"Jusprin 81 mg Tablet 40pcs"},
-  {code:"100630034",name:"Teveten 600 mg Tablet 28pcs"},
-  {code:"100630069",name:"Sortiva-Fort 100 mg Tablet 30pcs"},
-  {code:"100630077",name:"Diovan 320 mg Tablet 28pcs"},
-  {code:"100630165",name:"Lanoxin 0.25 mg Tablet 100pcs"},
-  {code:"100630173",name:"Lanoxin 0.125 mg Tablet 100pcs"},
-  {code:"100630253",name:"Diane-35 Tablet 21pcs"},
-  {code:"100630309",name:"Disprin 81 mg Tablet 100pcs"},
-  {code:"100630325",name:"Pedovex 75 mg Tablet 30pcs"},
-  {code:"100630333",name:"Olmetec 40/25 mg Tablet 28pcs"},
-  {code:"100630430",name:"Cordarone 200 mg Tablet 30pcs"},
-  {code:"100630448",name:"Sedacoron 200 mg Tablet 30pcs"},
-  {code:"100630464",name:"Hydergine 1.5 mg Tablet 30pcs"},
-  {code:"100630481",name:"Gincosan Capsule 30pcs"},
-  {code:"100630510",name:"Stugeron 25 mg Tablet 50pcs"},
-  {code:"100630616",name:"Lotense 5 mg Capsule 30pcs"},
-  {code:"100630624",name:"Lotense 10 mg Capsule 30pcs"},
-  {code:"100630704",name:"Adalat-Retard 20 mg Tablet 30pcs"},
-  {code:"100630771",name:"Lercadip 10 mg Tablet 30pcs"},
-  {code:"100630982",name:"Hymox 500 mg Capsule 20pcs"},
-  {code:"100630991",name:"Hymox 250 mg Capsule 20pcs"},
-  {code:"100631176",name:"Candivast 150 mg Capsule 1pc"},
-  {code:"100631184",name:"Candivast 50 mg Capsule 7pcs"},
-  {code:"100631192",name:"Duracan 150 mg Capsule 1pc"},
-  {code:"100631205",name:"Flocazole 150 mg Capsule 1pc"},
-  {code:"100631230",name:"Ciprobay 750 mg Tablet 10pcs"},
-  {code:"100631256",name:"Itrazol 100 mg Capsule 4pcs"},
-  {code:"100631301",name:"Noroxin 400 mg Tablet 14pcs"},
-  {code:"100631328",name:"Ciprobay 250 mg Tablet 10pcs"},
-  {code:"100631379",name:"Ciprogen 500 mg Tablet 10pcs"},
-  {code:"100631416",name:"Roxil 500 mg Capsule 20pcs"},
-  {code:"100631441",name:"Magnacef 400 mg Capsule 6pcs"},
-  {code:"100631459",name:"Magnacef 200 mg Capsule 8pcs"},
-  {code:"100631467",name:"Biodroxil 500 mg Capsule 20pcs"},
-  {code:"100631475",name:"Cefadril 500 mg Capsule 12pcs"},
-  {code:"100631491",name:"Claridar 500 mg Tablet 14pcs"},
-  {code:"100631512",name:"Clarimac 500 mg Tablet 14pcs"},
-  {code:"100631521",name:"Azimac 500 mg Tablet 3pcs"},
-  {code:"100631547",name:"Emimycine 500 mg Tablet 14pcs"},
-  {code:"100631619",name:"Caltrate-D 600/200 mg/IU Tablet 60pcs"},
-  {code:"100631678",name:"Amoxidar 250 mg Capsule 20pcs"},
-  {code:"100631686",name:"Remox 250 mg Capsule 20pcs"},
-  {code:"100631707",name:"Amoxydar-Forte 500 mg Capsule 20pcs"},
-  {code:"100631715",name:"Amoxil 500 mg Capsule 20pcs"},
-  {code:"100631723",name:"Remox 500 mg Capsule 20pcs"},
-  {code:"100631731",name:"Amoxil 250 mg Capsule 20pcs"},
-  {code:"100631740",name:"Emox 500 mg Capsule 16pcs"},
-  {code:"100631791",name:"Cefix 200 mg Capsule 8pcs"},
-  {code:"100631803",name:"Cefix 400 mg Capsule 6pcs"},
-  {code:"100631811",name:"Winex 200 mg Capsule 8pcs"},
-  {code:"100631820",name:"Winex 400 mg Capsule 6pcs"},
-  {code:"100632056",name:"Julphamox 500 mg Capsule 20pcs"},
-  {code:"100632136",name:"Forticef 500 mg Capsule 15pcs"},
-  {code:"100632224",name:"Rifadin 300 mg Capsule 8pcs"},
-  {code:"100632232",name:"Sporanox 100 mg Capsule 4pcs"},
-  {code:"100632355",name:"Moduretic Tablet 30pcs"},
-  {code:"100632380",name:"Linopril 5 mg Tablet 28pcs"},
-  {code:"100632401",name:"Fortzaar 100/25 mg Tablet 28pcs"},
-  {code:"100632419",name:"Co-Aprovel 300/12.5 mg Tablet 28pcs"},
-  {code:"100632427",name:"Co-Aprovel 150/12.5 mg Tablet 28pcs"},
-  {code:"100632443",name:"Hyzaar 50/12.5 mg Tablet 28pcs"},
-  {code:"100632460",name:"Vascodipine 5 mg Tablet 30pcs"},
-  {code:"100632478",name:"Vascodipine 10 mg Tablet 30pcs"},
-  {code:"100632494",name:"Adalat-La 60 Mg 30 Tablets"},
-  {code:"100632507",name:"Dilzem-Retard 90 mg Tablet 30pcs"},
-  {code:"100632515",name:"Isoptin 240 mg Tablet 20pcs"},
-  {code:"100632523",name:"Isoptin 40 mg Tablet 50pcs"},
-  {code:"100632646",name:"Salurin 40 mg Tablet 20pcs"},
-  {code:"100632654",name:"Fusix 40 mg Tablet 30pcs"},
-  {code:"100632700",name:"Transiderm-Nitro 25 Mg ( 5mg/24 Hrs) 30 Pcs"},
-  {code:"100632769",name:"Sortiva-H 100/25 mg Tablet 30pcs"},
-  {code:"100632777",name:"Acetab 25 mg Tablet 30pcs"},
-  {code:"100632785",name:"Caduet 10/10 mg Tablet 30pcs"},
-  {code:"100632814",name:"Caduet 5/20 mg Tablet 30pcs"},
-  {code:"100632822",name:"Caduet 10/20 mg Tablet 30pcs"},
-  {code:"100632849",name:"Lofral 5 mg Tablet 30pcs"},
-  {code:"100632970",name:"Simcor 10 mg Tablet 30pcs"},
-  {code:"100632988",name:"Simcor 20 mg Tablet 30pcs"},
-  {code:"100632996",name:"Simvast 20 mg Tablet 28 P"},
-  {code:"100633008",name:"Simvast 10 mg Tablet 28 P"},
-  {code:"100633024",name:"Acetab 50 mg Tablet 30pcs"},
-  {code:"100633075",name:"Lisino 5 mg Tablet 30pcs"},
-  {code:"100633083",name:"Lisino 10 mg Tablet 30pcs"},
-  {code:"100633091",name:"Lisino 20 mg Tablet 30pcs"},
-  {code:"100633180",name:"Mono-Tildium 200 mg Capsule 28pcs"},
-  {code:"100633307",name:"Monozide 25 mg Tablet"},
-  {code:"100633454",name:"Lowvasc 5 mg Capsule 28pcs"},
-  {code:"100633471",name:"Duactin 5 mg Capsule 30pcs"},
-  {code:"100633489",name:"Lowrac 5 mg Capsule 28pcs"},
-  {code:"100633497",name:"Amlopress 5 mg Capsule 28pcs"},
-  {code:"100633518",name:"Vascodipine 2.5 mg Tablet 30pcs"},
-  {code:"100633649",name:"Aldactone 100 mg Tablet 10pcs"},
-  {code:"100633657",name:"Dynamisan 30 Tablets"},
-  {code:"100633681",name:"Exotique-Plus Capsule 30pcs"},
-  {code:"100633711",name:"Gr-Six Capsule 16pcs"},
-  {code:"100633729",name:"Ginsana 100 mg Capsule 30pcs"},
-  {code:"100633745",name:"Ginsavit Capsule 24pcs"},
-  {code:"100633753",name:"Genso 500 mg 30 Capsules"},
-  {code:"100633817",name:"Ginsa-Plus 250 mg Capsule 60pcs"},
-  {code:"100633884",name:"Azomax 250 mg Capsule 6pcs"},
-  {code:"100633892",name:"Zithromax 250 mg Capsule 4pcs"},
-  {code:"100633948",name:"Feroglobin Capsule 30pcs"},
-  {code:"100633964",name:"Folicum 1 mg 20 Tab"},
-  {code:"100633972",name:"Folic-Acid 5 mg 20 Tab"},
-  {code:"100633981",name:"Folicum 5 mg 20 Tab"},
-  {code:"100634019",name:"Folic-Acid 1 mg 20 Tab"},
-  {code:"100634043",name:"Suprax 400 mg Capsule 6pcs"},
-  {code:"100634078",name:"Ceclor 500 mg Capsule 15pcs"},
-  {code:"100634115",name:"Marnys-Mar-Vitoil Capsule 60pcs"},
-  {code:"100634158",name:"Quinox 250 mg Tablet 10pcs"},
-  {code:"100634166",name:"Tavanic 250 mg Tablet"},
-  {code:"100634182",name:"Oflacin 200 mg Tablet 10pcs"},
-  {code:"100634203",name:"Cipromax 500 mg Tablet 10pcs"},
-  {code:"100634246",name:"Bio-Cal-D 60 Tab"},
-  {code:"100634254",name:"Calcinate 600 mg 60 Tablets"},
-  {code:"100634377",name:"Sevenseas-Pulse Capsule 30pcs"},
-  {code:"100634406",name:"Sevenseas Capsule 120pcs"},
-  {code:"100634465",name:"Floxacin 500 mg Tablet 10pcs"},
-  {code:"100634473",name:"Tavanic 500 mg Tablet"},
-  {code:"100634481",name:"Bactall 500 mg Tablet 10pcs"},
-  {code:"100635695",name:"Natur Clove Oil 9 ml"},
-  {code:"100640216",name:"Co-Tabuvan 80/12.5mg Tablets 30"},
-  {code:"100640224",name:"Co-Tabuvan 320/12.5mg Tablets 30"},
-  {code:"100641008",name:"Co-Tabuvan 160/25mg Tablets 30"},
-  {code:"100641016",name:"Co-Tabuvan 320/25mg Tablets 30"},
-  {code:"100641024",name:"Nervax 75mg Capsules 20"},
-  {code:"100641032",name:"Nervax 150mg Capsules 60"},
-  {code:"100641139",name:"Ridon 1mg Tablets 30"},
-  {code:"100641147",name:"Ridon 2mg Tablets 30"},
-  {code:"100641155",name:"Ridon 4mg Tablets 30"},
-  {code:"100641180",name:"Tabuvan 40mg Tablets 30"},
-  {code:"100641198",name:"Tabuvan 320mg Tablets 30"},
-  {code:"100641219",name:"Castor Oil Pure Flaver"},
-  {code:"100642027",name:"Flutab-Sinus Tablet 20 P"},
-  {code:"100647004",name:"Zinc-Gluconate 76 mg 60 Tab"},
-  {code:"100648111",name:"Exforge Hct 10mg/320mg/25mg Tablets 28"},
-  {code:"100649202",name:"Ail Ginko-Biloba 40 mg Capsule 60pcs"},
-  {code:"100649211",name:"Ail Garlic Odorless 500 mg Capsule 60pcs"},
-  {code:"100649237",name:"Ail Prostate-Health Capsule 60pcs"},
-  {code:"100649253",name:"Ail L-Arginine-Power 2500 mg Capsule 60pcs"},
-  {code:"100649270",name:"Ail Apple-Cider 300mg Tablet 60pcs"},
-  {code:"100649288",name:"Ail Diet-Power Capsule 60pcs"},
-  {code:"100649296",name:"Ail Acetyl-L-Carnitine 2500 mg Capsule 60pcs"},
-  {code:"100649309",name:"Ail-Ripped-Power Capsule 60pcs"},
-  {code:"100651054",name:"Vexal XR 75mg Capsules 14"},
-  {code:"100651062",name:"Vexal XR 150mg Capsules 14"},
-  {code:"100655733",name:"Champix 1mg Tablet 56"},
-  {code:"100655784",name:"Ramipril Sandoz 2.5mg Tablet 20"},
-  {code:"100655792",name:"Ramipril Sandoz 10mg Tablet 20"},
-  {code:"100655987",name:"Ferro 28 Capsule 60"},
-  {code:"100655995",name:"Calcivyte 30 Tab"},
-  {code:"100656189",name:"Glimexxxxx Delisted"},
-  {code:"100658045",name:"Azaprin 50mg Tablet 100"},
-  {code:"100659030",name:"Pristiq 50mg Tablet 30"},
-  {code:"100660161",name:"Arena 300mg Tablet 30"},
-  {code:"100674352",name:"Celebrex 200mg Capsule 20"},
-  {code:"100674361",name:"Glucosamine Plus 500mg 30 Tab"},
-  {code:"100674854",name:"Levox 750mg Tablet 5"},
-  {code:"100674862",name:"Levox 500mg Tablet 5"},
-  {code:"100683515",name:"Chitocal Capsule 60 Twin Pack + Gift"},
-  {code:"100684294",name:"Tilax 4mg Tablet 30"},
-  {code:"100684307",name:"Tilax 2mg Tablet 30"},
-  {code:"100684331",name:"Onglyza 5mg Tablet 30"},
-  {code:"100684534",name:"Aquamarine 2 In1 (Omega3+Clo) 60 Capsules"},
-  {code:"100684542",name:"Aquamarine Omega3 60 Capsules"},
-  {code:"100697255",name:"Ipramax 25mg Tablet 60"},
-  {code:"100697263",name:"Ipramax 100mg Tablet 60"},
-  {code:"100697271",name:"Cardex 5mg Tablet 30"},
-  {code:"100697298",name:"Lotevan 5/ 320 mg Tablet 30"},
-  {code:"100697319",name:"Lotevan 10/ 320 mg Tablet 30"},
-  {code:"100697327",name:"Lotevan 10/ 160 mg Tablet 30"},
-  {code:"100697335",name:"Airfast 10mg Tablet 30"},
-  {code:"100703310",name:"Regency Plus Capsule 30"},
-  {code:"100704312",name:"Loxol 100 mg Tablet 30"},
-  {code:"100704321",name:"Loxol 25 mg Tablet 30"},
-  {code:"100704339",name:"Loxol 50 mg Tablet 30"},
-  {code:"100704347",name:"Loxol 200 mg Tablet 30"},
-  {code:"100707329",name:"Daonil M 5/500 mg Tablet 30"},
-  {code:"100707337",name:"Daonil M 2.5/500 mg Tablet 30"},
-  {code:"100715281",name:"Arbiten Plus 160/12.5 mg Tablet 30"},
-  {code:"100715290",name:"Arbiten Plus 80/12.5 mg Tablet 30"},
-  {code:"100715302",name:"Arbiten 80 mg Tablet 30"},
-  {code:"100715311",name:"Arbiten 160 mg Tablet 30"},
-  {code:"100722254",name:"Valdoxan 25 mg Tablet 28 Piece"},
-  {code:"100726280",name:"Panadol Advance 500 Tablets 24"},
-  {code:"100728470",name:"Lorinex 5 mg Tablet 20"},
-  {code:"100736445",name:"Deslor 5 mg Tablet 20 Piece"},
-  {code:"100737261",name:"Cystine B6 Tablet 120 Piece"},
-  {code:"100738379",name:"Galvus 50 mg Tablet 56"},
-  {code:"100752306",name:"Riaphyllin 300 mg Tablet 30"},
-  {code:"100754272",name:"Kwai Odour Free 100 Tab"},
-  {code:"100755312",name:"Seroquel XL 400 mg Tablet 30"},
-  {code:"100755321",name:"Seroquel XL 300 mg Tablet 30"},
-  {code:"100755339",name:"Seroquel XL 50 mg Tablet 30"},
-  {code:"100764307",name:"Perfectil Capsule 30 Piece"},
-  {code:"100764403",name:"Pregnacare Capsule 30 Piece"},
-  {code:"100788430",name:"Versatis 5% Medicated Plaster"},
-  {code:"100788448",name:"Pregadex 75 mg Capsule 30pcs"},
-  {code:"100788456",name:"Pregadex 150 mg Capsule 30pcs"},
-  {code:"100788481",name:"Levozal 5 mg Tablet 20 Piece"},
-  {code:"100791129",name:"GNC Ginseng Gold Triple Ginseng Root 90 Caps"},
-  {code:"100791153",name:"GNC Kelp 30 mg 60 Caps"},
-  {code:"100791188",name:"GNC Triple Garlic 810 mg 100 Tablet Coated Odorless"},
-  {code:"100791196",name:"GNC Fish Body Oil 1000 mg 90 Caps"},
-  {code:"100791241",name:"GNC Hair. Skin &Nails Formula 60 Tablet"},
-  {code:"100791276",name:"GNC Evening Primrose Oil 500 mg 90 Caps"},
-  {code:"100791313",name:"GNC Your Liver 60 Caps"},
-  {code:"100791401",name:"GNC Cat`S Claw 500 mg 60 Caps"},
-  {code:"100791410",name:"Fb Advanced Flex Move 60 Tablet"},
-  {code:"100791444",name:"GNC L-Arginine 500 mg 30 Caps"},
-  {code:"100791479",name:"GNC Trim Trim 60 Tablet"},
-  {code:"100791487",name:"GNC Guarana Rush 60 Tablet"},
-  {code:"100791495",name:"GNC Xtreme 60 Tablet"},
-  {code:"100791559",name:"GNC Selenium 200 Mcg 100 Tablet"},
-  {code:"100791567",name:"GNC Mega Men Sport 60 Tablet"},
-  {code:"100791575",name:"GNC Mega Men 60 Tablet"},
-  {code:"100791591",name:"GNC Women`S Ultra Mega Active 100 Tablet"},
-  {code:"100791604",name:"GNC Women\'S Ultra Mega 60 Tablet"},
-  {code:"100791621",name:"GNC Folic Acid 400 Mcg 60 Tablet"},
-  {code:"100791639",name:"GNC Vitamin C With Rose Hips 500 mg 30 Tablet"},
-  {code:"100791671",name:"GNC B-Complex 60 Tablet"},
-  {code:"100796350",name:"Glypride 3 mg Tablet 30"},
-  {code:"100796368",name:"Glypride 2 mg Tablet 30"},
-  {code:"100796376",name:"Glypride 4 mg Tablet 30"},
-  {code:"100796384",name:"Glypride 1 mg Tablet 30"},
-  {code:"100796392",name:"Gaviscon Extra Strength Peppermint 12 Tablet"},
-  {code:"100800267",name:"Eucarbon Tablet 30 pcs"},
-  {code:"100823426",name:"Cardex Plus 10/25 mg Tablet 30"},
-  {code:"100823434",name:"Cardex Plus 5/12.5 mg Tablet 30"},
-  {code:"100823768",name:"Ivarin 5 mg Tablet 30"},
-  {code:"100823776",name:"Ivarin 40 mg Tablet 30"},
-  {code:"100824269",name:"Paxitab 40 mg Tablet 30"},
-  {code:"100824613",name:"Centrum Silver With Lutein 100 Tab"},
-  {code:"100824621",name:"Centrum Silver With Lutein 30 Tab"},
-  {code:"100824630",name:"Centrum With Lutein 30 Tab"},
-  {code:"100824648",name:"Centrum With Lutein 100 Tab"},
-  {code:"100828497",name:"Solian 400 mg Tablet 30"},
-  {code:"100828500",name:"Solian 100 mg Tablet 30"},
-  {code:"100836497",name:"Viola Ostrich Oil 125 ml"},
-  {code:"100838652",name:"Secnid 500 mg Tablet 4 Piece"},
-  {code:"100839840",name:"Baraclude 1 mg Tablet 30"},
-  {code:"100839858",name:"Baraclude 0.5 mg Tablet 30"},
-  {code:"100839866",name:"Bertigo 8 mg Tablet 30"},
-  {code:"100839874",name:"Bertigo 24 mg Tablet 30"},
-  {code:"100839882",name:"Bertigo 16 mg Tablet 30"},
-  {code:"100841309",name:"Hipp Natal Care Food Supplement 2 pcs 200 ml"},
-  {code:"100842037",name:"GNC Vitamin D3 400 IU Tablet 100 Piece"},
-  {code:"100853991",name:"Ladymil Nutritional Supplement Milk Vanilla 400 gm"},
-  {code:"100854003",name:"Ladymil Milk Nutritional Supplement Strawberry 400 gm"},
-  {code:"100855250",name:"Gluta White 500 mg Tablet 30 Piece"},
-  {code:"100859331",name:"Formoline L112 Tablet 40 Tab"},
-  {code:"100859349",name:"Formoline L112 Tablet 60 Tab"},
-  {code:"100862337",name:"Sevikar 20/10 mg Tablet 28 Piece"},
-  {code:"100864295",name:"Bilaxten 20 mg Tablet 20 Piece"},
-  {code:"100864308",name:"Suprax-D 400 mg Tablet 6 Piece"},
-  {code:"100864324",name:"Glipten 100 mg Tablet 28 Piece"},
-  {code:"100866303",name:"Dementile 10 mg Tablet 30"},
-  {code:"100866311",name:"Tabixa 10 mg Tablet 28"},
-  {code:"100866320",name:"Dementile 5 mg Tablet 30"},
-  {code:"100866338",name:"Omiz Plus 40/1100 mg Capsule 28"},
-  {code:"100866346",name:"Omiz Plus 20/1100 mg Capsule 28"},
-  {code:"100866362",name:"Prolax Er 15 mg Capsule 30"},
-  {code:"100868878",name:"Quinox 750 mg Tablet 10 Piece"},
-  {code:"100868923",name:"Voltaren SR 75 mg Coated Tablets 20"},
-  {code:"100869264",name:"Visanne 2 mg Tablet 28 P"},
-  {code:"100875381",name:"Levoflox 500 mg 5 tablet"},
-  {code:"100878312",name:"GNC Saudi Multi Mega Minerals 100 Tab"},
-  {code:"100878339",name:"Gnn Melatonin 3 mg, 60 Tab*12"},
-  {code:"100878355",name:"Oxiclav 625mg Tablet 20 Piece"},
-  {code:"100878363",name:"Glide 4 mg Tablet 30 tab"},
-  {code:"100878371",name:"Glide 3 mg Tablet 30 tab"},
-  {code:"100878380",name:"Glide 2 mg Tablet 30 tab"},
-  {code:"100878398",name:"Glide 1 mg Tablet 30 tab"},
-  {code:"100878401",name:"GNC Saudi Ultra Mega Green 60 Tab*12"},
-  {code:"100878419",name:"GNC Saudi Vitamin B12 1000 Mcg 90 Tab 12"},
-  {code:"100878435",name:"Gluta White 500 mg Tablet 60 Piece"},
-  {code:"100879251",name:"Cialis 5 mg Tablet 28 Piece"},
-  {code:"100880244",name:"Gilenya 0.5mg 28 capsule"},
-  {code:"100881263",name:"GNC Mens Arginmax 60 Tab"},
-  {code:"100881271",name:"GNC Ginseng Gold Ginseng Root 500 Mg 90 Caps"},
-  {code:"100882258",name:"Levonic 500 mg 5 tablet"},
-  {code:"100882291",name:"Pure Golden Royal Jelly 1000 mg Capsule 30pcs+Yohimbe"},
-  {code:"100882303",name:"Royal Power 2000 mg Capsule 30pcs"},
-  {code:"100887286",name:"Xarelto 15mg 28tablet"},
-  {code:"100887737",name:"Clavodar 1g 14 Tablets"},
-  {code:"100887753",name:"Clavodar 625mg 20 Tablets"},
-  {code:"100889257",name:"Aphromax Capsule 30pcs"},
-  {code:"100890733",name:"Spasmolyt 20 mg Coated Tablets 30"},
-  {code:"100890944",name:"Wadi-Alnahil Castor Oil With Berries 60 ml"},
-  {code:"100890952",name:"Wadi-Alnahil Castor Oil With Apple 60 ml"},
-  {code:"100890961",name:"Wadi-Alnahil Castor Oil With Peach 60 ml"},
-  {code:"100890987",name:"Wadi-Alnahil Castor Oil With Cherry 60 ml"},
-  {code:"100890995",name:"Wadi-Alnahil Castor Oil With Orange 60 ml"},
-  {code:"100891007",name:"Wadi-Alnahil Castor Oil Pure 60 ml"},
-  {code:"100891015",name:"Wadi-Alnahil Castor Oil With Banana 60 ml"},
-  {code:"100891736",name:"Cupido Tablets 75mg 30 Pcs"},
-  {code:"100891744",name:"Neuroplex 300mg 50capsules"},
-  {code:"100891752",name:"Neuroplex 400mg 50capsules"},
-  {code:"100891867",name:"Wellman Health. Vitality & Energy Release 30 Caps"},
-  {code:"100891875",name:"Diabetone Capsule 30pcs"},
-  {code:"100892114",name:"Neocipro 500mg 10 Tablets"},
-  {code:"100892122",name:"Neoxicam 15mg 10 Tablets"},
-  {code:"100893256",name:"Jp Co-Q10 50 mg 30 Cap"},
-  {code:"100893264",name:"Jp Co-Q10 200 mg 30 Cap"},
-  {code:"100893272",name:"Jp Co-Q10 100 mg 30 Cap"},
-  {code:"100893281",name:"Jp Omega-3 567 mg 30 Cap"},
-  {code:"100893336",name:"Biofreeze Pain Relieving Roll On 59 ml"},
-  {code:"100893352",name:"Resova Tablets 10mg 30 Pcs"},
-  {code:"100893379",name:"Resova Tablets 20mg 30 Pcs"},
-  {code:"100896300",name:"Dextrose 5% in Normal Saline 0.9% Sodium Chloride"},
-  {code:"100896633",name:"MA-Dis W1gl-098"},
-  {code:"100897564",name:"MA-Ringlact-101"},
-  {code:"100899711",name:"Vivamune 250 mg Capsule 30pcs"},
-  {code:"100899789",name:"Ginkogin Capsule 30pcs"},
-  {code:"100900698",name:"Lejam 30 mg Tablet 4pcs"},
-  {code:"100900701",name:"Lejam 60 mg Tablet 4pcs"},
-  {code:"100901826",name:"Tilcotil Tablets 20mg 10 Pcs"},
-  {code:"100904541",name:"Purout 100mg 100 Tablets"},
-  {code:"100904550",name:"Loric 300mg 28 Tablets"},
-  {code:"100907232",name:"Erecta 50 mg Tablet 4pcs"},
-  {code:"100907304",name:"Olazine 2.5mg 28 Tablets"},
-  {code:"100907312",name:"Olazine 5mg 28 Tablets"},
-  {code:"100907321",name:"Olazine 10mg 28 Tablets"},
-  {code:"100907339",name:"Olazine 15mg 28 Tablets"},
-  {code:"100907347",name:"Olazine 20mg 28 Tablets"},
-  {code:"100907697",name:"Frisomum Milk Nutritional Supplement No.(0) 400 gm"},
-  {code:"100907806",name:"Kombiglyze-XR Tablets 5/1000mg 30 Pcs"},
-  {code:"100907814",name:"Kombiglyze-XR Tablets 5/500mg 30 Pcs"},
-  {code:"100907849",name:"Urilax Tablets 10mg 30 Pcs"},
-  {code:"100907857",name:"Glim Tablets 6mg 30 Pcs"},
-  {code:"100911581",name:"Batterjee-Royal-Jelly 1000 mg 30 Cap"},
-  {code:"100911805",name:"Daxas Tablets 500mg 30 Pcs"},
-  {code:"100914715",name:"Hash Foliron 400mcg 30 Cap"},
-  {code:"100914926",name:"Hash Brewer\'s Yeast 30 Tab"},
-  {code:"100914942",name:"Rowanix Capsule 50 P"},
-  {code:"100917861",name:"Super Ananas 300 ml"},
-  {code:"100920904",name:"Xanax 0.25 mg 50tab"},
-  {code:"100920912",name:"Xanax 0.5 mg 50tab"},
-  {code:"100920921",name:"Xanax 1 mg 30tab"},
-  {code:"100920947",name:"Lexotanil 3 mg 30tab"},
-  {code:"100920955",name:"Rivotril 0.5 mg 50tab"},
-  {code:"100920963",name:"Rivotril 2 mg 30 Tab"},
-  {code:"100920971",name:"Valium 5 mg 25tab"},
-  {code:"100920998",name:"Concerta 18 mg Er 30tab"},
-  {code:"100921000",name:"Concerta 36 mg Er 30tab"},
-  {code:"100921018",name:"Tramal Retard 100 mg 10tab"},
-  {code:"100921026",name:"Tramal 50 mg Cap 30pcs"},
-  {code:"100921034",name:"Tramal 50 mg Cap 10pcs"},
-  {code:"100923531",name:"Prosta-Tab Pr 0.4mg 30 Tablets"},
-  {code:"100923540",name:"Prexal Tablets 5mg 30 Pcs"},
-  {code:"100923558",name:"Prexal Tablets 10mg 30 Pcs"},
-  {code:"100923566",name:"Viread Tablets 245mg 30 Pcs"},
-  {code:"100923574",name:"Vero 50 mg Tablet 4pcs"},
-  {code:"100926791",name:"Stravis 50mg 28 Tablets"},
-  {code:"100926812",name:"Strattera 10mg 28capsules"},
-  {code:"100926821",name:"Strattera 18mg 28capsules"},
-  {code:"100926839",name:"Strattera 25mg 28capsules"},
-  {code:"100926847",name:"Strattera 40mg 28capsules"},
-  {code:"100926855",name:"Strattera 60mg 28capsules"},
-  {code:"100926863",name:"Glucotabs Orange 40 gm 10 Tab"},
-  {code:"100926871",name:"Glucotabs Raspberry 40 gm 10 Tab"},
-  {code:"100926880",name:"Glucotabs Lemon 40 gm 10 Tab"},
-  {code:"100926898",name:"Glucotabs Blueberry 40 gm 10 Tab"},
-  {code:"100929327",name:"Beauty Secret Anti-Ageing Soup"},
-  {code:"100929554",name:"Hepaton Hash 30 Cap"},
-  {code:"100930598",name:"Natrol Dhea 25mg 90tab"},
-  {code:"100930601",name:"Natrol Dhea 50 mg 60 Tab"},
-  {code:"100930619",name:"Natrol Digest Support 60 Caps"},
-  {code:"100930635",name:"Giad 50 mg Tablet 4pcs"},
-  {code:"100930723",name:"GNC Xtreme Slim 90 Tablet"},
-  {code:"100930731",name:"GNC Dia Nutrients 90 Cap"},
-  {code:"100930740",name:"Natrol Green Tea 500mg 60 Cap"},
-  {code:"100930758",name:"Natrol 5-Htp 60 Cap"},
-  {code:"100930766",name:"Natrol My Favorite Multiple Women 60 Tab"},
-  {code:"100930774",name:"Natrol Skin Hair Nails 60 Cap"},
-  {code:"100930782",name:"Natrol Brainspeed Memory 60 Tab"},
-  {code:"100930791",name:"Natrol My Favorite Multiple Energizer 60 Tab"},
-  {code:"100930803",name:"Natrol L-Carnitine 500mg"},
-  {code:"100930811",name:"Natrol Melatonin 60 Tab 3mg"},
-  {code:"100930838",name:"Branson Vit D 5000 IU 90 Caps"},
-  {code:"100930846",name:"GNC Biotin 300mcg 100 Tabs"},
-  {code:"100931347",name:"Nantrol Vitamin D3 - 2000 IU 90tab"},
-  {code:"100931769",name:"Lanzor 15 mg Capsule 30pcs"},
-  {code:"100931785",name:"Erecta 100 mg Tablet 4pcs"},
-  {code:"100932585",name:"Silafil 50 mg Tablet 4pcs"},
-  {code:"100932745",name:"Atapina tablets 25mg 20 Pcs"},
-  {code:"100932753",name:"Atapina tablets 100 mg 60 Pcs"},
-  {code:"100932761",name:"Atapina tablets 200 mg 60 Pcs"},
-  {code:"100932770",name:"Atapina tablets 300mg 30 Pcs"},
-  {code:"100947971",name:"Montel 10mg 28 Tablets"},
-  {code:"100948018",name:"Etoria 60mg 28 Tablets"},
-  {code:"100948026",name:"Etoria 90mg 28 Tablets"},
-  {code:"100948034",name:"Etoria 120mg 7 Tablets"},
-  {code:"100948042",name:"Paleta 75mg 28 Tablets"},
-  {code:"100948069",name:"Glacera 15mg 30 Tablets"},
-  {code:"100948077",name:"Glacera 30mg 30 Tablets"},
-  {code:"100948085",name:"Exjade 125mg 28 Tablets"},
-  {code:"100948093",name:"Exjade 250mg 28 Tablets"},
-  {code:"100948106",name:"Exjade 500mg 28 Tablets"},
-  {code:"100948149",name:"Reyataz 150mg 60 Capsule"},
-  {code:"100948157",name:"Reyataz 200mg 60 Capsule"},
-  {code:"100949660",name:"Sebivo 600 mg F-C Tablets"},
-  {code:"100953992",name:"Livazo 2mg 28 Tablets"},
-  {code:"100954004",name:"Livazo 4mg 28 Tablets"},
-  {code:"100954688",name:"Nutralife Super Citrimax 100 Capsules"},
-  {code:"100956018",name:"Jp Vitamin D3 1000 IU 60 Caps"},
-  {code:"100956026",name:"Vitalife 30 Caps"},
-  {code:"100957547",name:"Jointace Chondroitin 60 Tab"},
-  {code:"100957571",name:"Laprix 5 mg 28 Tab"},
-  {code:"100957580",name:"Laprix 10 mg 28 Tab"},
-  {code:"100957598",name:"Depralex 10 mg 28 Tab"},
-  {code:"100957601",name:"Depralex 20 mg 28 Tab"},
-  {code:"100957619",name:"Zenorit 8 mg 20 Tab"},
-  {code:"100957627",name:"Vfend tablets 200mg 30 Pcs"},
-  {code:"100957635",name:"Vfend tablet 50mg 30 Pcs"},
-  {code:"100957862",name:"Thermacare Neck Wrist And Shoulders Heatwraps 1 P"},
-  {code:"100957871",name:"Thermacare Lower Back And Hip Heatwraps Size S M 1 P"},
-  {code:"100957942",name:"Jointace Collagen 60 Tab"},
-  {code:"100965133",name:"Natrol Biotin 1000 Mcg 100 Tab"},
-  {code:"100965168",name:"GNC Fenugreek 610 mg 100 Cap"},
-  {code:"100965176",name:"Natrol Melatonin 5 mg"},
-  {code:"100965184",name:"GNC Vitamin E 200 IU 100 Cap"},
-  {code:"100965192",name:"Pregnata 30 Cap"},
-  {code:"100965846",name:"Atacand 32 mg 28 Tablets"},
-  {code:"100965854",name:"Zyprexa 10 mg Tablet 28 Tablets"},
-  {code:"100965889",name:"Venex XR 75 mg 14 Capsules"},
-  {code:"100965897",name:"Venex XR 150 mg 14 Capsules"},
-  {code:"100966312",name:"Legalon Forte 140mg 100 Capsules"},
-  {code:"100968545",name:"E-1000 Sedico 30 Cap"},
-  {code:"100968561",name:"Elite 30 Capsules"},
-  {code:"100971031",name:"Ulcer Eze Mouth Ulcer Oral Strips 12pcs"},
-  {code:"100971648",name:"Caltrate 600+D Plus Minerals 60 Tab"},
-  {code:"100979560",name:"Thiotacid 300 mg 30 Tab"},
-  {code:"100979738",name:"Pgx Daily Singels 30 Sticks"},
-  {code:"100983622",name:"Sartan 50mg 30 Tablets"},
-  {code:"100983631",name:"Sartan 100mg 30 Tablets"},
-  {code:"100983850",name:"Digestica Capsule 30 P"},
-  {code:"100983892",name:"Prof Cold & Flu Caplet 20 P"},
-  {code:"100983905",name:"Fallah 100 mg Tablet 4 P"},
-  {code:"100983913",name:"Fallah 50 mg Tablet 4 P"},
-  {code:"100990953",name:"Harvoni 400/90mg 28 Tablets"},
-  {code:"100990961",name:"Sovaldi 400mg 28 Tablets"},
-  {code:"100992959",name:"Bronchicare Ivy Capsule 30 P"},
-  {code:"100994321",name:"Fatlos 120 mg 80 Capsules"},
-  {code:"100994330",name:"Daklinza 60mg 28 Tablets"},
-  {code:"100994348",name:"Exviera 250mg 56 Tablets"},
-  {code:"100994356",name:"Viekirax 12.5/50/75 mg 56 Tablets"},
-  {code:"100994364",name:"Advagraf 5mg 100 Capsules"},
-  {code:"100994372",name:"Advagraf 3mg 100 Capsules"},
-  {code:"100994381",name:"Advagraf 1mg 100 Capsules"},
-  {code:"100994399",name:"Advagraf 0.5mg 100 Capsules"},
-  {code:"100994452",name:"Respira 100/50 Mcg Diskair"},
-  {code:"100994461",name:"Respira 250/50 Mcg Diskair"},
-  {code:"100994479",name:"Respira 500/50 Mcg Diskair"},
-  {code:"100994495",name:"Elong 60mg 4 Tablets"},
-  {code:"100995050",name:"Aphrodil 50 mg Tablet 4 P"},
-  {code:"100995164",name:"Vitaglobin 30 Tab"},
-  {code:"100996036",name:"Soylife 60 Softgel Capsules"},
-  {code:"100996044",name:"Glucosamine Plus 500 mg 90 Tab"},
-  {code:"100998242",name:"Oystercal 500 mg Tab"},
-  {code:"100999931",name:"Bilobil Forte 80 mg 60 Capsules"},
-  {code:"101002937",name:"Onglyza 2.5mg 30 Tablets"},
-  {code:"101002945",name:"Duodart 0.5/0.4mg 30 Capsules"},
-  {code:"101003930",name:"Wafi 50 mg Tablet 4pcs"},
-  {code:"101003948",name:"Wafi 100 mg Tablet 4pcs"},
-  {code:"101009717",name:"Distilled Water 20 Liter"},
-  {code:"101015931",name:"Levitra 10 mg Orodispersible Tablet 4pcs"},
-  {code:"101017135",name:"Thalgo Booster Collagen 10 Doses"},
-  {code:"101018541",name:"Hemolar 150mg 50 Capsules"},
-  {code:"101018550",name:"Diaherb 112mg 40 Capsule"},
-  {code:"101018568",name:"Glavolean 300 mg 60 Capsule"},
-  {code:"101018576",name:"Glavolean 100 mg 60 Capsule"},
-  {code:"101023965",name:"Entresto 100mg 28 Tablets"},
-  {code:"101023973",name:"Entresto 200mg 56 Tablets"},
-  {code:"101023981",name:"Ultibro 110/50mcg 30 Inhalation Capsules"},
-  {code:"101023990",name:"Fampyra 10mg 56 Tablets"},
-  {code:"101024036",name:"Jamieson Selenium 50 Mcg 100 Tab"},
-  {code:"101024044",name:"Jamieson Vit D3 400 IU 10 Mcg 90 Tab"},
-  {code:"101024052",name:"Jamieson Zinc 10 mg 100 Tabs"},
-  {code:"101024061",name:"Jamieson Magnesium 100 mg 100 Tab"},
-  {code:"101024079",name:"Jamieson Chelated Chromium 200 Mcg 100 Tab"},
-  {code:"101024087",name:"Jamieson Cod Liver Oil Softgel 100 Cap"},
-  {code:"101024095",name:"Jamieson Evening Primrose Oil Softgel 90 Cap"},
-  {code:"101024108",name:"Jamieson Relaxing Herbal Formula 30 Caps"},
-  {code:"101024116",name:"Jamieson Melatonin 3 mg 100 Tab"},
-  {code:"101025952",name:"Candepress 8 mg 30 Tablets"},
-  {code:"101025961",name:"Candepress 16mg 30 Tablets"},
-  {code:"101026621",name:"Thermacare Back Pain Therapy Pactch 4 Pcs"},
-  {code:"101031412",name:"Similac Mama Nutritional Supplement 200 ml"},
-  {code:"101031973",name:"Fisio Enema Childern Enema 66 ml"},
-  {code:"101031981",name:"Fisio Enema Adult Enema 250 ml"},
-  {code:"101032001",name:"Renvela 800 mg 180 Tab"},
-  {code:"101035288",name:"Adazio 25 mg 20 Tablets"},
-  {code:"101035296",name:"Adazio 100 mg 60 Tablets"},
-  {code:"101035931",name:"Adazio 200 mg 60 Tablets"},
-  {code:"101035974",name:"Prelox 1110 mg 60 Tablets"},
-  {code:"101038227",name:"Pradaxa 150 mg 60 Capsule"},
-  {code:"101038235",name:"Cardura XL 4 mg 28 Tablet"},
-  {code:"101038251",name:"Normalix SR 1.5 mg 30 Tablets"},
-  {code:"101038796",name:"Tracleer 125 mg 56 Tablet"},
-  {code:"101038809",name:"Tracleer 62.5 mg 56 Tablet"},
-  {code:"101039377",name:"Vitanes Nature D-Trol Softgels"},
-  {code:"101039385",name:"Vitanes Nature Magvyte 30 Caplets"},
-  {code:"101039393",name:"Vitanes Nature Vitamin E 400 IU Softgel 120 Cap"},
-  {code:"101040378",name:"Relvar Ellipta 100/25 Microgram 30 Doses"},
-  {code:"101040407",name:"Pharmaton 100 Cap"},
-  {code:"101049031",name:"Biodal 50000 IU 20 Tab"},
-  {code:"101050939",name:"JP Natural Vitamin E 400 IU 30 Cap"},
-  {code:"101052011",name:"Arkopharma Arko Royal Complex 10 Unidoses"},
-  {code:"101052731",name:"Frisomum Milk Nutritional Supplement No.(0) 900 gm"},
-  {code:"101054930",name:"Kemadrin 5 Mg Tablet"},
-  {code:"101059159",name:"Glados 15 mg 30 Tablet"},
-  {code:"101059183",name:"Atorlip 20 mg 30 Tablet"},
-  {code:"101059191",name:"Atorlip 40 mg 30 Tablet"},
-  {code:"101059255",name:"Irbetel 150 mg 28 Tablet"},
-  {code:"101059263",name:"Irbetel 300 mg 28 Tablet"},
-  {code:"101059301",name:"Sortiva-H 100/12.5 mg 30 Tablet"},
-  {code:"101059319",name:"Zolinda 5 mg 30 Tablet"},
-  {code:"101059327",name:"Zolinda 10 mg 30 Tablet"},
-  {code:"101059335",name:"Zolinda 15 mg 30 Tablet"},
-  {code:"101059343",name:"Quetta FC 25 mg 30 Tablet"},
-  {code:"101059351",name:"Quetta FC 100 mg 30 Tablet"},
-  {code:"101059360",name:"Quetta FC 200 mg 30 Tablet"},
-  {code:"101059378",name:"Quetta FC 300 mg 30 Tablet"},
-  {code:"101059386",name:"Hepavir FC 0.5 mg 30 Tablet"},
-  {code:"101059394",name:"Hepavir FC 1 mg 30 Tablet"},
-  {code:"101059407",name:"Moxive 400 mg 5 Tablet"},
-  {code:"101059415",name:"Moxive 400 mg 7 Tablet"},
-  {code:"101060037",name:"Rubin Collagen C Drinkable 30 Bottels"},
-  {code:"101060045",name:"Rubin Cran Juice 20 Bottels 11 ml"},
-  {code:"101065170",name:"Clogrel Tablet 75 mg 30 Tab"},
-  {code:"101066092",name:"Jalra Tablet 50 mg 28 Tablets"},
-  {code:"101066113",name:"Jalra M Tablet 50/850 mg 60 Tablets"},
-  {code:"101067992",name:"Gold T Loop N"},
-  {code:"101068821",name:"Forxiga Tablets 5 mg 28 Tablets"},
-  {code:"101068848",name:"Resclar 500 mg 14 Tablets"},
-  {code:"101068856",name:"Aripex 5 mg 30 Tablets"},
-  {code:"101068864",name:"Aripex 10 mg 30 Tablets"},
-  {code:"101068872",name:"Aripex 15 mg 30 Tablets"},
-  {code:"101068881",name:"Goutex 40 mg 30 Tablets"},
-  {code:"101068899",name:"Goutex 80 mg 30 Tablets"},
-  {code:"101069091",name:"Esomep 20 mg 14 Tablets"},
-  {code:"101069103",name:"Esomep 20 mg 28 Tablets"},
-  {code:"101069111",name:"Esomep 40 mg 14 Tablets"},
-  {code:"101069120",name:"Esomep 40 mg 28 Tablets"},
-  {code:"101070930",name:"Sovira Tablets 28 Tab 400 mg"},
-  {code:"101074228",name:"Keppra 1000 mg Tablet 30pcs"},
-  {code:"101074236",name:"Keppra 250 mg Tablet 30pcs"},
-  {code:"101074244",name:"Prosnorm 5 mg 30 tab"},
-  {code:"101074252",name:"Prohair 1 mg 30 tab"},
-  {code:"101075423",name:"Invokana Tablets 100 mg 30 Tab"},
-  {code:"101075520",name:"Lora Fm 10 mg 10 Tablets"},
-  {code:"101075538",name:"Moxiflox 400 mg 7 Tablets"},
-  {code:"101075546",name:"Moxiflox 400 mg 5 Tablets"},
-  {code:"101075933",name:"Nutrinatal Chocolate For Healthy Pregnancy 30 bits"},
-  {code:"101078974",name:"Herox Tablet 5 mg 30 Tablets"},
-  {code:"101078982",name:"Herox Tablet 20 mg 4 Tablets"},
-  {code:"101079361",name:"Turbo 50 mg 4 Tablets"},
-  {code:"101079379",name:"Turbo 100 mg 4 Tablets"},
-  {code:"101094093",name:"Riapanta 40 mg 15 tablet"},
-  {code:"101094106",name:"Riapanta 40 mg 30 tablet"},
-  {code:"101103287",name:"Xeljanz 5 mg 60 Tablets"},
-  {code:"101103295",name:"Aubagio 14 mg 28 Tablets"},
-  {code:"101105354",name:"Donnacap 30 Capsules"},
-  {code:"101110567",name:"Zepatier 100/50 mg 28 Tablets"},
-  {code:"101111033",name:"Alfosin XR 10 mg 30 Tablet"},
-  {code:"101111113",name:"Glucare XR 750 mg 60 Tablet"},
-  {code:"101111121",name:"Glucare XR 750 mg 30 Tablet"},
-  {code:"101111130",name:"Glucare XR 500 mg 90 Tablet"},
-  {code:"101111148",name:"Glucare XR 500 mg 60 Tablet"},
-  {code:"101111156",name:"Glucare XR 500 mg 30 Tablet"},
-  {code:"101111164",name:"Glucare XR 1000 mg 60 Tablet"},
-  {code:"101111922",name:"Supradyn Multivitamins & Minerals 90 Film Coated Tab"},
-  {code:"101111931",name:"Supradyn Multivitamins & Minerals 30 Film Coated Tab"},
-  {code:"101112731",name:"Relvar Ellipta 200/25 Microgram 30 Doses"},
-  {code:"101115456",name:"Vicks Babyrub 50 gm"},
-  {code:"101118702",name:"Vales 250 mg 30 tablet"},
-  {code:"101118711",name:"Vales 500 mg 30 tablet"},
-  {code:"101118729",name:"Vales 1000 mg 30 tablet"},
-  {code:"101119271",name:"Salofalk Enemas 4mg / 60ml - 7 pcs"},
-  {code:"101120159",name:"Snafi 20 mg Tablet 6 pcs"},
-  {code:"101120538",name:"Tecfidera 120 mg 14 Capsules"},
-  {code:"101120546",name:"Tecfidera 240 mg 56 Capsules"},
-  {code:"101121012",name:"Neurovit High Potency Vitamins 20 Tablets"},
-  {code:"101121021",name:"Vitane Royal Jelly 500 mg 75 Softgels"},
-  {code:"101121346",name:"Nova T 380 Loop 1 pc"},
-  {code:"101121354",name:"Yaz Plus 28 Tablets"},
-  {code:"101121362",name:"Herox Tablet 20 mg 1 Tablet"},
-  {code:"101121371",name:"Predo 5 mg 30 Tablets"},
-  {code:"101121389",name:"Predo 25 mg 30 Tablets"},
-  {code:"101121400",name:"Levofloxacin Sandoz 500 mg 5 Tablets"},
-  {code:"101121418",name:"Dexilant 30 mg 28 capsules"},
-  {code:"101121426",name:"Dexilant 60 mg 28 capsules"},
-  {code:"101122103",name:"Epitam 250 mg 30 tablets"},
-  {code:"101122111",name:"Epitam 500 mg 30 tablets"},
-  {code:"101122120",name:"Epitam 750 mg 30 tablets"},
-  {code:"101122146",name:"Delaxin 30 mg 30 Caps"},
-  {code:"101122154",name:"Delaxin 60 mg 30 Caps"},
-  {code:"101122162",name:"Quetal XR 150 mg 30 tablets"},
-  {code:"101122171",name:"Quetal XR 200 mg 30 tablets"},
-  {code:"101122189",name:"Quetal XR 300 mg 30 tablets"},
-  {code:"101122197",name:"Dement 10 mg 30 tablets"},
-  {code:"101122200",name:"Pranza ODT 5 mg 30 tablets"},
-  {code:"101122218",name:"Pranza ODT 10 mg 30 tablets"},
-  {code:"101122226",name:"Brintellix 10 mg 28 tablets"},
-  {code:"101122234",name:"Brintellix 20 mg 28 tablets"},
-  {code:"101125937",name:"Arthosave 200 mg 100 Tablets"},
-  {code:"101126286",name:"Adenuric 80 mg 28 tablet"},
-  {code:"101126471",name:"Perfectil Capsule Special offer (2+1) 30 Capsules"},
-  {code:"101129938",name:"Lercadip 20 mg 30 Tablets"},
-  {code:"101133208",name:"Essential D3 1000 IU 60 Capsules"},
-  {code:"101133216",name:"Essential Capsules D3 5000 IU 60 Pcs"},
-  {code:"101133224",name:"Essential D3 10000 IU 60 Cap"},
-  {code:"101133232",name:"Essential D3 50000 IU 12 Capsules"},
-  {code:"101133241",name:"Dicoflor 60 - 10 Capsules"},
-  {code:"101133267",name:"Priorin-N Capsule Special Offer (2+1) 60 Capsules"},
-  {code:"101133929",name:"Mucof Expectorant 112.5 mg Capsule 30 pcs"},
-  {code:"101135393",name:"Isomar Nasal Aspirator For Babies"},
-  {code:"101135511",name:"Isomar Nasal Aspirator Spare Filters 20 pcs"},
-  {code:"101136935",name:"Levaquin 500 mg Tablet 5 pcs"},
-  {code:"101143043",name:"Vimpat 50 mg 56 Tablet"},
-  {code:"101143051",name:"Vimpat 100 mg 56 Tablet"},
-  {code:"101143060",name:"Vimpat 150 mg 56 Tablet"},
-  {code:"101144011",name:"Menopur 75 IU 5 Units"},
-  {code:"101147976",name:"Jamieson Wild Salmon Oil Omega-3 Complex 90 Softgels"},
-  {code:"101147984",name:"Jamieson Flu Shield 1000 - 20 Softgels"},
-  {code:"101152441",name:"Rubin Bonnagen 30 Bottels"},
-  {code:"101152943",name:"Cellcept 500 mg 50 Tablets"},
-  {code:"101155052",name:"Xarelto 15 mg Film Coated 42 Tablet"},
-  {code:"101156186",name:"Ferriprox 500 mg 100 Tablet"},
-  {code:"101156944",name:"Revolade 25 mg 28 Tablet"},
-  {code:"101156952",name:"Revolade 50 mg 28 Tablet"},
-  {code:"101163976",name:"JP Veratol 100 mg 60 Capsules"},
-  {code:"101164987",name:"Tenoryl 10 mg 30 Tablets"},
-  {code:"101167070",name:"Rubin Nobel 20 Bottel 220 ml"},
-  {code:"101167088",name:"Rubin Bee Q 20 Bottel 220 ml"},
-  {code:"101167150",name:"Nuramama Vanilla 200 ml"},
-  {code:"101169999",name:"Phlebodia 600 mg Tablet 30 pcs"},
-  {code:"101170931",name:"Adempas 0.5 Mg 42 Tablets"},
-  {code:"101170949",name:"Adempas 1 Mg 42 Tablets"},
-  {code:"101170957",name:"Adempas 1.5 Mg 42 Tablets"},
-  {code:"101170965",name:"Adempas 2 Mg 42 Tablets"},
-  {code:"101170973",name:"Adempas 2.5 Mg 42 Tablets"},
-  {code:"101171010",name:"Dorofen 90 Capsules"},
-  {code:"101171028",name:"Lindofe Iron & Foic Acid 30 Dark Chocolate"},
-  {code:"101171036",name:"Calinda 30 Milk Chocolate"},
-  {code:"101172119",name:"Greorin L Hair Tonic 60 Capsules"},
-  {code:"101172127",name:"Rubin Megaoil Drink 20 Bottels"},
-  {code:"101172240",name:"Biofreeze Pain Relieving Roll On 89 ml"},
-  {code:"101172266",name:"Olenza 10 mg 30 Tablets"},
-  {code:"101172274",name:"Olenza 15 mg 30 Tablets"},
-  {code:"101172709",name:"Motocap 60 Capsules"},
-  {code:"101172821",name:"Marnys Marnykal 60 Capsules"},
-  {code:"101172856",name:"Loreta 5 mg 20 Tablets"},
-  {code:"101172864",name:"Lora S 5/120 mg 14 Tablets"},
-  {code:"101172899",name:"Azolid 250 mg 6 Tablets"},
-  {code:"101172901",name:"Azolid 500 mg 3 Tablets"},
-  {code:"101173955",name:"Olenza 5 mg 30 Tablets"},
-  {code:"101176945",name:"Duphabears 30 Jelly Bears"},
-  {code:"101178932",name:"California Greens Comega CoQ10 With Omega-3 30 Capsules"},
-  {code:"101179951",name:"Ciprogram 500 mg Tablet 10 pcs"},
-  {code:"101179960",name:"Klare 500 mg Tablet 14 pcs"},
-  {code:"101179978",name:"Broncast 10 mg Tablet 28 pcs"},
-  {code:"101180004",name:"Ciprogram 250 mg Tablet 10 pcs"},
-  {code:"101180012",name:"Ciprogram 750 mg Tablet 10 pcs"},
-  {code:"101180021",name:"Broncast 5 mg Tablet 28 pcs"},
-  {code:"101180039",name:"Tavflox 500 mg Tablet 5 pcs"},
-  {code:"101182481",name:"Lanoxin Elixir 0.05 mg/ ml 60 ml"},
-  {code:"101188049",name:"Levera 60 mg 28 Tablets"},
-  {code:"101188057",name:"Levera 30 mg 28 Tablets"},
-  {code:"101206462",name:"Vulga XR 55 mg Tablet 30 pcs"},
-  {code:"101206471",name:"Vulga XR 80 mg Tablet 30 pcs"},
-  {code:"101206489",name:"Vulga XR 105 mg Tablet 30 pcs"},
-  {code:"101206551",name:"Efram XR 500 mg"},
-  {code:"101206569",name:"Efram XR 750 mg"},
-  {code:"101210066",name:"Valtense 40 mg 30 Tablet"},
-  {code:"101210429",name:"Imodium 2 mg Instant Melt Tablet 12 pcs"},
-  {code:"101210437",name:"Imodium 2 mg Instant Melt Tablet 6 pcs"},
-  {code:"101210488",name:"Vominore 25/50 mg Tablet 20 pcs"},
-  {code:"101211077",name:"Valtense 80 mg 30 Tablet"},
-  {code:"101211085",name:"Valtense 160 mg 30 Tablet"},
-  {code:"101211093",name:"Valtense 320 mg 30 Tablet"},
-  {code:"101211106",name:"Valtense plus 80/12.5 mg 30 Tablet"},
-  {code:"101211114",name:"Valtense plus 160/12.5 mg 30 Tablet"},
-  {code:"101211122",name:"Valtense plus 320/12.5 mg 30 Tablet"},
-  {code:"101211131",name:"Valtense plus 160/25 mg 30 Tablet"},
-  {code:"101211149",name:"Valtense plus 320/25 mg 30 Tablet"},
-  {code:"101211157",name:"Amlor Plus 5/160 mg 30 Capsule"},
-  {code:"101211165",name:"Amlor Plus 10/160 mg 30 Capsule"},
-  {code:"101211173",name:"Amlor Plus 5/320 mg 30 Capsule"},
-  {code:"101211181",name:"Amlor Plus 10/320 mg 30 Capsule"},
-  {code:"101212301",name:"Ozapin 5 mg 30 Tablet"},
-  {code:"101212310",name:"Ozapin 10 mg 30 Tablet"},
-  {code:"101212344",name:"Benzaflex 5 mg 30 Tablet"},
-  {code:"101212352",name:"Benzaflex 10 mg 30 Tablet"},
-  {code:"101213380",name:"Arkopharma Arko Royal Complex 10 Unidoses Offer (2+1)"},
-  {code:"101213427",name:"Ginsana Premium 100 mg 30 Capsules"},
-  {code:"101213540",name:"Vita D 50000 IU 15 Tablets"},
-  {code:"101224193",name:"Sabril 500 mg 100 Tab"},
-  {code:"101224214",name:"Esbriet 267 mg 270 Capsules"},
-  {code:"101225073",name:"Zoron 4 mg 10 Tablets"},
-  {code:"101225081",name:"Zoron 8 mg 10 Tablets"},
-  {code:"101225090",name:"Fycompa 2 mg 7 Tablets"},
-  {code:"101225102",name:"Fycompa 4 mg 28 Tablets"},
-  {code:"101225111",name:"Fycompa 6 mg 28 Tablets"},
-  {code:"101225129",name:"Fycompa 8 mg 28 Tablets"},
-  {code:"101225364",name:"Duetact 30/4 mg 30 Tablets"},
-  {code:"101225410",name:"Preboost Control Wipes For Men  6 pcs"},
-  {code:"101225428",name:"Fertab 50 mg Tablet 10 pcs"},
-  {code:"101225436",name:"Valitra 20 mg Tablet 4 pcs"},
-  {code:"101225874",name:"Betagen 24 mg 50 Tablets"},
-  {code:"101225920",name:"Lipicure 40 mg 30 Tablets"},
-  {code:"101227546",name:"Arko Royal 1500 mg 10 Single Doses"},
-  {code:"101227562",name:"JP Everose 500 mg 60 Capsules"},
-  {code:"101227589",name:"Ferritof Toffee Cubes With Iron 26 pcs"},
-  {code:"101227626",name:"Lavie 1000 mg 30 tablets"},
-  {code:"101227651",name:"Memaxia 10 mg 30 tablets"},
-  {code:"101227714",name:"Quetal XR 50 mg 30 tablets"},
-  {code:"101228371",name:"Stalevo 200/50/200 mg - 30 Tablets"},
-  {code:"101228442",name:"Lavie 500 mg 30 tablets"},
-  {code:"101228451",name:"Setapro 10 mg 30 tablets"},
-  {code:"101228469",name:"Setapro 20 mg 30 tablets"},
-  {code:"101231633",name:"Levetam XR 500 mg 30 tablets"},
-  {code:"101231641",name:"Quetta XR 200 mg 30 tablets"},
-  {code:"101231650",name:"Quetta XR 300 mg 30 tablets"},
-  {code:"101231668",name:"Quetta XR 400 mg 30 tablets"},
-  {code:"101231676",name:"Zementa 10 mg 30 tablets"},
-  {code:"101240281",name:"Caduet 5/40 mg 30 Tablets"},
-  {code:"101240290",name:"Caduet 10/40 mg 30 Tablets"},
-  {code:"101241292",name:"Tedo 20 mg 8 Tablets"},
-  {code:"101241305",name:"Dapo 60 mg 4 Tablets"},
-  {code:"101246296",name:"Deslin 5 mg 30 Tablets"},
-  {code:"101246309",name:"Virectil 50 mg 4 Tablets"},
-  {code:"101246317",name:"Virectil 100 mg 4 Tablets"},
-  {code:"101255264",name:"Synjardy 5/850 Mg 60 Tablets"},
-  {code:"101255272",name:"LD-Nor 10 Mg 30 Tablets"},
-  {code:"101255281",name:"LD-Nor 20 Mg 30 Tablets"},
-  {code:"101255299",name:"LD-Nor 40 Mg 30 Tablets"},
-  {code:"101256241",name:"Rozavi 20 Mg 28 Tablets"},
-  {code:"101256259",name:"Arbaval 40 Mg 28 Tablets"},
-  {code:"101256267",name:"Arbaval 80 Mg 28 Tablets"},
-  {code:"101256275",name:"Arbaval 160 Mg 28 Tablets"},
-  {code:"101256283",name:"Arbaval 320 Mg 28 Tablets"},
-  {code:"101256291",name:"Arbaval Plus 160 / 12.5 Mg 28 Tablets"},
-  {code:"101256304",name:"Arbaval Plus 160 / 25 Mg 28 Tablets"},
-  {code:"101256312",name:"Arbaval Plus 320 / 25 Mg 28 Tablets"},
-  {code:"101257471",name:"Razon 20 mg 30 Tablets"},
-  {code:"101257489",name:"Doxivenil 500 mg 30 Capsules"},
-  {code:"101257534",name:"7 MED 380 NSTA Intrautrine Device"},
-  {code:"101259943",name:"Roxonin Tape 50 mg 7 sheets"},
-  {code:"101259951",name:"Roxonin Tape 100 mg 7 sheets"},
-  {code:"101266342",name:"Asonor Nasal Delivery System 30 ml"},
-  {code:"101267468",name:"Max Flow Fenugreek Drink Chocolate Flavor 20 Packets"},
-  {code:"101276330",name:"Clopacin 75 Mg 28 Tablets"},
-  {code:"101277287",name:"Amaryl M 2Mg/500Mg 30 Tablet"},
-  {code:"101281201",name:"Atozet 10 mg/40 mg 30 tablet"},
-  {code:"101284170",name:"Artiz 10 mg 30 Tablets"},
-  {code:"101284196",name:"Zori 3 Lollipops Raspberry & Wild Strawberry Flavor"},
-  {code:"101284225",name:"Herox Tablet 20 mg 8 Tablets"},
-  {code:"101284233",name:"Lotevan plus 10/320/25 mg 30 tablet"},
-  {code:"101284241",name:"Lotevan plus 5/160/12.5 mg 30 tablets"},
-  {code:"101284250",name:"Lotevan plus 10/160/12.5 mg 30 tablets"},
-  {code:"101284268",name:"Lotevan plus 5/160/25 mg 30 tablets"},
-  {code:"101284276",name:"Lotevan plus 10/160/25 mg 30 tablets"},
-  {code:"101284284",name:"Tenoryl plus 5/10 mg 30 tablets"},
-  {code:"101284292",name:"Tenoryl plus 5/5 mg 30 tablets"},
-  {code:"101284305",name:"Tenoryl plus 10/5 mg 30 tablets"},
-  {code:"101284313",name:"Tenoryl plus 10/10 mg 30 tablets"},
-  {code:"101284321",name:"Lamira 50 mg 30 tablets"},
-  {code:"101284330",name:"Lamira 100 mg 30 tablets"},
-  {code:"101284348",name:"Modexa 30 mg 14 capsules"},
-  {code:"101284356",name:"Modexa 60 mg 28 capsules"},
-  {code:"101285324",name:"Olumiant 2 mg 28 tablets"},
-  {code:"101285332",name:"Olumiant 4 mg 28 tablets"},
-  {code:"101294183",name:"PROFILAR 1MG/5ML 120ML.SYP."},
-  {code:"101294204",name:"SELEKTINE 15MG/TAB 30 TAB"},
-  {code:"101294255",name:"VITA JELLY(VITA-VIGOR) 1000MG 30 CAP"},
-  {code:"101294301",name:"ZETEX 10MG/TAB 30 TAB"},
-  {code:"101294335",name:"ADVAQUIN 500MG/TAB 5 TAB"},
-  {code:"101294394",name:"BIO SMART 230ML"},
-  {code:"101294423",name:"CEFIM 200MG/TAB 8 CAP"},
-  {code:"101294431",name:"CEFIM 400MG/CAP 6 CAP."},
-  {code:"101294440",name:"CEFOVEX 500MG/TAB 10 TAB"},
-  {code:"101294466",name:"CLARIVA 500MG/TAB 14 TAB"},
-  {code:"101294538",name:"EMDITIL 500 MG 10 TABS"},
-  {code:"101294562",name:"EVENING PRIMROSE OIL 1000MG 30 CAP."},
-  {code:"101294571",name:"FINALLERG 100ML SYP"},
-  {code:"101294600",name:"GIMEX 30 CAP."},
-  {code:"101294618",name:"G-VITAL PLUS 30 CAP"},
-  {code:"101294642",name:"HERBIFIT HEDERINSYR 100 ML"},
-  {code:"101294651",name:"IVY CALM 120ML.SYP"},
-  {code:"101294706",name:"LOVRAK 800MG/TAB TAB"},
-  {code:"101294781",name:"OMEGA LIGHT 30 CAPS GEL"},
-  {code:"101294790",name:"Omegalight Gelatin Candies 60 Piece"},
-  {code:"101294802",name:"PANDA EXTRA 24 CAPLETS"},
-  {code:"101294811",name:"PHARMATIME 30 CAP"},
-  {code:"101296883",name:"Sana Pharma Iron Man 3X6 60 Minutes"},
-  {code:"101296921",name:"Azimac 250Mg 6 Cap"},
-  {code:"101302227",name:"Epclusa 400/100 Mg 28 tablets"},
-  {code:"101309162",name:"Marnys Salamon Oil Omega-3 Forte Cap 60 Capsules"},
-  {code:"101312169",name:"Implanon Nxt Implant Sc 68 mg 1 piece"},
-  {code:"101312177",name:"Zydac 150 mg 30 Tablets"},
-  {code:"101313161",name:"Rexulti 1 mg 28 tablets"},
-  {code:"101313170",name:"Rexulti 2 mg 28 tablets"},
-  {code:"101313188",name:"Rexulti 3 mg 28 tablets"},
-  {code:"101313196",name:"Rexulti 4 mg 28 tablets"},
-  {code:"101318190",name:"Xigduo XR 10/500 mg 28 tablets"},
-  {code:"101325162",name:"Sevikar HCT 20/5/12.5 mg�28 Tablets"},
-  {code:"101325171",name:"Sevikar HCT 40/5/12.5 mg 28 Tablets"},
-  {code:"101325189",name:"Sevikar HCT 40/5/25 mg 28 Tablets"},
-  {code:"101325197",name:"Sevikar HCT 40/10/12.5 mg 28 Tablets"},
-  {code:"101325200",name:"Sevikar HCT 40/10/25 mg 28 Tablets"},
-  {code:"101331167",name:"Normatec 20 mg 28 Tablets"},
-  {code:"101331175",name:"Normatec 40 mg 28 Tablets"},
-  {code:"101331183",name:"Normatec Plus 20/12.5 mg 28 Tablets"},
-  {code:"101331191",name:"Normatec Plus 40/12.5 mg 28 Tablets"},
-  {code:"101331204",name:"Normatec Plus 40/25 mg 28 Tablets"},
-  {code:"101331212",name:"Enablex 7.5 mg 28 Tablets"},
-  {code:"101331221",name:"Enablex 15 mg 28 Tablets"},
-  {code:"101333162",name:"Nostifix 0.5 mg tablet 2pcs"},
-  {code:"101333171",name:"Nostifix 0.5 mg tablet 8pcs"},
-  {code:"101342165",name:"Enterogermina 12 capsules"},
-  {code:"101347169",name:"VFONAZ 200 mg film-coated 30 tablet"},
-  {code:"101363206",name:"Urinaid 30 Caps"},
-  {code:"101365210",name:"Xigduo Xr 5/500 Mg 28 Tablet"},
-  {code:"101380372",name:"Lindynette 0.075/0.03 Mg 21 Film-Coated Tablets"},
-  {code:"101380381",name:"Midiana 3 mg / 0.3 mg 21 Tablets"},
-  {code:"101380410",name:"Nurofen 200 mg 24 Tablets"},
-  {code:"101380428",name:"Nurofen 400 mg 12 Tablets"},
-  {code:"101382917",name:"Sefarix 300 mg 10 Capsules"},
-  {code:"101387161",name:"Bosentor 125 mg Film-Coated 60 Tablets"},
-  {code:"101387179",name:"Bosentor 62.5 mg Film-Coated 60 Tablets"},
-  {code:"101401233",name:"Parkyn 50 Mg/12.5 Mg/200 Mg 100 Tablet"},
-  {code:"101401241",name:"Parkyn 100 Mg /25 Mg / 200 Mg 100 Tablet"},
-  {code:"101402201",name:"Snafi 5 mg Tablet 30 pcs"},
-  {code:"101405226",name:"Lactoglobin 100mg 30 Caps"},
-  {code:"101405234",name:"Alamax 600 mg 30 Tabs"},
-  {code:"101405242",name:"Digestal 30 Caps"},
-  {code:"101405269",name:"Beauty Hair & Nails Special offer 2+1"},
-  {code:"101407168",name:"Mavyret 100 Mg/40 Mg Film Coated 84 Tablet"},
-  {code:"101407176",name:"Pemar 10 Mg Prolonged-Release 60 Tablet"},
-  {code:"101419169",name:"Jadenu 90 mg Film-Coated 30 Tablets"},
-  {code:"101419177",name:"Jadenu 180 mg Film-Coated 30 Tablets"},
-  {code:"101419185",name:"Jadenu 360 mg Film-Coated 30 Tablets"},
-  {code:"101422632",name:"Nitroglycerin Sublingual 100 Tablets"},
-  {code:"101433286",name:"Extement 100 mg 4 Tablets"},
-  {code:"101433294",name:"Extement 50 mg 4 Tablets"},
-  {code:"101433315",name:"Nutraquinol 30 Caps 100 mg"},
-  {code:"101439223",name:"Antoxeed 50 Mg 60 Tablets"},
-  {code:"101439231",name:"Marnys Royal Jelly 5000 - 20 Drinkable Ampules * 11 ml"},
-  {code:"101439240",name:"Marnys Ginjal 2000 - 20 Drinkable Ampules * 10 ml"},
-  {code:"101439258",name:"Marnys Apivit C 2000 - 20 Drinkable Ampules * 10 ml"},
-  {code:"101439291",name:"Novaplus T 380 Cu Intrauterine Device 1pc"},
-  {code:"101439303",name:"Novaplus T 380 Ag Intrauterine Device 1pc"},
-  {code:"101453480",name:"Levon 500 mg 5 film-coated tablet"},
-  {code:"101453498",name:"Levon 750 mg 5 film-coated tablet"},
-  {code:"101453501",name:"Azera 100 mg enteric-coated 90 tablet"},
-  {code:"101454423",name:"Unisia 8/2.5 mg 30 Tablet"},
-  {code:"101454431",name:"Unisia 8/5 mg 30 Tablet"},
-  {code:"101457106",name:"GNC Flax Seed Oil 1000 mg 90 Caps"},
-  {code:"101457131",name:"GNC Wheat Germ Oil 1000 mg 60 Caps"},
-  {code:"101457149",name:"GNC Cranberry Juice Concentrate 500 mg 60 Caps"},
-  {code:"101457181",name:"GNC L-Arginine 500 mg 90 Caps"},
-  {code:"101457190",name:"GNC Potassium Gluconate 99 mg 100 Tablet"},
-  {code:"101457202",name:"GNC St. John\'s Wort 500 mg 100 Caps"},
-  {code:"101457211",name:"GNC Ultra Mega Gold Without Iron 60 Tablets"},
-  {code:"101457229",name:"GNC Salmon Oil 1000 mg 180 Caps"},
-  {code:"101457237",name:"GNC L-Carnitine 500 mg 30 Caps"},
-  {code:"101457253",name:"GNC Cod Liver Oil 100 Caps"},
-  {code:"101457261",name:"GNC Bilberry 500 mg 60 Caps"},
-  {code:"101457270",name:"GNC Acetyl L-Carnitine 500 mg 30 Caps"},
-  {code:"101461455",name:"GNC Damiana Leaf Standardized Extract 50 mg 60 Caps"},
-  {code:"101481771",name:"Centrum Energy 30 Tab"},
-  {code:"101495621",name:"Solotik 100 mg 15 Tablet"},
-  {code:"101495639",name:"Solotik 100 mg 30 Tablet"},
-  {code:"101495647",name:"Solotik 50 mg 15 Tablet"},
-  {code:"101495655",name:"Solotik 50 mg 30 Tablet"},
-  {code:"101497773",name:"Lixiana 15 mg 14 Tablets"},
-  {code:"101497781",name:"Lixiana 30 mg 28 Tablets"},
-  {code:"101497790",name:"Lixiana 60 mg 28 Tablets"},
-  {code:"101498063",name:"Lisart plus 40/12.5 mg 28 tablet"},
-  {code:"101498071",name:"Lisart plus 80/12.5 mg 28 tablet"},
-  {code:"101498477",name:"HEPATAB 0.5 mg 30 Tablets"},
-  {code:"101498557",name:"Propess 10 mg 1 pessary (Freezer)"},
-  {code:"101499867",name:"HEPATAB 1 mg 30 Tablets"},
-  {code:"101501664",name:"Xeljanz 11 mg XR 30 Tablets"},
-  {code:"101502915",name:"ESBRIET 801 MG FILM COATED TABLET"},
-  {code:"101520419",name:"Lavistina 8 mg 100 Tablet"},
-  {code:"101520427",name:"Lavistina 16 mg 40 Tablet"},
-  {code:"101520435",name:"Lavistina 24 mg 50 Tablet"},
-  {code:"101520443",name:"Varoxa 10 mg 30 Tablet"},
-  {code:"101520451",name:"Varoxa 15 mg 30 Tablet"},
-  {code:"101520460",name:"Varoxa 20 mg 30 Tablet"},
-  {code:"101520478",name:"Lysteda 650 mg 30 Tablet"},
-  {code:"101520611",name:"Kalcio Plus 60 Candies"},
-  {code:"101520620",name:"Jp Valerian 250mg 30 Caps"},
-  {code:"101527856",name:"Carbimazole 5 mg 100 Tablet"},
-  {code:"101528613",name:"Mothernest Candy Multivitamin Zinc & Biotin (3gm) 60 Pcs"},
-  {code:"101528630",name:"Mothernest Gummy Collagen (4gm) 40 Pcs"},
-  {code:"101528656",name:"Prima D3 50000 IU 30 Caps"},
-  {code:"101539398",name:"Chooz Gum 12S"},
-  {code:"101550976",name:"Epilat 10 Mg 30 Capsules"},
-  {code:"101550984",name:"Desirett 0.075 mg Tablet 28pcs"},
-  {code:"101550992",name:"Cebo 200 mg 20 capsule"},
-  {code:"101551151",name:"Arkopharma Forcapil Hair and Nail Tonic 60 Caps"},
-  {code:"101559612",name:"Isoptin 80 mg 20 Tablet"},
-  {code:"101559647",name:"Setral 50 mg 30 Tablet"},
-  {code:"101559655",name:"Coufatex 1 mg 100 Tablet"},
-  {code:"101566071",name:"Jamieson St. Johns Wort 1000 mg 30 Tabs"},
-  {code:"101566206",name:"Elevit Pronatal 30 Tabs"},
-  {code:"101571970",name:"VIDA Royal Jelly 1000 mg 30 Capsules"},
-  {code:"101572391",name:"AvalonActiv Original Roll On 59 ml"},
-  {code:"101572403",name:"AvalonActiv Cold Roll On 59 ml"},
-  {code:"101572690",name:"Ail Yohimbe Power 400 mg Capsule 60Pcs"},
-  {code:"101575612",name:"VEMLIDY 25MG F.C.TABLET"},
-  {code:"101575621",name:"VOSEVI 400MG/100MG/100MG F.C.TABLET"},
-  {code:"101579613",name:"Etoxa 90 mg 30 Tablet"},
-  {code:"101579621",name:"Etoxa 120 mg 7 Tablet"},
-  {code:"101579630",name:"Depojoy 30 mg 6 Tablets"},
-  {code:"101579648",name:"Depojoy 60 mg 6 Tablets"},
-  {code:"101579656",name:"Betmiga 50 mg 30 Tablet"},
-  {code:"101579795",name:"Etoxa 60 mg 30 Tablet"},
-  {code:"101580649",name:"Diusemide 40 mg 30 Tablets"},
-  {code:"101582610",name:"Cialis 20 mg Tablet 12 pcs"},
-  {code:"101585909",name:"Natur Castor Oil Mint Flavour 60 ml"},
-  {code:"101585917",name:"Natur Castor Oil Strawberries Flavour 60 ml"},
-  {code:"101586645",name:"Fenugreek 500mg 60 Capsules"},
-  {code:"101586661",name:"Vidal Vitamin D3 1000 IU 90 Caps"},
-  {code:"101587875",name:"Rowanzac 30 Capsule"},
-  {code:"101587883",name:"Devarin 20 Mg F.C.Tablet"},
-  {code:"101594514",name:"Navela 1.5 mg 1 Tablet"},
-  {code:"101594522",name:"Solfisan 10 mg 30 Tablet"},
-  {code:"101594531",name:"Solfisan 5 mg 30 Tablet"},
-  {code:"101594565",name:"Naprotex 500 mg 10 Tablets"},
-  {code:"101594899",name:"Arena Plus 150 /12.5 mg 30 Tablet"},
-  {code:"101594901",name:"Arena Plus 300/12.5 mg 30 Tablet"},
-  {code:"101601809",name:"Priorin-N Capsule 90pcs"},
-  {code:"101601921",name:"Aplefit Plus 60 Capsules"},
-  {code:"101605906",name:"Colomint 24 Capsule"},
-  {code:"101617616",name:"Dicoflor 60 - 30 Capsules"},
-  {code:"101624752",name:"Coufatex 2 Mg 100 Tablets"},
-  {code:"101624761",name:"Coufatex 5 Mg 100 Tablets"},
-  {code:"101624816",name:"Beatswell Vitamin C 1000Mg 100 Tabs"},
-  {code:"101624824",name:"Beatswell Echinacea 350Mg 100 Caps"},
-  {code:"101624832",name:"Beatswell Vitamin C 500Mg 100 Tabs"},
-  {code:"101624841",name:"Actiflora 30 Cap"},
-  {code:"101632437",name:"Mebagen SR 200 mg Caps 30 pcs"},
-  {code:"101635620",name:"Lactosat 30 sticks"},
-  {code:"101635638",name:"Shainy Glutathione 30 sticks"},
-  {code:"101635646",name:"Stromega Omega3 60 Caps"},
-  {code:"101635654",name:"Sun-D Vitamin D 1000 IU 90 Tabs"},
-  {code:"101635671",name:"Bellogen 30 bottle * 25 ml"},
-  {code:"101635806",name:"Sclera 120 mg 14 Capsules"},
-  {code:"101635814",name:"Sclera 240 mg 56 Capsules"},
-  {code:"101639639",name:"Kinetogen 30 bottle x 25 ml"},
-  {code:"101641616",name:"Bufomix 160/4.5 mcg easyhaler"},
-  {code:"101641624",name:"Senergy 5/160 mg 30 Tablets"},
-  {code:"101641632",name:"Senergy 10/160 mg 30 Tablets"},
-  {code:"101641641",name:"Flucazol 50 mg 7 Capsules"},
-  {code:"101641659",name:"Divinus 5 mg 30 Tablet"},
-  {code:"101641675",name:"Celect 200 mg 20 Capsule"},
-  {code:"101641739",name:"Rinvoq 15 mg 30 Tablets"},
-  {code:"101642918",name:"Heamo-Lind 400 Mg 10 Supp"},
-  {code:"101642993",name:"Laperva Multivita Mv With Prebiotics 30 Sticks"},
-  {code:"101661633",name:"VHC Ferrum 30 pcs"},
-  {code:"101661641",name:"VHC Bocaft 15 pcs"},
-  {code:"101661650",name:"VHC Uculis 30 pcs"},
-  {code:"101684042",name:"Diaphage 1g SR 28 tab"},
-  {code:"101686144",name:"Esural 20 mg Delayed Release 20 Tablets"},
-  {code:"101689695",name:"Setral 50 mg 10 Tablet"},
-  {code:"101689708",name:"Setral 100 mg 10 Tablet"},
-  {code:"101690696",name:"Monocef 250 mg Capsule 20 pcs"},
-  {code:"101690717",name:"Citoxal 20 mg Tablet 30 pcs"},
-  {code:"101690725",name:"Finiscar 5 mg Tab 28 pcs"},
-  {code:"101690733",name:"Diusemide 20mg/2ml Amp 5 pcs"},
-  {code:"101690741",name:"Omformin 500 mg Tablet 20 pcs"},
-  {code:"101690750",name:"Indicardin 10 mg Tablet 50 pcs"},
-  {code:"101690768",name:"Indicardin 40 mg Tablet 50 pcs"},
-  {code:"101690776",name:"Noractone 25 mg Tablet 30 pcs"},
-  {code:"101692675",name:"Lohist 10 mg 20 Tablets"},
-  {code:"101692683",name:"Omafen 400 mg 20 Tablets"},
-  {code:"101698655",name:"Vital E 400 Mg 30 Caps"},
-  {code:"101698866",name:"EREVARD 20 MG 4TAB"},
-  {code:"101698874",name:"OmegaKrill 500 Mg 60 Capsule"},
-  {code:"101699658",name:"Jp Omega-3 567 Mg 60 Cap"},
-  {code:"101702010",name:"Jamieson Calcium + D3 90 Caplets"},
-  {code:"101702028",name:"Jamieson Potassium 50 Mg 60 Tablets"},
-  {code:"101703637",name:"Nemr Royal Jelly 1000 Mg 30 Capsules"},
-  {code:"101707873",name:"Jamieson Green Tea 90 Caplets"},
-  {code:"101708622",name:"D-Seul 50000 I.U 20 Soft Gelatin Capsules"},
-  {code:"101709828",name:"Zolonia 10 Mg Tablet 28 Pcs"},
-  {code:"101711928",name:"Aprovasc 150/5 Mg Tablet 28 Pcs"},
-  {code:"101711936",name:"Aprovasc 300/10 Mg Tablet 28 Pcs"},
-  {code:"101711944",name:"Aprovasc 150/10 Mg Tablet 28 Pcs"},
-  {code:"101711952",name:"Aprovasc 300/5 Mg Tablet 28 Pcs"},
-  {code:"101719655",name:"Paradox Omega Sport 30 Capsules"},
-  {code:"101719663",name:"Paradox Omega Mums 30 Capsules"},
-  {code:"101719840",name:"Thiotacid 300 Mg 60 Tablets"},
-  {code:"101720120",name:"Antimetil 30 Tablets"},
-  {code:"101723443",name:"Amlohope 10/10 Mg 30 Capsules"},
-  {code:"101723451",name:"Amlohope 10/5 Mg 30 Capsules"},
-  {code:"101723460",name:"Amlohope 5/5 Mg 30 Capsules"},
-  {code:"101723478",name:"Amlohope 5/10 Mg 30 Capsules"},
-  {code:"101723611",name:"Isoptin 40 Mg Tablet 100 Pcs"},
-  {code:"101728623",name:"Jamieson Vitamin C 1000 Mg 100 Caplets"},
-  {code:"101728640",name:"Zinc 30 Mg 100 Tablets"},
-  {code:"101731881",name:"Xyrio 20mg 4tabs"},
-  {code:"101731890",name:"Xyrio 5mg 30tabs"},
-  {code:"101733617",name:"Vitalife 100 Capsules"},
-  {code:"101735971",name:"MARLON 20 Mg 30 Tablets"},
-  {code:"101735989",name:"MARLON 10 Mg 30 Tablets"},
-  {code:"101736640",name:"Claz MR 60 Mg 30 Tablets"},
-  {code:"101741625",name:"Royal Jelly 2000 Mg 30 Capsules"},
-  {code:"101741633",name:"Royal Jelly Plus Ginseng 30 Capsules"},
-  {code:"101744720",name:"Jamieson Q10 Ubiquinone 250 Mg 30 Softgels"},
-  {code:"101744738",name:"Jamieson Cranberry Complex 500 Mg 60 Capsules"},
-  {code:"101744746",name:"Ar Vita-P 90 Tablets"},
-  {code:"101744754",name:"Ar Ca-D 90 Tablets"},
-  {code:"101746637",name:"Jp Vivahair 60 Softgel Capsules"},
-  {code:"101746645",name:"Ar Vita-Min 90 Tablets"},
-  {code:"101747787",name:"Almisan Horse Balm Cooling 250ml (Jar)"},
-  {code:"101754864",name:"Omega 3-6-9 Plus Q10 60 Capsules"},
-  {code:"101754872",name:"Biored Forte 60 Tablets"},
-  {code:"101755648",name:"Waki Natural Garlic Odourless 30 Tablets"},
-  {code:"101757619",name:"Vipdomet 12.5/1000 Mg 56 Tablets"},
-  {code:"101757774",name:"Silomes 100 Mg 30 Tablet"},
-  {code:"101757782",name:"Silomes 200 Mg 30 Tablet"},
-  {code:"101757791",name:"Silomes 400 Mg 30 Tablet"},
-  {code:"101759577",name:"Jp Melatonin 5 Mg 100 Capsules"},
-  {code:"101759585",name:"Jp Melatonin 5 Mg 60 Capsules"},
-  {code:"101759631",name:"Ail Bone Health 60 Tablets"},
-  {code:"101760922",name:"Celflex 60 Capsules"},
-  {code:"101760931",name:"Motova Plus 60 Tablets"},
-  {code:"101761562",name:"Ashwag 300 Mg 50 Capsules"},
-  {code:"101763891",name:"Esoma 20 Mg Delayed Release 28 Capsules"},
-  {code:"101764077",name:"Devarin 10 Mg Orodispersible Tablet 4pcs"},
-  {code:"101768705",name:"Vipidia 12.5 Mg 28 Tablet"},
-  {code:"101768713",name:"Vipidia 25 Mg 28 Tablet"},
-  {code:"101769071",name:"Incresync 25/15 Mg 28 Tablet"},
-  {code:"101769089",name:"Incresync 25/30 Mg 28 Tablet"},
-  {code:"101769169",name:"Hemadid 200 Mg 120 Tablets"},
-  {code:"101770645",name:"Jp Hepaform 60 Capsules"},
-  {code:"101770733",name:"Gardy 15 Drinkable Shots"},
-  {code:"101770856",name:"Biocal-Plus 60 Tablets"},
-  {code:"101771939",name:"Viagra 50 Mg Orodispersible Tablet 8pcs"},
-  {code:"101774523",name:"Vita-Vigor Gimex 30 Capsules"},
-  {code:"101774531",name:"Vita-Vigor Vita Jelly 1000 Mg 30 Capsules"},
-  {code:"101774540",name:"Vita-Vigor Ultra-Vita 30 Capsules"},
-  {code:"101774611",name:"Esoma 40 Mg Capsules 28pcs"},
-  {code:"101774620",name:"Esoma 40 Mg Capsules 14pcs"},
-  {code:"101776123",name:"Procto-4 Creem 50 Mg"},
-  {code:"101779914",name:"GNC Coenzyme Q10 120 Mg 30 Capsules"},
-  {code:"101779922",name:"GNC Vitamin D-3 1000 IU 180 Tablets"},
-  {code:"101787674",name:"Peptazol 15 Mg Capsule 28pcs"},
-  {code:"101789637",name:"Snafi 20 Mg Tablet 12 Pcs"},
-  {code:"101790697",name:"Jamieson Omega-3 Complete 600 Mg 80 Softgels"},
-  {code:"101796773",name:"Calcy 600 30 Tablets"},
-  {code:"101797629",name:"Valium 10 Mg 25 Tablets"},
-  {code:"101797637",name:"Oxycontin 10 Mg Cr 20 Tablet"},
-  {code:"101797645",name:"Oxycontin 15 Mg Cr 20 Tablet"},
-  {code:"101797653",name:"Oxycontin 20 Mg Cr 20 Tablet"},
-  {code:"101797661",name:"Oxycontin 30 Mg Cr 20 Tablet"},
-  {code:"101797670",name:"Oxycontin 40 Mg Cr 20 Tablet"},
-  {code:"101797688",name:"Ritalin 10 Mg 30 Tablet"},
-  {code:"101797776",name:"Zaldiar 37.5/325 Mg 20 Tablets"},
-  {code:"101801616",name:"Nulex 100 Mg 20 Capsule"},
-  {code:"101801632",name:"Sumarex 50 Mg Tablet 2 Pcs"},
-  {code:"101801641",name:"Sumarex 50 Mg Tablet 6 Pcs"},
-  {code:"101801659",name:"Sumarex 100 Mg Tablet 2 Pcs"},
-  {code:"101801667",name:"Sumarex 100 Mg Tablet 6 Pcs"},
-  {code:"101801675",name:"Lyrica 75 Mg Capsule 56 Pcs"},
-  {code:"101801683",name:"Abstral 100mcg Sublingual 10 Tablet"},
-  {code:"101801691",name:"Abstral 200mcg Sublingual 10 Tablet"},
-  {code:"101801763",name:"Holista Vitamin C Mega Immunity Pack"},
-  {code:"101804702",name:"Jp Omega-3 1000 Mg 60 Capsules"},
-  {code:"101804711",name:"Jp Turnero 225 Mg 30 Tablets"},
-  {code:"101806741",name:"Cigapro 0.4 Mg Prolonged Release Tablet 30 Pcs"},
-  {code:"101826688",name:"Lorinase-D 2.5/120mg 20 Tablets"},
-  {code:"101826776",name:"Vitacal 60 Tablets"},
-  {code:"101854620",name:"Paquix 2.5mg 60 Tablets"},
-  {code:"101854638",name:"Paquix 5mg 60 Tablets"},
-  {code:"101859640",name:"Solpadeine Capsule 20pcs"},
-  {code:"101870611",name:"Firdapse 10 Mg Tab"},
-  {code:"101876618",name:"Dusta 0.5 Mg Capsule 30pcs"},
-  {code:"101883631",name:"Sleeply 24 Strips"},
-  {code:"101883682",name:"Jp Prosmetto 30 Capsules"},
-  {code:"101883691",name:"Jp Cranberry 60 Capsules"},
-  {code:"101889689",name:"Arkopharma Forcapil Hair And Nail Tonic 180 Capsules"},
-  {code:"101889700",name:"California Greens Curcumax 90 mg 60 Capsules"},
-  {code:"101889718",name:"California Greens Lactosat 125 Mg 30 Capsules"},
-  {code:"101898649",name:"Diaoptim Mr 60 Mg 30 Tablets"},
-  {code:"101911612",name:"Hemopran Rectal Supp 7 Pieces"},
-  {code:"101920691",name:"Luttagen 0.075/0.03 Mg 21 Tablets"},
-  {code:"101921618",name:"Slinda 4 Mg 28 Tablets"},
-  {code:"101921626",name:"Cybelle 0.150/0.03 Mg 28 Tablets"},
-  {code:"101921634",name:"Jamieson Vitamin D3 1000 Iu 100 Tablets"},
-  {code:"101923681",name:"Vivazac Plus 300mg/12.5mg 30 Tab"},
-  {code:"101923699",name:"Vivazac Plus 300mg/25mg 30 Tab"},
-  {code:"101923701",name:"Vivazac 150 Mg 30 Tab"},
-  {code:"101923710",name:"Vivazac 300 Mg 30tab"},
-  {code:"101923728",name:"Vivazac Plus 150mg/12.5mg 30 Tab"},
-  {code:"101941619",name:"Fensolin 5 Mg 30 Tablets"},
-  {code:"101941627",name:"Fensolin 10 Mg 30 Tablets"},
-  {code:"101941715",name:"Conventin 300 Mg 30 Capsule"},
-  {code:"101941723",name:"Conventin 400 Mg 30 Capsule"},
-  {code:"101942611",name:"Debromu 40 Mg 30 Tablet"},
-  {code:"101942620",name:"Gastrozole Plus 20 Mg /1100 Mg 28 Cap"},
-  {code:"101942751",name:"Vhc Propodezas 50 Bites"},
-  {code:"101943745",name:"Veggie Vitamin D3 50000 Iu 20 Capsules"},
-  {code:"101954612",name:"Belara 0.03mg/2mg 63tablet"},
-  {code:"101963623",name:"Janumet Xr 50/1000 Mg 56 Tablets"},
-  {code:"101963631",name:"Janumet Xr 50/500 Mg 56 Tablets"},
-  {code:"101963640",name:"Janumet Xr 100/1000 Mg 28 Tablets"},
-  {code:"101971631",name:"Mavenclad 10 Mg 1 Tab"},
-  {code:"101979617",name:"Xifaxan 200 Mg 12 Tablets"},
-  {code:"101980618",name:"Ravildo 25 Mg Tablet 30pcs"},
-  {code:"101980626",name:"Ravildo 12.5 Mg Tablet 30pcs"},
-  {code:"101980634",name:"Ravildo 6. 25 Mg Tablet 30pcs"},
-  {code:"101980642",name:"Ravildo 3.125 Mg Tablet 30pcs"},
-  {code:"101989831",name:"Step Nasal Kit"},
-  {code:"101992619",name:"Laxocodyl 10 Mg Supp( Adult )"},
-  {code:"101992627",name:"Laxocodyl 5 Mg Supp ( Child)"},
-  {code:"101993611",name:"Thorne Research M.F. Bromelain 60 Caps"},
-  {code:"101993620",name:"Thorne Research Relora Plus 60 Caps"},
-  {code:"101993638",name:"Thorne Research Boswellia Phytosome 60 Caps"},
-  {code:"101993646",name:"Thorne Research Green Tea Phytosome 60 Caps"},
-  {code:"101993654",name:"Thorne Research Liver Cleanse 60 Caps"},
-  {code:"101993662",name:"Thorne Research Meriva-Sf 120 Caps"},
-  {code:"101993671",name:"Thorne Research Phytisone 60 Caps"},
-  {code:"101993689",name:"Thorne Research 5-Hydroxytryptophan 90 Caps"},
-  {code:"101993697",name:"Thorne Research Alpha Lipoic Acid 60 Caps"},
-  {code:"101993700",name:"Thorne Research Bio-Gest (Digestive Enzymes) 180 Caps"},
-  {code:"101993718",name:"Thorne Research Carnityl (Acetyl-L-Carnitine) 60 Caps"},
-  {code:"101993726",name:"Thorne Research Choleast (Red Yeast Rice) 120 Caps"},
-  {code:"101993734",name:"Thorne Research Cortrex 60 Caps"},
-  {code:"101993742",name:"Thorne Research Florapro-Lp Probiotic 60 Tabs"},
-  {code:"101993751",name:"Thorne Research Florasport 20b 30 Caps"},
-  {code:"101993769",name:"Thorne Research Glucosamine & Chondroitin 90 Caps"},
-  {code:"101993777",name:"Thorne Research Glucosamine Sulfate 180 Caps"},
-  {code:"101993785",name:"Thorne Research L-Carnitine 60 Caps"},
-  {code:"101993793",name:"Thorne Research L-Tyrosine 90 Caps"},
-  {code:"101993806",name:"Thorne Research Melaton-5 60 Caps"},
-  {code:"101993814",name:"Thorne Research Omega Plus 90 Gelcaps"},
-  {code:"101993822",name:"Thorne Research Omega-3 With Coq10 90 Gelcaps"},
-  {code:"101993831",name:"Thorne Research Perfusia-Sr (L-Arginine) 120 Caps"},
-  {code:"101993849",name:"Thorne Research Phosphatidyl Choline 60 Gelcaps"},
-  {code:"101993857",name:"Thorne Research Plantizyme 90 Caps"},
-  {code:"101993865",name:"Thorne Research Q-Best 100 (Coq10 100 Mg) 60 Gelcaps"},
-  {code:"101993873",name:"Thorne Research Rhodiola 60 Caps"},
-  {code:"101993881",name:"Thorne Research Sacro-B 60 Caps"},
-  {code:"101993890",name:"Thorne Research Taurine 90 Caps"},
-  {code:"101993902",name:"Thorne Research Thyrocsin 120 Caps"},
-  {code:"101993911",name:"Thorne Research 3-K Complete 60 Caps"},
-  {code:"101993929",name:"Thorne Research Advanced Nutrients 240 Caps"},
-  {code:"101993937",name:"Thorne Research Basic B Complex 60 Caps"},
-  {code:"101993945",name:"Thorne Research B-Complex #12 60 Caps"},
-  {code:"101993953",name:"Thorne Research Biomins II W/O Copper & Iron 120 Caps"},
-  {code:"101993961",name:"Thorne Research Biomins With Copper & Iron 120 Caps"},
-  {code:"101993970",name:"Thorne Research Iodine & Tyrosine 60 Caps"},
-  {code:"101993988",name:"Thorne Research Magnesium Citramate 90 Caps"},
-  {code:"101993996",name:"Thorne Research Oscap 120 Caps"},
-  {code:"101994008",name:"Thorne Research Pic-Mins 90 Caps"},
-  {code:"101994016",name:"Thorne Research Potassium Citrate 90 Caps"},
-  {code:"101994024",name:"Thorne Research Stress B-Complex 60 Caps"},
-  {code:"101994032",name:"Thorne Research Trace Minerals 90 Caps"},
-  {code:"101994041",name:"Thorne Research Zinc Picolinate 15 Mg 60 Caps"},
-  {code:"101994059",name:"Thorne Research Zinc Picolinate 30 Mg 180 Caps"},
-  {code:"101994067",name:"Thorne Research Zinc Picolinate 30 Mg 60 Caps"},
-  {code:"101994075",name:"Thorne Research Selenomethionine 60 Caps"},
-  {code:"101994083",name:"Thorne Research Men\'S Multi 50+ (W/O Cu And Fe) 180 Caps"},
-  {code:"101994104",name:"Source Naturals Vitamin C-1000 With Rosehips 1000mg 250 Tabs"},
-  {code:"101994112",name:"Source Naturals Vitamin D-3 1000 Iu 100 Tabs"},
-  {code:"101994121",name:"Source Naturals Vitamin D-3 1000 Iu 100 Softgels"},
-  {code:"101994139",name:"Source Naturals Vitamin D-3 2000 Iu 100 Caps"},
-  {code:"101994147",name:"Source Naturals Vitamin D-3 400 Iu 200 Tabs"},
-  {code:"101994155",name:"Source Naturals Vitamin D-3 5000 Iu 100 Softgels"},
-  {code:"101994163",name:"Source Naturals Vitamin D-3 5000 Iu 200 Softgels"},
-  {code:"101994171",name:"Source Naturals Vitamin E D-Alpha 400 Iu 100 Softgels"},
-  {code:"101994180",name:"Source Naturals Vitamin K2 Advantage 2200 Mcg. 120 Tabs"},
-  {code:"101994198",name:"Source Naturals Wellness C-1000 50 Tabs"},
-  {code:"101994201",name:"Source Naturals Wellness Colloidal Silver 30 Ppm 59.14 Ml"},
-  {code:"101994219",name:"Source Naturals Wellness Colloidal Silver 10 Ppm 29.57 Ml"},
-  {code:"101994227",name:"Source Naturals Wellness Multiple 120 Tabs"},
-  {code:"101994235",name:"Source Naturals Diet Chitosan W/Plan 120 Caps"},
-  {code:"101994243",name:"Source Naturals Diet Pyruvate 500mg 120 Caps"},
-  {code:"101994251",name:"Source Naturals Diet-Phen 180 Tabs"},
-  {code:"101994260",name:"Source Naturals Digest Activ 240 Caps"},
-  {code:"101994278",name:"Source Naturals Digestactiv 60 Caps"},
-  {code:"101994286",name:"Source Naturals Digest-Active 120 Cap"},
-  {code:"101994294",name:"Source Naturals Dlpa 375 Mg 60 Tabs"},
-  {code:"101994307",name:"Source Naturals Dlpa 750 Mg 30 Tabs"},
-  {code:"101994315",name:"Source Naturals Dmg 100 Mg 30 Tabs"},
-  {code:"101994323",name:"Source Naturals Dmg 100mg 60 Tabs"},
-  {code:"101994331",name:"Source Naturals D-Ribose 120 Tabs"},
-  {code:"101994340",name:"Source Naturals D-Ribose 30 Tabs"},
-  {code:"101994374",name:"Source Naturals Egcg From Green Tea 120 Tabs"},
-  {code:"101994382",name:"Source Naturals Hyaluronic Joint Complex 120 Tabs"},
-  {code:"101994391",name:"Source Naturals L-Arginine 1000 Mg 200 Tabs"},
-  {code:"101994403",name:"Source Naturals L-Ornithine 667 Mg 100 Caps"},
-  {code:"101994411",name:"Source Naturals L-Proline L-Lysine 275 Mg 120 Tabs"},
-  {code:"101994420",name:"Source Naturals L-Tryptophan 500 Mg 120 Caps"},
-  {code:"101994438",name:"Source Naturals Mbp Bone Renew 60 Caps"},
-  {code:"101994446",name:"Source Naturals Mega Strength Beta Sitosterol 240ct Tabs"},
-  {code:"101994454",name:"Source Naturals Neuromins Dha 100mg 120 Softgels"},
-  {code:"101994462",name:"Source Naturals Nightwell 59.14 Ml"},
-  {code:"101994471",name:"Source Naturals Nko Neptune Krill Oil 1000 Mg 60 Softgels"},
-  {code:"101994489",name:"Source Naturals Paba 100 Mg 100 Tabs"},
-  {code:"101994497",name:"Source Naturals Pantethine Co B5 Sublingual 25 Mg 60 Tabs"},
-  {code:"101994500",name:"Source Naturals Phosphatidyl Choline 420 Mg 90 Softgels"},
-  {code:"101994518",name:"Source Naturals Pomegranate Extract 500 Mg 60 Tabs"},
-  {code:"101994534",name:"Source Naturals Sytrinol 150 Mg 60 Tabs"},
-  {code:"101994542",name:"Source Naturals Tmg Trimethylglycine 750 Mg 240 Tabs"},
-  {code:"101994551",name:"Source Naturals Tmg Trimethylglycine 750 Mg 120 Tabs"},
-  {code:"101994569",name:"Source Naturals Tonalin 1000 Cla 120 Softgels"},
-  {code:"101994577",name:"Source Naturals Ubiquinol Coqh 100 Mg 90 Softgels"},
-  {code:"101994585",name:"Source Naturals Vegan True Melatonin 3 Mg 60 Caps"},
-  {code:"101994593",name:"Source Naturals Vegetarian Glucosamine 750 Mg 120 Tabs"},
-  {code:"101994606",name:"Source Naturals Vegetarian Glucosamine 750mg 240 Tabs"},
-  {code:"101994614",name:"Source Naturals Visual Eyes 120 Tabs"},
-  {code:"101994622",name:"Source Naturals Wellness Formula 60 Caps"},
-  {code:"101994631",name:"Source Naturals Zea-Tein 20/20 Lutein & Zeaxanthin 30 Caps"},
-  {code:"101994649",name:"Source Naturals Alkaline Balance 120 Tabs"},
-  {code:"101994657",name:"Source Naturals Ascorbyl Palmitate 180 Caps"},
-  {code:"101994665",name:"Source Naturals B-1 High Potency 500 Mg 50 Tabs"},
-  {code:"101994673",name:"Source Naturals B-125 Complex 90 Tabs"},
-  {code:"101994681",name:"Source Naturals B-2 100 Mg 100 Tabs"},
-  {code:"101994690",name:"Source Naturals B-2 100 Mg 250 Tabs"},
-  {code:"101994702",name:"Source Naturals B-50 Complex 50 Mg 50 Tabs"},
-  {code:"101994711",name:"Source Naturals B-6 50 Mg 100 Tabs"},
-  {code:"101994729",name:"Source Naturals Benfotiamine 120 Tabs"},
-  {code:"101994737",name:"Source Naturals Calcium Ascorbate 4 Oz"},
-  {code:"101994745",name:"Source Naturals Calcium Ascorbate Crystals 8 Ounce"},
-  {code:"101994753",name:"Source Naturals Chemdefense Sublingual Peppermint 45 Tabs"},
-  {code:"101994761",name:"Source Naturals Chem-Defense Peppermint 90 Tabs"},
-  {code:"101994770",name:"Source Naturals Chromemate Chromium Gtf 200mcg 120 Tabs"},
-  {code:"101994788",name:"Source Naturals Chromium Chelate 100 Tabs"},
-  {code:"101994796",name:"Source Naturals Chromium Picolinate 200 Mcg 120 Tablet"},
-  {code:"101994809",name:"Source Naturals Coenzymate B Sublingual Orange 120 Tabs"},
-  {code:"101994817",name:"Source Naturals Coenzymate B Sublingual Peppermint 120 Tabs"},
-  {code:"101994850",name:"Source Naturals Coenzymated B-6 300mg 60 Tabs"},
-  {code:"101994868",name:"Source Naturals Coenzymated B-6 Sublingual 30 Tabs"},
-  {code:"101994876",name:"Source Naturals Coenzymated B-6 100 Mg 30 Tabs"},
-  {code:"101994884",name:"Source Naturals Coenzymated B-6 25mg Sublingual 60 Tabs"},
-  {code:"101994892",name:"Source Naturals Colloidalife Fruit Flavor 16 Fl Oz"},
-  {code:"101994905",name:"Source Naturals Copper Sebacate 22 Mg 60 Tabs"},
-  {code:"101994913",name:"Source Naturals Dibencozide Coenzymated B-12 60 Tabs"},
-  {code:"101994921",name:"Source Naturals Dibencozide Sublingual 30 Tabs"},
-  {code:"101994930",name:"Source Naturals K-Mag C 60 Tabs"},
-  {code:"101994948",name:"Source Naturals K-Mag Aspartate 120 Tabs"},
-  {code:"101994956",name:"Source Naturals Life Force Multiple 120 Tabs"},
-  {code:"101994964",name:"Source Naturals Magnesium Bis-Glycinate 120 Tabs"},
-  {code:"101994972",name:"Source Naturals Mangosteen 75 Mg 120 Tabs"},
-  {code:"101994981",name:"Source Naturals Vitamin B-12 1 Mg Sublingual 240 Tabs"},
-  {code:"101994999",name:"Source Naturals Non-Gmo C-1000 240 Tabs"},
-  {code:"101995001",name:"Source Naturals Non-Gmo Vitamin C-1000 120 Tabs"},
-  {code:"101995019",name:"Source Naturals Spirulina Multiple 100 Tabs"},
-  {code:"101995027",name:"Source Naturals Triple Boron 3 Mg 100 Caps"},
-  {code:"101995043",name:"Source Naturals Ultra Chromium 200 Mcg 120 Tabs"},
-  {code:"101995051",name:"Source Naturals Ultra Chromium Picolinate 500 120 Tabs"},
-  {code:"101995060",name:"Source Naturals Ultra Potassium 99 Mg 100 Tabs"},
-  {code:"101995078",name:"Source Naturals Ultra Potassium 99 Mg 200 Tabs"},
-  {code:"101995086",name:"Source Naturals Ultra-Mag 240 Tabs"},
-  {code:"101995094",name:"Source Naturals Vanadium W/Chromium 180 Tabs"},
-  {code:"101995107",name:"Source Naturals Vitamin E 400 Iu 50 Tabs"},
-  {code:"101995131",name:"Carlson Labs Mct Oil Packets 1 Pouch Of 15 Packets"},
-  {code:"101995140",name:"Carlson Labs Melatonin 300 Mcg 30 Tabs"},
-  {code:"101995158",name:"Carlson Labs Mild-C 500 Mg 100 Caps"},
-  {code:"101995166",name:"Carlson Labs Mild-C 500 Mg 250 Caps"},
-  {code:"101995182",name:"Carlson Labs Mini-Multi 250 Mini Tabs"},
-  {code:"101995191",name:"Carlson Labs Mini-Multi 90 Mini Tabs"},
-  {code:"101995203",name:"Carlson Labs Mini-Multi 180 Mini Tabs"},
-  {code:"101995211",name:"Carlson Labs Moly-B (Chelated Molybdenum) 100 Tabs"},
-  {code:"101995220",name:"Carlson Labs Moly-B (Chelated Molybdenum) 300 Tabs"},
-  {code:"101995238",name:"Carlson Labs Msm Sulfur 1000 Mg 90 Caps"},
-  {code:"101995246",name:"Carlson Labs Msm Sulfur 1000 Mg 180 Caps"},
-  {code:"101995254",name:"Carlson Labs Msm Sulfur 1000 Mg 300 Caps"},
-  {code:"101995262",name:"Carlson Labs Natural Digestive Enzymes 250 Tabs"},
-  {code:"101995271",name:"Carlson Labs Niacin 50 Mg 100 Tabs"},
-  {code:"101995289",name:"Carlson Labs Niacin 50 Mg 300 Tabs"},
-  {code:"101995297",name:"Carlson Labs Niacin-Time 500 Mg 250 Tabs"},
-  {code:"101995300",name:"Carlson Labs Niacin-Time 500 Mg 500 Tabs"},
-  {code:"101995318",name:"Carlson Labs Salmon Oil 250 Mg 300 Softgels"},
-  {code:"101995326",name:"Carlson Labs Super Omega3 Gems 600 Mg 180 Softgels"},
-  {code:"101995334",name:"Carlson Labs Nutra-Support Diabetes 180 Caps"},
-  {code:"101995342",name:"Carlson Labs Nutra-Support Immune 200 Caps"},
-  {code:"101995351",name:"Carlson Labs Nutra-Support Immune 60 Caps"},
-  {code:"101995369",name:"Carlson Labs Nutra-Support Joint 120 Tabs"},
-  {code:"101995377",name:"Carlson Labs Nutra-Support Joint 180 Tabs"},
-  {code:"101995385",name:"Carlson Labs Nutra-Support Prostate 90 Softgels"},
-  {code:"101995393",name:"Carlson Labs Omega Complete Gems Natural Lemon 180 Softgels"},
-  {code:"101995406",name:"Carlson Labs Phosphatidyl Serine 100 Mg 90 Softgels"},
-  {code:"101995414",name:"Carlson Labs Salmon Oil 1000 Mg 180 Softgels"},
-  {code:"101995422",name:"Carlson Labs Salmon Oil 500 Mg 50 Softgels"},
-  {code:"101995431",name:"Carlson Labs Solar D Gems 2000 Iu Vitamin D3 120 Softgels"},
-  {code:"101995449",name:"Carlson Labs Vitamin D3 125 Mcg (5000 Iu) 360 Softgels"},
-  {code:"101995457",name:"Carlson Labs Vitamin D3 2000 Iu (50 Mcg) 360 Softgels"},
-  {code:"101995465",name:"Carlson Labs Vitamin D3 25 Mcg (1000 Iu) 250 Softgels"},
-  {code:"101995473",name:"Carlson Labs Vitamin D3 25 Mcg (1000 Iu) 360 Softgels"},
-  {code:"101995481",name:"Carlson Labs Vitamin D3 250 Mcg (10000 Iu) 120 Softgels"},
-  {code:"101995490",name:"Carlson Labs Vitamin K2 180 Mcg 180 Softgels"},
-  {code:"101995502",name:"Carlson Labs Vitamin K2 180 Mcg 90 Softgels"},
-  {code:"101995511",name:"Carlson Labs Vitamin K2 90 Mcg 120 Softgels"},
-  {code:"101995529",name:"Carlson Labs Vitamin K2 90 Mcg 60 Softgels"},
-  {code:"101995537",name:"Carlson Labs Vitamin K2 45 Mcg 180 Softgels"},
-  {code:"101995545",name:"Carlson Labs Vitamin K2 Mk-7 45 Mcg 90 Softgels"},
-  {code:"101995553",name:"Carlson Labs Vitamin K2 5 Mg 60 Caps"},
-  {code:"101995561",name:"Carlson Labs Vitamin K2 5 Mg 180 Caps"},
-  {code:"101995570",name:"Carlson Labs Vitamins B + C 180 Tabs"},
-  {code:"101995588",name:"Carlson Labs Super Omega-3 Gems 600 Mg 180 Softgels"},
-  {code:"101995596",name:"Carlson Labs Super Omega-3 Gems 600 Mg 250 Softgels"},
-  {code:"101995609",name:"Carlson Labs Elite Omega-3 Gems 800 Mg 180 Softgels"},
-  {code:"101995617",name:"Carlson Labs Solar D Gems 4000 Iu Vitamin D3 120 Softgels"},
-  {code:"101995625",name:"Carlson Labs Solar D Gems 6000 Iu Vitamin D3 120 Softgels"},
-  {code:"101995633",name:"Carlson Labs Solar D Gems 6000 Iu Vitamin D3 360 Softgels"},
-  {code:"101995641",name:"Carlson Labs Solar D Gems 4000 Iu Vitamin D3 360 Softgels"},
-  {code:"101995650",name:"Carlson Labs Solar D Gems 2000 Iu Vitamin D3 360 Softgels"},
-  {code:"101995668",name:"Carlson Labs Super Daily D3 1000 Iu 0.35 Fl Oz (10.3 Ml)"},
-  {code:"101995676",name:"Carlson Labs Super Daily D3 4000 Iu 10.3 Ml"},
-  {code:"101995684",name:"Veggie Vitamin D3 1000 Iu 60 Capsules"},
-  {code:"101995692",name:"Carlson Labs Super Daily D3 2000 Iu 10.3 Ml"},
-  {code:"101995705",name:"Carlson Labs Super Daily K2 45 Mcg 10.16 Ml"},
-  {code:"101995713",name:"Carlson Labs Super Omega-3 Gems 1200 Mg 100 Softgels"},
-  {code:"101995721",name:"Carlson Labs Super Omega-3 Gems 1200 Mg 300 Softgels"},
-  {code:"101995730",name:"Carlson Labs Super Omega-3 Gems 1200 Mg 50 Softgels"},
-  {code:"101995748",name:"Carlson Labs Super-C-Complex 250 Vegetarian Tabs"},
-  {code:"101995756",name:"Carlson Labs Taurine 1000 Mg 100 Caps"},
-  {code:"101995764",name:"Carlson Labs Taurine 1000 Mg 300 Caps"},
-  {code:"101995781",name:"Carlson Labs Teen\'S Max Catch Minis 30 Mini Softgels"},
-  {code:"101995799",name:"Carlson Labs Teen\'S Max Catch Minis 60 Mini Softgels"},
-  {code:"101995801",name:"Carlson Labs The Very Finest Fish Oil 700 Mg Lem 120 SGels"},
-  {code:"101995810",name:"Carlson Labs The Very Finest Fish Oil 700 Mg Ora 120 SGels"},
-  {code:"101995828",name:"Carlson Labs Tocomin Suprabio 120 Softgels"},
-  {code:"101995836",name:"Carlson Labs Tocomin Suprabio 60 Softgels"},
-  {code:"101995844",name:"Carlson Labs Tocotrienols With Vitamin E 180 Softgels"},
-  {code:"101995852",name:"Carlson Labs Tocotrienols With Natural Vitamin E 90 Softgels"},
-  {code:"101995861",name:"Carlson Labs Totally Zen 120 Caps"},
-  {code:"101995879",name:"Carlson Labs Totally Zen 30 Caps"},
-  {code:"101995887",name:"Carlson Labs Totally Zen 60 Caps"},
-  {code:"101995895",name:"Carlson Labs Vitamin A Natural 10000 Iu 100 Softgels"},
-  {code:"101995908",name:"Carlson Labs Vitamin A 10000 Iu 250 Softgels"},
-  {code:"101995916",name:"Carlson Labs Vitamin A 25000 Iu 100 Softgels"},
-  {code:"101995924",name:"Carlson Labs Vitamin A 25000 Iu 300 Softgels"},
-  {code:"101995932",name:"Carlson Labs Vitamin A 7500 Mcg Rae (25000 Iu ) 250 Softgels"},
-  {code:"101995941",name:"Carlson Labs Vitamin C 1000 Mg 100 Vegetarian Tabs"},
-  {code:"101995959",name:"Carlson Labs Vitamin C 1000 Mg 250 Vegetarian Tabs"},
-  {code:"101995967",name:"Carlson Labs Vitamin C Crystals 1000 Grams"},
-  {code:"101995975",name:"Carlson Labs Vitamin C Crystals (Non-Gmo) 6 Oz (170 Grams)"},
-  {code:"101995983",name:"Carlson Labs Vitamin D3 1000 Iu (25 Mcg) 100 Softgels"},
-  {code:"101995991",name:"Carlson Labs Vitamin D3 1000 Iu (25 Mcg) 60 Softgels"},
-  {code:"101996003",name:"Carlson Labs Vitamin D3 2000 Iu 120 Softgels"},
-  {code:"101996011",name:"Carlson Labs Vitamin D3 2500 Iu (62.5 Mcg) 150 Softgels"},
-  {code:"101996020",name:"Carlson Labs Vitamin D3 2500 Iu (62.5 Mcg) 360 Softgels"},
-  {code:"101996038",name:"Carlson Labs Vitamin D3 4000 Iu 120 Softgels"},
-  {code:"101996046",name:"Carlson Labs Vitamin D3 4000 Iu 360 Softgels"},
-  {code:"101996054",name:"Carlson Labs Vitamin D3 5000 Iu 120 Softgels"},
-  {code:"101996062",name:"Carlson Labs Vitamin D3 10000 Iu (250 Mcg) 360 Softgels"},
-  {code:"101996610",name:"Carlson Labs Zinc 15 Mg 100 Tabs"},
-  {code:"101996628",name:"Carlson Labs 5-Htp Elite 50 Mg 120 Tabs"},
-  {code:"101996636",name:"Carlson Labs Aces + Zn 120 Softgels"},
-  {code:"101996644",name:"Carlson Labs Aces + Zn 180 Softgels"},
-  {code:"101996652",name:"Carlson Labs Aces + Zn 360 Softgels"},
-  {code:"101996661",name:"Carlson Labs Aces + Zn 60 Softgels"},
-  {code:"101996679",name:"Carlson Labs Aces 200 Softgels"},
-  {code:"101996687",name:"Carlson Labs Aces 90 Softgels"},
-  {code:"101996695",name:"Carlson Labs Acetyl L-Carnitine 500 Mg 120 Caps"},
-  {code:"101996716",name:"Carlson Labs Aloe Vera Gel 25 Mg 100 Softgels"},
-  {code:"101996724",name:"Carlson Labs Alpha Lipoic Acid 300 Mg 30 Tabs"},
-  {code:"101996732",name:"Carlson Labs Zinc 15 Mg 250 Tabs"},
-  {code:"101996783",name:"Carlson Labs Selenium 200 Mcg 180 Caps"},
-  {code:"101996791",name:"Carlson Labs B-100 100 Softgels"},
-  {code:"101996804",name:"Carlson Labs B-100 200 Softgels"},
-  {code:"101996812",name:"Carlson Labs B-12 1000 Mcg 90 Tabs"},
-  {code:"101996821",name:"Carlson Labs B-2 (Riboflavin) 100 Mg 250 Vegetarian Tabs"},
-  {code:"101996839",name:"Carlson Labs B-50 Vitamin B Complex 100 Softgels"},
-  {code:"101996847",name:"Carlson Labs B-50 Vitamin B Complex 200 Softgels"},
-  {code:"101996863",name:"Carlson Labs Buffalo Liver 180 Caps"},
-  {code:"101996871",name:"Carlson Labs Cardio Complete 180 Tabs"},
-  {code:"101996880",name:"Carlson Labs Cardio Complete 90 Tabs"},
-  {code:"101996898",name:"Carlson Labs Ceylon Cinnamon 180 Caps"},
-  {code:"101996901",name:"Carlson Labs C-Gel 1000 Mg 60 Softgels"},
-  {code:"101996919",name:"Carlson Labs Chelated Chromium 200 Mcg 100 Tabs"},
-  {code:"101996927",name:"Carlson Labs Chelated Chromium 200 Mcg 300 Tabs"},
-  {code:"101996935",name:"Carlson Labs Chelated Copper 100 Tabs"},
-  {code:"101996943",name:"Carlson Labs Chelated Magnesium 200 Mg 180 Tabs"},
-  {code:"101996951",name:"Carlson Labs Chelated Manganese 100 Tabs"},
-  {code:"101996960",name:"Carlson Labs Chelated Manganese 20 Mg 250 Tabs"},
-  {code:"101996978",name:"Carlson Labs Chelated Minerals 90 Softgels"},
-  {code:"101996986",name:"Carlson Labs Chelated Zinc 30 Mg 100 Tabs"},
-  {code:"101996994",name:"Carlson Labs Chelated Zinc 30 Mg 250 Tabs"},
-  {code:"101997006",name:"Carlson Labs Coq10 100 Mg 90 Softgels"},
-  {code:"101997014",name:"Carlson Labs Co-Qh2 Ubiquinol 100 Mg 60 Softgels"},
-  {code:"101997022",name:"Carlson Labs Curcumin 120 Softgels"},
-  {code:"101997031",name:"Carlson Labs Curcumin 60 Softgels"},
-  {code:"101997049",name:"Carlson Labs Dlpa Dl-Phenylalanine 500 Mg 60 Caps"},
-  {code:"101997057",name:"Carlson Labs Ecosmart Omega-3 Lemon 90 Softgels"},
-  {code:"101997065",name:"Carlson Labs Ecosmart Omega-3 1000 Mg 180 Softgels"},
-  {code:"101997073",name:"Carlson Labs E-Gem Lip Care Box 1 Box Of 12 Tubes"},
-  {code:"101997090",name:"Carlson Labs E-Gems 400 Iu (268 Mg) 200 Softgels"},
-  {code:"101997102",name:"Carlson Labs E-Gems 400 Iu (268 Mg) 90 Softgels"},
-  {code:"101997111",name:"Carlson Labs E-Gems Elite 1000 Iu 60 Softgels"},
-  {code:"101997129",name:"Carlson Labs E-Gems Elite 400 Iu (268 Mg) 240 Softgels"},
-  {code:"101997137",name:"Carlson Labs E-Gems Elite 400 Iu (268 Mg) 60 Softgels"},
-  {code:"101997145",name:"Carlson Labs E-Gems Elite Vitamin E 400 Iu 120 Softgels"},
-  {code:"101997153",name:"Carlson Labs E-Gems Gamma Tocopherol 465 Mg 60 Softgels"},
-  {code:"101997161",name:"Carlson Labs E-Gems 67 Mg (100 Iu) 250 Softgels"},
-  {code:"101997170",name:"Carlson Labs Elite Dha Gems 1000 Mg 30 Softgels"},
-  {code:"101997188",name:"Carlson Labs Elite Dha Gems 1000 Mg 60 Softgels"},
-  {code:"101997196",name:"Carlson Labs Elite Epa Gems 1000 Mg 120 Softgels"},
-  {code:"101997209",name:"Carlson Labs Elite Omega 3 Gems 800 Mg 240 Softgels"},
-  {code:"101997217",name:"Carlson Labs Elite Omega-3 Gems 1600 Mg 90 Softgels"},
-  {code:"101997225",name:"Carlson Labs Elite Omega-3 Plus D & K 180 Softgels"},
-  {code:"101997233",name:"Carlson Labs Elite Omega-3 Plus D & K 60 Softgels"},
-  {code:"101997241",name:"Carlson Labs Enhanced Mobility 120 Softgels"},
-  {code:"101997250",name:"Carlson Labs Enhanced Mobility 30 Softgels"},
-  {code:"101997268",name:"Carlson Labs Enhanced Mobility 60 Softgels"},
-  {code:"101997276",name:"Carlson Labs Gamma E-Gems 465 Mg 120 Softgels"},
-  {code:"101997292",name:"Carlson Labs Golden Aloe 100 Mg 180 Softgels"},
-  {code:"101997305",name:"Carlson Labs Golden Aloe 60 Softgels"},
-  {code:"101997313",name:"Carlson Labs K Complete 45 Softgels"},
-  {code:"101997321",name:"Carlson Labs K Complete 90 Softgels"},
-  {code:"101997330",name:"Carlson Labs Kids Super Daily K2 22.5 Mcg 10.16 Ml"},
-  {code:"101997348",name:"Carlson Labs Magnesium 400 Mg 100 Softgels"},
-  {code:"101997356",name:"Carlson Labs Magnesium 400 Mg 250 Softgels"},
-  {code:"101997372",name:"Carlson Labs Magnesium Glycinate 240 Tabs"},
-  {code:"101997381",name:"Carlson Labs Magnesium 350 Mg 180 Caps"},
-  {code:"101997399",name:"Carlson Labs Maximum Omega 2000 Mg 90 Softgels"},
-  {code:"101997401",name:"Carlson Labs Maximum Omega 2000 60 Softgels"},
-  {code:"101997410",name:"Carlson Labs Maximum Omega 2000 Mg 180 Softgels"},
-  {code:"101997428",name:"Carlson Labs Maximum Omega Minis 1000 Mg 120 Mini Softgels"},
-  {code:"101997436",name:"Carlson Labs Maximum Omega Minis 1000 Mg 60 Mini Softgels"},
-  {code:"101997444",name:"Carlson Labs Mct & Omega-3 With Coconut Oil 120 Softgels"},
-  {code:"101997452",name:"Natures Way Premium Blend Immune Blend 90 Vegan Caps"},
-  {code:"101997461",name:"Natures Way Premium Extract Maca 350 Mg 60 Vegan Caps"},
-  {code:"101997479",name:"Natures Way Saw Palmetto 160 Mg 60 Softgels"},
-  {code:"101997487",name:"Natures Way Schisandra Fruit 580 Mg 100 Vegan Caps"},
-  {code:"101997495",name:"Natures Way Premium Extract Pomegranate 350 Mg 60 Caps"},
-  {code:"101997508",name:"Natures Way Spirulina Micro-Algae 380 Mg 100 Vegan Caps"},
-  {code:"101997516",name:"Natures Way Super Thisilyn Advanced Liver Support 60 Caps"},
-  {code:"101997532",name:"Enzymatic Therapy 7-Keto Dhea Metabolite 25 Mg 60 Caps"},
-  {code:"101997541",name:"Enzymatic Therapy Acid-Ease 90 Ultracaps"},
-  {code:"101997559",name:"Enzymatic Therapy Adrenergize Adrenal Energy 50 Caps"},
-  {code:"101997567",name:"Enzymatic Therapy Dhea-25 60 Vegetable Caps"},
-  {code:"101997575",name:"Enzymatic Therapy L-Theanine 100 Mg 180 Veg Caps"},
-  {code:"101997583",name:"Enzymatic Therapy Metabolic Advantage Metabolism 100 Caps"},
-  {code:"101997591",name:"Natures Way Flexmax Glucosamine Chondroitin 160 Tabs"},
-  {code:"101997604",name:"Natures Way 5-Htp 50 Mg 60 Tabs"},
-  {code:"101997612",name:"Natures Way Acetyl L-Carnitine 60 Vegcap"},
-  {code:"101997621",name:"Natures Way Acid Ease Digestion Formula 180 Vegan Caps"},
-  {code:"101997639",name:"Natures Way Aloemaxlax With Cascara Sagrada 360 Mg 100 Caps"},
-  {code:"101997647",name:"Natures Way Alpha Lipoic Acid 50mg 60 Capsule"},
-  {code:"101997655",name:"Natures Way Cats Claw 175 Mg 60 Vegan Caps"},
-  {code:"101997663",name:"Natures Way Dmg-B15 Complex 60 Vegan Caps"},
-  {code:"101997671",name:"Natures Way Fiber Fusion Daily 3.1 G 150 Vegan Caps"},
-  {code:"101997680",name:"Natures Way Flexmax Glucosamine With Msm 240 Tabs"},
-  {code:"101997698",name:"Natures Way Fortify Digestive Complete 20 Billion 30 Caps"},
-  {code:"101997719",name:"Natures Way Fortify Mens Probiotic 30 Billion 30 Caps"},
-  {code:"101997727",name:"Natures Way Glucomannan From Konjac Root 665 Mg 100 Caps"},
-  {code:"101997735",name:"Natures Way Buffered C-500 500 Mg 100 Caps"},
-  {code:"101997743",name:"Natures Way Chromium Picolinate 200 Mcg 100 Caps"},
-  {code:"101997751",name:"Natures Way Fatigued To Fantastic B Complex 120 Caps"},
-  {code:"101997760",name:"Natures Way Kelp Whole Thallus 600 Mg 100 Vegan Caps"},
-  {code:"101997778",name:"Natures Way Krebs Magnesium Potassium 175 Mg 120 Tabs"},
-  {code:"101997786",name:"Natures Way Magnesium Complex 250 Mg 100 Caps"},
-  {code:"101997794",name:"Natures Way Myo-Tone 80 Tabs"},
-  {code:"101997807",name:"Natures Way Niacinamide 500 Mg 100 Caps"},
-  {code:"101997815",name:"Natures Way Potassium 99 Mg 100 Caps"},
-  {code:"101997823",name:"Natures Way Riboflavin Vitamin B2 100 Mg 100 Caps"},
-  {code:"101997831",name:"Natures Way Vitamin B-1 100 Mg 100 Caps"},
-  {code:"101997858",name:"Natures Way Barley Grass Young Harvest 500 Mg 100 Caps"},
-  {code:"101997866",name:"Natures Way Beet Root 500 Mg 100 Vegan Caps"},
-  {code:"101997874",name:"Natures Way Cascara Sagrada 270 Mg 100 Vegan Caps"},
-  {code:"101997882",name:"Natures Way Chamomile Flower 350 Mg 100 Vegan Caps"},
-  {code:"101997891",name:"Natures Way Cordyceps 500 Mg 60 Vegan Caps"},
-  {code:"101997903",name:"Natures Way Dong Quai Root 565 Mg 100 Vegan Caps"},
-  {code:"101997911",name:"Natures Way Siberian Eleuthero 250 Mg 60 Vegan Caps"},
-  {code:"101997920",name:"Natures Way Forskohlii 125 Mg 60 Vegan Caps"},
-  {code:"101997938",name:"Natures Way Fo-Ti Root 610 Mg 100 Vegan Caps"},
-  {code:"101997946",name:"Enzymatic Therapy Prostate Advantage 120 Softgels"},
-  {code:"101997954",name:"Natures Way Premium Blend Balanced Mood 90 Count"},
-  {code:"101997962",name:"Natures Way Aloe Latex With Fennel 140 Mg 100 Caps"},
-  {code:"101997971",name:"Natures Way Alpha Betic Cinnamon With Mag & Biotin 90 Caps"},
-  {code:"101997989",name:"Natures Way Artichoke 60 Vegan Caps"},
-  {code:"101997997",name:"Natures Way Ashwagandha 500 Mg 60 Vegan Caps"},
-  {code:"101998009",name:"Natures Way Asian Ginseng 560 Mg 100 Vegan Caps"},
-  {code:"101998017",name:"Natures Way Astragalus 60 Vegan Caps"},
-  {code:"101998025",name:"Natures Way Bilberry 90 Vegan Caps"},
-  {code:"101998033",name:"Natures Way Boswellia 307 Mg 60 Tabs"},
-  {code:"101998041",name:"Natures Way Brain Health Clear Thinking 40 Caps"},
-  {code:"101998050",name:"Natures Way Butchers Broom Root 470 Mg 100 Vegan Caps"},
-  {code:"101998068",name:"Natures Way Gymnema 500 Mg 60 Vegan Caps"},
-  {code:"101998076",name:"Natures Way Charcoal Activated 280 Mg 100 Caps"},
-  {code:"101998084",name:"Natures Way Coconut Oil Extra Virgin 1000 Mg 120 Softgels"},
-  {code:"101998092",name:"Natures Way Horny Goat Weed 500 Mg 60 Vegan Caps"},
-  {code:"101998105",name:"Natures Way Cranberry 400 Mg 120 Vegan Caps"},
-  {code:"101998113",name:"Natures Way Damiana Leaves 400 Mg 100 Vegan Caps"},
-  {code:"101998121",name:"Natures Way Dandelion Root 525 Mg 100 Vegan Caps"},
-  {code:"101998130",name:"Natures Way Devils Claw 350 Mg 90 Vegan Caps"},
-  {code:"101998148",name:"Natures Way Dgl Ultra 75 Mg 90 Vegan Caps"},
-  {code:"101998156",name:"Natures Way Digestion 100 Capsule"},
-  {code:"101998164",name:"Natures Way Echinacea & Vitamin C 461 Mg 100 Vegan Caps"},
-  {code:"101998172",name:"Natures Way Echinacea Goldenseal 450 Mg 100 Vegan Caps"},
-  {code:"101998181",name:"Natures Way Ex-Stress 445 Mg 100 Caps"},
-  {code:"101998199",name:"Natures Way Fennel Seed 480 Mg 100 Vegan Caps"},
-  {code:"101998201",name:"Natures Way Garlicin Cf Immune 90 Tablet"},
-  {code:"101998210",name:"Natures Way Garlicin Hc 90 Tablet"},
-  {code:"101998228",name:"Natures Way Garlicin 90 Vegan Tabs"},
-  {code:"101998236",name:"Natures Way Gastritix With Chamomile Extract 100 Caps"},
-  {code:"101998244",name:"Natures Way Ginger Root 100 Vegan Caps"},
-  {code:"101998252",name:"Natures Way Ginkgo 120 Vegan Caps"},
-  {code:"101998261",name:"Natures Way Ginkgold Eyes 60 Vegan Tabs"},
-  {code:"101998279",name:"Natures Way Gotu Kola Herb 475 Mg 100 Vegan Caps"},
-  {code:"101998287",name:"Natures Way Heartcare Hawthorn 80 Mg 120 Tabs"},
-  {code:"101998295",name:"Natures Way Hem-Care 90 Caps"},
-  {code:"101998308",name:"Natures Way Leg Veins Premium Blend 120 Vegan Caps"},
-  {code:"101998316",name:"Natures Way Melissa Lemon Balm Leaf 500 Mg 100 Caps"},
-  {code:"101998332",name:"Natures Way Premium Blend Milk Thistle 60 Vegan Caps"},
-  {code:"101998341",name:"Natures Way Gluten Defense With Dpp Iv 120 Vegan Caps"},
-  {code:"101998359",name:"Natures Way Hydraplenish Collagen With Optimsm 60 Caps"},
-  {code:"101998367",name:"Natures Way Lactase Enzyme Formula 100 Caps"},
-  {code:"101998391",name:"Natures Way Msm 1000 Mg 200 Vegan Tabs"},
-  {code:"101998404",name:"Natures Way Nutrasea Hp Omega-3 Extra Strength 120 Softgels"},
-  {code:"101998412",name:"Natures Way Nutrasea+D Omega-3 Fish Oil 60 Softgels"},
-  {code:"101998421",name:"Natures Way Optima High Potency 60 B Cfu 30 Caps"},
-  {code:"101998439",name:"Natures Way Optima Colon Support 90 B Cfu 30 Caps"},
-  {code:"101998447",name:"Natures Way Psyllium Husk 525 Mg 100 Caps"},
-  {code:"101998480",name:"Alive Max3 Potency Multivitamin 180 Tabs"},
-  {code:"101998498",name:"Alive Max3 Potency Multivitamin No Added Iron 180 Tabs"},
-  {code:"101998519",name:"Natures Way B-50 Complex 100 Caps"},
-  {code:"101998527",name:"Natures Way Boron Complex 3 Mg 100 Caps"},
-  {code:"101998535",name:"Natures Way Vitamin B-6 50 Mg 100 Caps"},
-  {code:"101998543",name:"Natures Way Zinc Chelate 30 Mg 100 Caps"},
-  {code:"101998578",name:"Natures Way Body Essential Silica Caps With Calcium 90 Caps"},
-  {code:"101998586",name:"Natures Way Selenium 200 Mcg 100 Caps"},
-  {code:"101998607",name:"Alive Mens Ultra Potency Complete Multivitamin 60 Tabs"},
-  {code:"101998615",name:"Source Naturals Coenzyme Q10 100 Mg 90 Vegetarian Softgels"},
-  {code:"101998623",name:"Source Naturals Coenzyme Q10 200 Mg 30 Softgels"},
-  {code:"101998631",name:"Source Naturals Coenzyme Q10 400 Mg 30 Softgel"},
-  {code:"101998640",name:"Source Naturals Coenzyme Q10 W/Bioperine 120 Softgel"},
-  {code:"101998658",name:"Source Naturals Coenzyme Q10 100mg 90 Softgels"},
-  {code:"101998666",name:"Source Naturals Coenzyme Q10 200 Mg 30 Caps"},
-  {code:"101998674",name:"Source Naturals Coenzyme Q10 400mg 60 Softgels"},
-  {code:"101998682",name:"Source Naturals Coenzyme Q10/Lipoic Acid 30 Caps"},
-  {code:"101998691",name:"Source Naturals Coenzyme Q10/Lipoic Acid 60 Mg 60 Caps"},
-  {code:"101998703",name:"Source Naturals Daily Essential Enzymes 500 Mg 240 Caps"},
-  {code:"101998711",name:"Source Naturals Day Starter 60 Tabs"},
-  {code:"101998720",name:"Source Naturals Diet Chitosan 120 Tabs"},
-  {code:"101998738",name:"Source Naturals Diet Chitosan 250 Mg 240 Caps"},
-  {code:"101998746",name:"Source Naturals Diet Chitosan 500 Mg 60 Caps"},
-  {code:"101998754",name:"Source Naturals 100% Pure Activated Charcoal 260 Mg 200 Caps"},
-  {code:"101998762",name:"Source Naturals Acai Extract 120 Vcaps"},
-  {code:"101998771",name:"Source Naturals Acai Extract 240 Vcaps"},
-  {code:"101998789",name:"Source Naturals Aloe Verite Raspberry W/Stevia 33 Fl Oz"},
-  {code:"101998797",name:"Source Naturals Artichoke Extract 45 Tabs"},
-  {code:"101998800",name:"Source Naturals Bilberry Extract 50 Mg 60 Tabs"},
-  {code:"101998818",name:"Source Naturals Bioflavonoid Complex 30 Tabs"},
-  {code:"101998826",name:"Source Naturals Bioflavonoid Complex 60 Tabs"},
-  {code:"101998834",name:"Source Naturals Blue-Green Algae 500 Mg 100 Tabs"},
-  {code:"101998842",name:"Source Naturals Black Cumin Seed 240 Softgels"},
-  {code:"101998851",name:"Source Naturals Boswellia Extract 50 Tabs"},
-  {code:"101998869",name:"Source Naturals Berberine 120 Veg Caps"},
-  {code:"101998877",name:"Source Naturals Butcher\'S Broom 100 Tabs"},
-  {code:"101998885",name:"Source Naturals Cbr 100 Tabs"},
-  {code:"101998893",name:"Source Naturals Cell Guard 120 Tabs"},
-  {code:"101998906",name:"Source Naturals Bioperine 10 Mg 60 Tabs"},
-  {code:"101998914",name:"Source Naturals Bitter Melon 120 Caps"},
-  {code:"101998922",name:"Source Naturals Broccoli Sprouts Extract 250 Mg 30 Tabs"},
-  {code:"101998931",name:"Source Naturals Bromelain 600 Gdu/G 500 Mg 60 Tabs"},
-  {code:"101998949",name:"Source Naturals Diet Citrimax 45 Tabs"},
-  {code:"101998957",name:"Source Naturals Diet Citrimax Complex 120 Tabs"},
-  {code:"101998965",name:"Source Naturals Diet Metabo-7 90 Tab"},
-  {code:"101998973",name:"Source Naturals Diet-Metabo-7 45 Tabs"},
-  {code:"101998981",name:"Source Naturals Echinacea Root 500mg 100 Caps"},
-  {code:"101998990",name:"Source Naturals Extra Virgin Coconut Oil 120 Softgels"},
-  {code:"101999001",name:"Source Naturals Maca Standardized Peruvian Energizer 30 Tabs"},
-  {code:"101999010",name:"Source Naturals Meriva Turmeric Complex 500 Mg 60 Caps"},
-  {code:"101999028",name:"Source Naturals Myricetin 100 Mg 60 Tabs"},
-  {code:"101999036",name:"Source Naturals Prosta-Response 180 Tabs"},
-  {code:"101999044",name:"Source Naturals Slenderluma 500 Mg 30 Caps"},
-  {code:"101999061",name:"Source Naturals St. John\'S Wort 450 450 Mg 90 Tablet"},
-  {code:"101999079",name:"Source Naturals St. John\'S Wort Extract 300 Mg 120 Tabs"},
-  {code:"101999087",name:"Source Naturals Theracurmin 30 Veg Caps 600 Mg"},
-  {code:"101999095",name:"Source Naturals Theracurmin 120 Caps"},
-  {code:"101999108",name:"Source Naturals Turmeric 1000 Mg 30 Tabs"},
-  {code:"101999116",name:"Source Naturals Turmeric 1000 120 Tabs"},
-  {code:"101999124",name:"Source Naturals Turmeric 1000 60 Tabs"},
-  {code:"101999132",name:"Source Naturals Turmeric With Meriva 500 Mg 60 Caps"},
-  {code:"101999141",name:"Source Naturals Turmeric With Meriva 60 Tabs"},
-  {code:"101999167",name:"Source Naturals Cherry Fruit Extract 500mg 180 Tabs"},
-  {code:"101999175",name:"Source Naturals Yerba Mate 600 Mg 180 Tabs"},
-  {code:"101999183",name:"Source Naturals Zembrin 25 Mg. 60 Tabs"},
-  {code:"101999191",name:"Source Naturals Zembrin For Mental Well-Being 25 Mg. 30 Tabs"},
-  {code:"101999204",name:"Source Naturals Chlorella 500 Mg 200 Tabs"},
-  {code:"101999212",name:"Source Naturals Yaeyama Chlorella 200 Mg 300 Tabs"},
-  {code:"101999221",name:"Source Naturals Choco Lift 500mg 120 Caps"},
-  {code:"101999247",name:"Source Naturals Citrus Bioflavonoids 100 Caps"},
-  {code:"101999255",name:"Source Naturals Wellness Oil Of Oregano 29.57 Ml"},
-  {code:"101999263",name:"Source Naturals Smilax Sarsaparilla Extract 59.14 Ml"},
-  {code:"101999271",name:"Source Naturals Tongkat Ali Male Libido Tonic 120 Tablet(S)"},
-  {code:"101999280",name:"Source Naturals 7-Keto Dhea Metabolite 30 Tabs"},
-  {code:"101999298",name:"Source Naturals Ahiflower Oil 120 Softgels"},
-  {code:"101999301",name:"Source Naturals Allerstrength 120 Tabs"},
-  {code:"101999319",name:"Source Naturals Alpha Lipoic Acid 50mg 24 Tabs"},
-  {code:"101999327",name:"Source Naturals Alpha Lipoic Acid 50mg 50 Tabs"},
-  {code:"101999335",name:"Source Naturals Alpha-Lipoic Acid 30 Tabs"},
-  {code:"101999343",name:"Source Naturals Arcticpure Krill Oil 60 Softgels"},
-  {code:"101999351",name:"Source Naturals Arcticpure Lemon-Flavored 120 Sg"},
-  {code:"101999360",name:"Source Naturals Arcticpure Omega-3 1125 Mg 120 Softgels"},
-  {code:"101999378",name:"Source Naturals Astaxanthin 12 Mg 60 Softgels"},
-  {code:"101999386",name:"Source Naturals Astaxanthin 2 Mg 120 Softgels"},
-  {code:"101999394",name:"Source Naturals Bee Pollen 100 Tabs"},
-  {code:"101999407",name:"Source Naturals Beta Carotene 25000 Iu 100 Softgels"},
-  {code:"101999415",name:"Source Naturals Beta Glucan 13/16 60 Caps"},
-  {code:"101999423",name:"Source Naturals Beta Glucan 30 Tabs"},
-  {code:"101999431",name:"Source Naturals Beta Glucan 60 Tabs"},
-  {code:"101999440",name:"Source Naturals Betaine Hcl 650 Mg 90 Tabs"},
-  {code:"101999458",name:"Source Naturals Brain Charge 30 Tabs"},
-  {code:"101999466",name:"Source Naturals Caffeine+ L-Theanine 120 Tabs"},
-  {code:"101999474",name:"Source Naturals Caffeine+ L-Theanine 240 Tabs"},
-  {code:"101999482",name:"Source Naturals Carotene Full Spectrum 120 Softgels"},
-  {code:"101999491",name:"Source Naturals Cat\'S Claw 1000 Mg 120 Tabs"},
-  {code:"101999503",name:"Source Naturals Cat\'S Claw 120 Tabs"},
-  {code:"101999511",name:"Source Naturals Cat\'S Claw 3% Standardized Ext. 30 Tabs"},
-  {code:"101999520",name:"Source Naturals Cat\'S Claw 500mg 120 Tabs"},
-  {code:"101999538",name:"Source Naturals Cat\'S Claw Extract 1 Oz"},
-  {code:"101999554",name:"Source Naturals Cholesterol Rescue 30 Tabs"},
-  {code:"101999562",name:"Source Naturals Cholest-Response 120 Tabs"},
-  {code:"101999571",name:"Source Naturals Cholestrex 180 Tabs"},
-  {code:"101999589",name:"Source Naturals Cholestrex 180 Caps"},
-  {code:"101999597",name:"Source Naturals Cholestrex 360 Caps"},
-  {code:"101999600",name:"Source Naturals Chondroitin Sulfate 400 Mg 120 Tabs"},
-  {code:"101999618",name:"Source Naturals Chondroitin Sulfate 600 Mg 120 Tabs"},
-  {code:"101999626",name:"Source Naturals Coenzyme Q10 100 Mg 120 Sg"},
-  {code:"101999634",name:"Now Foods Multi-Food 1 Multivitamin 90 Tabs"},
-  {code:"101999642",name:"Now Foods Natural E-200 (D-Alpha Tocopheryl) 100 Softgels"},
-  {code:"101999651",name:"Now Foods Niacin 500 Mg. 100 Tabs"},
-  {code:"101999669",name:"Now Foods Niacinamide 500 Mg 100 Veg Caps"},
-  {code:"101999677",name:"Now Foods Pantothenic Acid 500 Mg 100 Caps"},
-  {code:"101999685",name:"Now Foods Pantothenic Acid B-Complex 500 Mg 250 Caps"},
-  {code:"101999693",name:"Now Foods Potassium Gluconate 99 Mg 100 Tabs"},
-  {code:"101999706",name:"Now Foods Red Palm Tocotrienols 50 Mg. 60 Softgels"},
-  {code:"101999714",name:"Now Foods Special Two High Potency Multiple Vitamin 180 Tabs"},
-  {code:"101999722",name:"Now Foods Special Two Multi Viitamin 90 Tabs"},
-  {code:"101999731",name:"Now Foods Sun-E 400 Iu Natural Vitamin E 60 Softgels"},
-  {code:"101999757",name:"Now Foods Vitamin C Crystals 454 G"},
-  {code:"101999765",name:"Now Foods Vitamin C-500 With Rose Hips 100 Tabs"},
-  {code:"101999773",name:"Now Foods Vitamin E Mixed Tocopherols 200 Iu 100 Softgels"},
-  {code:"101999781",name:"Now Foods Zinc 50 Mg 100 Tabs"},
-  {code:"101999790",name:"Now Foods Zinc Picolinate 50 Mg 60 Veg Caps"},
-  {code:"101999802",name:"Now Foods Selenium (Yeast Free) 200 Mcg 90 Veg Caps"},
-  {code:"101999811",name:"Now Foods Super Citrimax Healthy Metabolism Formula 90 Caps"},
-  {code:"101999829",name:"Now Foods Super Odorless Garlic 90 Veg Caps"},
-  {code:"101999837",name:"Now Foods Goji Superfruit Antioxidant Juice 32 Fl. Oz."},
-  {code:"101999845",name:"Now Foods Goldenseal Root 500 Mg. 100 Vegetable Caps"},
-  {code:"101999853",name:"Now Foods Goldenseal Root 500 Mg. 50 Vegetable Caps"},
-  {code:"101999861",name:"Now Foods Kava Kava Extract 250 Mg 60 Caps"},
-  {code:"101999870",name:"Now Foods Olive Leaf Extract 500 Mg. 60 Vegetable Caps"},
-  {code:"101999888",name:"Now Foods Olive Leaf Extract Free Radical Scavenger 50 Caps"},
-  {code:"101999896",name:"Now Foods Pau D\'Arco 500 Mg 100 Caps"},
-  {code:"101999909",name:"Now Foods 8 Billion Acidophilus & Bifidus 60 Veg Caps"},
-  {code:"101999917",name:"Now Foods Alpha Lipoic Acid 100 Mg. 60 Caps"},
-  {code:"101999933",name:"Now Foods Bee Pollen 500 Mg. 250 Caps"},
-  {code:"101999941",name:"Now Foods Cla (Conjugated Linoleic Acid) 800 Mg. 90 Softgels"},
-  {code:"101999950",name:"Now Foods Coq10 100 Mg With Hawthorn Berry 30 Veg Caps"},
-  {code:"101999968",name:"Now Foods Coq10 50 Mg 200 Softgels"},
-  {code:"101999976",name:"Now Foods Coq10 50 Mg 50 Softgels"},
-  {code:"101999992",name:"Now Foods Coq10 Cardiovascular Health 400 Mg 30 Softgels"},
-  {code:"102000001",name:"Now Foods Coq10 With Omega-3 Fish Oil 60 Mg. 60 Softgels"},
-  {code:"102000010",name:"Now Foods Dha-500 Double Strength 90 Softgels"},
-  {code:"102000028",name:"Now Foods Digest Platinum Healthy Digestion Support 60 Caps"},
-  {code:"102000036",name:"Now Foods Glucosamine & Msm Joint Health 60 Veg Caps"},
-  {code:"102000044",name:"Now Foods Glucosamine And Chondroitin Extra Strength 60 Tabs"},
-  {code:"102000052",name:"Now Foods L-Carnitine 1000 Mg 50 Tabs"},
-  {code:"102000061",name:"Now Foods L-Carnitine 500 Mg. 30 Vegetable Caps"},
-  {code:"102000079",name:"Now Foods L-Lysine 500 Mg 100 Caps"},
-  {code:"102000087",name:"Now Foods L-Tryptophan 500 Mg 60 Veg Caps"},
-  {code:"102000095",name:"Now Foods Lutein 10 Mg 60 Softgels"},
-  {code:"102000116",name:"Now Foods Melatonin 5 Mg 60 Veg Caps"},
-  {code:"102000124",name:"Now Foods Msm 1500 Mg. 100 Tabs"},
-  {code:"102000141",name:"Now Foods Plant Enzymes 120 Caps"},
-  {code:"102000159",name:"Now Foods Probiotic-10 + Inulin 24 Packets"},
-  {code:"102000167",name:"Now Foods Probiotic-10 25 Billion 30 Veg Caps"},
-  {code:"102000183",name:"Now Foods Psyllium Husk Caps 500 Mg 200 Veg Caps"},
-  {code:"102000204",name:"Now Foods Red Yeast Rice 600 Mg With Coq10 30 Mg 60 Caps"},
-  {code:"102000212",name:"Now Foods Red Yeast Rice With Coq-10 600 Mg. 60 Caps"},
-  {code:"102000221",name:"Now Foods Royal Jelly Superfood 300 Mg. 100 Softgels"},
-  {code:"102000239",name:"Now Foods Royal Jelly Fresh 30000 Mg. 10 Oz."},
-  {code:"102000247",name:"Now Foods Serrazimes 20000 Units 90 Caps"},
-  {code:"102000255",name:"Now Foods Shark Cartilage 750 Mg 100 Caps"},
-  {code:"102000263",name:"Now Foods Shark Cartilage 750 Mg 300 Caps"},
-  {code:"102000271",name:"Now Foods Sunflower Lecithin 1200 Mg 100 Softgels"},
-  {code:"102000280",name:"Now Foods Whole Psyllium Husk Mega Pack 10 Lbs"},
-  {code:"102000298",name:"Now Foods Advanced Gamma-E Complex 60 Softgels"},
-  {code:"102000301",name:"Now Foods Alphasorb-C 500 Antioxidant Protection 90 Caps"},
-  {code:"102000319",name:"Now Foods B-6 100 Mg 100 Caps"},
-  {code:"102000327",name:"Now Foods B-6 100 Tabs"},
-  {code:"102000335",name:"Now Foods Boron 3 Mg 100 Caps"},
-  {code:"102000343",name:"Now Foods Buffered C-1000 Complex 90 Tabs"},
-  {code:"102000351",name:"Now Foods C-1000 With Rose Hips & Bioflavonoids 100 Tabs"},
-  {code:"102000360",name:"Now Foods Chromemate Insulin Co-Factor 180 Caps"},
-  {code:"102000378",name:"Now Foods E-400 (D-Alpha Tocopheryl) 100 Softgels"},
-  {code:"102000386",name:"Now Foods E-400 (Mixed Tocopherols) 100 Softgels"},
-  {code:"102000394",name:"Now Foods Flush-Free Niacin 250 Mg 90 Veg Caps"},
-  {code:"102000407",name:"Now Foods Full Spectrum Minerals Caps 120 Caps"},
-  {code:"102000423",name:"Now Foods Gtf Chromium 200 Mcg 100 Tabs"},
-  {code:"102000440",name:"Now Foods Magnesium Nervous System Support 200 Mg 100 Tabs"},
-  {code:"102000458",name:"Now Foods Magnesium Citrate 90 Softgels"},
-  {code:"102000466",name:"Now Foods Acai Super Fruit Juice 32 Fl. Oz."},
-  {code:"102000482",name:"Now Foods Cayenne 500 Mg. 100 Vegetable Caps"},
-  {code:"102000491",name:"Now Foods Cherry Concentrate 750 Mg. 90 Vegetable Caps"},
-  {code:"102000503",name:"Now Foods Bilberry Complex 80 Mg 50 Caps"},
-  {code:"102000511",name:"Now Foods Boswellia Extract 250 Mg. 60 Vegetable Caps"},
-  {code:"102000520",name:"Now Foods Butcher\'S Broom 200 Mg. 100 Vegetable Caps"},
-  {code:"102000538",name:"Now Foods Chlorella 1000 Mg 60 Tabs"},
-  {code:"102000546",name:"Now Foods Chlorella 400 Mg 100 Vegetable Caps"},
-  {code:"102000554",name:"Now Foods Cla 800 Mg 90 Softgels"},
-  {code:"102000571",name:"Now Foods Curcumin Turmeric Root Extract 60 Softgels"},
-  {code:"102000589",name:"Now Foods Detox Support Detoxification Formula 90 Caps"},
-  {code:"102000597",name:"Now Foods Echinacea & Goldenseal Glycerite 60 Ml"},
-  {code:"102000600",name:"Now Foods Echinacea & Goldenseal Root 100 Veg Caps"},
-  {code:"102000618",name:"Now Foods Flax Oil 1000 Mg 100 Softgels"},
-  {code:"102000626",name:"Now Foods Ginkgo Biloba 120 Mg 100 Caps"},
-  {code:"102000634",name:"Now Foods Ginkgo Biloba 60 Mg 120 Caps"},
-  {code:"102000642",name:"Now Foods Gotu Kola 450 Mg 100 Caps"},
-  {code:"102000651",name:"Now Foods Men\'S Virility Power 60 Vegetable Caps"},
-  {code:"102000669",name:"Now Foods Modified Citrus Pectin 800 Mg 180 Veg Caps"},
-  {code:"102000677",name:"Now Sports T-Lean Extreme Weight Management 60 Caps"},
-  {code:"102000685",name:"Now Foods Eleuthero 500 Mg 100 Caps"},
-  {code:"102000693",name:"Now Foods Omega 3-6-9 1000 Mg 100 Softgels"},
-  {code:"102000714",name:"Now Foods Panax Ginseng 500 Mg 100 Caps"},
-  {code:"102000722",name:"Now Foods Pygeum & Saw Palmetto 60 Softgels"},
-  {code:"102000731",name:"Now Foods Raw Maca 750 Mg 30 Veg Caps"},
-  {code:"102000749",name:"Now Foods Saw Palmetto Berries 550 Mg 100 Veg Caps"},
-  {code:"102000757",name:"Now Foods Saw Palmetto Extract 160 Mg. 60 Softgels"},
-  {code:"102000765",name:"Now Foods Silymarin Milk Thistle Extract 350 Mg. 4 Oz."},
-  {code:"102000781",name:"Now Foods St. John\'S Wort 300 Mg 100 Caps"},
-  {code:"102000790",name:"Natures Way Pantothenic Acid Vitamin B5 250 Mg 100 Caps"},
-  {code:"102000802",name:"Natures Way Pms With B6 & Other B-Vitamins 100 Caps"},
-  {code:"102000811",name:"Natures Way Premium Blend Soy Isoflavones 100 Mg 60 Caps"},
-  {code:"102000829",name:"Natures Way Premium Extract Grape Seed 60 Vegan Caps"},
-  {code:"102000837",name:"Natures Way Prenatal Multivitamin With Vitamin C 180 Caps"},
-  {code:"102000845",name:"Natures Way Pycnogenol 50 Mg 30 Vegan Tabs"},
-  {code:"102000870",name:"Alive Once Daily Women\'S Ultra Potency Multivitamin 60 Tabs"},
-  {code:"102000909",name:"Alive Women\'S Multivitamin 200 Tabs"},
-  {code:"102000925",name:"Natures Way Antioxidant Formula 100 Tabs"},
-  {code:"102000933",name:"Natures Way Black Cohosh 40 Mg 120 Vegan Caps"},
-  {code:"102000941",name:"Natures Way Calcium Mag & D Complex 100 Caps"},
-  {code:"102000950",name:"Natures Way Calcium Magnesium & Zinc 765 Mg 100 Caps"},
-  {code:"102000968",name:"Natures Way Evening Primrose 1300 Mg 120 Softgels"},
-  {code:"102000976",name:"Natures Way Femaprin Vitex Extract 60 Caps"},
-  {code:"102000984",name:"Natures Way Fenugreek Seed 610 Mg 100 Vegan Caps"},
-  {code:"102000992",name:"Natures Way Folate 800 Mcg 100 Caps"},
-  {code:"102001004",name:"Natures Way Fortify Women\'S Probiotic 30 Billion 30 Caps"},
-  {code:"102001021",name:"Country Life 5-Htp 50 Mg 50 Vegan Caps"},
-  {code:"102001039",name:"Country Life Activated Charcoal 260 Mg 180 Vegan Caps"},
-  {code:"102001055",name:"Country Life Active Lipoic Acid 300 Mg 60 Tabs"},
-  {code:"102001063",name:"Country Life Aller-Max 100 Vegan Caps"},
-  {code:"102001071",name:"Country Life Coenzyme B-Complex Advanced 60 Vegan Caps"},
-  {code:"102001080",name:"Country Life Core Daily-1 Multivitamins Men 60 Tabs"},
-  {code:"102001098",name:"Country Life Core Daily-1 For Men 50+ 60 Tabs"},
-  {code:"102001101",name:"Country Life Dhea Complex For Men 60 Vegan Caps"},
-  {code:"102001119",name:"Country Life Glucosamine Chondroitin Formula 180 Caps"},
-  {code:"102001127",name:"Country Life Liver Support Factors 100 Vegan Caps"},
-  {code:"102001135",name:"Country Life L-Theanine 200 Mg 60 Vegan Caps"},
-  {code:"102001143",name:"Country Life L-Tyrosine Caps 500 Mg 100 Caps"},
-  {code:"102001151",name:"Country Life Lutein With Zeaxanthin 20 Mg 60 Softgels"},
-  {code:"102001160",name:"Country Life Max For Men Iron-Free 120 Caps"},
-  {code:"102001178",name:"Country Life Max For Vegans Multivitamin & Mineral 120 Caps"},
-  {code:"102001186",name:"Country Life Maxi-Zyme 120 Vegan Caps"},
-  {code:"102001194",name:"Country Life Natural Omega-3 1000 Mg 300 Softgels"},
-  {code:"102001207",name:"Country Life Prosta Max For Men 200 Tabs"},
-  {code:"102001215",name:"Country Life Rapid Release Thyro-Max Support 60 Tabs"},
-  {code:"102001223",name:"Country Life Simply Coq10 100 Mg 60 Vegan Caps"},
-  {code:"102001231",name:"Country Life Simply Coq10 200 Mg 60 Vegan Softgels"},
-  {code:"102001240",name:"Country Life Magnesium With Silica 300 Mg 120 Caps"},
-  {code:"102001258",name:"Country Life Magnesium Potassium Aspartate 180 Tabs"},
-  {code:"102001266",name:"Country Life Target-Mins Total Mins Iron-Free 120 Tabs"},
-  {code:"102001274",name:"Country Life Target-Mins Zinc 50 Mg 180 Tabs"},
-  {code:"102001282",name:"Country Life Vitamin B12 1000 Mcg 60 Tabs"},
-  {code:"102001291",name:"Country Life Vitamin B6 100 Mg 100 Tabs"},
-  {code:"102001311",name:"Country Life Maxi-Hair For Men 60 Softgels"},
-  {code:"102001346",name:"Source Naturals Biotin 1000 Mcg 100 Tabs"},
-  {code:"102001354",name:"Source Naturals Biotin 1000 Mcg 200 Tabs"},
-  {code:"102001362",name:"Source Naturals Biotin 10000 Mcg 120 Tabs"},
-  {code:"102001371",name:"Source Naturals Biotin 5000 Mcg 200 Tabs"},
-  {code:"102001389",name:"Source Naturals Biotin 600 Mcg 100 Tabs"},
-  {code:"102001397",name:"Source Naturals Biotin 600mcg 200 Tabs"},
-  {code:"102001400",name:"Source Naturals Black Cohosh Extract 120 Tabs"},
-  {code:"102001418",name:"Source Naturals Blood Pressure Response 150 Tabs"},
-  {code:"102001426",name:"Source Naturals Calcium & Magnesium 300 Mg 100 Tabs"},
-  {code:"102001434",name:"Source Naturals Collagen From Fish 120 Tabs"},
-  {code:"102001442",name:"Source Naturals Collagen From Fish 240 Tabs"},
-  {code:"102001451",name:"Source Naturals Coral Calcium & Magnesium 180 Tabs"},
-  {code:"102001469",name:"Source Naturals Coral Calcium/Magnesium 2:1 Ratio 90 Tabs"},
-  {code:"102001477",name:"Source Naturals Dim (Diindolylmethane) 100 Mg 120 Tabs"},
-  {code:"102001485",name:"Source Naturals Dim 200 Mg 120 Tabs"},
-  {code:"102001493",name:"Source Naturals Hot Flash 90 Tabs"},
-  {code:"102001506",name:"Source Naturals Megafolinic 800 Mcg 240 Tabs"},
-  {code:"102001514",name:"Source Naturals Meno-7 (Menopause Symptom Relief) 120 Caps"},
-  {code:"102001522",name:"Source Naturals Pantothenic Acid 100 Mg 100 Tabs"},
-  {code:"102001531",name:"Source Naturals Ultra Cal Night With Vitamin K 240 Tabs"},
-  {code:"102001549",name:"Source Naturals Women\'S Life Force Multiple No Iron 180 Tabs"},
-  {code:"102001944",name:"Carlson Labs Biotin 5000 Mcg 100 Caps"},
-  {code:"102001952",name:"Carlson Labs Biotin 5000 Mcg 50 Caps"},
-  {code:"102001961",name:"Carlson Labs Blood Nutrients 180 Caps"},
-  {code:"102001979",name:"Carlson Labs Cal-1000 With Vitamin D3 100 + 30 Softgels"},
-  {code:"102001987",name:"Carlson Labs Cal-1000 With Vitamin D3 100 Softgels"},
-  {code:"102001995",name:"Carlson Labs Chelated Calcium 250 Mg 180 Tabs"},
-  {code:"102002007",name:"Carlson Labs Chelated Cal-Mag 180 Tabs"},
-  {code:"102002015",name:"Carlson Labs Chelated Cal-Mag 60 Tabs"},
-  {code:"102002023",name:"Carlson Labs Chelated Iron 27 Mg 100 Tabs"},
-  {code:"102002031",name:"Carlson Labs Chelated Iron 27 Mg 250 Tabs"},
-  {code:"102002074",name:"Carlson Labs Glutathione Booster 180 Caps"},
-  {code:"102002082",name:"Carlson Labs Golden Primrose 1300 Mg 90 Softgels"},
-  {code:"102002111",name:"Carlson Labs Mother\'S Dha 500 Mg 120 Softgels"},
-  {code:"102002120",name:"Carlson Labs Cod Liver Oil Gems 230 Mg 150 Softgels"},
-  {code:"102002138",name:"Carlson Labs Cod Liver Oil Gems 1000 Mg 300 Softgels"},
-  {code:"102002146",name:"Carlson Labs Cod Liver Oil Gems 2000 MG 300 Softgels"},
-  {code:"102002154",name:"Carlson Labs Cod Liver Oil Gems 460 Mg 150 Softgels"},
-  {code:"102002162",name:"Carlson Labs Cod Liver Oil Gems Super 1000 Mg 100 Softgels"},
-  {code:"102002171",name:"Carlson Labs Cod Liver Oil Gems Super 1000 Mg 250 Softgels"},
-  {code:"102002613",name:"Enzymedica Acid Soothe 30 Caps"},
-  {code:"102002621",name:"Enzymedica Acid Soothe 90 Caps"},
-  {code:"102002630",name:"Enzymedica Allerase 60 Caps"},
-  {code:"102002656",name:"Enzymedica Apple Cider Vinegar 60 Caps"},
-  {code:"102002664",name:"Enzymedica Aqua Biome Fish Oil + Meriva Curcumin 60 Softgels"},
-  {code:"102002672",name:"Enzymedica Aqua Biome Omega3 1000 Mg 60 Softgels"},
-  {code:"102002681",name:"Enzymedica Beanassist 30 Caps"},
-  {code:"102002699",name:"Enzymedica Berberine For Blood Sugar Metabolism 60 Caps"},
-  {code:"102002701",name:"Enzymedica Candidase 42 Caps"},
-  {code:"102002710",name:"Enzymedica Candidase Extra Strength 42 Caps"},
-  {code:"102002728",name:"Enzymedica Dairyassist 30 Caps"},
-  {code:"102002736",name:"Enzymedica Digest + Probiotics 90 Caps"},
-  {code:"102002744",name:"Enzymedica Digest Gold With Atpro 45 Caps"},
-  {code:"102002752",name:"Enzymedica Digest Keto 60 Caps"},
-  {code:"102002761",name:"Enzymedica Digest Spectrum 30 Caps"},
-  {code:"102002779",name:"Enzymedica Digest Complete Enzyme Formula 90 Caps"},
-  {code:"102002787",name:"Enzymedica Enzyme Defense 60 Caps"},
-  {code:"102002795",name:"Enzymedica Enzyme Nutrition Men\'S 60 Capsule"},
-  {code:"102002808",name:"Enzymedica Glutenease 60 Caps"},
-  {code:"102002816",name:"Enzymedica Glutenease Extra Strength 60 Caps"},
-  {code:"102002824",name:"Enzymedica Lypo Gold For Fat Digestion 60 Caps"},
-  {code:"102002832",name:"Enzymedica Purify Activated Charcoal Plus 60 Caps"},
-  {code:"102002841",name:"Enzymedica Purify Liver Detox 60 Caps"},
-  {code:"102002859",name:"Enzymedica Repair Gold 60 Caps"},
-  {code:"102002867",name:"Enzymedica Stem Xcell 60 Caps"},
-  {code:"102002875",name:"Enzymedica Telomere Plus 30 Caps"},
-  {code:"102002883",name:"Enzymedica Veggiegest 60 Capsule"},
-  {code:"102003018",name:"Swisse Daily Digestive Probiotic 30 Capsule"},
-  {code:"102003026",name:"Swisse Odourless Wild Fish Oil 1500mg 200 Caps"},
-  {code:"102003034",name:"Swisse Calm + De-Stress 60 Tabletes"},
-  {code:"102003042",name:"Swisse Co-Enzyme Q10 150mg 50 Capsule"},
-  {code:"102003051",name:"Swisse Cranberry (25000mg) 30 Capsule"},
-  {code:"102003069",name:"Swisse Curcumin 60 Tabletes"},
-  {code:"102003077",name:"Swisse Joint Repair 90 Tabletes"},
-  {code:"102003085",name:"Swisse Liver Detox 60 Tabletes"},
-  {code:"102003093",name:"Swisse Magnesium 60 Tabletes"},
-  {code:"102003106",name:"Swisse Megab+ 60 Tabletes"},
-  {code:"102003114",name:"Swisse Memory + Focus 50 Tabletes"},
-  {code:"102003122",name:"Swisse Men\'S Ultivite 60 Tabletes"},
-  {code:"102003131",name:"Swisse Relax And Sleep 60 Tabletes"},
-  {code:"102003157",name:"Swisse Vitamin D 60 Caps"},
-  {code:"102003165",name:"Swisse Zinc+ 60 Tabletes"},
-  {code:"102003173",name:"Nutrex Research Lipo-6 Black Diuretic 80 Black-Caps"},
-  {code:"102003181",name:"Nutrex Research Lipo-6 Black Hers Ultra Concentrate 60 Caps"},
-  {code:"102003190",name:"Nutrex Research Lipo-6 Black Intense 60 Caps"},
-  {code:"102003202",name:"Nutrex Research Lipo-6 Black STIM-Free UC 60 Caps"},
-  {code:"102003211",name:"Nutrex Research Lipo-6 Black Thyrolean Fat Loss 60 Caps"},
-  {code:"102003229",name:"Nutrex Research Lipo-6 Black Extreme Potency 120 Black-Caps"},
-  {code:"102003237",name:"Nutrex Research Lipo-6 Black Ultra Concentrate 30 Black-Caps"},
-  {code:"102003245",name:"Nutrex Research Lipo-6 Black Ultra Concentrate 60 Black-Caps"},
-  {code:"102003270",name:"Nutrex Research Lipo-6 CLA 45 Softgels"},
-  {code:"102003288",name:"Nutrex Research Lipo-6 CLA 90 Softgels"},
-  {code:"102003296",name:"Nutrex Research Lipo-6 CLA 180 Softgels"},
-  {code:"102003309",name:"Nutrex Research Lipo-6 Hardcore 60 Caps"},
-  {code:"102004838",name:"Now Foods Calcium & Magnesium 100 Softgels"},
-  {code:"102004846",name:"Now Foods Calcium & Magnesium 120 Softgels"},
-  {code:"102004854",name:"Now Foods Calcium Citrate Caps 120 Veg Caps"},
-  {code:"102004862",name:"Now Foods Calcium Citrate Caps 120 Vegetable Caps"},
-  {code:"102004871",name:"Now Foods Evening Primrose Oil 500 Mg 100 Softgels"},
-  {code:"102004889",name:"Now Foods Eve Superior Women\'S Multivitamin 90 Softgels"},
-  {code:"102004897",name:"Now Foods Female Balance 90 Veg Caps"},
-  {code:"102004900",name:"Now Foods Fenugreek And Thyme 100 Vegetable Caps"},
-  {code:"102004918",name:"Now Foods Grape Seed 100 Mg 100 Veg Caps"},
-  {code:"102004926",name:"Now Foods Grape Seed Standardized Extract 60 Mg 180 Caps"},
-  {code:"102004934",name:"Now Foods Iron Complex 100 Tabs"},
-  {code:"102004951",name:"Now Foods Nutritional Yeast Flakes 10 Lbs"},
-  {code:"102004969",name:"Now Foods Pycnogenol Free Radical Scavenger 30 Mg 30 Caps"},
-  {code:"102004977",name:"Now Foods Soy Isoflavones 150 Mg. 60 Vegetable Caps"},
-  {code:"102004985",name:"Nature\'S Bounty 5-Htp 100 Mg Caps 60 Each"},
-  {code:"102004993",name:"Nature\'S Bounty B-12 30 Bi-Layer Tabs"},
-  {code:"102005005",name:"Nature\'S Bounty Cla 1000 Mg 50 Softgels"},
-  {code:"102005013",name:"Nature\'S Bounty Co Q-10 400 Mg Maximum Strength 39 Softgels"},
-  {code:"102005021",name:"Nature\'S Bounty High Potency D3 1000 Iu 350 Softgels"},
-  {code:"102005030",name:"Nature\'S Bounty Melatonin Sleep Health 10 Mg 45 Tabs"},
-  {code:"102005048",name:"Nature\'S Bounty Milk Thistle 250 Mg 200 Caps"},
-  {code:"102005056",name:"Nature\'S Bounty Niacin 500 Mg 120 Caps"},
-  {code:"102005064",name:"Nature\'S Bounty Q-Sorb Coq-10 100 Mg 60 Softgels"},
-  {code:"102005072",name:"Nature\'S Bounty Saw Palmetto 450 Mg 100 Caps"},
-  {code:"102005081",name:"Nature\'S Bounty Vitamin B-12 1000 Mcg 200 Tabs"},
-  {code:"102005099",name:"Nature\'S Bounty Vitamin D3 50 Mcg (2000 Iu) 350 Softgels"},
-  {code:"102005101",name:"Nature\'S Bounty Vitamin E 1000 Iu 60 Softgels"},
-  {code:"102005110",name:"Fruily Adult 50+ Multivitamin"},
-  {code:"102005128",name:"Fruily Cranberry Vitamin C"},
-  {code:"102005144",name:"Fruily Lutein Eyesight"},
-  {code:"102005152",name:"Fruily Mental Focus & Clarity"},
-  {code:"102005208",name:"Fruily Probiotic & Prebiotic"},
-  {code:"102005216",name:"Fruily Stay Calm & Relax"},
-  {code:"102005224",name:"Fruily Vitamin B12 Energy"},
-  {code:"102005232",name:"Fruily Vitamin D3 Plus K2"},
-  {code:"102005241",name:"Country Life Core Daily-1 Multivitamin For Women 50+ 60 Tabs"},
-  {code:"102005259",name:"Country Life Core Daily-1 Multivitamin For Women 60 Tabs"},
-  {code:"102005267",name:"Country Life Dhea Complex For Women 60 Vegan Caps"},
-  {code:"102005283",name:"Country Life High Potency Biotin 10 Mg 120 Vegan Caps"},
-  {code:"102005291",name:"Country Life Max For Women Iron-Free 120 Caps"},
-  {code:"102005304",name:"Country Life Maxi-Hair Plus 1250 Mcg 120 Caps"},
-  {code:"102005321",name:"Country Life Pycnogenol 100 Mg 30 Vegan Caps"},
-  {code:"102005339",name:"Country Life Calcium Magnesium Vitamin D 240 Caps"},
-  {code:"102005347",name:"Country Life Tri Layer Maxi-Skin Collagen + C & A 90 Tabs"},
-  {code:"102009612",name:"Enzymax Forte 20 Capsules"},
-  {code:"102014884",name:"Acarizax 12sq-Hdm Orally Lyophilisate 30 Tab"},
-  {code:"102015799",name:"Bisolol Tabs 2.5 Mg 30 Tab"},
-  {code:"102015801",name:"Bisolol Tabs 5 Mg 30 Tab"},
-  {code:"102015810",name:"Bisolol Tabs 10 Mg 30 Tab"},
-  {code:"102015828",name:"Tyra Tablet 20 Mg Film Coated 4 Tab"},
-  {code:"102015836",name:"Tyra Tablet 5 Mg Film Coated 28 Tab"},
-  {code:"102015959",name:"Glozal 5mg 30 Tabs"},
-  {code:"102016661",name:"Crevast Fc Tabs 10mg 30 Pcs"},
-  {code:"102016679",name:"Crevast Fc Tabs 20mg 30 Pcs"},
-  {code:"102016687",name:"Crevast Fc Tabs 40mg 30 Pcs"},
-  {code:"102016695",name:"Crevast Fc Tabs 5mg 30 Pcs"},
-  {code:"102019693",name:"Thorne Research Glutathione-Sr 60 Caps"},
-  {code:"102019706",name:"Thorne Research Biotin-8 60 Caps"},
-  {code:"102019714",name:"Thorne Research 5-Mthf 1 Mg 60 Caps"},
-  {code:"102019722",name:"Thorne Research 5-Mthf 5 Mg 60 Caps"},
-  {code:"102019731",name:"Thorne Research Resveracel 60 Caps"},
-  {code:"102019749",name:"Thorne Research Basic Prenatal 90 Caps"},
-  {code:"102019757",name:"Thorne Research Women\'S Multi 50+ 180 Caps"},
-  {code:"102019888",name:"Fruily Prenatal Multivitamin"},
-  {code:"102019896",name:"Swisse Calcium + Vitamin D 90 Tabletes"},
-  {code:"102019917",name:"Swisse Collagen Glow With Collagen Peptides 60 Tabletes"},
-  {code:"102019925",name:"Swisse Grape Seed 180 Tablets"},
-  {code:"102019933",name:"Swisse Hair Skin Nails+ 60 Tabletes"},
-  {code:"102019941",name:"Swisse Iron 30 Tabletes"},
-  {code:"102019950",name:"Swisse Pre-Conception & Pregnancy Multivitamin 60 Tabs"},
-  {code:"102019968",name:"Swisse Women\'S Ultivite 60 Tabletes"},
-  {code:"102019976",name:"Universal Nutrition GH Max Superior GH Optimization 180 Tabs"},
-  {code:"102019984",name:"Universal Nutrition Super Cuts 3 144 Tabs"},
-  {code:"102019992",name:"Universal Nutrition Sport Series ZMA Pro 180 Caps"},
-  {code:"102020002",name:"Universal Nutrition ZMA Pro 90 Caps"},
-  {code:"102020011",name:"Universal Nutrition Fish Oil 100 Softgels"},
-  {code:"102020029",name:"Universal Nutrition N1-T Pro-Testosterone Support 90 Caps"},
-  {code:"102020037",name:"Universal Nutrition Natural Sterol Complex 180 Tabs"},
-  {code:"102020045",name:"Universal Nutrition Tribulus Pro 110 Caps"},
-  {code:"102021620",name:"Probulin Colon Support Probiotic 30 Caps"},
-  {code:"102021638",name:"Probulin Daily Care Probiotic 10 Billion Cfu 30 Caps"},
-  {code:"102021646",name:"Probulin Total Care Immune Probiotic 20 B Cfu 30 Caps"},
-  {code:"102021654",name:"Probulin Total Care Probiotic 20 Billion Cfu 30 Caps"},
-  {code:"102021662",name:"Probulin Trimsynergy Probiotic 20 Billion Cfu 60 Caps"},
-  {code:"102021671",name:"Probulin Women\'S Health Probiotic 20 Billion Cfu 30 Caps"},
-  {code:"102024644",name:"Jarrow Formulas Co Enzyme Q10 200mg 30 Capsule"},
-  {code:"102024679",name:"Enzymedica Enzyme Nutrition Women\'S 50+ 60 Capsule"},
-  {code:"102024687",name:"Enzymedica Enzyme Nutrition Women\'S 60 Capsule"},
-  {code:"102024695",name:"Nature\'S Bounty Ultra Strength 10000 Mcg 120 Softgels"},
-  {code:"102024716",name:"Probulin Total Care Womens Ut Probiotic 20 B Cfu 30 Caps"},
-  {code:"102027651",name:"Source Naturals Pregnenolone 25 Mg 120 Tabs"},
-  {code:"102027677",name:"Source Naturals Pregnenolone 50 Mg 120 Tabs"},
-  {code:"102027731",name:"Enzymatic Therapy Derma Klear Akne-Zyme 90 Caps"},
-  {code:"102027749",name:"Enzymatic Therapy Resveratrol Forte 125 Mg 60 Veg Caps"},
-  {code:"102027757",name:"Muscletech Hydroxycut Hardcore Elite 100 Caps"},
-  {code:"102027765",name:"Muscletech Hydroxycut Hardcore Super Elite 120 Caps"},
-  {code:"102027773",name:"Muscletech Hydroxycut Hardcore Elite 110 Caps"},
-  {code:"102027781",name:"Muscletech Hydroxycut Hardcore Next Gen Weight Loss 100 Caps"},
-  {code:"102027790",name:"Muscletech Platinum 100% Caffeine 220 Mg 125 Tabs"},
-  {code:"102027802",name:"Optimum Nutrition Cla 750 Mg 90 Softgels"},
-  {code:"102027811",name:"Optimum Nutrition Opti-Men 150 Tabs"},
-  {code:"102027829",name:"Optimum Nutrition Opti-Men 90 Tabs"},
-  {code:"102027837",name:"Optimum Nutrition Opti-Women 120 Caps"},
-  {code:"102027845",name:"Optimum Nutrition Hmb 1000 90 Caps"},
-  {code:"102027853",name:"Carlson Labs Ribose 30 Single Serving Packets 5 G Each"},
-  {code:"102027870",name:"Sambucol Black Elderberry + Vit C & Zinc 15 Eff. Tablets"},
-  {code:"102028629",name:"Now Foods L-Tyrosine Free Form 500 Mg. 60 Caps"},
-  {code:"102028637",name:"Now Foods Rhodiola 500 Mg 60 Veg Caps"},
-  {code:"102028645",name:"Now Foods Sam-E Nervous System Support 400 Mg. 30 Tabs"},
-  {code:"102028653",name:"Now Foods Silica Complex Vegetarian 500 Mg. 90 Tabs"},
-  {code:"102028661",name:"Now Foods Bone Strength 120 Caps"},
-  {code:"102028741",name:"Natures Way Eyebright Herbal Blend 458 Mg 100 Caps"},
-  {code:"102028784",name:"Thorne Research Nac (N-Acetylcysteine) 90 Caps"},
-  {code:"102028792",name:"Source Naturals D-Ribose Fruit Flavored 60 Tabs"},
-  {code:"102028805",name:"Source Naturals Vegetarian Pancreatin 120 Caps"},
-  {code:"102028901",name:"Carlson Labs L-Glutamine 750 Mg 300 Caps"},
-  {code:"102028928",name:"Carlson Labs N-A-C 500 Mg 60 Caps"},
-  {code:"102028936",name:"Carlson Labs Ultimate Liver Support 30 Caps"},
-  {code:"102028944",name:"Carlson Labs Ultimate Liver Support 60 Caps"},
-  {code:"102028952",name:"Carlson Labs The Very Finest Fish Oil 700mg 240 Lem Softgels"},
-  {code:"102028961",name:"Carlson Labs The Very Finest Fish Oil 700mg 240 Ora Softgels"},
-  {code:"102040687",name:"Supra Vit Ginkgo Biloba + Magnesium 30 Capsules"},
-  {code:"102043618",name:"Xibax 60 Mg 28 Tablet"},
-  {code:"102043626",name:"Xibax 90 Mg 28 Tablet"},
-  {code:"102043634",name:"Xibax 120 Mg 7 Tablet"},
-  {code:"102043642",name:"Azimac 250 Mg Tablet 6pcs"},
-  {code:"102045613",name:"Jp Triplex B 30 Tablets"},
-  {code:"102048611",name:"Beatswell Royal Jelly 900 Mg 120 Capsules"},
-  {code:"102062616",name:"Otezla Tablet 10,20&30 Mg Fc 27 Pcs"},
-  {code:"102062624",name:"Otezla Tablet 30 Mg Fc 56 Pcs"},
-  {code:"102064646",name:"Deuxpharma Deuxmag Capsules 30s"},
-  {code:"102064654",name:"Deuxpharma Zincophar 60 Capsules"},
-  {code:"102064662",name:"Deuxpharma Ginkgophar Smart 30 Capsules"},
-  {code:"102064671",name:"Deuxpharma Immuforte 20 Tablets"},
-  {code:"102064689",name:"Deuxpharma Lipophar Forte 30 Capsules"},
-  {code:"102064697",name:"Deuxpharma Lipolix 60 Capsules"},
-  {code:"102073622",name:"Imatox 4 Mg 10 Tablets"},
-  {code:"102073631",name:"Imatox 8 Mg 10 Tablets"},
-  {code:"102075610",name:"Osterra Calcium 1500 Mg Vitamin D 800 Iu 30 Tablets"},
-  {code:"102075628",name:"Osterra Calcium 500 Mg Vitamin D 400 Iu 30 Tablets"},
-  {code:"102077720",name:"Dulcolax 5mg Tabsc 40"},
-  {code:"102077738",name:"Mucosolvan La 75mg 10 Capsule"},
-  {code:"102078618",name:"Olican 0.5mg 28 Capsules"},
-  {code:"102086731",name:"Country Life N-Acetyl Cysteine 750 Mg 60 Vegan Caps"},
-  {code:"102086749",name:"Universal Nutrition Ripped Fast 120 Caps"},
-  {code:"102086757",name:"Source Naturals Amino Athlete 1000 Mg 50 Tabs"},
-  {code:"102086765",name:"Source Naturals Amino Day 30 Tabs"},
-  {code:"102086773",name:"Source Naturals Amino Mass 100 Tabs"},
-  {code:"102086781",name:"Source Naturals Amino Night 120 Caps"},
-  {code:"102086790",name:"Source Naturals Amino Strength 100 Tabs"},
-  {code:"102086802",name:"Source Naturals Chela-Detox Heavy Metal Detoxifier 120 Tabs"},
-  {code:"102086811",name:"Source Naturals D-Mannose 500 Mg 30 Caps"},
-  {code:"102086829",name:"Source Naturals Huperzine A 100 Mcg 60 Tabs"},
-  {code:"102086837",name:"Source Naturals Megamind 90 Tabs"},
-  {code:"102086845",name:"Source Naturals Mental Edge 30 Tabs"},
-  {code:"102086853",name:"Source Naturals Vinpocetine 10 Mg 240 Tabs"},
-  {code:"102086861",name:"Source Naturals Vinpocetine 10 Mg 60 Tabs"},
-  {code:"102089616",name:"Concor Amlo 5/5 Mg Tablet 30pcs"},
-  {code:"102089624",name:"Glucophage Xr 1000 Mg Tablet 30pcs"},
-  {code:"102090617",name:"Edarbi 40 Mg 28 Tablets"},
-  {code:"102090625",name:"Edarbi 80 Mg 28 Tablets"},
-  {code:"102090633",name:"Edarbyclor 40 Mg/25 Mg 28 Tablets"},
-  {code:"102090641",name:"Edarbyclor 40 Mg/12.5 Mg 28 Tablets"},
-  {code:"102092621",name:"Zyrosa 10 Mg. 28 Tab."},
-  {code:"102092639",name:"Zyrosa 20 Mg. 28 Tab."},
-  {code:"102099611",name:"Sevitense 20/5 Mg 28 Tablets"},
-  {code:"102099620",name:"Sevitense 20/10 Mg 28 Tablets"},
-  {code:"102099638",name:"Sevitense 40/5 Mg 28 Tablets"},
-  {code:"102099646",name:"Sevitense 40/10 Mg 28 Tablets"},
-  {code:"102099654",name:"Sevitense Plus 20/5/12.5 Mg 28 Tablets"},
-  {code:"102099662",name:"Sevitense Plus 40/5/25 Mg 28 Tablets"},
-  {code:"102099671",name:"Sevitense Plus 40/10/25 Mg 28 Tablets"},
-  {code:"102099689",name:"Sevitense Plus 40/5/12.5 Mg 28 Tablets"},
-  {code:"102099697",name:"Sevitense Plus 40/10/12.5 Mg 28 Tablets"},
-  {code:"102100627",name:"Paradox Omega 3 60 Capsules"},
-  {code:"102106623",name:"Diva D Vitamin D3 10,000 I.U. 100 Capsules"},
-  {code:"102107626",name:"Omega 3-6-9 1300 Mg 30 Softgel Capsules"},
-  {code:"102107642",name:"Care-Q10 100 Mg 30 Softgel Capsules"},
-  {code:"102107651",name:"Vascutal 60 Mg 45 Softgel Capsules"},
-  {code:"102109621",name:"Omegalight Capsule 60pcs"},
-  {code:"102109664",name:"Fertalight Tablet 60pcs"},
-  {code:"101957637",name:"Rybelsus 7mg tablets 30pcs"},
-  {code:"100994410",name:"Agout 80mg Tablet 30pcs"},
-  {code:"101906637",name:"Salemtum Ez-Pill"},
-  {code:"100022080",name:"???????? 0.5 ??? ??? ????? 4 ??"},
-  {code:"100892085",name:"Mimpara 30mg 28tablets"},
-  {code:"101957645",name:"Rybelsus 14 Mg 30 Tablets"},
-  {code:"102272613",name:"Omipure Omega-3 1000mg 28 Soft Capsules"},
-  {code:"100994401",name:"Agout 40mg 30 Tablets"},
-  {code:"102137892",name:"Deflat 120 Mg Chewable Tablet"},
-  {code:"101957629",name:"Rybelsus 3 Mg 30 Tablets"},
-  {code:"100965900",name:"Arimidex 1mg 28 Tab"},
-  {code:"100632697",name:"Nitroderm-Tts 5 mg Patch 10pcs"},
-  {code:"102271629",name:"Biocare Alcohol Swabs 200 Pcs"},
-  {code:"100620477",name:"Femara 2.5mg Tablets 30"},
-  {code:"102120610",name:"Gastrozole Plus 40/1100 Mg 28 Capsule"},
-  {code:"102371620",name:"Panadol-Extend 665 Mg Tablet 24pcs"},
-  {code:"101456592",name:"Single Let Sterile Single-use Safety Lancets 200 pcs"},
-  {code:"102408672",name:"Ramep 20 Mg 28 Tablet"},
-  {code:"100028502",name:"Lantus 100 IU Solostar/Optiset 5 pcs 3 ml (Refrigerator)"},
-  {code:"100430665",name:"Calcos-Vitamin-D3 Chewable 60 Tablets"},
-  {code:"102327741",name:"H&B Zinc Gluconate 25mg 100 Tablets"},
-  {code:"102137948",name:"Tedo 5 Mg 30 Tab"},
-  {code:"102300611",name:"Gleptal 50 Mg Tablet 30 Pcs"},
-  {code:"101284188",name:"?????? ??? 30 ??? ?????"},
-  {code:"102340639",name:"Mothernest Omega 3 1000 Mg 60 Capsules"},
-  {code:"102510247",name:"Dapazin 10 Mg 30 Tablets"},
-  {code:"102300629",name:"Gleptal 50 Mg Tablet 60 Pcs"},
-  {code:"102347611",name:"Silomes 50 Mg 30 Tablet"},
-  {code:"102722119",name:"Prima D3 2000 Iu 60 Cap"},
-  {code:"102737610",name:"Fexofin 180 Mg Tablet 30pcs"},
-  {code:"102119619",name:"Glacera Plus 15/850 Mg 60 Tablets"},
-  {code:"102792774",name:"Meligamet 50/1000 Mg 60 Tablets"},
-  {code:"102792838",name:"Lipofirate 145 Mg 30 Tablets"},
-  {code:"1234",name:"Arcalion forte tablet"},
-  {code:"12345",name:"H&B Omega 3 1000mg"},
-  {code:"1242",name:"Men`s multivitamin Tablets"},
-  {code:"1252",name:"Arkalion forte tablets"},
-  {code:"76521",name:"Salmon oil omega-3"},
-  {code:"12934",name:"Calcium 600 mg"},
-  {code:"102786366",name:"Divinusmet 5/1000 Mg XR 60 Tablets"},
-  {code:"102510255",name:"Dapazin 5 Mg 30 Tablets"},
-  {code:"102779625",name:"Lypfen 200 Mg 30 Capsules"},
-  {code:"102786358",name:"Divinusmet 10/1000 Mg XR 30 Tablet"},
-  {code:"102781004",name:"Domassel 90 Mg 60 Tablets"},
-  {code:"102846736",name:"Esopole 20mg Cap 28 Pc"},
-  {code:"102792951",name:"Rost 10 Mg 30 Tablets"},
-  {code:"102792969",name:"Rost 20 Mg 30 Tablets"},
-  {code:"102792791",name:"Bivoneb 5 Mg 30 Tablets"},
-  {code:"102792782",name:"Meligamet 50/850 Mg 60 Tablets"},
-  {code:"102796636",name:"Esopole 40 Mg Capsule 28 Pcs"},
-  {code:"102782795",name:"Adazio 25 Mg 30 Tablets"},
-  {code:"102792811",name:"Meliglptin 100 Mg 30 Tablets"},
-  {code:"102792803",name:"Bivoneb 5 Mg 60 Tablets"},
-  {code:"102783860",name:"Vdia 50 Mg 56 Tablets"},
-  {code:"102737716",name:"Crotal 1 Mg Capsule 100 Pcs"},
-  {code:"102900616",name:"Mofetab 500 Mg 150 Tab"},
-  {code:"102736908",name:"Formit Xr 500 Mg 60 Tablets"},
-  {code:"100008579",name:"Methycobal 500 mcg Ampoule 10P 1 ml"},
-  {code:"102904351",name:"Glyxambi 25/5 Mg 30 Tablets"},
-  {code:"102544615",name:"Cooper Theomax 600 Mg 30 Capsule"},
-  {code:"102271611",name:"JP Prima K2 100 mcg 60 Softgel Capsules"},
-  {code:"102736895",name:"Formit Xr 500 Mg 30 Tablets"},
-  {code:"103006667",name:"Lintra 5 Mg 30 Tablets"},
-  {code:"102965532",name:"Carelio 50 Mg 30 Tablets"},
-  {code:"102792723",name:"Rivax 10 Mg 10 Tablets"},
-  {code:"102904369",name:"Glyxambi 10/5 Mg 30 Tablets"},
-  {code:"102965524",name:"Carelio 100 Mg 30 Tablets"},
-  {code:"102544623",name:"Cooper Theomax 300 Mg 30 Capsule"},
-  {code:"102327733",name:"H&B Tr Vitamin B12 1000 Mcg 100 Tablets"},
-  {code:"102783851",name:"Vdia 50 Mg 28 Tablets"},
-  {code:"102940175",name:"Pexapan 5 Mg 60 Tablets"},
-  {code:"102792820",name:"Meliglptin 50 Mg 30 Tablets"},
-  {code:"102796628",name:"Esopole 40 Mg Capsule 14 Pcs"},
-  {code:"103008671",name:"Lunia 20/10 Mg 28 Tab"},
-  {code:"102742611",name:"Thiotacid 600 Mg 30 Tab"},
-  {code:"100029610",name:"Finasid 5 mg Tablet 30P"},
-  {code:"102987627",name:"Lercadip 20 Mg Tablet 28pcs"},
-  {code:"103008638",name:"Atiquix 5 Mg 60 Tab"},
-  {code:"103008726",name:"Olsar Plus 40/25 mg 28 Tab"},
-  {code:"102443611",name:"Kerendia Finerenone 10mg Tablets 28s"},
-  {code:"102139960",name:"Tazmeron 15 Mg Tablet 30pcs"},
-  {code:"103008697",name:"Olsar 40 Mg 28 Tab"},
-  {code:"103008689",name:"Olsar 20 Mg 28 Tab"},
-  {code:"103008611",name:"Rastor 40 Mg  28Tab"},
-  {code:"102846197",name:"Emanera 20 Mg"},
-  {code:"103008662",name:"Lunia 40/10 Mg 28 Tab"},
-  {code:"103015803",name:"Olneda 20/10 Mg 30 Tab"},
-  {code:"103079621",name:"Apixaban Spc 5 Mg 60 Tab"},
-  {code:"103066985",name:"Instigar 30 Mg 28 Cap"},
-  {code:"101801747",name:"Holista Vitamin D3 1000 Iu 180 Chewable Tablets"},
-  {code:"102987619",name:"Lercadip 10 Mg Tablet 28pcs"},
-  {code:"102327768",name:"H&B Vitamin B12 500 Mcg 100 Tablets"},
-  {code:"103008700",name:"Olsar Plus 20/12.5 28 Tab"},
-  {code:"100996933",name:"Pentasa tablets 1g 60 Pcs"},
-  {code:"102969787",name:"Sensilab, Sens Omega, 1000 Mg Fish Oil, 60 Softgels"},
-  {code:"102792977",name:"Rost 40 Mg 30 Tablets"},
-  {code:"102956927",name:"Jp Nervan 500 Mcg 30 Tab"},
-  {code:"103066993",name:"Instigar 60 Mg 28 Cap"},
-  {code:"103067638",name:"Vittoria 10/160 Mg 28 Tab"},
-  {code:"102137884",name:"Gamcet 0.4 Mg Pr 30 Tablets"},
-  {code:"102940167",name:"Pexapan 2.5 Mg 60 Tablets"},
-  {code:"103143910",name:"Olneda 40/5 Mg 30 Tab"},
-  {code:"102985744",name:"Omegana, Omega 3, 1000 Mg, 28 Capsules"},
-  {code:"102785890",name:"Blum-D Vitamin D3 50000 Iu 20 Tab"},
-  {code:"103078610",name:"Dusta Plus 0.5mg/ 0.4mg 30 Cap"},
-  {code:"103067611",name:"Vittoria 5/160 Mg 28 Tab"},
-  {code:"103231910",name:"Helt 5mg 30 Tabs"},
-  {code:"103071653",name:"Meva Sr 200mg 30 Caps"},
-  {code:"102327688",name:"H&B Magnesium 250mg 100 Tablets"},
-  {code:"103261191",name:"Prasido 90 Mg 56 Tab"},
-  {code:"102942461",name:"Coxicel 200 Mg 30 Caps"},
-  {code:"103012661",name:"Flopadex 8 Mg 30 Capsules"},
-  {code:"102861848",name:"LIPIZET 10 MG 28 TAB"},
-  {code:"103143901",name:"Olneda 40/10 Mg 30 Tab"},
-  {code:"103344851",name:"Creschol 10 Mg 30 Tab"},
-  {code:"103344869",name:"Creschol 20 Mg 30 Tab"},
-  {code:"103143899",name:"Olneda 20/5 Mg 30 Tab"},
-  {code:"103040638",name:"Lodiab Xr 1000 Mg 60 Tablet"},
-  {code:"103340518",name:"Ezora 40mg 28 Cap"},
-  {code:"103004629",name:"Capillo 500 Mg 30 Tab"},
-  {code:"103340526",name:"Olmevasc 20/5 Mg 30 Tab"},
-  {code:"103069617",name:"Darine 5 Mg 30 Tablets"},
-  {code:"103340614",name:"Ezora 20 Mg 28 Cap"},
-  {code:"103143426",name:"Glucovance 5/1000 Mg Tablet 30 Pcs"},
-  {code:"103264682",name:"Durotine 30mg  30 Capsules"},
-  {code:"103344834",name:"Emcast 10 Mg 30 Tab"},
-  {code:"100024763",name:"Vasta 10 mg Tablet 30P"},
-  {code:"103264691",name:"Durotine 60mg  30Capsules"},
-  {code:"102960651",name:"Jamieson Omega 3 Complete 600 Mg 30 Softgels"},
-  {code:"103374460",name:"Liptyn 5mg 30 Tab"},
-  {code:"103330791",name:"Devasc 75 Mg 30 Tab"},
-  {code:"101148979",name:"?????? 30 ?????? ?????????"},
-  {code:"103209616",name:"Candan 8 Mg 28 Tab"},
-  {code:"103063611",name:"Candan 16 Mg 28 Tab"},
-  {code:"103322694",name:"Vascepa 1 Gm 120 Capsule"},
-  {code:"102750267",name:"Carelio 25 Mg 30 Tablets"},
-  {code:"103393652",name:"Sensityn 50/850 Mg 60 Tablets"},
-  {code:"103067646",name:"Vittoria 10/320 Mg 28 Tab"},
-  {code:"100024798",name:"Vasta 20 mg Tablet 30P"},
-  {code:"103225641",name:"Resilia 80 Mg 30 Tablets"},
-  {code:"103340577",name:"Nizortan 80 Mg 28 Tab"},
-  {code:"103340551",name:"Olmevasc 40/5 Mg 30 Tab"},
-  {code:"103344842",name:"Creschol 5 Mg 30 Tab"},
-  {code:"103375921",name:"Diafor Xr 1000mg 28 Tablet"},
-  {code:"103393644",name:"Sensityn 50/1000mg 60 Tablets"},
-  {code:"103225632",name:"Resilia 40 Mg 30 Tablets"},
-  {code:"103340471",name:"Olmazide 40/12.5 Mg 30 Tab"},
-  {code:"103436317",name:"Diafor Xr 750mg 56 Tablet"},
-  {code:"102956919",name:"Jp Vitamin D3 1000 Iu 90 Capsule"},
-  {code:"103079612",name:"Pixar Spc 2.5 Mg 60 Tab"},
-  {code:"103084761",name:"Duserex 0.5 Mg 30 Cap"},
-  {code:"103340534",name:"Olmevasc 40/10 Mg 30 Tab"},
-  {code:"103437678",name:"Sitavic 50/1000mg 56 Tab"},
-  {code:"103341617",name:"Roneza 40/10 Mg 30 Tab"},
-  {code:"100908622",name:"Systane-Ultra Ud Eye Drop 30pcs 0.7 ml"},
-  {code:"100796413",name:"Amlophar 5 Mg 30 CAP"},
-  {code:"103340542",name:"Olmevasc 20/10 Mg 30 Tab"},
-  {code:"102745601",name:"Noorachole 60 Cap"},
-  {code:"103375913",name:"Diafor Xr 750mg 28 Tablet"},
-  {code:"102745661",name:"Omega Light 30 Capsule"},
-  {code:"103430661",name:"Sitagen 100 Mg Tablets 30 Pcs"},
-  {code:"103139689",name:"Vittoria Hct 10/160/25 Mg 28 Tab"},
-  {code:"102472623",name:"Baclon 10 Mg 50 Tabs"},
-  {code:"102831622",name:"Trezol 2.5mg 30 Tab"},
-  {code:"103430644",name:"Juleen 100 Mg 30 Tab"},
-  {code:"102497636",name:"Kerendia Finerenone 20mg Tablets 28s"},
-  {code:"103431612",name:"Dapxiga 10mg 30 Tablet"},
-  {code:"103340489",name:"Olmazide 40/25 Mg 30 Tab"},
-  {code:"103340462",name:"Olmazide 20/12.5 Mg 30 Tab"},
-  {code:"102743930",name:"Megatone 30 Cap"},
-  {code:"103375905",name:"Diafor Xr 500mg 28 Tablet"},
-  {code:"103325924",name:"Jusprin 81 Mg Tablet 90 Pcs"},
-  {code:"103139697",name:"Vittoria Hct 5/160/12.5 Mg 28 Tab"},
-  {code:"103002041",name:"Nhs Thiocap Alpha Lipoic Acid 400 Mg 45 Capsules"},
-  {code:"103437686",name:"Sitavic 50/850mg 56 Tab"},
-  {code:"103393679",name:"Empagliflozin Spc 25 Mg 30 Tab"},
-  {code:"102040126",name:"Pravomax 30 Chewable Tablets"},
-  {code:"103393661",name:"Empagliflozin Spc 10 Mg 30 Tab"},
-  {code:"103225616",name:"Argenta 90mg 28 Tab"},
-  {code:"103209624",name:"Candan Plus 16/12.5 Mg 30 Tab"},
-  {code:"103436296",name:"Diafor Xr 1000mg 56 Tablet"},
-  {code:"103001946",name:"Nq Movacid 400 Mg 30 Capsules"},
-  {code:"103340569",name:"Nizortan 40 Mg 28 Tab"},
-  {code:"103483973",name:"Atomibe 10/40 Mg 30 Tab"},
-  {code:"103436309",name:"Diafor Xr 500mg 56 Tablet"},
-  {code:"103169239",name:"Divido Combo 75mg/20mg Caps"},
-  {code:"103409722",name:"Nervamine 500 Mcg 30tabs"},
-  {code:"103340606",name:"Roneza 20/10 Mg 30 Tab"},
-  {code:"103340593",name:"Roneza 10/10 Mg 30 Tab"},
-  {code:"103067620",name:"Vittoria 5/320 Mg 28 Tab"},
-  {code:"103243857",name:"Fevadol 500mg 30 Tablet"},
-  {code:"102750380",name:"Femic 500 Mg 60 Tab"},
-  {code:"103340585",name:"Roneza 5/10 Mg 30 Tab"},
-  {code:"103261764",name:"Ranexa 375 Mg 60 Tab"},
-  {code:"103261756",name:"Ranexa 500 Mg 60 Tab"},
-  {code:"103483957",name:"Atomibe 10/10 Mg 30 Tab"},
-  {code:"103379076",name:"Olmy 20 Mg 30 Tab"},
-  {code:"103379084",name:"Olmy 40 Mg 30 Tab"},
-  {code:"102925717",name:"Holista, High Potency Omega 3, 1425mg Fish Oil, 80 Softgels"},
-  {code:"103350804",name:"Esopole 20 Mg 56 Cap"},
-  {code:"103001962",name:"Nq Movacid 600 Mg 30 Capsules"},
-  {code:"101240273",name:"Cureaml 500 mg 30 Capsules"},
-  {code:"103591616",name:"Valista 80mg 28 Tab"},
-  {code:"102472631",name:"Baclon 25 Mg 50 Tabs"},
-  {code:"103591641",name:"Provinda 5mg 30 Tab"},
-  {code:"103344826",name:"Emcast 5 Mg 30 Chewable Tab"},
-  {code:"103260614",name:"Aprolin 25 Mg 100 Tab"},
-  {code:"102956943",name:"Jp Flexall Ultra 120 Tab"},
-  {code:"103322686",name:"Zencin 500 Mg 3 Film-Coated Tablet"},
-  {code:"103601618",name:"Tenival 5/160 Mg 28 Tab"},
-  {code:"103483965",name:"Atomibe 10/20 Mg 30 Tab"},
-  {code:"103601626",name:"Tenival 10/160 Mg 28 Tab"},
-  {code:"102750216",name:"Argenta 60mg 28 Tab"},
-  {code:"103492600",name:"Thiodox 300 Mg 60 Capsule"},
-  {code:"103351031",name:"Levozyrt 5mg 30 Tablet"},
-  {code:"102498612",name:"Jp Prima D3 5000 Iu 60 Caps"},
-  {code:"103324139",name:"Nhs Megatone Q10 100 Mg Fish Oil 1100 Mg 30 Capsules"},
-  {code:"103068631",name:"Limitless Allzyme Original 30 Enteric Coated Tablets"},
-  {code:"102638662",name:"Fas Hepasyl 30 Softgels"},
-  {code:"103066619",name:"Diacerein 50 Mg 30 Hard Gelatin Capsules"},
-  {code:"103008620",name:"Atiquix 2.5 Mg 60 Tab"},
-  {code:"103261810",name:"Solaray Calcium Magnesium Zinc 100 Capsules"},
-  {code:"103211759",name:"Solaray Hair Nutrients 120 Capsules"},
-  {code:"103211716",name:"Solaray Glucosamine Chondroitin Ha 90 Veg Capsules"},
-  {code:"102786593",name:"Nahdi Alcohol Pads 200 Pcs"},
-  {code:"103431621",name:"Dapxiga 5mg 30 Tablet"},
-  {code:"103585814",name:"Sacvaly 200 Mg 60 Tab"},
-  {code:"102570653",name:"Zympass 20 Mg/10 Mg 30 Tab"},
-  {code:"101533818",name:"Dulcolax 5 Mg Sugar Coated Tabs 40"},
-  {code:"102917776",name:"Antinal 200mg 24 Caps"},
-  {code:"103585806",name:"Sacvaly 100 Mg 60 Tab"},
-  {code:"103617695",name:"Zetex 10 Mg 30 Tab"},
-  {code:"100017299",name:"Adol-Sinus Caplet 24pcs"},
-  {code:"102424656",name:"Xelorni 8 Mg 30 Tablets"},
-  {code:"100027112",name:"Hepa-Merz 3 gm Granules 10P 5 gm"},
-  {code:"103064621",name:"Sapofen 400 Mg Tablet 30 Pcs"},
-  {code:"102744271",name:"Co Light 60 Caps"},
-  {code:"103002009",name:"Nq Ginkoflex 60 Capsules"},
-  {code:"103101120",name:"Enablex 7.5 Mg 28 Tab"},
-  {code:"103380608",name:"Saventi 100 Mg 60 Tab"},
-  {code:"102325674",name:"H&B Chewable Calcium With Vit D 90 Chewable Tablets"},
-  {code:"103380616",name:"Saventi 200 Mg 60 Tab"},
-  {code:"102846728",name:"Esopole 20mg Cap 14 Pc"},
-  {code:"103380595",name:"Saventi 50 Mg 60 Tab"},
-  {code:"103023619",name:"Nevotic 500mg 10 Tab"},
-  {code:"103225624",name:"Argenta 120mg 7 Tab"},
-  {code:"103587019",name:"Cholib 145mg/40 Mg 30Tablet"},
-  {code:"103587001",name:"Cholib 145mg/20 Mg 30Tablet"},
-  {code:"103437918",name:"Rina Extra 30 Tab"},
-  {code:"100866389",name:"AIRFAST 5 MG CHEWABLE TABLET 30"},
-  {code:"103346928",name:"Abilirazole 5 Mg 30 Tablet"},
-  {code:"103084770",name:"Tiotropium Eva 30 Cap Inhalation Powder"},
-  {code:"102958105",name:"Cartimov 50mg 20 Capsule"},
-  {code:"100843312",name:"CARDICOR 5 MG TABLET 30"},
-  {code:"100024561",name:"Omeral 20 mg Capsule 14P"},
-  {code:"103257618",name:"Vetam 500 Mg 30 Film-Coated Tablet"},
-  {code:"103642647",name:"Gizlan Hct 300 Mg / 12.5 Mg 30 Tab"},
-  {code:"103483981",name:"Bivocard 5 Mg 30 Tab"},
-  {code:"103749364",name:"Uxorate 40 Mg 30 Film-Coated Tablet"},
-  {code:"102750056",name:"Ferrofol 150mg 0.5mg Folic Acid 30 Capsules"},
-  {code:"102570645",name:"Zympass 10 Mg/10 Mg 30 Tab"},
-  {code:"100007875",name:"Gupisone 5 mg Tablet 20pcs"},
-  {code:"103002017",name:"Nq Arax-Comind 30 Capsules"},
-  {code:"103749372",name:"Uxorate 80 Mg 28 Film-Coated Tablet"},
-  {code:"103659625",name:"Spasmopan 10mg 20tab"},
-  {code:"102988654",name:"Adol 500mg Caplets 48\'S"},
-  {code:"103540624",name:"Nhs Pros Star Pros Star 30 Tablet"},
-  {code:"102762621",name:"Glandy 60 Mg Fct 28 Tab"},
-  {code:"103758666",name:"Rafol 5mg 50 Tablets"},
-  {code:"100029345",name:"Glucare 500 mg Tablet 50P"},
-  {code:"103621707",name:"Sequit 100 Mg 30 Film-Coated Tablet"},
-  {code:"10251025",name:"Ruatine 20 mg 30 soft gels"},
-  {code:"103642698",name:"Gizamlo 300 Mg / 10 Mg 30 Tab"},
-  {code:"103680635",name:"Purout 300 Mg 28 Tablets"},
-  {code:"102461810",name:"Degasin 280 Mg 32 Cap"},
-  {code:"103642655",name:"Gizlan Hct 300 Mg / 12.5 Mg 30 Tab"},
-  {code:"103683617",name:"Telfast 180 Mg30Tablet"},
-  {code:"103635252",name:"Amaglime 2 Mg 30 Tablet"},
-  {code:"103795601",name:"Aciloc 20 Mg Capsule 28 Pcs"},
-  {code:"103759968",name:"Aciloc 40 Mg Capsule 28 Cap"},
-  {code:"103488707",name:"Folic Acid 1mg 30 Tablets"},
-  {code:"103659158",name:"Irovel Plus 300 Mg / 12.5 Mg 30 Tab"},
-  {code:"103628095",name:"Relaxon Forte 500 Mg 30tablets"},
-  {code:"103652773",name:"Velexel 75 Mg 28 Prolonged-Release Tablet"},
-  {code:"103652765",name:"Velexel 150 Mg 28 Prolonged-Release Tablet"},
-  {code:"103596231",name:"Pharmaton Vitality 30 Tablet"},
-  {code:"103470611",name:"Laprix 5 Mg 28 Film-Coated Tablet"}
+javascript:(function(){
+var APP_VERSION='136.4';
+/* Load font non-blocking (single request) */
+if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
+var APP_NAME='EZ_Pill Farmadosis';
+
+/* ══════════════════════════════════════════
+   WHAT'S NEW - CHANGELOG SYSTEM
+   ══════════════════════════════════════════ */
+var CHANGELOG={
+  '136.4':{
+    title:'أوقات بدء مخصصة للأكواد 🕐',
+    features:[
+      {icon:'🕐',text:'إضافة: تاب جديد "أوقات الأكواد" في الإعدادات المحمية'},
+      {icon:'💊',text:'تعيين وقت بدء مخصص لكل كود صنف'},
+      {icon:'⏰',text:'لو النوت فاضي → يستخدم وقت الكود بدل الافتراضي 9:00'},
+      {icon:'⚠️',text:'التحذيرات تتجاهل الأكواد اللي ليها وقت مخصص'}
+    ]
+  },
+  '136.3':{
+    title:'إصلاح الأوقات والتحذيرات 🕐⚠️',
+    features:[
+      {icon:'🕐',text:'إصلاح: "قبل الأكل مرتين" → 8:00 (كان 9:00)'},
+      {icon:'🍽️',text:'إضافة: "قبل/بعد الغذاء" و "الغداء" → 13:00/14:00'},
+      {icon:'⚠️',text:'تحذير للجرعات غير المفهومة'},
+      {icon:'📝',text:'النوت الفاضي → وقت افتراضي 9:00'}
+    ]
+  },
+  '136.2':{
+    title:'تصليح حساب تواريخ رمضان النهائي 🌙✅',
+    features:[
+      {icon:'✅',text:'إصلاح التعارض بين الدالتين في حساب التواريخ'},
+      {icon:'📅',text:'الفطار: لا تزيد شيء (15→16 تم بالفعل) = يوم 16 ✓'},
+      {icon:'🌙',text:'السحور: تزيد يوم واحد فقط (16+1) = يوم 17 ✓'}
+    ]
+  },
+  '136.0':{
+    title:'وضع رمضان + لوحة إعدادات 🌙⚙️',
+    features:[
+      {icon:'🌙',text:'سويتش وضع رمضان - تحويل الجرعات لأوقات الفطار والسحور'},
+      {icon:'🕌',text:'4 أوقات رمضان: قبل الفطار · بعد الفطار · قبل السحور · بعد السحور'},
+      {icon:'⚙️',text:'لوحة إعدادات محمية برقم سري - تعديل الأوقات والأكواد'},
+      {icon:'💊',text:'إضافة/تعديل/حذف أكواد الأصناف ذات الحجم الثابت'},
+      {icon:'🗓️',text:'إدارة أكواد الجرعات الأسبوعية'},
+      {icon:'⏰',text:'تخصيص جميع أوقات الجرعات (عادية + رمضان)'},
+      {icon:'💾',text:'جميع التعديلات تُحفظ في المتصفح وتبقى حتى بعد الإغلاق'}
+    ]
+  },
+  '135.0':{
+    title:'تصميم جديد بالكامل 🎨',
+    features:[
+      {icon:'✨',text:'دايلوج جديد بتصميم Glassmorphism مع تأثيرات Shimmer'},
+      {icon:'📅',text:'أزرار الأشهر بوصف عربي (شهر / شهرين / ٣ شهور)'},
+      {icon:'🔘',text:'Toggles ذكية بتنور لما تتفعّل'},
+      {icon:'⚡',text:'زرار المعالجة بتأثير Pulse + progress bar جديد'},
+      {icon:'🛡️',text:'Functions موحدة + Column Aliases لحماية من تغيير الأعمدة'},
+      {icon:'🔍',text:'Error handling واضح - بيقولك إيه العمود الناقص بالاسم'},
+      {icon:'🔁',text:'تنبيه الأصناف المكررة في نفس الطلب'}
+    ]
+  },
+  '134.0':{
+    title:'تحديث ذكي ⚡',
+    features:[
+      {icon:'💾',text:'حفظ الإعدادات تلقائياً - الأشهر والأيام والخيارات تترجع زي ما سبتها'},
+      {icon:'🔁',text:'تنبيه التكرار - لو نفس الصنف موجود أكتر من مرة في الطلب'},
+      {icon:'📊',text:'ملخص الطلب - إحصائيات كاملة بعد المعالجة'},
+      {icon:'🌙',text:'الوضع الليلي (Dark Mode) - للشغل بالليل'},
+      {icon:'🔔',text:'أصوات تنبيه ذكية - تختلف حسب نوع التنبيه'}
+    ]
+  },
+  '133.0':{
+    title:'تحديث ذكي 🧠',
+    features:[
+      {icon:'👤',text:'استخلاص اسم الضيف/المريض من Prescription Notes تلقائياً'},
+      {icon:'⚠️',text:'نظام تحذيرات جديد بالكامل - لكل تحذير زرار تطبيق أو تجاهل'},
+      {icon:'💊',text:'اكتشاف الجرعة المزدوجة (2 Undefined/tablets) مع تغيير Dose وتضاعف Size'},
+      {icon:'🔍',text:'بحث ذكي في Import Invoice بالفاتورة أو ERX'},
+      {icon:'🛡️',text:'حماية الفاتورة الحالية من الاستيراد المكرر'},
+      {icon:'📋',text:'زرار تصغير لدايلوج خيارات إضافية'},
+      {icon:'📦',text:'اكتشاف تعليمات التغليف: دمج بوكس واحد أو كل شهر بصندوق منفصل'},
+      {icon:'🎉',text:'شاشة What\'s New تظهر مرة واحدة مع كل تحديث'}
+    ]
+  },
+  '132.0':{
+    title:'تحديث رئيسي 🎉',
+    features:[
+      {icon:'🎨',text:'واجهة Dialog جديدة بتصميم احترافي'},
+      {icon:'💊',text:'دعم كل 6 ساعات (Q6H) → صفين × 12 ساعة'},
+      {icon:'📋',text:'جدول جرعات محسن مع تعليم أصناف التكرار ⚡'},
+      {icon:'🌐',text:'اكتشاف لغة الجرعات وضبط Patient Language'},
+      {icon:'🖌️',text:'تنسيق احترافي للصفحة والأزرار والجداول'}
+    ]
+  }
+};
+
+function showWhatsNew(){
+  try{
+    var lastSeen=localStorage.getItem('ez_pill_version');
+    if(lastSeen===APP_VERSION) return;
+    var info=CHANGELOG[APP_VERSION];
+    if(!info&&lastSeen) {localStorage.setItem('ez_pill_version',APP_VERSION);return;}
+    if(!info) info={title:'تحديث جديد ✨',features:[{icon:'🚀',text:'تم التحديث إلى النسخة '+APP_VERSION}]};
+
+    /* Build features HTML */
+    var featuresHtml='';
+    for(var i=0;i<info.features.length;i++){
+      var f=info.features[i];
+      featuresHtml+='<div class="ez-wn-item" style="animation-delay:'+(0.1+i*0.07)+'s">'+
+        '<span class="ez-wn-icon">'+f.icon+'</span>'+
+        '<span class="ez-wn-text">'+f.text+'</span></div>';
+    }
+
+    /* Create overlay */
+    var overlay=document.createElement('div');
+    overlay.id='ez-whats-new';
+    overlay.innerHTML='\
+    <style>\
+    #ez-whats-new{position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:999998;display:flex;align-items:center;justify-content:center;animation:ezWnFadeIn 0.4s ease}\
+    @keyframes ezWnFadeIn{from{opacity:0}to{opacity:1}}\
+    @keyframes ezWnSlideUp{from{opacity:0;transform:translateY(40px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}\
+    @keyframes ezWnItemIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}\
+    @keyframes ezWnPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}\
+    @keyframes ezWnShine{0%{background-position:-200% 0}100%{background-position:200% 0}}\
+    @keyframes ezWnConfetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(-60px) rotate(360deg);opacity:0}}\
+    .ez-wn-card{background:#fff;border-radius:22px;width:380px;max-height:85vh;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.2),0 8px 24px rgba(0,0,0,0.08);animation:ezWnSlideUp 0.5s cubic-bezier(0.16,1,0.3,1);border:2px solid rgba(129,140,248,0.12);position:relative}\
+    .ez-wn-confetti{position:absolute;top:0;left:0;right:0;height:120px;pointer-events:none;overflow:hidden}\
+    .ez-wn-dot{position:absolute;width:6px;height:6px;border-radius:50%;animation:ezWnConfetti 1.5s ease-out forwards}\
+    .ez-wn-header{background:linear-gradient(145deg,#6366f1,#4f46e5);padding:28px 24px 22px;text-align:center;position:relative;overflow:hidden}\
+    .ez-wn-header::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);background-size:200% 100%;animation:ezWnShine 3s ease infinite}\
+    .ez-wn-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;color:rgba(255,255,255,0.9);margin-bottom:10px;border:1px solid rgba(255,255,255,0.15);letter-spacing:0.5px}\
+    .ez-wn-badge-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,0.5);animation:ezWnPulse 1.5s ease infinite}\
+    .ez-wn-ver{font-size:36px;font-weight:900;color:#fff;font-family:Cairo,sans-serif;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,0.15)}\
+    .ez-wn-ver-sub{font-size:13px;font-weight:700;color:rgba(255,255,255,0.75);margin-top:4px;font-family:Cairo,sans-serif}\
+    .ez-wn-body{padding:20px 22px;max-height:300px;overflow-y:auto}\
+    .ez-wn-title{font-size:16px;font-weight:900;color:#1e1b4b;font-family:Cairo,sans-serif;margin-bottom:12px;display:flex;align-items:center;gap:6px}\
+    .ez-wn-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;margin-bottom:4px;border-radius:10px;transition:all 0.25s;opacity:0;animation:ezWnItemIn 0.4s ease forwards}\
+    .ez-wn-item:hover{background:rgba(129,140,248,0.05)}\
+    .ez-wn-icon{font-size:18px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(129,140,248,0.08);border-radius:8px}\
+    .ez-wn-text{font-size:13px;font-weight:700;color:#3730a3;font-family:Cairo,sans-serif;line-height:1.5;direction:rtl;flex:1}\
+    .ez-wn-footer{padding:14px 22px 18px;border-top:1px solid rgba(129,140,248,0.08)}\
+    .ez-wn-btn{width:100%;height:48px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 6px 20px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.2),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;position:relative;overflow:hidden}\
+    .ez-wn-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}\
+    .ez-wn-btn::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transition:0.5s}\
+    .ez-wn-btn:hover::after{left:100%}\
+    .ez-wn-skip{display:block;text-align:center;margin-top:8px;font-size:11px;font-weight:700;color:#a5b4fc;cursor:pointer;font-family:Cairo,sans-serif;transition:color 0.2s;background:none;border:none;width:100%}\
+    .ez-wn-skip:hover{color:#6366f1}\
+    </style>\
+    <div class="ez-wn-card">\
+      <div class="ez-wn-confetti" id="ez-wn-confetti"></div>\
+      <div class="ez-wn-header">\
+        <div class="ez-wn-badge"><span class="ez-wn-badge-dot"></span> NEW UPDATE</div>\
+        <div class="ez-wn-ver">v'+APP_VERSION+'</div>\
+        <div class="ez-wn-ver-sub">'+APP_NAME+'</div>\
+      </div>\
+      <div class="ez-wn-body">\
+        <div class="ez-wn-title">'+info.title+'</div>\
+        '+featuresHtml+'\
+      </div>\
+      <div class="ez-wn-footer">\
+        <button class="ez-wn-btn" id="ez-wn-ok">تمام، يلا نبدأ 🚀</button>\
+        <button class="ez-wn-skip" id="ez-wn-skip">عدم الإظهار لهذا التحديث</button>\
+      </div>\
+    </div>';
+    document.body.appendChild(overlay);
+
+    /* Confetti dots */
+    var confettiEl=document.getElementById('ez-wn-confetti');
+    var colors=['#818cf8','#a78bfa','#f59e0b','#10b981','#f472b6','#22d3ee','#6366f1'];
+    for(var c=0;c<20;c++){
+      var dot=document.createElement('div');
+      dot.className='ez-wn-dot';
+      dot.style.cssText='left:'+Math.random()*100+'%;top:'+(60+Math.random()*40)+'%;background:'+colors[c%colors.length]+';animation-delay:'+Math.random()*0.8+'s;animation-duration:'+(1+Math.random()*0.8)+'s;width:'+(4+Math.random()*5)+'px;height:'+(4+Math.random()*5)+'px';
+      confettiEl.appendChild(dot);
+    }
+
+    /* Close handlers */
+    function closeWN(){
+      localStorage.setItem('ez_pill_version',APP_VERSION);
+      overlay.style.animation='ezWnFadeIn 0.3s ease reverse';
+      setTimeout(function(){overlay.remove();},300);
+    }
+    document.getElementById('ez-wn-ok').addEventListener('click',closeWN);
+    document.getElementById('ez-wn-skip').addEventListener('click',closeWN);
+    overlay.addEventListener('click',function(e){if(e.target===overlay)closeWN();});
+  }catch(e){
+    /* localStorage not available or error - skip silently */
+    console.log('EZ WhatsNew:',e);
+  }
+}
+
+/* ══════════════════════════════════════════
+   SETTINGS PERSISTENCE (localStorage)
+   ══════════════════════════════════════════ */
+var EZ_SETTINGS_KEY='ez_pill_settings';
+var EZ_CUSTOM_KEY='ez_pill_custom';
+var EZ_USERS_KEY='ez_pill_users';
+/* ── PIN hash (SHA-like simple hash for obfuscation) ── */
+function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'ezh_'+(h>>>0).toString(36);}
+var _EZ_PIN_HASH=_ezHashPin(101093);
+
+/* ── Default Users ── */
+var _DEFAULT_USERS = [
+  { name: 'اسامه السقا', hash: _ezHashPin(105893) }
 ];
-// =============================================
+
+/* User management */
+function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);return s?JSON.parse(s):[];}catch(e){return[];}}
+function saveUsers(arr){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(arr));}catch(e){}}
+function authenticatePin(pin){
+  var hash=_ezHashPin(pin);
+  if(hash===_EZ_PIN_HASH) return {role:'admin',name:'Admin'};
+  var users=loadUsers();
+  for(var i=0;i<users.length;i++){if(users[i].hash===hash) return {role:'user',name:users[i].name};}
+  return null;
+}
+
+function loadSettings(){
+  try{
+    var s=localStorage.getItem(EZ_SETTINGS_KEY);
+    return s?JSON.parse(s):{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false,ramadanMode:false};
+  }catch(e){return{m:1,t:30,autoDuration:true,showWarnings:true,darkMode:false,ramadanMode:false};}
+}
+function saveSettings(obj){
+  try{var cur=loadSettings();for(var k in obj)cur[k]=obj[k];localStorage.setItem(EZ_SETTINGS_KEY,JSON.stringify(cur));}catch(e){}
+}
+function loadCustomConfig(){
+  try{var s=localStorage.getItem(EZ_CUSTOM_KEY);return s?JSON.parse(s):{};}catch(e){return{};}
+}
+function saveCustomConfig(obj){
+  try{localStorage.setItem(EZ_CUSTOM_KEY,JSON.stringify(obj));}catch(e){}
+}
+var savedSettings=loadSettings();
+/* ── User System (Master Control) ── */
+var EZ_USERS_KEY='ez_pill_users';
+function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'ezh_'+(h>>>0).toString(36);}
+function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){localStorage.setItem(EZ_USERS_KEY,JSON.stringify(_DEFAULT_USERS));return _DEFAULT_USERS;}return[];}catch(e){return[];}}
+function saveUsers(u){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(u));}catch(e){}}
+var _DEFAULT_USERS = [
+  { name: 'اسامه السقا', hash: _ezHashPin(105893) }
+];
+
+var _EZ_RAMADAN_RULES=[{test:/beforeIftar/,time:'18:30',label:'قبل الإفطار'},{test:/afterIftar/,time:'19:00',label:'بعد الإفطار'},{test:/beforeSuhoor/,time:'03:00',label:'قبل السحور'},{test:/afterSuhoor/,time:'04:00',label:'بعد السحور'}];
+
+var customConfig=loadCustomConfig();
+
+/* ══════════════════════════════════════════
+   SOUND ALERTS (Web Audio API)
+   ══════════════════════════════════════════ */
+function ezBeep(type){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    gain.gain.value=0.08;
+    if(type==='success'){osc.frequency.value=880;osc.type='sine';gain.gain.value=0.06;}
+    else if(type==='warning'){osc.frequency.value=440;osc.type='triangle';gain.gain.value=0.08;}
+    else if(type==='error'){osc.frequency.value=280;osc.type='sawtooth';gain.gain.value=0.05;}
+    else if(type==='info'){osc.frequency.value=660;osc.type='sine';gain.gain.value=0.05;}
+    else{osc.frequency.value=550;osc.type='sine';}
+    osc.start();
+    if(type==='warning'){
+      /* Double beep for warnings */
+      gain.gain.setValueAtTime(0.08,ctx.currentTime);
+      gain.gain.setValueAtTime(0,ctx.currentTime+0.12);
+      gain.gain.setValueAtTime(0.08,ctx.currentTime+0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.35);
+      osc.stop(ctx.currentTime+0.4);
+    } else if(type==='success'){
+      /* Rising tone */
+      osc.frequency.setValueAtTime(660,ctx.currentTime);
+      osc.frequency.setValueAtTime(880,ctx.currentTime+0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.25);
+      osc.stop(ctx.currentTime+0.3);
+    } else {
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.2);
+      osc.stop(ctx.currentTime+0.25);
+    }
+  }catch(e){}
+}
+var _defaultFixedSizeCodes={
+  '100009926':24,  '100009934':48,  '100010097':20,  '100010652':30,  '100011436':20,  '100011743':30,  '100013167':20,  '100013423':10,  '100013431':15,  '100013562':20,  '100014565':6,  '100015947':24,  '100015955':24,  '100015971':24,  '100015980':24,  '100016106':10,  '100017942':20,  '100023592':30,  '100023875':20,  '100027201':20,  '100030493':40,  '100633972':20,  '100634019':20,  '100684294':30,  '100726280':24,  '101284170':30,  '101826688':20,  '101859640':20,  '102077738':10,  '102371620':24,  '102988654':48,  '103169239':20,  '103243857':30,  '103437918':30,  '103683617':30
+};
+var _defaultWeeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
+var _defaultNormalTimes={empty:'07:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:30',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'15:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:30',bed:'22:00',defaultTime:'09:00'};
+var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00'};
+
+/* Merge defaults with custom overrides */
+var fixedSizeCodes=(function(){var base={};for(var k in _defaultFixedSizeCodes)base[k]=_defaultFixedSizeCodes[k];if(customConfig.fixedSizeCodes){for(var k in customConfig.fixedSizeCodes)base[k]=customConfig.fixedSizeCodes[k];}if(customConfig.removedCodes){for(var i=0;i<customConfig.removedCodes.length;i++)delete base[customConfig.removedCodes[i]];}return base;})();
+
+var weeklyInjections=(function(){var base=_defaultWeeklyInjections.slice();if(customConfig.addedWeekly){for(var i=0;i<customConfig.addedWeekly.length;i++){if(base.indexOf(customConfig.addedWeekly[i])===-1)base.push(customConfig.addedWeekly[i]);}}if(customConfig.removedWeekly){base=base.filter(function(c){return customConfig.removedWeekly.indexOf(c)===-1;});}return base;})();
+
+var NORMAL_TIMES=(function(){var base={};for(var k in _defaultNormalTimes)base[k]=_defaultNormalTimes[k];if(customConfig.normalTimes){for(var k in customConfig.normalTimes)base[k]=customConfig.normalTimes[k];}return base;})();
+
+/* Code-specific start times (used when note is empty/unrecognized instead of default 9:00) */
+var CODE_START_TIMES=(function(){var base={};if(customConfig.codeStartTimes){for(var k in customConfig.codeStartTimes)base[k]=customConfig.codeStartTimes[k];}return base;})();
+
+/* ══════════════════════════════════════════
+   RAMADAN MODE CONSTANTS & HELPERS
+   ══════════════════════════════════════════ */
+var RAMADAN_TIMES=(function(){var base={};for(var k in _defaultRamadanTimes)base[k]=_defaultRamadanTimes[k];if(customConfig.ramadanTimes){for(var k in customConfig.ramadanTimes)base[k]=customConfig.ramadanTimes[k];}return base;})();
+
+/* Map normal meal words to Ramadan equivalents */
+function ramadanMapNote(note){
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
+
+  /* ── Check custom Ramadan keywords FIRST ── */
+  if(customConfig.customRamadanRules){
+    for(var i=0;i<customConfig.customRamadanRules.length;i++){
+      var cr=customConfig.customRamadanRules[i];
+      try{if(new RegExp(cr.pattern,'i').test(note)){
+        return {meal:cr.meal,label_ar:cr.label_ar||cr.label,label_en:cr.label_en||cr.label,time:cr.time};
+      }}catch(e){}
+    }
+  }
+  /* ── Check custom normal keywords mapped to Ramadan ── */
+  if(customConfig.customTimeRules){
+    for(var i=0;i<customConfig.customTimeRules.length;i++){
+      var cr=customConfig.customTimeRules[i];
+      try{
+        /* Smart matching: normalize both pattern and input for Arabic flexibility */
+        var nNote=(note||'').replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');
+        var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');
+        /* Also try matching without ال التعريف */
+        var nPat2=nPat.replace(/^ال/,'(ال)?');
+        if(new RegExp(nPat,'i').test(note)||new RegExp(nPat2,'i').test(note)){
+          /* Map custom time to nearest Ramadan meal */
+          var h=parseInt(cr.time.split(':')[0]);
+          var meal,lbl_ar,lbl_en,tm;
+          if(h>=15&&h<19){meal='beforeIftar';lbl_ar='قبل الفطار';lbl_en='Before Iftar';tm=RAMADAN_TIMES.beforeIftar;}
+          else if(h>=19||h<1){meal='afterIftar';lbl_ar='بعد الفطار';lbl_en='After Iftar';tm=RAMADAN_TIMES.afterIftar;}
+          else if(h>=1&&h<4){meal='beforeSuhoor';lbl_ar='قبل السحور';lbl_en='Before Suhoor';tm=RAMADAN_TIMES.beforeSuhoor;}
+          else if(h>=4&&h<7){meal='afterSuhoor';lbl_ar='بعد السحور';lbl_en='After Suhoor';tm=RAMADAN_TIMES.afterSuhoor;}
+          else{meal='afterIftar';lbl_ar='بعد الفطار';lbl_en='After Iftar';tm=RAMADAN_TIMES.afterIftar;}
+          return {meal:meal,label_ar:lbl_ar,label_en:lbl_en,time:tm};
+        }
+      }catch(e){}
+    }
+  }
+  /* ── SPECIAL: Note mentions BOTH iftar AND suhoor → return special marker for duplicate ── */
+  if((/فطار|فطور|فطر|افطار|iftar/i.test(note))&&(/سحور|سحر|suhoor|sahoor/i.test(note))){
+    return {meal:'both',label_ar:'فطار + سحور',label_en:'Iftar + Suhoor',time:RAMADAN_TIMES.afterIftar,isBoth:true};
+  }
+
+  /* ── CRITICAL: Check Suhoor BEFORE dinner mapping ── */
+  /* قبل السحور / before suhoor */
+  if(/قبل.*سحور|قبل.*سحر|before.*suhoor|before.*sahoor|before.*sahor/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
+  /* بعد السحور / after suhoor */
+  if(/بعد.*سحور|بعد.*سحر|after.*suhoor|after.*sahoor|after.*sahor/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+
+  /* ── Check Iftar (Breakfast in Ramadan) ── */
+  /* قبل الفطار / before iftar */
+  if(/قبل.*فطار|قبل.*فطور|قبل.*افطار|before.*iftar|before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* بعد الفطار / after iftar */
+  if(/بعد.*فطار|بعد.*فطور|بعد.*افطار|after.*iftar|after.*breakfast/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+
+  /* ── Map dinner → Suhoor (NOT Iftar) ── */
+  /* قبل العشاء / before dinner → قبل السحور */
+  if(/قبل.*عشا|قبل.*عشو|قبل.*عشاء|before.*din|before.*sup|before.*dinner|before.*asha/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
+  /* بعد العشاء / after dinner → بعد السحور */
+  if(/بعد.*عشا|بعد.*عشو|بعد.*عشاء|after.*din|after.*sup|after.*dinner|after.*asha/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  if(/بعد.*سحور|بعد.*سحر|after.*suhoor|after.*sahoor|after.*sahor/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  /* قبل الفطار / before iftar (explicit) */
+  if(/قبل.*فطار|قبل.*فطر|قبل.*فطور|قبل.*افطار|before.*iftar|before.*bre/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* بعد الفطار / after iftar / breakfast */
+  if(/بعد.*فطار|بعد.*فطر|بعد.*فطور|بعد.*افطار|after.*iftar|after.*bre/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  /* Morning / صباح → بعد السحور */
+  if(/صباح|الصباح|morning|am\b/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  /* Evening / مساء / bed / نوم → بعد الفطار */
+  if(/مساء|مسا|evening|eve|bed|sleep|نوم|النوم|hs\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  /* Noon / ظهر / Lunch / غداء → قبل الفطار (closest meaningful time) */
+  if(/ظهر|الظهر|noon|midday|غدا|غداء|الغدا|الغداء|lunch|lun/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* عصر / afternoon → قبل الفطار */
+  if(/عصر|العصر|asr|afternoon/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* على الريق / empty stomach → قبل السحور */
+  if(/ريق|الريق|empty|fasting|stomach/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
+  /* قبل الأكل / before meal → قبل الفطار */
+  if(/قبل\s*(الاكل|الأكل|الوجبات)|before\s*(meal|food)|ac\b/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  /* بعد الأكل / after meal → بعد الفطار */
+  if(/بعد\s*(الاكل|الأكل|الوجبات)|after\s*(meal|food)|pc\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  return null;
+}
+
+/* Check if a Ramadan time is Suhoor (past midnight, need +1 extra day) */
+function isRamadanSuhoorTime(meal){
+  return meal==='beforeSuhoor'||meal==='afterSuhoor';
+}
+
+/* Get Ramadan start date for a given meal type */
+function getRamadanStartDate(baseDateStr,meal){
+  if(!baseDateStr) return baseDateStr;
+  var base=new Date(baseDateStr);
+  /* ملاحظة: baseDateStr بيجي من #fstartDate اللي فيه +1 يوم بالفعل
+     يعني لو اليوم 15، baseDateStr = 16
+     الفطار: ما نزودش حاجة → يبقى 16 ✓
+     السحور: نزود يوم واحد بس → 16+1 = 17 ✓ */
+  if(isRamadanSuhoorTime(meal)){
+    base.setDate(base.getDate()+1);
+  }
+  /* الفطار: ما نزودش حاجة - نرجع التاريخ زي ما هو */
+  return _fmtDate(base);
+}
+function _fmtDate(d){var y=d.getFullYear(),ms=('0'+(d.getMonth()+1)).slice(-2),da=('0'+d.getDate()).slice(-2);return y+'-'+ms+'-'+da;}
+
+/* Determine Ramadan duplicate type from note (all Ramadan doses with 2 times = duplicate) */
+function ramadanShouldDuplicate(note){
+  var d=smartDoseRecognizer(note);
+  /* BID / مرتين / كل 12 ساعة → duplicate to فطار + سحور */
+  if(d.count===2||d.rawFrequency==='BID'||d.rawFrequency==='Q12H') return {type:'ramadan_two',meals:['iftar','suhoor']};
+  /* TID / 3 مرات / كل 8 → duplicate to فطار + سحور (+ warning) */
+  if(d.count===3||d.rawFrequency==='TID'||d.rawFrequency==='Q8H') return {type:'ramadan_two',meals:['iftar','suhoor']};
+  /* QID / 4 مرات / كل 6 → duplicate to فطار + سحور */
+  if(d.count>=4||d.rawFrequency==='QID'||d.rawFrequency==='Q6H'||d.rawFrequency==='Q4H') return {type:'ramadan_two',meals:['iftar','suhoor']};
+  /* OD / once daily → single, will be handled by the "once daily" prompt */
+  if(d.count===1) return null;
+  return null;
+}
+
+/* Check if item is injection/syrup/ointment/cream (non-oral solid) */
+function isNonTabletItem(itemName){
+  return /injection|حقن|حقنة|حقنه|syrup|شراب|cream|كريم|ointment|مرهم|مره|lotion|لوشن|gel|جل|drop|قطر|قطره|spray|بخاخ|inhaler|بخاخة|suppository|لبوس|solution|محلول|suspension|معلق|emulsion|مستحلب|patch|لصقة|لاصق/i.test(itemName||'');
+}
+
+var warningQueue=[];
+var _EZ_WARNING_CONFIG={
+  ramadan_unclear:{enabled:true,label:'جرعة غير واضحة في رمضان'},
+  dose2:{enabled:true,label:'جرعة مزدوجة (2) في الملاحظات'},
+  duplicate:{enabled:true,label:'صنف مكرر في الطلب'},
+  unrecognized_dose:{enabled:true,label:'الجرعة غير مفهومة'},
+  days:{enabled:true,label:'عدد الأيام مختلف عن المحدد'},
+  smallsplit:{enabled:true,label:'تقسيم صغير'}
+};
+var monthCounter=0;
+var originalStartDate='';
+var duplicatedRows=[];
+var duplicatedCount=0;
+
+/* ══════════════════════════════════════════
+   SHARED UTILITY FUNCTIONS (Single Source)
+   ══════════════════════════════════════════ */
+function _ezFire(el){
+  try{
+    if(!el)return;
+    el.focus();
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+    el.dispatchEvent(new Event('blur',{bubbles:true}));
+    if(typeof angular!=='undefined'){try{angular.element(el).triggerHandler('change');}catch(e){}}
+    if(typeof jQuery!=='undefined'){try{jQuery(el).trigger('change');}catch(e){}}
+  }catch(e){}
+}
+
+function _ezNorm(txt){
+  return(txt||'').toString().trim().replace(/\s+/g,' ');
+}
+
+function _ezNormL(txt){
+  return _ezNorm(txt).toLowerCase()
+    .replace(/[أإآ]/g,'ا')
+    .replace(/ة/g,'هـ')
+    .replace(/ئ/g,'ي')
+    .replace(/ؤ/g,'و')
+    .replace(/ى/g,'ي')
+    .trim();
+}
+
+function _ezGet(td){
+  if(!td) return '';
+  var i=td.querySelector('input,textarea,select');
+  if(i){
+    if(i.tagName==='SELECT'){var o=i.options[i.selectedIndex];return _ezNorm(o?o.textContent:i.value);}
+    return _ezNorm(i.value);
+  }
+  return _ezNorm(td.innerText||td.textContent);
+}
+
+function _ezSet(td,v){
+  if(!td) return;
+  var s=td.querySelector('select');
+  if(s){s.value=String(v);_ezFire(s);return;}
+  var i=td.querySelector('input,textarea');
+  if(i){i.value=v;_ezFire(i);}
+  else td.textContent=v;
+}
+
+/* Column aliases - Point 1: Resilient column detection */
+var COLUMN_ALIASES={
+  'qty':['qty','quantity','كمية','الكمية','qnty','q.ty','عدد'],
+  'size':['size','حجم','الحجم','sz','pack size','pack'],
+  'note':['note','notes','ملاحظة','ملاحظات','remark','remarks','prescription note'],
+  'every':['every','evry','كل','المدة','frequency','freq','interval'],
+  'time':['start time','time','وقت','الوقت','timing'],
+  'dose':['dose','جرعة','الجرعة','dosage','dos'],
+  'code':['code','كود','الكود','item code','barcode','رمز'],
+  'start date':['start date','تاريخ البدء','بداية','from'],
+  'end date':['end date','end','تاريخ الانتهاء','نهاية','to'],
+  'expiry':['expiry','exp','صلاحية','انتهاء الصلاحية'],
+  'name':['name','item','اسم','الاسم','item name','drug name','medication','drug']
+};
+
+function _ezIdx(ths,name){
+  var key=name.toLowerCase().trim();
+  var aliases=COLUMN_ALIASES[key]||[key];
+  for(var i=0;i<ths.length;i++){
+    var txt=_ezNormL(ths[i].textContent);
+    for(var a=0;a<aliases.length;a++){
+      if(txt===aliases[a]||txt.indexOf(aliases[a])>-1) return i;
+    }
+  }
+  return-1;
+}
+
+/* Find main data table with resilient detection */
+function _ezFindTable(){
+  var tables=document.querySelectorAll('table');
+  for(var i=0;i<tables.length;i++){
+    var ths=tables[i].querySelectorAll('th');
+    if(ths.length>3){
+      var hasQty=_ezIdx(ths,'qty')>=0;
+      var hasNote=_ezIdx(ths,'note')>=0;
+      if(hasQty&&hasNote) return tables[i];
+    }
+  }
+  /* Fallback: largest table */
+  var best=null,bestCols=0;
+  for(var j=0;j<tables.length;j++){
+    var cols=tables[j].querySelectorAll('th').length;
+    if(cols>bestCols){bestCols=cols;best=tables[j];}
+  }
+  return best;
+}
+
+/* ══════════════════════════════════════════
+   LANGUAGE DETECTION
+   ══════════════════════════════════════════ */
+function detectLanguage(text){
+  if(!text) return 'arabic';
+  var arabicCount=(text.match(/[\u0600-\u06FF]/g)||[]).length;
+  var englishCount=(text.match(/[a-zA-Z]/g)||[]).length;
+  var medAbbrev=(text.match(/\b(mg|mcg|ml|kg|gr|gm|iu|bid|tid|qid|prn|tab|cap|pcs?)\b/gi)||[]).length;
+  var adjustedEnglish=englishCount-(medAbbrev*3);
+  if(arabicCount===0 && englishCount>2) return 'english';
+  if(adjustedEnglish>arabicCount && adjustedEnglish>5) return 'english';
+  return 'arabic';
+}
+
+function setPatientLanguage(language){
+  var langSelect=document.querySelector('select[name*="language" i], select[id*="language" i], #flanguage, #fplanguage, #patientLanguage');
+  if(!langSelect){
+    var allSelects=document.querySelectorAll('select');
+    for(var j=0;j<allSelects.length;j++){
+      var prev=allSelects[j].previousElementSibling||allSelects[j].parentNode;
+      var txt=(prev?prev.textContent:'').toLowerCase();
+      if(txt.indexOf('language')>-1||txt.indexOf('لغة')>-1||txt.indexOf('lang')>-1){langSelect=allSelects[j];break;}
+      var ops=allSelects[j].options;
+      var hasAr=false,hasEn=false;
+      for(var k=0;k<ops.length;k++){var ot=ops[k].text.toLowerCase();if(ot==='arabic'||ot==='عربي')hasAr=true;if(ot==='english'||ot==='انجليزي')hasEn=true;}
+      if(hasAr&&hasEn){langSelect=allSelects[j];break;}
+    }
+  }
+  if(langSelect){
+    var targetValue=language==='english'?'English':'Arabic';
+    var options=langSelect.options;
+    for(var i=0;i<options.length;i++){
+      if(options[i].text===targetValue||options[i].value===targetValue||
+         options[i].text.toLowerCase()===targetValue.toLowerCase()){
+        langSelect.selectedIndex=i;
+        langSelect.dispatchEvent(new Event('input',{bubbles:true}));
+        langSelect.dispatchEvent(new Event('change',{bubbles:true}));
+        langSelect.dispatchEvent(new Event('blur',{bubbles:true}));
+        if(typeof angular!=='undefined'){try{angular.element(langSelect).triggerHandler('change');}catch(e){}}
+        if(typeof jQuery!=='undefined'){try{jQuery(langSelect).trigger('change');}catch(e){}}
+        return true;
+      }
+    }
+  }
+}
+
+/* ══════════════════════════════════════════
+   TOAST NOTIFICATION SYSTEM
+   ══════════════════════════════════════════ */
+window.ezShowToast=function(msg,type){
+  var t=document.createElement('div');
+  t.className='ez-toast ez-toast-'+type;
+  t.innerHTML='<div class="ez-toast-icon">'+
+    {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'}[type]+
+    '</div><div class="ez-toast-msg">'+msg+'</div>';
+  document.body.appendChild(t);
+  setTimeout(function(){t.classList.add('show');},10);
+  setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},300);},3000);
+  /* Sound alert */
+  if(type==='warning'||type==='error') ezBeep(type);
+};
+
+/* ══════════════════════════════════════════
+   DIALOG CONTROL FUNCTIONS
+   ══════════════════════════════════════════ */
+window.ezCancel=function(){
+  var d=document.getElementById('ez-dialog-box');
+  if(d) d.remove();
+};
+
+window.ezClosePost=function(){
+  var d=document.getElementById('ez-post-dialog');
+  if(d) d.remove();
+};
+
+window.ezMinimizePost=function(){
+  var d=document.getElementById('ez-post-dialog');
+  if(d){
+    var body=d.querySelector('.ez-post-body');
+    var foot=d.querySelector('.ez-post-foot');
+    var btn=d.querySelector('.ez-post-min-btn');
+    if(body.style.display==='none'){
+      body.style.display='block';
+      if(foot) foot.style.display='block';
+      btn.innerHTML='−';
+    } else {
+      body.style.display='none';
+      if(foot) foot.style.display='none';
+      btn.innerHTML='+';
+    }
+  }
+};
+
+window.ezCloseDoses=function(){
+  var d=document.getElementById('ez-doses-dialog');
+  if(d) d.remove();
+};
+
+window.ezToggleDark=function(){
+  var isDark=document.body.classList.toggle('ez-dark-mode');
+  saveSettings({darkMode:isDark});
+  var btn=document.querySelector('.ez-header-actions .ez-btn-icon[onclick*="ezToggleDark"]');
+  if(btn) btn.textContent=isDark?'☀️':'🌙';
+  ezBeep('info');
+};
+
+window.ezMinimize=function(){
+  var d=document.getElementById('ez-dialog-box');
+  if(d){
+    var content=d.querySelector('.ez-content');
+    var foot=d.querySelector('.ez-footer');
+    var minBtn=d.querySelector('.ez-btn-icon-min');
+    if(content.style.display==='none'){
+      content.style.display='block';
+      if(foot) foot.style.display='block';
+      minBtn.innerHTML='−';
+    } else {
+      content.style.display='none';
+      if(foot) foot.style.display='none';
+      minBtn.innerHTML='+';
+    }
+  }
+};
+
+window.ezSelect=function(el,type,val){
+  var p=el.parentNode;
+  var pills=p.querySelectorAll('.ez-pill');
+  for(var i=0;i<pills.length;i++) pills[i].classList.remove('active');
+  el.classList.add('active');
+  var d=document.getElementById('ez-dialog-box');
+  if(type==='m') d.setAttribute('data-m',val);
+  else d.setAttribute('data-t',val);
+};
+
+/* ══════════════════════════════════════════
+   DOSES VIEWER
+   ══════════════════════════════════════════ */
+window.ezShowDoses=function(){
+  var existing=document.getElementById('ez-doses-dialog');
+  if(existing){existing.remove();return;}
+  var tb=_ezFindTable();
+  if(!tb){window.ezShowToast('لم يتم العثور على الجدول','error');return;}
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var ni=_ezIdx(hs,'note'),nmi=_ezIdx(hs,'name');
+  if(nmi<0) nmi=_ezIdx(hs,'item');
+  var cdi=_ezIdx(hs,'code');
+  if(ni<0||nmi<0){window.ezShowToast('أعمدة Note أو Name مش موجودة','error');return;}
+  function getVal(td){
+    if(!td)return'';
+    var inp=td.querySelector('input,textarea,select');
+    if(inp){if(inp.tagName==='SELECT'){var o=inp.options[inp.selectedIndex];return o?o.textContent.trim():inp.value.trim();}return inp.value.trim();}
+    return(td.innerText||td.textContent).trim();
+  }
+  function cleanN(txt){
+    if(!txt)return'';
+    var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
+    c=c.replace(/(.*?)أيام/,'').replace(/(.*?)days/i,'').replace(/^\s*-\s*/,'').trim();
+    return c.replace(/\s+/g,' ').trim();
+  }
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+  var seenCodes={};var items=[];
+  rows.forEach(function(r){
+    var tds=r.querySelectorAll('td');
+    if(tds.length>Math.max(ni,nmi)){
+      var name=getVal(tds[nmi]);
+      var note=cleanN(getVal(tds[ni]));
+      var code=cdi>=0&&tds.length>cdi?getVal(tds[cdi]).replace(/\D/g,''):'';
+      if(code&&seenCodes[code]){return;}
+      if(code) seenCodes[code]=true;
+      var isDup=false;
+      if(note){var nl=note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();isDup=!!shouldDuplicateRow(nl);}
+      if(name&&note) items.push({name:name,note:note,isDup:isDup});
+    }
+  });
+  if(items.length===0){window.ezShowToast('لا توجد بيانات جرعات','info');return;}
+  var html='';
+  html+='<div class="ez-doses-header"><div class="ez-logo-group"><div class="ez-doses-logo">📋</div><div class="ez-title-block"><div class="ez-doses-title">جدول الجرعات</div><div class="ez-sub-info"><span class="ez-items-count">📦 '+items.length+' صنف</span></div></div></div><button class="ez-btn-icon" onclick="window.ezCloseDoses()">×</button></div>';
+  html+='<div class="ez-doses-body">';
+  html+='<div class="ez-dose-header-row"><div class="ez-dose-num">#</div><div class="ez-dose-name">اسم الصنف</div><div class="ez-dose-note">الجرعة</div></div>';
+  for(var i=0;i<items.length;i++){
+    var dupClass=items[i].isDup?' ez-dose-item-dup':'';
+    var dupIcon=items[i].isDup?' ⚡':'';
+    html+='<div class="ez-dose-item'+dupClass+'"><div class="ez-dose-num">'+(i+1)+'</div><div class="ez-dose-name">'+items[i].name+'</div><div class="ez-dose-note">'+items[i].note+dupIcon+'</div></div>';
+  }
+  html+='</div>';
+  html+='<div class="ez-doses-footer"><button class="ez-btn-close-doses" onclick="window.ezCloseDoses()">✕ إغلاق</button></div>';
+  var dialog=document.createElement('div');
+  dialog.id='ez-doses-dialog';
+  dialog.className='ez-doses-dialog';
+  dialog.innerHTML=html;
+  document.body.appendChild(dialog);
+  makeDraggable(dialog);
+};
+
+/* ══════════════════════════════════════════
+   WARNING SYSTEM
+   ══════════════════════════════════════════ */
+window.showWarnings=function(warnings,callback){
+  if(!warnings||warnings.length===0){callback();return;}
+  var html='<div style="width:500px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1)">';
+  html+='<div style="position:relative;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#ef4444,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
+  html+='<div style="padding:16px 22px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(129,140,248,0.08)">';
+  html+='<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(245,158,11,0.25),inset 0 1px 0 rgba(255,255,255,0.3)">⚠️</div>';
+  html+='<div><div style="font-size:16px;font-weight:900;color:#1e1b4b">تحذيرات تحتاج مراجعة</div>';
+  html+='<div style="font-size:11px;font-weight:700;color:#92400e;margin-top:1px">'+warnings.length+' تحذير · اختر لكل تحذير: تطبيق أو تجاهل</div></div></div>';
+  html+='<div style="padding:14px 18px;max-height:420px;overflow-y:auto">';
+
+  for(var i=0;i<warnings.length;i++){
+    var w=warnings[i];
+    var levelConfig={
+      warning:{bg:'rgba(245,158,11,0.04)',bdr:'rgba(245,158,11,0.15)',icon:'⚠️',iconBg:'linear-gradient(145deg,#fbbf24,#f59e0b)',labelColor:'#92400e',labelBg:'rgba(245,158,11,0.08)',label:'تحذير'},
+      danger:{bg:'rgba(239,68,68,0.04)',bdr:'rgba(239,68,68,0.15)',icon:'🚨',iconBg:'linear-gradient(145deg,#f87171,#ef4444)',labelColor:'#991b1b',labelBg:'rgba(239,68,68,0.08)',label:'هام'},
+      info:{bg:'rgba(99,102,241,0.04)',bdr:'rgba(99,102,241,0.12)',icon:'ℹ️',iconBg:'linear-gradient(145deg,#818cf8,#6366f1)',labelColor:'#3730a3',labelBg:'rgba(99,102,241,0.08)',label:'معلومة'}
+    };
+    var lc=levelConfig[w.level]||levelConfig.info;
+
+    var itemName='';var reason='';var detail='';var actionLabel='';
+    var msgText=w.message.replace(/^[^\s]+\s*/,'');
+    var itemMatch=msgText.match(/الصنف[:\s]*["""]?([^"""-]+)["""]?/);
+    if(itemMatch) itemName=itemMatch[1].trim();
+
+    if(w.type==='dose2'){
+      reason='💊 جرعة مزدوجة (2) مكتوبة في الملاحظات';
+      detail='الطبيب كتب جرعة 2 - يعني حبتين في الجرعة الواحدة. لو ضغطت تطبيق: الجرعة هتتغير لـ 2 والكمية هتتضاعف.';
+      actionLabel='تغيير الجرعة لـ 2 وتضاعف الكمية';
+    } else if(w.type==='days'){
+      var dayMatch=w.message.match(/"(\d+)\s*يوم"/);
+      var selectedMatch=w.message.match(/المحدد\s*(\d+)/);
+      reason='📅 اختلاف في مدة العلاج';
+      detail='المكتوب في الملاحظات '+(dayMatch?dayMatch[1]:'')+' يوم، لكن المحدد '+(selectedMatch?selectedMatch[1]:'')+' يوم. لو ضغطت تطبيق: هيتعدل حسب القيمة اللي تحددها.';
+      actionLabel='تطبيق عدد الأيام';
+    } else if(w.type==='smallsplit'){
+      reason='📏 كمية صغيرة بعد التقسيم';
+      detail='بعد تقسيم الصنف لجرعات متعددة كل جرعة هتكون كمية قليلة. للعلم فقط.';
+      actionLabel='';
+    } else if(w.type==='duplicate'){
+      reason='🔁 صنف مكرر في نفس الطلب';
+      detail=w.detail||'نفس الصنف موجود أكتر من مرة. ممكن يكون الدكتور كتبه مرتين بالغلط. راجع واحذف المكرر لو مش محتاجه.';
+      actionLabel='';
+    } else if(w.type==='ramadan_unclear'){
+      reason='🌙 جرعة غير واضحة في رمضان';
+      detail='الجرعة المكتوبة: '+w.currentNote+'\n\nلم يتم التعرف على وقت رمضان محدد. عدّل التكرار والوقت أدناه ثم اضغط تطبيق.';
+      actionLabel='تطبيق التعديلات';
+    } else {
+      reason='📌 يحتاج مراجعة';
+      detail=msgText;
+      actionLabel='تطبيق';
+    }
+
+    html+='<div id="warn-card-'+i+'" style="background:'+lc.bg+';border:1.5px solid '+lc.bdr+';border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;transition:all 0.3s">';
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    html+='<div style="width:30px;height:30px;border-radius:9px;background:'+lc.iconBg+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.1);flex-shrink:0">'+lc.icon+'</div>';
+    if(itemName) html+='<div style="flex:1;font-size:13px;font-weight:800;color:#1e1b4b;direction:rtl">'+itemName+'</div>';
+    html+='<span style="font-size:9px;font-weight:800;color:'+lc.labelColor+';background:'+lc.labelBg+';padding:3px 10px;border-radius:6px;letter-spacing:0.5px;flex-shrink:0">'+lc.label+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:12.5px;font-weight:800;color:#312e81;margin-bottom:4px;direction:rtl">'+reason+'</div>';
+    html+='<div style="font-size:11px;font-weight:700;color:#64748b;line-height:1.7;direction:rtl;padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:8px;border:1px solid rgba(0,0,0,0.04);margin-bottom:8px">'+detail+'</div>';
+
+    if(w.editable){
+      if(w.type==='ramadan_unclear'){
+        /* Special UI for ramadan_unclear: dropdown + time input */
+        html+='<div style="display:flex;gap:8px;direction:rtl;margin-bottom:8px;flex-wrap:wrap">';
+        html+='<div style="flex:1;min-width:120px"><label style="display:block;font-size:10px;font-weight:800;color:'+lc.labelColor+';margin-bottom:3px">Every (كل كام ساعة)</label>';
+        html+='<select id="edit-every-'+i+'" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;direction:rtl">';
+        html+='<option value="24"'+(w.currentEvery===24?' selected':'')+'>كل 24 ساعة (مرة في اليوم)</option>';
+        html+='<option value="12"'+(w.currentEvery===12?' selected':'')+'>كل 12 ساعة (مرتين)</option>';
+        html+='<option value="8"'+(w.currentEvery===8?' selected':'')+'>كل 8 ساعات (3 مرات)</option>';
+        html+='<option value="6"'+(w.currentEvery===6?' selected':'')+'>كل 6 ساعات (4 مرات)</option>';
+        html+='<option value="48"'+(w.currentEvery===48?' selected':'')+'>كل 48 ساعة (يوم بعد يوم)</option>';
+        html+='<option value="168"'+(w.currentEvery===168?' selected':'')+'>كل 168 ساعة (أسبوعياً)</option>';
+        html+='</select></div>';
+        html+='<div style="width:140px"><label style="display:block;font-size:10px;font-weight:800;color:'+lc.labelColor+';margin-bottom:3px">وقت الجرعة (Start Time)</label>';
+        html+='<input type="time" id="edit-time-'+i+'" value="'+w.currentTime+'" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
+        html+='</div>';
+      } else {
+        /* Default editable UI */
+        html+='<div style="display:flex;align-items:center;gap:8px;direction:rtl;margin-bottom:8px">';
+        html+='<label style="font-size:11px;font-weight:800;color:'+lc.labelColor+'">'+w.editLabel+':</label>';
+        html+='<input type="number" id="edit-'+i+'" value="'+w.currentValue+'" min="'+w.minValue+'" max="'+w.maxValue+'" style="width:80px;padding:6px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:14px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" />';
+        html+='<span style="font-size:11px;font-weight:700;color:#94a3b8">يوم</span></div>';
+      }
+    }
+
+    /* Per-warning action buttons */
+    if(w.type!=='smallsplit'&&w.type!=='duplicate'){
+      html+='<div style="display:flex;gap:6px;direction:rtl">';
+      html+='<button onclick="window.applyWarning('+i+')" style="flex:1;height:34px;border:none;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 3px 10px rgba(16,185,129,0.2);transition:all 0.3s">✅ '+actionLabel+'</button>';
+      html+='<button onclick="window.skipWarning('+i+')" style="height:34px;padding:0 14px;border:none;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#94a3b8;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.15);transition:all 0.3s">تجاهل</button>';
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+  html+='</div>';
+  html+='<div style="padding:10px 18px 14px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
+  html+='<button onclick="window.closeWarnings()" style="flex:1;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 14px rgba(99,102,241,0.2);transition:all 0.3s">✅ تم المراجعة - متابعة</button>';
+  html+='</div></div>';
+
+  var overlay=document.createElement('div');
+  overlay.id='warning-overlay';
+  overlay.innerHTML=html;
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,15,35,0.5);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
+  document.body.appendChild(overlay);
+  ezBeep('warning');
+  window.warningCallback=callback;
+};
+
+window.applyWarning=function(idx){
+  var w=warningQueue[idx];
+  if(!w) return;
+  var card=document.getElementById('warn-card-'+idx);
+
+  if(w.type==='dose2'){
+    /* Mark row for dose=2 override - continueProcessing will apply it */
+    var rd=window._ezRows?window._ezRows[w.rowIndex]:null;
+    if(rd){
+      rd.forceDose2=true;
+      window.ezShowToast('✅ سيتم تطبيق الجرعة المزدوجة عند المتابعة','info');
+    }
+  } else if(w.type==='days'&&w.onEdit){
+    var editInput=document.getElementById('edit-'+idx);
+    if(editInput){w.onEdit(parseInt(editInput.value));}
+    window.ezShowToast('✅ تم تعديل عدد الأيام','success');
+  } else if(w.type==='ramadan_unclear'&&w.onEdit){
+    /* Get values from dropdown and time input */
+    var everySelect=document.getElementById('edit-every-'+idx);
+    var timeInput=document.getElementById('edit-time-'+idx);
+    if(everySelect&&timeInput){
+      var newEvery=parseInt(everySelect.value);
+      var newTime=timeInput.value;
+      w.onEdit(newEvery,newTime);
+      window.ezShowToast('✅ تم تطبيق Every='+newEvery+'h و Time='+newTime,'success');
+    }
+  }
+
+  /* Mark card as applied */
+  if(card){
+    card.style.cssText='background:rgba(16,185,129,0.06)!important;border:1.5px solid rgba(16,185,129,0.25)!important;border-radius:14px;padding:14px 16px;margin-bottom:10px';
+    var btns=card.querySelectorAll('button');
+    for(var b=0;b<btns.length;b++) btns[b].remove();
+    var badge=document.createElement('div');
+    badge.style.cssText='text-align:center;font-size:13px;font-weight:800;color:#059669;padding:6px;background:rgba(16,185,129,0.06);border-radius:8px;margin-top:6px';
+    badge.textContent='✅ تم التطبيق';
+    card.appendChild(badge);
+  }
+};
+
+window.skipWarning=function(idx){
+  var card=document.getElementById('warn-card-'+idx);
+  if(card){
+    card.style.cssText='background:rgba(148,163,184,0.03)!important;border:1.5px solid rgba(148,163,184,0.1)!important;border-radius:14px;padding:14px 16px;margin-bottom:10px;opacity:0.4';
+    var btns=card.querySelectorAll('button');
+    for(var b=0;b<btns.length;b++) btns[b].remove();
+    var badge=document.createElement('div');
+    badge.style.cssText='text-align:center;font-size:13px;font-weight:800;color:#94a3b8;padding:6px;background:rgba(148,163,184,0.06);border-radius:8px;margin-top:6px';
+    badge.textContent='⏭️ تم التجاهل';
+    card.appendChild(badge);
+  }
+};
+
+window.closeWarnings=function(){
+  var overlay=document.getElementById('warning-overlay');
+  if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
+};
+
+window.acceptWarnings=function(){
+  var edits={};
+  var inputs=document.querySelectorAll('[id^="edit-"]');
+  for(var i=0;i<inputs.length;i++){
+    var id=inputs[i].id.replace('edit-','');
+    edits[id]=parseInt(inputs[i].value);
+  }
+  for(var key in edits){
+    if(warningQueue[key]&&warningQueue[key].onEdit) warningQueue[key].onEdit(edits[key]);
+  }
+  var overlay=document.getElementById('warning-overlay');
+  if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
+};
+
+window.cancelWarnings=function(){
+  var overlay=document.getElementById('warning-overlay');
+  if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
+};
+
+/* ══════════════════════════════════════════
+   SUBMIT HANDLER
+   ══════════════════════════════════════════ */
+window.ezSubmit=function(){
+  try{
+    var d=document.getElementById('ez-dialog-box');
+    if(!d) return;
+    var m=parseInt(d.getAttribute('data-m'))||1;
+    var t=parseInt(d.getAttribute('data-t'))||30;
+    var autoDuration=document.getElementById('auto-duration')?document.getElementById('auto-duration').checked:true;
+    var showWarningsFlag=document.getElementById('show-warnings')?document.getElementById('show-warnings').checked:true;
+    var showPostDialog=document.getElementById('show-post-dialog')?document.getElementById('show-post-dialog').checked:false;
+    var ramadanMode=document.getElementById('ramadan-mode')?document.getElementById('ramadan-mode').checked:false;
+    /* Save settings for next time */
+    saveSettings({m:m,t:t,autoDuration:autoDuration,showWarnings:showWarningsFlag,ramadanMode:ramadanMode});
+    d.remove();
+    var loader=document.createElement('div');
+    loader.id='ez-loader';
+    loader.innerHTML='<div style="display:flex;align-items:center;gap:14px"><div class="ez-loader-spinner"></div><div class="ez-loader-text">'+(ramadanMode?'🌙 جاري المعالجة (وضع رمضان)...':'جاري المعالجة...')+'</div></div><div style="margin-top:14px;height:4px;background:rgba(129,140,248,0.1);border-radius:4px;overflow:hidden"><div style="height:100%;width:60%;background:linear-gradient(90deg,#6366f1,#818cf8,#6366f1);background-size:200% 100%;animation:barShift 1.5s ease infinite;border-radius:4px"></div></div>';
+    loader.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.97);backdrop-filter:blur(40px);padding:30px 50px;border-radius:24px;box-shadow:0 30px 80px rgba(99,102,241,0.12),0 0 0 1px rgba(129,140,248,0.08);z-index:99998;text-align:center;font-family:Cairo,sans-serif;min-width:260px;animation:dialogEnter 0.4s ease';
+    document.body.appendChild(loader);
+    setTimeout(function(){
+      if(loader) loader.remove();
+      processTable(m,t,autoDuration,showWarningsFlag,showPostDialog,ramadanMode);
+    },800);
+  } catch(e){
+    alert("خطأ: "+e.message);
+  }
+};
+
+/* ══════════════════════════════════════════
+   UNDO DUPLICATES - FIXED: ignores non-⚡ rows
+   ══════════════════════════════════════════ */
+window.ezUndoDuplicates=function(){
+  try{
+    var tb=_ezFindTable();
+    if(!tb) return;
+
+    var fire=_ezFire,normL=_ezNormL,get=_ezGet,set=_ezSet,idx=_ezIdx;
+
+    var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+    var ci=idx(hs,'code'),si=idx(hs,'size'),ni=idx(hs,'note'),ei=idx(hs,'evry');
+    if(ei<0) ei=idx(hs,'every');
+    if(ci<0||si<0||ni<0||ei<0) return;
+
+    var groups={},rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+    rows.forEach(function(r){
+      var tds=r.querySelectorAll('td');
+      var code=get(tds[ci]).trim();
+      var noteText=get(tds[ni]).trim();
+      var isSplitRow=noteText.indexOf('⚡')===0;
+      if(code&&isSplitRow){
+        if(!groups[code]) groups[code]=[];
+        groups[code].push(r);
+      }
+    });
+
+    var foundDuplicates=false;
+    Object.keys(groups).forEach(function(code){
+      var g=groups[code],n=g.length;
+      if(n>1){
+        foundDuplicates=true;
+        var master=g[0],tds=master.querySelectorAll('td');
+        var curS=parseInt(get(tds[si]))||0;
+        var mult=n;
+        var isQ6H=g[0].getAttribute('data-q6h')==='true';
+        var ev=isQ6H?6:(n===2?12:8);
+        set(tds[si],curS*mult);
+        set(tds[ei],ev);
+        var allN=g.map(function(row){return get(row.querySelectorAll('td')[ni]);});
+        var fN=allN[0];
+        fN=fN.replace(/^⚡\s*/,'');
+        for(var k=1;k<allN.length;k++){
+          var next=allN[k].replace(/^⚡\s*/,'');
+          if((fN.includes('بعد')&&next.includes('بعد'))||(fN.toLowerCase().includes('after')&&next.toLowerCase().includes('after'))){
+            fN+=' & '+next.replace(/بعد|after/gi,'').trim();
+          } else if((fN.includes('قبل')&&next.includes('قبل'))||(fN.toLowerCase().includes('before')&&next.toLowerCase().includes('before'))){
+            fN+=' & '+next.replace(/قبل|before/gi,'').trim();
+          } else {
+            fN+=' & '+next;
+          }
+        }
+        set(tds[ni],fN);
+        for(var j=1;j<n;j++){if(g[j].parentNode) g[j].parentNode.removeChild(g[j]);}
+      }
+    });
+    if(foundDuplicates) window.ezShowToast('تم إلغاء التقسيم بنجاح','success');
+    else window.ezShowToast('لا يوجد صفوف مقسمة','info');
+  } catch(e){
+    window.ezShowToast('خطأ في إلغاء التقسيم','error');
+  }
+};
+
+/* ══════════════════════════════════════════
+   NEXT MONTH HANDLER
+   ══════════════════════════════════════════ */
+window.ezNextMonth=function(){
+  monthCounter++;
+  var btn=document.getElementById('ez-next-month-btn');
+  var sDateElem=document.querySelector('#fstartDate');
+  if(!sDateElem) return;
+
+  var tb=_ezFindTable();
+  if(!tb) return;
+
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var si=_ezIdx(hs,'size'),edi=_ezIdx(hs,'end date'),qi=_ezIdx(hs,'qty');
+
+  var rows=tb.querySelectorAll('tr');
+
+  var fireEv=_ezFire;
+
+  if(monthCounter===1||monthCounter===2){
+    var newStart='';
+    for(var i=1;i<rows.length;i++){
+      var tds=rows[i].querySelectorAll('td');
+      if(tds.length>edi){
+        var ev='';
+        var inp=tds[edi].querySelector('input');
+        ev=inp?inp.value:tds[edi].textContent.trim();
+        if(ev&&ev.match(/\d{4}-\d{2}-\d{2}/)){newStart=ev;break;}
+      }
+    }
+    if(newStart){
+      sDateElem.value=newStart;
+      fireEv(sDateElem);
+      rows.forEach(function(r,ix){
+        if(ix===0)return;
+        var sInput=r.querySelectorAll('td')[si]?r.querySelectorAll('td')[si].querySelector('input,textarea'):null;
+        if(sInput) fireEv(sInput);
+      });
+      btn.innerHTML=(monthCounter===1)?'📅 الشهر الثالث':'🖨️ تجميع للطباعة';
+      btn.style.background=(monthCounter===1)?'linear-gradient(135deg, #818cf8, #6366f1)':'linear-gradient(135deg, #10b981, #059669)';
+      btn.style.color='#fff';
+      btn.setAttribute('data-step',String(monthCounter+1));
+    }
+  } else if(monthCounter===3){
+    if(originalStartDate){sDateElem.value=originalStartDate;fireEv(sDateElem);}
+    rows.forEach(function(r,ix){
+      if(ix===0)return;
+      var tds=r.querySelectorAll('td');
+      if(qi>=0&&tds.length>qi){
+        var qInput=tds[qi].querySelector('input,textarea');
+        if(qInput){qInput.value='3';fireEv(qInput);}
+        else tds[qi].textContent='3';
+      }
+      if(tds.length>si){
+        var sInput=tds[si].querySelector('input,textarea');
+        if(sInput) fireEv(sInput);
+      }
+    });
+    btn.innerHTML='✅ تم التجميع بنجاح';
+    btn.style.background='linear-gradient(135deg, #10b981, #059669)';
+    btn.style.color='#fff';
+    btn.disabled=true;
+  }
+};
+
+/* ══════════════════════════════════════════
+   END DATE FIXING
+   ══════════════════════════════════════════ */
+window.fixEndDates=function(targetDate,ediIdx){
+  var tb=document.querySelector('table');
+  if(!tb) return;
+  var fire=_ezFire;
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+  rows.forEach(function(r){
+    var tds=r.querySelectorAll('td');
+    if(tds.length>ediIdx){
+      var inp=tds[ediIdx].querySelector('input');
+      if(inp){inp.value=targetDate;fire(inp);}
+    }
+  });
+  window.closeEndDateAlert();
+  window.ezShowToast('تم توحيد التواريخ','success');
+};
+
+window.closeEndDateAlert=function(){
+  var overlay=document.getElementById('end-date-overlay');
+  if(overlay) overlay.remove();
+};
+
+/* ══════════════════════════════════════════
+   CORE UTILITY FUNCTIONS
+   ══════════════════════════════════════════ */
+var fireEvent=_ezFire;
+
+function cleanNote(txt){
+  if(!txt) return '';
+  var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
+  var a=/(.*?)أيام/;var e=/(.*?)days/i;
+  if(a.test(c)) c=c.replace(a,'').replace(/^\s*-\s*/,'').trim();
+  else if(e.test(c)) c=c.replace(e,'').replace(/^\s*-\s*/,'').trim();
+  return c.replace(/\s+/g,' ').trim();
+}
+
+/* ══════════════════════════════════════════
+   PILL COUNT EXTRACTION
+   ══════════════════════════════════════════ */
+function extractPillCount(itemName){
+  var s=itemName.trim().toUpperCase().replace(/\s+/g,' ');
+  var cleaned=s.replace(/(\d+(?:\.\d+)?)\s*(MG|ملجم|ملغ|مجم|MCG|µG|μG|GR|GM|GRAM|جرام|جم|ML|IU|KG|كجم)/g,'');
+  cleaned=cleaned.replace(/\s+/g,' ').trim();
+  var allMatches=[];
+  var patterns=[
+    {r:/(\d+)\s*(TAB|TABLET|TABLETS)/g,p:1,n:'tablet'},
+    {r:/(\d+)\s*(قرص|اقراص|أقراص)/g,p:1,n:'قرص'},
+    {r:/(\d+)\s*(حبة|حبه|حبوب)/g,p:1,n:'حبة'},
+    {r:/(\d+)\s*(CAP|CAPS|CAPSULE|CAPSULES)/g,p:1,n:'capsule'},
+    {r:/(\d+)\s*(كبسولة|كبسوله|كبسولات)/g,p:1,n:'كبسولة'},
+    {r:/(\d+)\s*[PTC]/g,p:2,n:'letter'},
+    {r:/(\d+)\s*(PCS|PC|PIECE|PIECES)/g,p:3,n:'pcs'},
+    {r:/(\d+)\s*(علبة|علب)/g,p:3,n:'علبة'}
+  ];
+  for(var i=0;i<patterns.length;i++){
+    var pat=patterns[i];pat.r.lastIndex=0;var m;
+    while((m=pat.r.exec(cleaned))!==null){
+      var num=parseInt(m[1]);
+      if(num>0&&num<=500) allMatches.push({val:num,pri:pat.p,pos:m.index,name:pat.n});
+    }
+  }
+  if(allMatches.length===0) return null;
+  allMatches.sort(function(a,b){if(a.pri!==b.pri)return a.pri-b.pri;return b.pos-a.pos;});
+  return allMatches[0].val;
+}
+
+function extractDayOfWeek(note){
+  var s=note.trim();
+  var days=[
+    {ar:['الأحد','الاحد','احد','يوم الأحد','يوم الاحد'],en:['sunday','sun'],day:0},
+    {ar:['الاثنين','الإثنين','اثنين','إثنين','يوم الاثنين'],en:['monday','mon'],day:1},
+    {ar:['الثلاثاء','ثلاثاء','يوم الثلاثاء'],en:['tuesday','tue','tues'],day:2},
+    {ar:['الأربعاء','الاربعاء','أربعاء','اربعاء','يوم الاربعاء'],en:['wednesday','wed'],day:3},
+    {ar:['الخميس','خميس','يوم الخميس'],en:['thursday','thu','thur','thurs'],day:4},
+    {ar:['الجمعة','الجمعه','جمعة','جمعه','يوم الجمعة'],en:['friday','fri'],day:5},
+    {ar:['السبت','سبت','يوم السبت'],en:['saturday','sat'],day:6}
+  ];
+  var sl=s.toLowerCase();
+  for(var i=0;i<days.length;i++){var d=days[i];for(var j=0;j<d.ar.length;j++){if(s.indexOf(d.ar[j])>-1)return d.day;}for(var j=0;j<d.en.length;j++){if(sl.indexOf(d.en[j])>-1)return d.day;}}
+  return null;
+}
+
+function extractDuration(note){
+  var s=note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').trim();
+  var result={hasDuration:false,days:null,isPRN:false,isUntilFinish:false,original:note};
+  if(/عند الحاجه|عند اللزوم|prn|as\s*needed|when\s*needed|sos|عند الضرورة|if\s*needed|p\.r\.n/i.test(s)){result.isPRN=true;return result;}
+  if(/حتى (نفاد|انتهاء|انهاء|الشفاء)|until\s*(finish|complete|symptom|gone|resolved)|till\s*finish/i.test(s)){result.isUntilFinish=true;return result;}
+  var dayPatterns=[{r:/لمده?\s*(\d+)\s*(يوم|ايام)/i,g:1},{r:/مده?\s*(\d+)\s*(يوم|ايام)/i,g:1},{r:/(\d+)\s*(يوم|ايام)\s*فقط/i,g:1},{r:/(\d+)\s*(يوم|ايام)/i,g:1},{r:/(\d+)\s*days?/i,g:1},{r:/for\s*(\d+)\s*days?/i,g:1},{r:/x\s*(\d+)\s*days?/i,g:1},{r:/duration[:\s]*(\d+)\s*days?/i,g:1}];
+  for(var i=0;i<dayPatterns.length;i++){var m=s.match(dayPatterns[i].r);if(m){result.hasDuration=true;result.days=parseInt(m[dayPatterns[i].g]);return result;}}
+  var weekPatterns=[{r:/اسبوع واحد|واحد اسبوع|1\s*اسبوع|one\s*week|1\s*week/i,d:7},{r:/اسبوعين|2\s*اسبوع|two\s*weeks?|2\s*weeks?/i,d:14},{r:/ثلاث(ه)?\s*اسابيع|3\s*اسابيع|three\s*weeks?|3\s*weeks?/i,d:21},{r:/اربع(ه)?\s*اسابيع|4\s*اسابيع|four\s*weeks?|4\s*weeks?/i,d:28},{r:/شهر واحد|واحد شهر|1\s*شهر|one\s*month|1\s*month/i,d:30},{r:/شهرين|2\s*شهر|two\s*months?|2\s*months?/i,d:60},{r:/ثلاث(ه)?\s*اشهر|3\s*اشهر|three\s*months?|3\s*months?/i,d:90}];
+  for(var i=0;i<weekPatterns.length;i++){if(weekPatterns[i].r.test(s)){result.hasDuration=true;result.days=weekPatterns[i].d;return result;}}
+  return result;
+}
+
+function extractHourlyInterval(note){
+  var s=note.toLowerCase().trim();
+  var result={hasInterval:false,hours:null,timesPerDay:null};
+  var patterns=[{r:/كل\s*(\d+)\s*ساع(ه|ات|ة|ه)/i,g:1},{r:/every\s*(\d+)\s*hours?/i,g:1},{r:/q\s*(\d+)\s*h/i,g:1},{r:/(\d+)\s*hourly/i,g:1},{r:/(\d+)\s*hrly/i,g:1}];
+  for(var i=0;i<patterns.length;i++){var m=s.match(patterns[i].r);if(m){result.hasInterval=true;result.hours=parseInt(m[patterns[i].g]);result.timesPerDay=Math.floor(24/result.hours);return result;}}
+  if(/q4h/i.test(s)){result.hasInterval=true;result.hours=4;result.timesPerDay=6;return result;}
+  if(/q6h/i.test(s)){result.hasInterval=true;result.hours=6;result.timesPerDay=4;return result;}
+  if(/q8h/i.test(s)){result.hasInterval=true;result.hours=8;result.timesPerDay=3;return result;}
+  if(/q12h/i.test(s)){result.hasInterval=true;result.hours=12;result.timesPerDay=2;return result;}
+  if(/q24h/i.test(s)){result.hasInterval=true;result.hours=24;result.timesPerDay=1;return result;}
+  return result;
+}
+
+function moveColumnAfter(table,colToMove,colAfter){
+  var rows=table.querySelectorAll('tr');
+  for(var r=0;r<rows.length;r++){
+    var cells=rows[r].querySelectorAll('th,td');
+    if(cells.length<=Math.max(colToMove,colAfter)) continue;
+    var cellToMove=cells[colToMove];var cellAfter2=cells[colAfter];
+    if(cellToMove&&cellAfter2&&cellToMove.parentNode===cellAfter2.parentNode){cellAfter2.parentNode.insertBefore(cellToMove,cellAfter2.nextSibling);}
+  }
+}
+
+function checkEndDateConsistency(){
+  var tb=document.querySelector('table');if(!tb)return;
+  var ths=tb.querySelectorAll('th');var ediIdx=-1;
+  for(var i=0;i<ths.length;i++){if(ths[i].textContent.toLowerCase().includes('end')&&ths[i].textContent.toLowerCase().includes('date')){ediIdx=i;break;}}
+  if(ediIdx<0)return;
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);var dates={};var mostCommonDate='';var maxCount=0;
+  rows.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length>ediIdx){var inp=tds[ediIdx].querySelector('input');var date=inp?inp.value:tds[ediIdx].textContent.trim();if(date&&/\d{4}-\d{2}-\d{2}/.test(date)){dates[date]=(dates[date]||0)+1;if(dates[date]>maxCount){maxCount=dates[date];mostCommonDate=date;}}}});
+  if(Object.keys(dates).length>1) showEndDateAlert(mostCommonDate,ediIdx);
+}
+
+function showEndDateAlert(commonDate,ediIdx){
+  var html='<div style="width:380px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12);border:2px solid rgba(129,140,248,0.15);overflow:hidden;position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
+  html+='<div style="padding:14px 20px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">📅</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">تواريخ انتهاء مختلفة</div></div><button onclick="window.closeEndDateAlert()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif">×</button></div>';
+  html+='<div style="padding:16px 20px;text-align:center"><div style="font-size:13px;color:#3730a3;font-weight:600;line-height:1.6;margin-bottom:12px;font-family:Cairo,sans-serif">تم اكتشاف صفوف بتواريخ انتهاء مختلفة<br>هل تريد توحيد جميع التواريخ؟</div>';
+  html+='<div style="display:flex;align-items:center;justify-content:center;margin:10px 0 16px"><div style="padding:8px 18px;background:rgba(129,140,248,0.06);border:1.5px solid rgba(129,140,248,0.15);border-radius:10px"><div style="font-size:16px;font-weight:900;color:#1e1b4b;font-family:Cairo,sans-serif">'+commonDate+'</div><div style="font-size:9px;font-weight:700;color:#818cf8;letter-spacing:1px">التاريخ الأكثر شيوعاً</div></div></div>';
+  html+='<div style="display:flex;gap:8px"><button onclick="window.fixEndDates(\''+commonDate+'\','+ediIdx+')" style="flex:1;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 16px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1)">✅ توحيد التواريخ</button>';
+  html+='<button onclick="window.closeEndDateAlert()" style="flex:1;height:42px;border:1.5px solid rgba(129,140,248,0.15);border-radius:12px;background:linear-gradient(145deg,#fff,#f8fafc);color:#6366f1;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8)">❌ إلغاء</button></div></div></div>';
+  var overlay=document.createElement('div');overlay.id='end-date-overlay';overlay.innerHTML=html;
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(30,27,75,0.5);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;';
+  document.body.appendChild(overlay);
+}
+
+/* ══════════════════════════════════════════
+   POST PROCESS DIALOG
+   ══════════════════════════════════════════ */
+function showPostProcessDialog(){
+  var sdInput=document.querySelector('#fstartDate');
+  if(sdInput) originalStartDate=sdInput.value;
+  monthCounter=0;
+  var dupInfo=duplicatedCount>0?'<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 14px;margin-bottom:10px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12);border-radius:10px"><span style="font-size:18px">⚡</span><span style="font-size:13px;font-weight:800;color:#4338ca;font-family:Cairo,sans-serif">'+duplicatedCount+' صنف مقسم</span></div>':'';
+  var dialog=document.createElement('div');
+  dialog.id='ez-post-dialog';
+  dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي (2)</button></div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
+  document.body.appendChild(dialog);
+  makeDraggable(dialog);
+}
+
+/* ══════════════════════════════════════════
+   DRAGGABLE FUNCTIONALITY
+   ══════════════════════════════════════════ */
+function makeDraggable(el){
+  var pos1=0,pos2=0,pos3=0,pos4=0;
+  var header=el.querySelector('.ez-post-header')||el.querySelector('.ez-doses-header')||el.querySelector('.ez-header')||el;
+  header.style.cursor='move';
+  header.onmousedown=dragMouseDown;
+  function dragMouseDown(e){e=e||window.event;e.preventDefault();pos3=e.clientX;pos4=e.clientY;document.onmouseup=closeDragElement;document.onmousemove=elementDrag;}
+  function elementDrag(e){e=e||window.event;e.preventDefault();pos1=pos3-e.clientX;pos2=pos4-e.clientY;pos3=e.clientX;pos4=e.clientY;el.style.top=(el.offsetTop-pos2)+'px';el.style.left=(el.offsetLeft-pos1)+'px';el.style.right='auto';el.style.transform='none';}
+  function closeDragElement(){document.onmouseup=null;document.onmousemove=null;}
+}
+
+/* ══════════════════════════════════════════
+   DOSE RECOGNIZER
+   ══════════════════════════════════════════ */
+function smartDoseRecognizer(note){
+  var raw=note;
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي').replace(/\s+/g,' ').trim();
+  var res={count:1,hasB:false,hasL:false,hasD:false,isBefore:false,hasM:false,hasN:false,hasA:false,hasE:false,hasBed:false,hasEmpty:false,language:'arabic',confidence:'high',rawFrequency:null};
+  res.language=detectLanguage(raw);
+  res.hasB=/\b(bre|breakfast|fatur|ftor)\b|فطر|فطار|فطور|افطار|إفطار|الافطار|الفطور|الفطار/i.test(s);
+  res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء/i.test(s);
+  res.hasD=/\b(din|dinner|sup|supper|asha|isha)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا/i.test(s);
+  res.hasM=/\b(morning|am|morn|a\.m)\b|صباح|الصباح|صبح/i.test(s);
+  res.hasN=/\b(noon|midday|ظهر|الظهر)\b/i.test(s);
+  res.hasA=/\b(asr|afternoon|pm|p\.m|عصر|العصر)\b/i.test(s);
+  res.hasE=/\b(evening|eve|مساء|مسا|المساء|المسا|ليل|الليل)\b/i.test(s);
+  res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s|نوم|النوم|قبل النوم|عند النوم|before\s*bed|before\s*sleep|at\s*bed)\b/i.test(s);
+  res.hasEmpty=/\b(empty|fasting|ريق|الريق|على الريق|معدهـ فارغهـ|empty\s*stomach)\b/i.test(s);
+  res.isBefore=/\b(before|bef|pre|ac|a\.c|قبل|قبل الاكل|قبل الأكل|before\s*meal|before\s*food)\b/i.test(s);
+  if(/\bqid\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){res.count=4;res.rawFrequency='QID';return res;}
+  if(/\btid\b|t\.i\.d|ثلاث مرات|3\s*مرات|three\s*times?\s*(a\s*day|daily|يوميا)?|3\s*times?\s*(a\s*day|daily)?|thrice\s*(daily)?/i.test(s)){res.count=3;res.rawFrequency='TID';return res;}
+  if(/\bbid\b|b\.i\.d|مرتين|مرتان|مره مرتين|twice\s*(a\s*day|daily)?|2\s*times?\s*(a\s*day|daily|يوميا)?/i.test(s)){res.count=2;res.rawFrequency='BID';return res;}
+  if(/\bod\b|o\.d|\bqd\b|q\.d|once\s*(a\s*day|daily)?|مره واحده يوميا|مرهـ واحدهـ/i.test(s)){res.count=1;res.rawFrequency='OD';return res;}
+  if(/كل\s*6|every\s*6\s*h|q6h|q\s*6\s*h/i.test(s)){res.count=4;res.rawFrequency='Q6H';return res;}
+  if(/كل\s*8|every\s*8\s*h|q8h|q\s*8\s*h/i.test(s)){res.count=3;res.rawFrequency='Q8H';return res;}
+  if(/كل\s*12|every\s*12\s*h|q12h|q\s*12\s*h/i.test(s)){res.count=2;res.rawFrequency='Q12H';return res;}
+  if(/كل\s*24|every\s*24\s*h|q24h|q\s*24\s*h/i.test(s)){res.count=1;res.rawFrequency='Q24H';return res;}
+  if(/كل\s*4\s*ساع|every\s*4\s*h|q4h|q\s*4\s*h/i.test(s)){res.count=6;res.rawFrequency='Q4H';return res;}
+  var mealCount=0;
+  if(res.hasB||res.hasM) mealCount++;
+  if(res.hasL||res.hasN) mealCount++;
+  if(res.hasD||res.hasE) mealCount++;
+  if(res.hasA&&mealCount<3) mealCount++;
+  if(/قبل\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)?|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){res.count=3;res.isBefore=true;return res;}
+  if(/بعد\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)?|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){res.count=3;return res;}
+  if(/قبل\s*(الاكل|الأكل|الوجبات)\s*مرتين|before\s*meals?\s*twice/i.test(s)){res.count=2;res.isBefore=true;return res;}
+  if(mealCount>=3){res.count=3;return res;}
+  var pairDual=/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
+  if(mealCount===2||pairDual.test(s)){res.count=2;return res;}
+  if(res.hasBed&&mealCount===0){res.count=1;return res;}
+  if(res.hasEmpty&&mealCount===0){res.count=1;return res;}
+  return res;
+}
+
+function getTwoPillsPerDoseInfo(n){
+  var s=(n||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
+  if(/نص حبه|نص قرص|نصف حبه|نصف قرص|half\s*(a\s*)?(tab|tablet|pill|cap|capsule)|0\.5\s*(tab|tablet|pill)/i.test(n))return{dose:0.5,multiplier:0.5};
+  if(/ربع حبه|ربع قرص|quarter\s*(a\s*)?(tab|tablet|pill)|0\.25\s*(tab|tablet|pill)/i.test(n))return{dose:0.25,multiplier:0.25};
+  var twoP=['2 حبه','2 حبة','حبتين','حبتان','2 حبوب','2 قرص','قرصين','قرصان','2 كبسولة','كبسولتين','كبسولتان','2 pill','2 pills','two pill','two pills','2 tablet','2 tablets','two tablet','two tablets','2 tab','2 tabs','two tab','two tabs','2 cap','2 caps','two cap','two caps'];
+  for(var i=0;i<twoP.length;i++){if(s.includes(twoP[i].toLowerCase())){var is2=/مرتين|twice|2\s*times|bid|b\.i\.d/i.test(n);var is3=/ثلاث مرات|3\s*مرات|three\s*times|3\s*times|tid|t\.i\.d/i.test(n);var ml=1;if(is3)ml=6;else if(is2)ml=4;else ml=2;return{dose:2,multiplier:ml};}}
+  var threeP=['3 حبه','3 حبات','3 حبوب','3 قرص','3 اقراص','3 كبسول','3 tab','3 tabs','3 pill','3 pills','three tab','three pill'];
+  for(var i=0;i<threeP.length;i++){if(s.includes(threeP[i].toLowerCase()))return{dose:3,multiplier:3};}
+  return{dose:1,multiplier:1};
+}
+
+function getTimeFromWords(w){
+  var s=(w||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
+  var st=s.match(/(?:at|الساعهـ|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
+  if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
+  var NT=NORMAL_TIMES;
+  
+  /* CRITICAL FIX: "قبل الأكل مرتين" should be beforeMeal (8:00) not morning (9:30) */
+  var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
+  if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
+  
+  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\\s*(الاكل|الأكل|meal)|before\\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\\b(morning|am|a\\.m)\\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\\b(noon|midday)\\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\\b(asr|afternoon|pm|p\\.m)\\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\\.s/,time:'22:00'}];
+  /* Custom time rules from settings (checked FIRST for priority) */
+  if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
+  for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
+  /* If note is empty or very short, return default time */
+  if(!s||s.length<3)return{time:NT.defaultTime,isEmpty:true};
+  /* Unrecognized pattern - return default but flag it */
+  return{time:NT.defaultTime,isUnrecognized:true};
+}
+
+/* Code-aware time: override default time with code-specific start time if note is empty/unrecognized */
+function getCodeAwareTime(timeResult,itemCode){
+  if((timeResult.isEmpty||timeResult.isUnrecognized)&&itemCode&&CODE_START_TIMES[itemCode]){
+    return{time:CODE_START_TIMES[itemCode],isCodeTime:true};
+  }
+  return timeResult;
+}
+
+function shouldDuplicateRow(note){
+  var d=smartDoseRecognizer(note);
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
+  var isEvery8=/كل\s*8|every\s*8|q8h/i.test(s);
+  if(isEvery8||d.count===3)return{type:'three',doseInfo:d,isBefore:d.isBefore};
+  var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
+  if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  var isRegularTwice=((d.hasB||d.hasM)&&(d.hasD||d.hasE))||/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
+  if(d.count===2&&!isRegularTwice)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
+  if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
+  return null;
+}
+
+function scanForDuplicateNotes(){
+  var tb=_ezFindTable();
+  if(!tb)return false;
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');var ni=_ezIdx(hs,'note');
+  if(ni<0)return false;
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+  for(var i=0;i<rows.length;i++){var tds=rows[i].querySelectorAll('td');if(tds.length>ni){var inp=tds[ni].querySelector('input,textarea');var noteText=inp?inp.value:tds[ni].textContent;var cleaned=cleanNote(noteText);var nl=cleaned.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();if(nl&&shouldDuplicateRow(nl))return true;}}
+  return false;
+}
+
+/* ══════════════════════════════════════════
+   ★ MAIN PROCESSING ENGINE ★
+   ══════════════════════════════════════════ */
+function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode){
+  warningQueue=[];duplicatedRows=[];duplicatedCount=0;var detectedLanguagesPerRow=[];window._ezDose2Applied=null;window._ramadanMode=ramadanMode||false;
+  var fire=_ezFire,norm=_ezNorm,normL=_ezNormL,get=_ezGet,idx=_ezIdx;
+  function getCleanCode(td){var text=get(td);var match=text.match(/\d+/);return match?match[0]:'';}
+  function setSize(td,v){if(!td)return;var i=td.querySelector('input,textarea');if(i){i.value=v;fire(i);}else{td.textContent=v;}}
+  function setEvry(td,v){if(!td)return;var s=td.querySelector('select');if(s){s.value=String(v);fire(s);}else{td.textContent=String(v);}}
+  function setDose(td,v){if(!td)return;var s=td.querySelector('select');if(s){s.value=String(v);fire(s);return;}var i=td.querySelector('input,textarea');if(i){i.value=String(v);fire(i);return;}td.textContent=String(v);}
+  function setTime(r,tm){if(!r||!tm)return;var i=r.querySelector("input[type='time']");if(i){i.value=tm;fire(i);}}
+  function setNote(td,v){if(!td)return;var i=td.querySelector('input,textarea');if(i){i.value=v;fire(i);}else{td.textContent=v;}}
+  function setStartDate(r,dateStr){if(!r||!dateStr)return;var sdInput=r.querySelector('input[type="date"]');if(!sdInput){var inputs=r.querySelectorAll('input');for(var i=0;i<inputs.length;i++){if(inputs[i].value&&/\d{4}-\d{2}-\d{2}/.test(inputs[i].value)){sdInput=inputs[i];break;}}}if(sdInput){sdInput.value=dateStr;fire(sdInput);}}
+  function setTopStartDate(){var d=new Date();d.setDate(d.getDate()+1);var y=d.getFullYear(),ms=('0'+(d.getMonth()+1)).slice(-2),da=('0'+d.getDate()).slice(-2);var ts2=y+'-'+ms+'-'+da;var s=document.querySelector('#fstartDate');if(s){s.value=ts2;fire(s);return true;}return false;}
+  function getNextDayOfWeek(baseDate,targetDay){var base=new Date(baseDate);var currentDay=base.getDay();var daysUntilTarget=(targetDay-currentDay+7)%7;if(daysUntilTarget===0)daysUntilTarget=7;var result=new Date(base);result.setDate(base.getDate()+daysUntilTarget);var y=result.getFullYear();var mm=('0'+(result.getMonth()+1)).slice(-2);var dd=('0'+result.getDate()).slice(-2);return y+'-'+mm+'-'+dd;}
+
+  function createDuplicateRows(t_val,r,ni,bs,niIdx,si,ei,di,ti,sdi,edi,m_val,tc,ci,qi){
+    var tds=r.querySelectorAll('td');var u_code=getCleanCode(tds[ci]);var ns=bs;
+    if(fixedSizeCodes[u_code]&&ni.type!=='q6h'){var div=(ni.type==='three')?3:2;ns=Math.floor(fixedSizeCodes[u_code]/div);var remainder=fixedSizeCodes[u_code]%div;if(remainder>0){var splits=[];for(var x=0;x<div;x++){if(x<remainder)splits.push(Math.ceil(fixedSizeCodes[u_code]/div));else splits.push(Math.floor(fixedSizeCodes[u_code]/div));}ni.customSplits=splits;}}
+    var on=get(r.querySelectorAll('td')[niIdx]);var isEn=/[a-z]/i.test(on)||ni.doseInfo.language==='english';
+    var p=ni.isBefore?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد ');
+    var bf=isEn?'Breakfast':'الفطار';var ln=isEn?'Lunch':'الغداء';var dn=isEn?'Dinner':'العشاء';
+    var m_lbl=isEn?'Morning':'صباحا';var n_lbl=isEn?'Noon':'ظهرا';var a_lbl=isEn?'Afternoon':'عصرا';var e_lbl=isEn?'Evening':'مساءا';
+    var calcQ=1;if(qi>=0){var cur=parseInt(get(tds[qi]))||1;calcQ=cur;}
+    var dupRows=[];var meals=[];
+    if(ni.type==='two'){
+      var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
+      var sz1=ni.customSplits?ni.customSplits[0]:ns;var sz2=ni.customSplits?ni.customSplits[1]:ns;
+      setSize(nt1[si],sz1);setSize(nt2[si],sz2);setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');
+      if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
+      if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
+      var n1='',t1='',n2='',t2='';
+      if(ni.doseInfo.hasM&&ni.doseInfo.hasN){n1=m_lbl;t1='09:30';n2=n_lbl;t2='12:00';meals=['الصباح','الظهر'];}
+      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1='12:00';n2=e_lbl;t2='21:30';meals=['الظهر','المساء'];}
+      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';meals=['الصباح','العصر'];}
+      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1='15:00';n2=e_lbl;t2='21:30';meals=['العصر','المساء'];}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
+      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1='13:00';n2=p+dn;t2='20:00';}else{n1=p+ln;t1='14:00';n2=p+dn;t2='21:00';}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
+      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
+      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
+      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
+    } else if(ni.type==='three'){
+      var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);var nr3=r.cloneNode(true);
+      var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');var nt3=nr3.querySelectorAll('td');
+      var sz1=ni.customSplits?ni.customSplits[0]:ns;var sz2=ni.customSplits?ni.customSplits[1]:ns;var sz3=ni.customSplits?ni.customSplits[2]:ns;
+      setSize(nt1[si],sz1);setSize(nt2[si],sz2);setSize(nt3[si],sz3);setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');setEvry(nt3[ei],'24');
+      if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);setDose(nt3[di],tpi.dose);}
+      if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
+      var n1='',t1='',n2='',t2='',n3='',t3='';
+      if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';n3=e_lbl;t3='21:30';meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
+      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
+      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
+      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
+    } else if(ni.type==='q6h'){
+      var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
+      var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
+      var q6hSize=bs*2;
+      setSize(nt1[si],q6hSize);setSize(nt2[si],q6hSize);
+      setEvry(nt1[ei],'12');setEvry(nt2[ei],'12');
+      if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
+      if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
+      var andW=isEn?' & ':' و';var bedLbl=isEn?'Before Bed':'قبل النوم';
+      var n1='',t1='',n2='',t2='';
+      if(ni.isBefore){n1=p+bf+andW+dn;t1='08:00';n2=p+ln+andW+bedLbl;t2='13:00';}
+      else{n1=p+bf+andW+dn;t1='09:00';n2=p+ln+andW+bedLbl;t2='14:00';}
+      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
+      nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
+      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
+      meals=isEn?['Breakfast&Dinner','Lunch&Bed']:['الفطار والعشاء','الغداء والنوم'];
+    }
+    duplicatedRows.push({originalRow:r,duplicates:dupRows,type:ni.type,meals:meals});duplicatedCount++;
+    if(r.parentNode)r.parentNode.removeChild(r);
+  }
+
+  /* ── RAMADAN DUPLICATE ROWS ── */
+  function createRamadanDuplicateRows(t_val,r,rInfo,bs,niIdx,si,ei,di,ti,sdi,edi,m_val,tc,ci,qi){
+    var tds=r.querySelectorAll('td');var u_code=getCleanCode(tds[ci]);
+    var on=get(tds[niIdx]);var isEn=/[a-z]/i.test(on)||detectLanguage(on)==='english';
+    var calcQ=1;if(qi>=0){calcQ=parseInt(get(tds[qi]))||1;}
+    var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
+    var tpi=getTwoPillsPerDoseInfo(on);
+
+    /* Ramadan always creates 2 rows: Iftar + Suhoor */
+    var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
+    var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
+
+    /* Size = t_val (days) for each row */
+    var ns=t_val;
+    if(fixedSizeCodes[u_code]){ns=Math.floor(fixedSizeCodes[u_code]/2);var rem=fixedSizeCodes[u_code]%2;setSize(nt1[si],ns+(rem>0?1:0));setSize(nt2[si],ns);}
+    else{setSize(nt1[si],ns);setSize(nt2[si],ns);}
+    setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');
+    if(di>=0){setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
+    if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
+
+    /* Determine before/after from note */
+    var noteMap=ramadanMapNote(on);
+    var isBefore=/قبل|before|ac\b/i.test(on);
+    var iftarLabel,suhoorLabel,iftarTime,suhoorTime;
+    if(isBefore){
+      iftarLabel=isEn?'Before Iftar':'قبل الفطار';
+      suhoorLabel=isEn?'Before Suhoor':'قبل السحور';
+      iftarTime=RAMADAN_TIMES.beforeIftar;
+      suhoorTime=RAMADAN_TIMES.beforeSuhoor;
+    } else {
+      iftarLabel=isEn?'After Iftar':'بعد الفطار';
+      suhoorLabel=isEn?'After Suhoor':'بعد السحور';
+      iftarTime=RAMADAN_TIMES.afterIftar;
+      suhoorTime=RAMADAN_TIMES.afterSuhoor;
+    }
+
+    setNote(nt1[niIdx],'⚡ '+iftarLabel);setNote(nt2[niIdx],'⚡ '+suhoorLabel);
+    setTime(nr1,iftarTime);setTime(nr2,suhoorTime);
+
+    /* Set Ramadan start dates */
+    if(sdi>=0&&defaultStartDate){
+      var iftarSD=getRamadanStartDate(defaultStartDate,'afterIftar');
+      var suhoorSD=getRamadanStartDate(defaultStartDate,'afterSuhoor');
+      setStartDate(nr1,iftarSD);
+      setStartDate(nr2,suhoorSD);
+    }
+
+    r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);
+    var dupRows=[nr1,nr2];
+    var meals=isEn?['Iftar','Suhoor']:['الفطار','السحور'];
+    duplicatedRows.push({originalRow:r,duplicates:dupRows,type:'ramadan_two',meals:meals});duplicatedCount++;
+    if(r.parentNode)r.parentNode.removeChild(r);
+  }
+
+  function sortRowsByTime(t_elem,ti_idx,ei_idx){
+    if(ti_idx<0)return;var rs=Array.from(t_elem.querySelectorAll('tr'));var he=rs.shift();var rwt=[];var rwot=[];
+    rs.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length<=ti_idx){rwot.push(r);return;}var tv=get(tds[ti_idx]);if(!tv||tv.trim()===''){rwot.push(r);return;}rwt.push({row:r,time:tv});});
+    rwt.sort(function(a,b){
+      var ta=a.time.split(':').map(Number);
+      var tb2=b.time.split(':').map(Number);
+      var timeA=ta[0]*60+ta[1];
+      var timeB=tb2[0]*60+tb2[1];
+      /* في رمضان: السحور (1-5 صباحاً) يجي بعد الفطار (6 مساءً - 12 منتصف الليل) */
+      /* إذا كان وقت A صباحاً مبكر (0-5) ووقت B مساءً/ليلاً (18-23)، A يجي بعد B */
+      if(timeA>=0&&timeA<=300&&timeB>=1080){return 1;}
+      if(timeB>=0&&timeB<=300&&timeA>=1080){return -1;}
+      var diff=timeA-timeB;
+      if(diff===0&&ei_idx>=0){var evA=parseInt(get(a.row.querySelectorAll('td')[ei_idx]))||0;var evB=parseInt(get(b.row.querySelectorAll('td')[ei_idx]))||0;return evB-evA;}
+      return diff;
+    });
+    t_elem.innerHTML='';t_elem.appendChild(he);rwt.forEach(function(i){t_elem.appendChild(i.row);});rwot.forEach(function(r){t_elem.appendChild(r);});
+  }
+
+  function showUniqueItemsCount(t_elem,ci_idx){var s2=new Set();t_elem.querySelectorAll('tr').forEach(function(r,ri){if(ri===0)return;var tds=r.querySelectorAll('td');if(tds.length<=ci_idx)return;var c=get(tds[ci_idx]);if(c&&c.trim()!=='')s2.add(c.trim());});return s2.size;}
+  function getCheckmarkCellIndex(r){var tds=r.querySelectorAll('td');for(var i=0;i<tds.length;i++){if(tds[i].querySelector('input[type="checkbox"]')||tds[i].querySelector('img[src*="check"]'))return i;}return-1;}
+  function resetCheckmark(r,ci2){if(ci2<0)return;var tds=r.querySelectorAll('td');if(tds.length<=ci2)return;var cb=tds[ci2].querySelector('input[type="checkbox"]');if(cb){cb.checked=false;fire(cb);}}
+
+  setTopStartDate();
+  var tb_main=_ezFindTable();
+  if(!tb_main){window.ezShowToast('❌ لم يتم العثور على جدول الأدوية','error');ezBeep('error');return;}
+  tb_main.classList.add('ez-data-table');
+  var h_main=tb_main.querySelector('tr');var hs_main=h_main.querySelectorAll('th,td');
+  var qi_main=idx(hs_main,'qty');var si_main=idx(hs_main,'size');var ni_main=idx(hs_main,'note');var ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');
+  var ti_main=idx(hs_main,'time');var di_main=idx(hs_main,'dose');var ci_main=idx(hs_main,'code');var sdi_main=idx(hs_main,'start date');var edi_main=idx(hs_main,'end date');var nm_main=idx(hs_main,'name');if(nm_main<0)nm_main=idx(hs_main,'item');
+  window._ezCols={di:di_main,si:si_main,qi:qi_main,ni:ni_main,ei:ei_main};
+  /* Point 2: Detailed error for missing columns */
+  var missingCols=[];
+  if(qi_main<0) missingCols.push('Qty (الكمية)');
+  if(si_main<0) missingCols.push('Size (الحجم)');
+  if(ni_main<0) missingCols.push('Note (الملاحظات)');
+  if(ei_main<0) missingCols.push('Every (التكرار)');
+  if(missingCols.length>0){
+    var availCols=[];for(var ac=0;ac<hs_main.length;ac++){var ct=_ezNorm(hs_main[ac].textContent);if(ct)availCols.push(ct);}
+    window.ezShowToast('❌ أعمدة ناقصة: '+missingCols.join(' + '),'error');
+    ezBeep('error');
+    console.log('EZ Pill - أعمدة ناقصة:',missingCols);
+    console.log('EZ Pill - الأعمدة الموجودة:',availCols);
+    return;
+  }
+  if(ti_main>=0&&ni_main>=0&&ti_main<ni_main){moveColumnAfter(tb_main,ni_main,ti_main);hs_main=h_main.querySelectorAll('th,td');ni_main=idx(hs_main,'note');di_main=idx(hs_main,'dose');ei_main=idx(hs_main,'every');if(ei_main<0)ei_main=idx(hs_main,'evry');sdi_main=idx(hs_main,'start date');edi_main=idx(hs_main,'end date');}
+  if(sdi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[sdi_main].style.width='110px';hs_main[sdi_main].style.minWidth='110px';}
+  if(edi_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[edi_main].style.width='110px';hs_main[edi_main].style.minWidth='110px';}
+  if(ni_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ni_main].style.width='180px';hs_main[ni_main].style.minWidth='180px';}
+  if(ti_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ti_main].style.width='100px';hs_main[ti_main].style.minWidth='100px';}
+  if(ei_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ei_main].style.width='90px';hs_main[ei_main].style.minWidth='90px';}
+  if(nm_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[nm_main].style.minWidth='280px';}
+  var exp_main=idx(hs_main,'expiry');if(exp_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[exp_main].style.minWidth='85px';}
+  if(ci_main>=0){hs_main=h_main.querySelectorAll('th,td');hs_main[ci_main].style.width='90px';hs_main[ci_main].style.minWidth='90px';}
+
+  var rtd_list=[];var rtp_list=[];var skp_list=[];var processedCodes={};var allRowsData=[];window._ezRows=allRowsData;
+
+  tb_main.querySelectorAll('tr').forEach(function(r_node,ri_idx){
+    if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
+    if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+    var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
+    if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
+    rtp_list.push(r_node);
+  });
+
+  for(var i=0;i<rtp_list.length;i++){
+    var r_node=rtp_list[i];var tds_nodes=r_node.querySelectorAll('td');
+    if(tds_nodes.length<=Math.max(qi_main,si_main,ni_main,ei_main))continue;
+    if(sdi_main>=0){var sdInp=tds_nodes[sdi_main].querySelector('input');if(sdInp)sdInp.style.width='110px';}
+    if(edi_main>=0){var edInp=tds_nodes[edi_main].querySelector('input');if(edInp)edInp.style.width='110px';}
+    if(ti_main>=0){var tiInp=tds_nodes[ti_main].querySelector('input');if(tiInp)tiInp.style.width='100px';}
+    if(ei_main>=0){var eiInp=tds_nodes[ei_main].querySelector('input,select');if(eiInp)eiInp.style.width='90px';}
+    if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
+    var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
+    if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
+    var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
+    if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
+    var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
+    var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);var h_s=!!(itemCode&&weeklyInjections.indexOf(itemCode)>-1);
+
+    /* ── RAMADAN MODE OVERRIDES ── */
+    var ramadanInfo=null;
+    if(ramadanMode){
+      var doseRec=smartDoseRecognizer(fn_str);
+      var noteMapR=ramadanMapNote(fn_str);
+
+      /* ── CASE A: Note explicitly mentions BOTH iftar+suhoor → force duplicate even if count=1 ── */
+      if(noteMapR && noteMapR.isBoth){
+        dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+        /* ramadanInfo stays null → will be handled by duplicate logic */
+      }
+      /* ── CASE B: Weekly items ── */
+      else if(h_s){
+        ramadanInfo={type:'weekly_ramadan',meal:noteMapR?noteMapR.meal:'afterIftar',time:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar};
+      }
+      /* ── CASE C: Items with count >= 2: force Ramadan duplicate ── */
+      else if(doseRec.count>=2 && !h_s){
+        dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+      }
+      /* ── CASE D: Once daily ── */
+      else if(doseRec.count===1 && !h_s){
+        /* SMART FALLBACK: try multiple methods to understand the note */
+        if(!noteMapR){
+          var twResult=getTimeFromWords(fn_str);
+          if(twResult && twResult.time!==NORMAL_TIMES.defaultTime){
+            var h2=parseInt(twResult.time.split(':')[0]);
+            var meal2,lbl_ar2,lbl_en2,tm2;
+            if(h2>=5&&h2<10){meal2='afterSuhoor';lbl_ar2='بعد السحور';lbl_en2='After Suhoor';tm2=RAMADAN_TIMES.afterSuhoor;}
+            else if(h2>=10&&h2<17){meal2='beforeIftar';lbl_ar2='قبل الفطار';lbl_en2='Before Iftar';tm2=RAMADAN_TIMES.beforeIftar;}
+            else if(h2>=17&&h2<20){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
+            else if(h2>=20||h2<1){meal2='afterIftar';lbl_ar2='بعد الفطار';lbl_en2='After Iftar';tm2=RAMADAN_TIMES.afterIftar;}
+            else{meal2='beforeSuhoor';lbl_ar2='قبل السحور';lbl_en2='Before Suhoor';tm2=RAMADAN_TIMES.beforeSuhoor;}
+            noteMapR={meal:meal2,label_ar:lbl_ar2,label_en:lbl_en2,time:tm2};
+          }
+        }
+        if(!noteMapR && (doseRec.hasB||doseRec.hasL||doseRec.hasD||doseRec.hasM||doseRec.hasN||doseRec.hasA||doseRec.hasE||doseRec.hasBed||doseRec.hasEmpty)){
+          if(doseRec.hasB||doseRec.hasM||doseRec.hasEmpty) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+          else if(doseRec.hasL||doseRec.hasN||doseRec.hasA) noteMapR={meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+          else if(doseRec.hasD||doseRec.hasE) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+          else if(doseRec.hasBed) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+        }
+
+        var isNonTab=isNonTabletItem(itemName);
+        if(isNonTab){
+          dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+          ramadanInfo={type:'nontablet_ramadan',forceUncheck:true};
+        } else if(noteMapR){
+          ramadanInfo={type:'once_ramadan',meal:noteMapR.meal,time:noteMapR.time};
+        } else {
+          ramadanInfo={type:'once_ramadan',meal:'afterIftar',time:RAMADAN_TIMES.afterIftar};
+          var evryVal2=get(tds_nodes[ei_main]);
+          var timeVal2=ti_main>=0?get(tds_nodes[ti_main]):'';
+          warningQueue.push({level:'warning',message:'🌙 جرعة غير واضحة في رمضان: "'+itemName+'"',detail:'الجرعة المكتوبة: '+fn_str+'\n\nلم يتم التعرف على وقت رمضان. سيتم تعيينها بعد الفطار '+RAMADAN_TIMES.afterIftar+' افتراضياً.',editable:true,editLabel:'Every (ساعات)',currentEvery:parseInt(evryVal2)||24,currentTime:timeVal2||'19:00',currentNote:fn_str,rowIndex:allRowsData.length,type:'ramadan_unclear',onEdit:(function(idx2,tdsRef,eiIdx,tiIdx){return function(newEvery,newTime){allRowsData[idx2].ramadanOverrideEvery=newEvery;allRowsData[idx2].ramadanOverrideTime=newTime;if(eiIdx>=0&&tdsRef[eiIdx]){var eInp=tdsRef[eiIdx].querySelector('input,select');if(eInp){eInp.value=newEvery;_ezFire(eInp);}}if(tiIdx>=0&&tdsRef[tiIdx]){var tInp=tdsRef[tiIdx].querySelector('input');if(tInp){tInp.value=newTime;_ezFire(tInp);}}};})(allRowsData.length,tds_nodes,ei_main,ti_main)});
+        }
+      }
+    }
+    var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
+    if(autoDuration){durationInfo=extractDuration(fn_str);if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.floor(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
+    hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
+    allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
+    /* Detect dose=2 patterns AFTER push so rowIndex is correct */
+    var dose2pattern=/^2\s+(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
+    var dose2pattern2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
+    if(dose2pattern.test(original_note.trim())||dose2pattern2.test(original_note)){warningQueue.push({level:'warning',message:'💊 الصنف "'+itemName+'" - مكتوب جرعة مزدوجة (2) في الملاحظات',detail:original_note,editable:false,rowIndex:allRowsData.length-1,type:'dose2'});}
+  }
+
+  /* Feature 2: Detect duplicate items (same item code, different notes) */
+  if(enableWarnings){
+    var itemCodeMap={};
+    for(var di2=0;di2<allRowsData.length;di2++){
+      var rd2=allRowsData[di2];
+      var code2=rd2.itemCode;
+      if(!code2) continue;
+      if(itemCodeMap[code2]!==undefined){
+        var prevIdx=itemCodeMap[code2];
+        var prevRd=allRowsData[prevIdx];
+        warningQueue.push({level:'danger',message:'🔁 الصنف "'+rd2.itemName+'" مكرر في الطلب',detail:'موجود في سطر '+(prevIdx+1)+' وسطر '+(di2+1)+(prevRd.note!==rd2.note?' بملاحظات مختلفة':''),editable:false,rowIndex:di2,type:'duplicate',dupPairIndex:prevIdx});
+      } else {
+        itemCodeMap[code2]=di2;
+      }
+    }
+  }
+
+  if(enableWarnings){
+    for(var i=0;i<allRowsData.length;i++){
+      var rd=allRowsData[i];
+      
+      /* Check for unrecognized time patterns */
+      if(rd.note&&rd.note.trim().length>=3){
+        var timeResult=getTimeFromWords(rd.note);
+        if(timeResult.isUnrecognized&&!(rd.itemCode&&CODE_START_TIMES[rd.itemCode])){
+          warningQueue.push({
+            level:'warning',
+            message:'⚠️ الصنف: '+rd.itemName+' - الجرعة غير مفهومة',
+            detail:'النص: "'+rd.note+'" - تم استخدام الوقت الافتراضي '+timeResult.time,
+            editable:false,
+            rowIndex:i,
+            type:'unrecognized_dose'
+          });
+        }
+      }
+      
+      if(rd.durationInfo&&rd.durationInfo.hasDuration){
+        var extracted=rd.durationInfo.days;
+        if(extracted!==t){
+          warningQueue.push({
+            level:'warning',
+            message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',
+            editable:true,
+            editLabel:'عدد الأيام',
+            currentValue:extracted,
+            minValue:1,
+            maxValue:365,
+            rowIndex:i,
+            type:'days',
+            onEdit:(function(idx2){return function(newVal){allRowsData[idx2].calculatedDays=newVal;allRowsData[idx2].calculatedSize=newVal;allRowsData[idx2].warningOverride=true;};})(i)
+          });
+        }
+      }
+      
+      if(rd.hasFixedSize&&rd.dui){
+        var totalSize=fixedSizeCodes[rd.itemCode];
+        var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);
+        var eachPart=rd.dui.type==='q6h'?totalSize*2:Math.floor(totalSize/parts);
+        if(eachPart<5){
+          warningQueue.push({
+            level:'info',
+            message:'ℹ️ تقسيم صغير: '+rd.itemName+' سيصبح '+eachPart+' حبة لكل جرعة',
+            editable:false,
+            rowIndex:i,
+            type:'smallsplit'
+          });
+        }
+      }
+    }
+  }
+
+  warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
+  if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+
+  function continueProcessing(){
+    var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
+    var ramadanRtd=[];/* Ramadan duplicate list */
+    for(var i=0;i<allRowsData.length;i++){
+      var rd=allRowsData[i];var r_node=rd.row;var tds_nodes=rd.tds;
+
+      /* ── RAMADAN MODE: Ramadan duplicate (فطار + سحور) ── */
+      if(ramadanMode&&rd.dui&&rd.dui.type==='ramadan_two'){
+        if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}
+        /* Non-tablet items: uncheck and move to skip list */
+        if(rd.ramadanInfo&&rd.ramadanInfo.type==='nontablet_ramadan'){
+          var ck=getCheckmarkCellIndex(r_node);
+          resetCheckmark(r_node,ck);
+        }
+        ramadanRtd.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;
+      }
+
+      /* ── RAMADAN MODE: Once daily → single Ramadan time ── */
+      if(ramadanMode&&rd.ramadanInfo&&(rd.ramadanInfo.type==='once_ramadan'||rd.ramadanInfo.type==='weekly_ramadan')){
+        if(rd.ramadanInfo.type==='weekly_ramadan'&&rd.isWeekly){
+          /* Weekly in Ramadan: same logic but Ramadan time */
+          var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;
+          setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');
+          if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}
+          setTime(r_node,rd.ramadanInfo.time);
+          var targetDay=extractDayOfWeek(rd.note);
+          if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}
+          continue;
+        }
+        /* Single dose Ramadan: apply Ramadan time */
+        var rmEvery=rd.ramadanOverrideEvery||24;
+        setEvry(tds_nodes[ei_main],String(rmEvery));
+        setSize(tds_nodes[si_main],rd.calculatedSize);
+        setTime(r_node,rd.ramadanInfo.time);
+        if(di_main>=0){var tpi_once=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_once.dose);}
+        if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
+        /* Set Ramadan start date */
+        if(sdi_main>=0&&defaultStartDate){
+          var rmSD=getRamadanStartDate(defaultStartDate,rd.ramadanInfo.meal);
+          setStartDate(r_node,rmSD);
+        }
+        /* Apply note label */
+        var isEn=detectLanguage(rd.note)==='english';
+        var noteMap=ramadanMapNote(rd.note);
+        if(noteMap){
+          var newLabel=isEn?noteMap.label_en:noteMap.label_ar;
+          setNote(tds_nodes[ni_main],newLabel);
+        }
+        continue;
+      }
+
+      /* ── NORMAL MODE (original logic) ── */
+      if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
+      if(rd.hasFixedSize&&!rd.warningOverride){setSize(tds_nodes[si_main],fixedSizeCodes[rd.itemCode]);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
+      if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
+      if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
+      var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
+      var is48h=/48|يوم بعد يوم|يوم ويوم|every\s*other\s*day|day\s*after\s*day|alternate\s*day|eod|e\.o\.d/i.test(rd.note);
+      if(is48h){setEvry(tds_nodes[ei_main],'48');var mult2=doseMultiplier;if(doseInfo.count>=2)setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*mult2));else setSize(tds_nodes[si_main],Math.ceil((rd.calculatedSize*mult2)/2));setTime(r_node,tm2_obj.time);continue;}
+      var finalTPD=rd.timesPerDay;if(rd.hourlyInfo.hasInterval)finalTPD=rd.hourlyInfo.timesPerDay;
+      var isE12=/كل\s*12|12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(doseInfo.hasB&&doseInfo.hasD)||(doseInfo.hasM&&doseInfo.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);
+      if(finalTPD>=6){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*6));setEvry(tds_nodes[ei_main],'4');}
+      else if(finalTPD===4){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*4));setEvry(tds_nodes[ei_main],'6');}
+      else if(isE12||finalTPD===2){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*2));setEvry(tds_nodes[ei_main],'12');setTime(r_node,tm2_obj.time);}
+      else if(doseInfo.count===3||finalTPD===3){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*3));setEvry(tds_nodes[ei_main],'8');}
+      else if(doseInfo.count===2){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*2));setEvry(tds_nodes[ei_main],'12');setTime(r_node,tm2_obj.time);}
+      else{setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier));setEvry(tds_nodes[ei_main],'24');}
+      if(di_main>=0)setDose(tds_nodes[di_main],doseMultiplier>=1?doseMultiplier:1);
+      if(!isE12)setTime(r_node,tm2_obj.time);
+      /* Apply forceDose2 override AFTER normal processing */
+      if(rd.forceDose2){
+        if(di_main>=0)setDose(tds_nodes[di_main],2);
+        if(si_main>=0){var curSz=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],curSz*2);}
+        /* Queue safety confirmation */
+        if(!window._ezDose2Applied) window._ezDose2Applied=[];
+        window._ezDose2Applied.push({name:rd.itemName,newSize:curSz*2,dose:2});
+      }
+    }
+    for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
+    /* Ramadan duplicates */
+    for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
+    sortRowsByTime(tb_main,ti_main,ei_main);
+    for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='110px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='110px';}if(ti_main>=0&&tds_nodes[ti_main]){var tiInp2=tds_nodes[ti_main].querySelector('input');if(tiInp2)tiInp2.style.width='100px';}if(ei_main>=0&&tds_nodes[ei_main]){var eiInp2=tds_nodes[ei_main].querySelector('input,select');if(eiInp2)eiInp2.style.width='90px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
+    var uc=showUniqueItemsCount(tb_main,ci_main);
+    beautifyPage();
+    var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
+    if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
+    if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
+    if(showPostDialog||(ramadanMode&&duplicatedCount>0))showPostProcessDialog();
+    /* Ramadan mode notification */
+    if(ramadanMode){
+      var rmBadge=document.createElement('div');
+      rmBadge.id='ez-ramadan-active-badge';
+      rmBadge.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999994;background:linear-gradient(145deg,#1e1b4b,#312e81);color:#fbbf24;padding:8px 24px;border-radius:30px;font-family:Cairo,sans-serif;font-size:13px;font-weight:900;box-shadow:0 6px 20px rgba(30,27,75,0.3),inset 0 1px 0 rgba(255,255,255,0.1);display:flex;align-items:center;gap:8px;animation:fadeSlideUp 0.5s ease;border:1.5px solid rgba(251,191,36,0.3)';
+      rmBadge.innerHTML='<span style="font-size:18px">🌙</span> وضع رمضان مفعّل <span style="font-size:10px;color:rgba(251,191,36,0.6);margin-right:6px">فطار '+RAMADAN_TIMES.afterIftar+' · سحور '+RAMADAN_TIMES.afterSuhoor+'</span>';
+      document.body.appendChild(rmBadge);
+      setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},8000);
+    }
+    checkEndDateConsistency();
+    window.ezShowToast('تمت المعالجة بنجاح ✅','success');
+    ezBeep('success');
+
+    /* Feature 4: Order Summary - DISABLED */
+    /* Summary popup has been removed as per user request */
+    /* Show safety confirmation for dose2 changes */
+    if(window._ezDose2Applied&&window._ezDose2Applied.length>0){
+      setTimeout(function(){
+        var items=window._ezDose2Applied;
+        var listHtml='';
+        for(var d2=0;d2<items.length;d2++){
+          listHtml+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.1);border-radius:8px;margin-bottom:6px;direction:rtl">';
+          listHtml+='<span style="font-size:16px">💊</span>';
+          listHtml+='<span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+items[d2].name+'</span>';
+          listHtml+='<span style="font-size:11px;font-weight:800;color:#059669;background:rgba(16,185,129,0.08);padding:2px 8px;border-radius:6px">الجرعة: '+items[d2].dose+'</span>';
+          listHtml+='<span style="font-size:11px;font-weight:800;color:#6366f1;background:rgba(99,102,241,0.08);padding:2px 8px;border-radius:6px">الكمية: '+items[d2].newSize+'</span>';
+          listHtml+='</div>';
+        }
+        var safetyBanner=document.createElement('div');
+        safetyBanner.id='ez-safety-confirm';
+        safetyBanner.style.cssText='position:fixed;bottom:-300px;left:50%;transform:translateX(-50%);width:440px;max-width:94vw;z-index:9999998;transition:bottom 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
+        safetyBanner.innerHTML='\
+        <div style="background:#fff;border-radius:18px 18px 0 0;overflow:hidden;box-shadow:0 -12px 40px rgba(245,158,11,0.12),0 -4px 12px rgba(0,0,0,0.06);border:2px solid rgba(245,158,11,0.15);border-bottom:none">\
+          <div style="height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(245,158,11,0.08)">\
+            <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(245,158,11,0.2);flex-shrink:0">🔔</div>\
+            <div style="flex:1"><div style="font-size:13px;font-weight:800;color:#92400e">تأكد من كمية الأدوية التالية</div>\
+            <div style="font-size:10px;font-weight:700;color:#b45309;margin-top:1px">تم تعديل الجرعة والكمية - برجاء المراجعة</div></div>\
+          </div>\
+          <div style="padding:12px 18px">'+listHtml+'</div>\
+          <div style="padding:8px 18px 14px;display:flex;gap:6px">\
+            <button onclick="var el=document.getElementById(\'ez-safety-confirm\');el.style.bottom=\'-300px\';setTimeout(function(){el.remove()},600);window.ezShowToast(\'✅ تم التأكيد\',\'success\')" style="flex:1;height:36px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 3px 10px rgba(16,185,129,0.2);transition:all 0.3s">✅ تم المراجعة - الكميات صحيحة</button>\
+          </div>\
+        </div>';
+        document.body.appendChild(safetyBanner);
+        setTimeout(function(){safetyBanner.style.bottom='0px';},100);
+        /* Auto dismiss after 20 seconds */
+        setTimeout(function(){if(document.getElementById('ez-safety-confirm')){safetyBanner.style.bottom='-300px';setTimeout(function(){safetyBanner.remove();},600);}},20000);
+        window._ezDose2Applied=null;
+      },500);
+    }
+    setTimeout(function(){extractAndConfirmName();},800);
+    setTimeout(function(){detectPackagingInstructions();},1200);
+  }
+}
+
+/* ══════════════════════════════════════════
+   PACKAGING INSTRUCTIONS DETECTION
+   ══════════════════════════════════════════ */
+function detectPackagingInstructions(){
+  try{
+    /* Find Prescription Notes */
+    var inputs=document.querySelectorAll('input[type="text"],textarea');
+    var notesText='';
+    for(var i=0;i<inputs.length;i++){
+      var v=(inputs[i].value||'').trim();
+      if(v.length>30&&/[\u0600-\u06FF]/.test(v)&&(/ضيف|توصيل|صيدل|دمج|بوكس|صندوق|شهر/i.test(v))){notesText=v;break;}
+      var attrs=(inputs[i].name||'')+(inputs[i].id||'')+(inputs[i].placeholder||'');
+      if(/presc.*note|prescription.*note/i.test(attrs)&&v.length>10){notesText=v;break;}
+    }
+    if(!notesText) return;
+
+    var detected=null;
+    var s=notesText;
+
+    /* ── Pattern 1: MERGE - دمج الطلبات في بوكس واحد ── */
+    var mergePatterns=[
+      /دمج(هم|هن|وهم|وا|يهم)?\s*(في|فى|ب)?\s*(بوكس|صندوق|كرتون|شنطه|شنطة)?\s*(واحد)?/i,
+      /(بوكس|صندوق|كرتون|شنطه|شنطة)\s*(واحد|واحده)/i,
+      /تجميع(هم|هن)?\s*(في|فى|ب)?\s*(بوكس|صندوق)?/i,
+      /(في|فى)\s*(بوكس|صندوق|كرتون)\s*(واحد)/i,
+      /مع\s*بعض\s*(في|فى|ب)?\s*(بوكس|صندوق)?/i,
+      /طلب(ات|ين)?\s*(ب)?رجاء\s*دمج/i
+    ];
+
+    /* Extract order count */
+    var orderCount='';
+    var countMatch=s.match(/(\d+)\s*(طلب|طلبات|اوردر|order)/i);
+    if(countMatch) orderCount=countMatch[1];
+    var countMatch2=s.match(/(ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته|سبع|ثمان|تسع|عشر)\s*(طلب|طلبات)/i);
+    if(countMatch2){
+      var arabicNums={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','خمسة':'5','ست':'6','سته':'6','سبع':'7','ثمان':'8','تسع':'9','عشر':'10'};
+      orderCount=arabicNums[countMatch2[1]]||countMatch2[1];
+    }
+
+    for(var p=0;p<mergePatterns.length;p++){
+      if(mergePatterns[p].test(s)){
+        detected={
+          type:'merge',
+          icon:'📦',
+          color:'#6366f1',
+          colorLight:'rgba(99,102,241,0.06)',
+          colorBorder:'rgba(99,102,241,0.15)',
+          title:'دمج الطلبات في بوكس واحد',
+          detail:'الضيف عنده '+(orderCount?orderCount+' طلبات':'عدة طلبات')+' - المطلوب تجميعهم في بوكس واحد',
+          action:'تأكد من دمج جميع الطلبات في صندوق واحد قبل التوصيل'
+        };
+        break;
+      }
+    }
+
+    /* ── Pattern 2: SEPARATE BOXES - كل شهر بصندوق منفصل ── */
+    if(!detected){
+      var separatePatterns=[
+        /كل\s*(شهر|بوكس)\s*(ب|في|فى)?\s*(صندوق|بوكس|كرتون)/i,
+        /كل\s*شهر\s*(لوحد|منفصل|لحال)/i,
+        /(بوكسات|صناديق|كراتين)\s*(منفصل|منفصله|لوحد)/i,
+        /كل\s*شهر\s*(ب|في|فى)\s*(بوكس|صندوق)/i,
+        /(فصل|افصل|يفصل)\s*(كل)?\s*(شهر|بوكس)/i,
+        /شهر\s*(ب|في|فى)\s*(صندوق|بوكس)\s*(منفصل)?/i,
+        /جعل\s*كل\s*شهر\s*(ب|في|فى)?\s*(صندوق|بوكس)/i
+      ];
+
+      /* Extract month count */
+      var monthCount='';
+      var mMatch=s.match(/(\d+)\s*(شهر|اشهر|أشهر|شهور)/i);
+      if(mMatch) monthCount=mMatch[1];
+      var mMatch2=s.match(/(شهرين|ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته)\s*(شهر|اشهر|أشهر|شهور)?/i);
+      if(mMatch2){
+        var arabicNums2={'شهرين':'2','ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','خمسة':'5','ست':'6','سته':'6'};
+        monthCount=arabicNums2[mMatch2[1]]||mMatch2[1];
+      }
+      var lMatch=s.match(/ل(ثلاث|ثلاثة|اربع|أربع|خمس|ست)\s*(اشهر|أشهر|شهور)/i);
+      if(lMatch){
+        var arabicNums3={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','ست':'6'};
+        monthCount=arabicNums3[lMatch[1]]||lMatch[1];
+      }
+
+      for(var p2=0;p2<separatePatterns.length;p2++){
+        if(separatePatterns[p2].test(s)){
+          detected={
+            type:'separate',
+            icon:'📦📦📦',
+            color:'#f59e0b',
+            colorLight:'rgba(245,158,11,0.06)',
+            colorBorder:'rgba(245,158,11,0.15)',
+            title:'كل شهر في صندوق منفصل',
+            detail:'المطلوب '+(monthCount?monthCount+' صناديق - صندوق لكل شهر':'تقسيم الأدوية لصناديق منفصلة - صندوق لكل شهر'),
+            action:'تأكد من فصل أدوية كل شهر في بوكس منفصل عند التجهيز'
+          };
+          break;
+        }
+      }
+    }
+
+    if(!detected) return;
+
+    /* Show packaging banner - right side */
+    var pkgBanner=document.createElement('div');
+    pkgBanner.id='ez-pkg-alert';
+    pkgBanner.style.cssText='position:fixed;right:-500px;top:80px;width:340px;z-index:9999996;transition:right 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
+
+    pkgBanner.innerHTML='\
+    <div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.1),0 4px 12px rgba(0,0,0,0.04);border:2px solid '+detected.colorBorder+'">\
+      <div style="height:3px;background:linear-gradient(90deg,'+detected.color+','+detected.color+'88,'+detected.color+');background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+      <div style="padding:14px 16px 10px;display:flex;align-items:center;gap:10px">\
+        <div style="font-size:24px;flex-shrink:0">'+detected.icon+'</div>\
+        <div style="flex:1"><div style="font-size:14px;font-weight:900;color:#1e1b4b">'+detected.title+'</div></div>\
+        <button onclick="var el=document.getElementById(\'ez-pkg-alert\');el.style.right=\'-500px\';setTimeout(function(){el.remove()},600)" style="width:26px;height:26px;border:none;border-radius:7px;font-size:13px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>\
+      </div>\
+      <div style="padding:0 16px 12px">\
+        <div style="background:'+detected.colorLight+';border:1px solid '+detected.colorBorder+';border-radius:10px;padding:10px 12px;margin-bottom:8px;direction:rtl">\
+          <div style="font-size:12px;font-weight:800;color:#1e1b4b;line-height:1.6">'+detected.detail+'</div>\
+        </div>\
+        <div style="display:flex;align-items:flex-start;gap:6px;direction:rtl;padding:6px 8px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.08)">\
+          <span style="font-size:14px;flex-shrink:0;margin-top:1px">⚡</span>\
+          <div style="font-size:11px;font-weight:700;color:#92400e;line-height:1.6">'+detected.action+'</div>\
+        </div>\
+      </div>\
+      <div style="padding:6px 16px 12px">\
+        <button onclick="var el=document.getElementById(\'ez-pkg-alert\');el.style.right=\'-500px\';setTimeout(function(){el.remove()},600);window.ezShowToast(\'✅ تم الاطلاع\',\'success\')" style="width:100%;height:36px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,'+detected.color+','+detected.color+'dd);box-shadow:0 3px 10px '+detected.color+'33;transition:all 0.3s">👍 تم - فاهم</button>\
+      </div>\
+    </div>';
+
+    document.body.appendChild(pkgBanner);
+    setTimeout(function(){pkgBanner.style.right='16px';ezBeep('warning');},100);
+    /* Auto dismiss after 25 seconds */
+    setTimeout(function(){if(document.getElementById('ez-pkg-alert')){pkgBanner.style.right='-500px';setTimeout(function(){pkgBanner.remove();},600);}},25000);
+
+  }catch(e){console.log('EZ PackageDetect:',e);}
+}
+
+/* ══════════════════════════════════════════
+   STYLES - NEW PROFESSIONAL DESIGN
+   ══════════════════════════════════════════ */
+var s_style=document.createElement('style');
+s_style.textContent='\
+@keyframes barShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}\
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}\
+@keyframes dialogEnter{from{opacity:0;transform:translate(-50%,-46%) scale(0.95)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}\
+@keyframes shimmer{0%,70%{left:-100%}100%{left:200%}}\
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}\
+@keyframes spin{to{transform:rotate(360deg)}}\
+@keyframes meshFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}\
+.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:480px;max-width:96vw;z-index:99999;border-radius:28px;background:rgba(255,255,255,0.97);backdrop-filter:blur(40px);box-shadow:0 30px 80px rgba(99,102,241,0.12),0 8px 24px rgba(0,0,0,0.04),0 0 0 1px rgba(129,140,248,0.08),inset 0 1px 0 rgba(255,255,255,0.8);overflow:hidden;animation:dialogEnter 0.8s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
+.ez-dialog-v2::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#a78bfa,#818cf8,#6366f1);background-size:300% 100%;animation:barShift 4s ease infinite;z-index:1}\
+.ez-header{padding:20px 24px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.08);cursor:move}\
+.ez-logo-group{display:flex;align-items:center;gap:14px}\
+.ez-logo{width:52px;height:52px;border-radius:16px;background:linear-gradient(145deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 24px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2);position:relative;overflow:hidden}\
+.ez-logo::after{content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);animation:shimmer 3s ease infinite}\
+.ez-title-block{display:flex;flex-direction:column;gap:2px}\
+.ez-title{font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.5px;line-height:1.2;display:flex;align-items:center;gap:8px}\
+.ez-title .ez-brand{font-size:13px;font-weight:800;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:0.5px}\
+.ez-subtitle{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.3px}\
+.ez-header-actions{display:flex;align-items:center;gap:6px}\
+.ez-version{font-size:9px;font-weight:800;color:#818cf8;background:rgba(129,140,248,0.08);padding:3px 10px;border-radius:8px;letter-spacing:0.5px}\
+.ez-btn-icon{width:34px;height:34px;border-radius:10px;border:1px solid rgba(129,140,248,0.1);background:rgba(129,140,248,0.04);color:#94a3b8;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
+.ez-btn-icon:hover{background:rgba(129,140,248,0.1);color:#6366f1}\
+.ez-content{padding:20px 24px 24px}\
+.ez-section-label{display:flex;align-items:center;gap:8px;direction:rtl;margin-bottom:10px}\
+.ez-section-label .dot{font-size:14px}\
+.ez-section-label span:last-child{font-size:11px;font-weight:800;color:#64748b;letter-spacing:0.3px}\
+.ez-section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(129,140,248,0.08),transparent)}\
+.ez-pill-group{display:flex;gap:8px;margin-bottom:20px}\
+.ez-pill{flex:1;height:52px;border-radius:14px;border:1.5px solid rgba(129,140,248,0.1);background:transparent;font-size:18px;font-weight:900;color:#94a3b8;cursor:pointer;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}\
+.ez-pill .ez-pill-sub{font-size:8px;font-weight:700;opacity:0.5;letter-spacing:0.5px}\
+.ez-pill:hover:not(.active){color:#6366f1;border-color:rgba(99,102,241,0.15);background:rgba(99,102,241,0.02)}\
+.ez-pill.active{color:#fff;background:linear-gradient(145deg,#6366f1,#818cf8);border-color:#6366f1;box-shadow:0 6px 20px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2);transform:scale(1.02)}\
+.ez-pill.active .ez-pill-sub{opacity:0.9}\
+.ez-sep{height:1px;margin:16px 0;background:linear-gradient(90deg,transparent,rgba(129,140,248,0.12),transparent)}\
+.ez-toggle-row{display:flex;align-items:center;padding:10px 14px;gap:12px;direction:rtl;cursor:pointer;border-radius:12px;border:1px solid transparent;transition:all 0.3s;margin-bottom:4px}\
+.ez-toggle-row:hover{background:rgba(99,102,241,0.02);border-color:rgba(129,140,248,0.06)}\
+.ez-toggle-row.ez-tog-on{background:rgba(99,102,241,0.02);border-color:rgba(129,140,248,0.06)}\
+.ez-switch{position:relative;width:42px;height:24px;flex-shrink:0}\
+.ez-switch input{display:none}\
+.ez-switch-track{position:absolute;inset:0;background:rgba(148,163,184,0.3);border-radius:12px;transition:all 0.3s cubic-bezier(0.16,1,0.3,1)}\
+.ez-switch input:checked+.ez-switch-track{background:linear-gradient(145deg,#6366f1,#818cf8);box-shadow:0 2px 8px rgba(99,102,241,0.3)}\
+.ez-switch-knob{position:absolute;top:3px;right:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);box-shadow:0 1px 4px rgba(0,0,0,0.15);pointer-events:none}\
+.ez-switch input:checked~.ez-switch-knob{right:21px}\
+.ez-toggle-text{font-size:12px;font-weight:700;color:#64748b;flex:1;transition:color 0.3s}\
+.ez-tog-on .ez-toggle-text{color:#1e1b4b}\
+.ez-toggle-text .auto-tag{font-size:8px;font-weight:800;color:#fff;background:linear-gradient(135deg,#10b981,#059669);padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:middle}\
+.ez-toggle-icon{font-size:14px;opacity:0.4;transition:all 0.3s}\
+.ez-tog-on .ez-toggle-icon{opacity:1}\
+.ez-ramadan-toggle.ez-tog-on{background:linear-gradient(135deg,rgba(30,27,75,0.06),rgba(251,191,36,0.06))!important;border-color:rgba(251,191,36,0.2)!important}\
+.ez-ramadan-toggle.ez-tog-on .ez-switch-track{background:linear-gradient(145deg,#1e1b4b,#312e81)!important;box-shadow:0 2px 8px rgba(30,27,75,0.4)!important}\
+.ez-ramadan-toggle.ez-tog-on .ez-toggle-text{color:#1e1b4b!important;font-weight:800!important}\
+.ez-actions{display:flex;gap:8px;margin-top:20px}\
+.ez-btn-primary{flex:1;height:52px;border:none;border-radius:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 6px 24px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.15);transition:all 0.4s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden;letter-spacing:0.3px}\
+.ez-btn-primary::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);animation:shimmer 4s ease-in-out infinite}\
+.ez-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,0.35),inset 0 1px 0 rgba(255,255,255,0.15)}\
+.ez-btn-primary:active{transform:translateY(0)}\
+.ez-btn-primary.ez-pulse{box-shadow:0 8px 30px rgba(99,102,241,0.4),0 0 0 3px rgba(99,102,241,0.1)}\
+.ez-btn-doses{width:52px;height:52px;border-radius:14px;border:1.5px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.04);color:#818cf8;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}\
+.ez-btn-doses:hover{background:linear-gradient(145deg,#6366f1,#818cf8);color:#fff;border-color:#6366f1;box-shadow:0 6px 20px rgba(99,102,241,0.25)}\
+.ez-btn-cancel{width:52px;height:52px;border-radius:14px;border:1.5px solid rgba(239,68,68,0.1);background:rgba(239,68,68,0.03);color:#ef4444;cursor:pointer;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
+.ez-btn-cancel:hover{background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.2)}\
+.ez-footer{padding:10px 24px;text-align:center;font-size:9px;font-weight:800;letter-spacing:2px;border-top:1px solid rgba(129,140,248,0.06);background:rgba(129,140,248,0.02)}\
+.ez-footer span{color:#c7d2fe}\
+.ez-content>*{animation:fadeSlideUp 0.4s ease backwards}\
+.ez-content>*:nth-child(1){animation-delay:0.05s}.ez-content>*:nth-child(2){animation-delay:0.1s}.ez-content>*:nth-child(3){animation-delay:0.15s}.ez-content>*:nth-child(4){animation-delay:0.2s}.ez-content>*:nth-child(5){animation-delay:0.25s}.ez-content>*:nth-child(6){animation-delay:0.3s}.ez-content>*:nth-child(7){animation-delay:0.35s}.ez-content>*:nth-child(8){animation-delay:0.4s}.ez-content>*:nth-child(9){animation-delay:0.45s}\
+.ez-doses-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;z-index:100000;border-radius:20px;background:#fff;box-shadow:0 20px 60px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.2);overflow:hidden;font-family:Cairo,sans-serif}\
+.ez-doses-dialog::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a78bfa,#8b5cf6,#6366f1,#8b5cf6,#a78bfa);background-size:200% 100%;animation:barShift 4s ease infinite;z-index:1}\
+.ez-doses-header{padding:14px 22px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(167,139,250,0.03) 0%,transparent 100%)}\
+.ez-doses-logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(145deg,#a78bfa,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(139,92,246,0.25),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.12);position:relative}\
+.ez-doses-logo::after{content:"";position:absolute;inset:0;border-radius:11px;background:linear-gradient(180deg,rgba(255,255,255,0.2) 0%,transparent 50%);pointer-events:none}\
+.ez-doses-title{font-size:17px;font-weight:800;color:#1e1b4b}\
+.ez-items-count{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:#818cf8;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12);padding:2px 10px;border-radius:8px}\
+.ez-doses-body{padding:16px 22px 16px;max-height:60vh;overflow-y:auto}\
+.ez-dose-header-row{display:flex;align-items:center;gap:0;margin-bottom:6px;border-radius:10px;overflow:hidden;background:linear-gradient(145deg,#818cf8,#6366f1)}\
+.ez-dose-header-row .ez-dose-num{width:36px;text-align:center;padding:8px 0;color:rgba(255,255,255,0.7);font-size:11px;font-weight:800;border-left:1px solid rgba(255,255,255,0.15)}\
+.ez-dose-header-row .ez-dose-name,.ez-dose-header-row .ez-dose-note{flex:1;padding:8px 14px;color:#fff;font-size:11px;font-weight:800;letter-spacing:0.5px;border-left:1px solid rgba(255,255,255,0.15)}\
+.ez-dose-item{display:flex;align-items:stretch;gap:0;margin-bottom:6px;border-radius:10px;border:1px solid rgba(129,140,248,0.1);overflow:hidden;background:#fff;transition:all 0.2s}\
+.ez-dose-item:hover{border-color:rgba(129,140,248,0.2);box-shadow:0 2px 12px rgba(99,102,241,0.06)}\
+.ez-dose-item-dup{border:1.5px solid rgba(251,191,36,0.4);background:rgba(251,191,36,0.04)}\
+.ez-dose-item-dup:hover{border-color:rgba(251,191,36,0.6);box-shadow:0 2px 12px rgba(251,191,36,0.1)}\
+.ez-dose-num{width:36px;display:flex;align-items:center;justify-content:center;background:rgba(129,140,248,0.05);font-size:12px;font-weight:800;color:#818cf8;border-left:1px solid rgba(129,140,248,0.08);flex-shrink:0}\
+.ez-dose-name{flex:1;padding:10px 14px;font-size:12px;font-weight:700;color:#1e1b4b;line-height:1.4;border-left:1px solid rgba(129,140,248,0.08);word-break:break-word}\
+.ez-dose-note{flex:1.2;padding:10px 14px;font-size:12px;font-weight:600;color:#3730a3;line-height:1.4;background:rgba(241,245,249,0.5);word-break:break-word;direction:rtl}\
+.ez-doses-footer{padding:12px 22px;display:flex;gap:8px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)}\
+.ez-btn-close-doses{flex:1;height:42px;border:1.5px solid rgba(129,140,248,0.15);border-radius:12px;background:linear-gradient(145deg,#fff,#f8fafc);color:#6366f1;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;transition:all 0.25s;box-shadow:0 2px 6px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8)}\
+.ez-btn-close-doses:hover{border-color:#818cf8;color:#4338ca;background:rgba(129,140,248,0.06)}\
+.ez-toast{position:fixed;bottom:30px;right:30px;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);padding:12px 16px;border-radius:14px;box-shadow:0 10px 35px rgba(45,43,58,0.12),0 2px 8px rgba(0,0,0,0.06);z-index:999999;display:flex;align-items:center;gap:10px;font-family:Cairo,sans-serif;transform:translateX(400px);opacity:0;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);border:1px solid rgba(129,140,248,0.1)}\
+.ez-toast.show{transform:translateX(0);opacity:1}\
+.ez-toast-icon{font-size:18px}\
+.ez-toast-msg{font-size:13px;font-weight:700;color:#1e1b4b}\
+.ez-toast-success{border-right:4px solid #10b981}\
+.ez-toast-error{border-right:4px solid #ef4444}\
+.ez-toast-info{border-right:4px solid #818cf8}\
+.ez-toast-warning{border-right:4px solid #f59e0b}\
+.ez-loader-spinner{width:22px;height:22px;border:3px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite}\
+.ez-loader-text{font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif}\
+\
+body.ez-dark-mode{background:#0f0f23!important;color:#e2e8f0!important}\
+body.ez-dark-mode *:not(.ez-dialog-v2):not(.ez-dialog-v2 *):not([id^="ez-"]):not([id^="ez-"] *):not(.ez-toast):not(.ez-toast *){background-color:#1a1a2e!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.15)!important}\
+body.ez-dark-mode input,body.ez-dark-mode textarea,body.ez-dark-mode select{background:#16162a!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.2)!important}\
+body.ez-dark-mode .form-control{background:#16162a!important;color:#e2e8f0!important}\
+body.ez-dark-mode a{color:#818cf8!important}\
+body.ez-dark-mode button:not(.ez-pill):not(.ez-btn-primary):not(.ez-btn-cancel):not(.ez-btn-doses):not(.ez-btn-icon):not([onclick*="ez"]){background:#1e1e3a!important;color:#c7d2fe!important;border-color:rgba(129,140,248,0.2)!important}\
+body.ez-dark-mode .ez-dialog-v2{background:rgba(20,20,45,0.95)!important;box-shadow:0 30px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(129,140,248,0.1),inset 0 1px 0 rgba(255,255,255,0.03)!important}\
+body.ez-dark-mode .ez-title{color:#e2e8f0!important}\
+body.ez-dark-mode .ez-subtitle{color:#64748b!important}\
+body.ez-dark-mode .ez-section-label span:last-child{color:#94a3b8!important}\
+body.ez-dark-mode .ez-pill:not(.active){color:#94a3b8!important;border-color:rgba(129,140,248,0.12)!important}\
+body.ez-dark-mode .ez-pill:hover:not(.active){background:rgba(129,140,248,0.08)!important;color:#c7d2fe!important}\
+body.ez-dark-mode .ez-toggle-text{color:#94a3b8!important}\
+body.ez-dark-mode .ez-tog-on .ez-toggle-text{color:#e2e8f0!important}\
+body.ez-dark-mode .ez-toggle-row{border-color:rgba(129,140,248,0.06)!important}\
+body.ez-dark-mode .ez-toggle-row:hover,.ez-dark-mode .ez-tog-on{background:rgba(99,102,241,0.06)!important}\
+body.ez-dark-mode .ez-footer{background:rgba(129,140,248,0.03)!important;border-color:rgba(129,140,248,0.06)!important}\
+body.ez-dark-mode .ez-footer span{color:#475569!important}\
+body.ez-dark-mode .ez-btn-cancel{background:rgba(239,68,68,0.06)!important;border-color:rgba(239,68,68,0.12)!important}\
+body.ez-dark-mode .ez-btn-doses{background:rgba(129,140,248,0.06)!important;border-color:rgba(129,140,248,0.12)!important}\
+body.ez-dark-mode .ez-sep{background:linear-gradient(90deg,transparent,rgba(129,140,248,0.1),transparent)!important}\
+body.ez-dark-mode label,body.ez-dark-mode span{color:#c7d2fe!important}';
+/* Table borders - data table only */
+s_style.textContent+='table.ez-data-table{border-collapse:collapse!important;border:1px solid #bbb!important}table.ez-data-table th,table.ez-data-table td{border:1px solid #bbb!important}';
+document.head.appendChild(s_style);
+
+/* ══════════════════════════════════════════
+   PAGE BEAUTIFICATION
+   ══════════════════════════════════════════ */
+function beautifyPage(){
+  try{
+    var dataTable=null;var allTables=document.querySelectorAll('table');
+    for(var i=0;i<allTables.length;i++){var txt=allTables[i].innerText.toLowerCase();if((txt.indexOf('qty')>-1||txt.indexOf('quantity')>-1)&&txt.indexOf('note')>-1){dataTable=allTables[i];break;}}
+    if(dataTable){dataTable.classList.add('ez-data-table');}
+  }catch(e){}
+}
+
+/* ══════════════════════════════════════════
+   MAIN DIALOG - NEW PROFESSIONAL DESIGN
+   ══════════════════════════════════════════ */
+
+/* ── ADMIN SETTINGS PANEL ── */
+window.ezOpenSettings=function(){
+  if(document.getElementById('ez-settings-overlay')) return;
+  /* PIN prompt */
+  var pinOverlay=document.createElement('div');
+  pinOverlay.id='ez-pin-overlay';
+  pinOverlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.7);backdrop-filter:blur(12px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;animation:ezWnFadeIn 0.3s ease';
+  pinOverlay.innerHTML='<div style="background:#fff;border-radius:22px;width:340px;padding:32px 28px;text-align:center;box-shadow:0 30px 80px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);animation:ezWnSlideUp 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="width:60px;height:60px;border-radius:18px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(99,102,241,0.3)">🔐</div><div style="font-size:18px;font-weight:900;color:#1e1b4b;margin-bottom:4px">لوحة الإعدادات</div><div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:20px">أدخل الرقم السري للمتابعة</div><div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;direction:ltr" id="ez-pin-dots"></div><input type="password" id="ez-pin-input" maxlength="6" style="width:180px;padding:12px 16px;border:2px solid rgba(129,140,248,0.15);border-radius:14px;font-size:24px;font-weight:900;color:#1e1b4b;text-align:center;font-family:Cairo,sans-serif;outline:none;letter-spacing:8px;background:rgba(241,245,249,0.5);transition:all 0.3s" placeholder="••••••" autocomplete="off" /><div id="ez-pin-error" style="font-size:11px;font-weight:800;color:#ef4444;margin-top:8px;height:16px"></div><div style="display:flex;gap:8px;margin-top:16px"><button id="ez-pin-ok" style="flex:1;height:44px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 4px 16px rgba(99,102,241,0.25);transition:all 0.3s">دخول</button><button id="ez-pin-cancel" style="height:44px;padding:0 20px;border:1.5px solid rgba(129,140,248,0.15);border-radius:12px;background:#fff;color:#6366f1;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;transition:all 0.3s">إلغاء</button></div></div>';
+  document.body.appendChild(pinOverlay);
+  var pinInput=document.getElementById('ez-pin-input');
+  setTimeout(function(){pinInput.focus();},100);
+  document.getElementById('ez-pin-cancel').onclick=function(){pinOverlay.remove();};
+  pinOverlay.onclick=function(e){if(e.target===pinOverlay)pinOverlay.remove();};
+  function tryPin(){
+    var val=pinInput.value.trim();
+    var auth=authenticatePin(val);
+    if(auth){
+      pinOverlay.remove();
+      _ezShowSettingsPanel(auth.role,auth.name);
+    } else {
+      document.getElementById('ez-pin-error').textContent='❌ الرقم السري غلط';
+      pinInput.style.borderColor='#ef4444';pinInput.style.animation='shake 0.4s ease';
+      setTimeout(function(){pinInput.style.borderColor='rgba(129,140,248,0.15)';pinInput.style.animation='';pinInput.value='';pinInput.focus();},800);
+    }
+  }
+  document.getElementById('ez-pin-ok').onclick=tryPin;
+  pinInput.onkeydown=function(e){if(e.key==='Enter')tryPin();if(e.key==='Escape')pinOverlay.remove();};
+};
+
+function _ezShowSettingsPanel(role,userName){
+  var isAdmin=(role==='admin');
+  var cc=loadCustomConfig();
+  var RT=RAMADAN_TIMES;var NT=NORMAL_TIMES;
+
+  var overlay=document.createElement('div');
+  overlay.id='ez-settings-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(10px);z-index:9999998;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;animation:ezWnFadeIn 0.3s ease';
+
+  /* Build Fixed Size Codes table */
+  var fscRows='';var fscKeys=Object.keys(fixedSizeCodes);
+  for(var i=0;i<fscKeys.length;i++){
+    var isCustom=cc.fixedSizeCodes&&cc.fixedSizeCodes[fscKeys[i]]!==undefined;
+    fscRows+='<tr style="'+(isCustom?'background:rgba(16,185,129,0.04)':'')+'"><td style="padding:4px 8px;font-size:12px;font-weight:800;color:#1e1b4b;direction:ltr">'+fscKeys[i]+'</td><td style="padding:4px 8px;text-align:center"><input type="number" class="ez-cfg-fsc-val" data-code="'+fscKeys[i]+'" value="'+fixedSizeCodes[fscKeys[i]]+'" style="width:60px;padding:4px 6px;border:1.5px solid rgba(129,140,248,0.15);border-radius:8px;font-size:13px;font-weight:800;text-align:center;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none" /></td><td style="padding:4px;text-align:center"><button class="ez-cfg-del-fsc" data-code="'+fscKeys[i]+'" style="width:26px;height:26px;border:none;border-radius:7px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:12px">✕</button></td></tr>';
+  }
+
+  /* Build Weekly Injections list */
+  var wiRows='';
+  for(var i=0;i<weeklyInjections.length;i++){
+    var isCustomW=cc.addedWeekly&&cc.addedWeekly.indexOf(weeklyInjections[i])>-1;
+    wiRows+='<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:4px;background:'+(isCustomW?'rgba(16,185,129,0.04)':'rgba(241,245,249,0.5)')+';border-radius:8px;border:1px solid rgba(129,140,248,0.06)"><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b;direction:ltr">'+weeklyInjections[i]+'</span><button class="ez-cfg-del-wi" data-code="'+weeklyInjections[i]+'" style="width:22px;height:22px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px">✕</button></div>';
+  }
+
+  /* Build Custom Keywords list */
+  var kwRows='';
+  var allKwRules=[];
+  /* Add normal rules with type marker */
+  if(cc.customTimeRules){
+    for(var i=0;i<cc.customTimeRules.length;i++){
+      allKwRules.push({rule:cc.customTimeRules[i],type:'normal',originalIdx:i});
+    }
+  }
+  /* Add ramadan rules with type marker */
+  if(cc.customRamadanRules){
+    for(var i=0;i<cc.customRamadanRules.length;i++){
+      allKwRules.push({rule:cc.customRamadanRules[i],type:'ramadan',originalIdx:i});
+    }
+  }
+  for(var i=0;i<allKwRules.length;i++){
+    var item=allKwRules[i];
+    var kr=item.rule;
+    var isRm=item.type==='ramadan';
+    kwRows+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:'+(isRm?'rgba(251,191,36,0.04)':'rgba(139,92,246,0.04)')+';border-radius:8px;border:1px solid '+(isRm?'rgba(251,191,36,0.12)':'rgba(139,92,246,0.08)')+';direction:rtl"><span style="font-size:12px;font-weight:800;color:#1e1b4b;flex:1">'+kr.pattern+'</span><span style="font-size:11px;font-weight:800;color:#6366f1;background:rgba(99,102,241,0.06);padding:2px 8px;border-radius:6px;direction:ltr">'+kr.time+'</span>'+(kr.label?'<span style="font-size:9px;font-weight:700;color:#94a3b8">'+kr.label+'</span>':'')+'<button class="ez-cfg-del-kw" data-idx="'+i+'" data-type="'+item.type+'" data-original-idx="'+item.originalIdx+'" style="width:22px;height:22px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+  }
+  if(allKwRules.length===0) kwRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا توجد كلمات مخصصة بعد</div>';
+
+  /* Build Users list */
+  var usrRows='';var usrRows_count=0;
+
+  /* Build Code Start Times list */
+  var cstRows='';var cstKeys=Object.keys(CODE_START_TIMES);
+  for(var i=0;i<cstKeys.length;i++){
+    cstRows+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:rgba(6,182,212,0.04);border-radius:8px;border:1px solid rgba(6,182,212,0.1);direction:ltr"><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+cstKeys[i]+'</span><input type="time" class="ez-cfg-cst-val" data-code="'+cstKeys[i]+'" value="'+CODE_START_TIMES[cstKeys[i]]+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(6,182,212,0.15);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /><button class="ez-cfg-del-cst" data-code="'+cstKeys[i]+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+  }
+  if(cstKeys.length===0) cstRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا توجد أوقات مخصصة للأكواد بعد</div>';
+  {
+    var users=loadUsers();usrRows_count=users.length;
+    for(var i=0;i<users.length;i++){
+      usrRows+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(245,158,11,0.04);border-radius:8px;border:1px solid rgba(245,158,11,0.1);direction:rtl"><span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;flex-shrink:0">👤</span><span style="flex:1;font-size:12px;font-weight:800;color:#1e1b4b">'+users[i].name+'</span><span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 6px;border-radius:4px">مستخدم</span>'+(isAdmin?'<button class="ez-cfg-del-usr" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button>':'')+'</div>';
+    }
+    if(users.length===0) usrRows='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;font-weight:700">لا يوجد مستخدمين بعد</div>';
+  }
+
+  function timeInput(id,label,value,icon){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(241,245,249,0.5);border-radius:10px;border:1px solid rgba(129,140,248,0.06);margin-bottom:6px"><span style="font-size:14px;flex-shrink:0">'+icon+'</span><span style="flex:1;font-size:11px;font-weight:700;color:#64748b;direction:rtl">'+label+'</span><input type="time" id="'+id+'" value="'+value+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(129,140,248,0.12);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /></div>';
+  }
+
+  overlay.innerHTML='<div style="background:#fff;border-radius:24px;width:580px;max-width:96vw;max-height:90vh;overflow:hidden;box-shadow:0 30px 80px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);animation:ezWnSlideUp 0.5s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column">\
+    <div style="padding:18px 24px 14px;display:flex;align-items:center;gap:14px;border-bottom:2px solid rgba(129,140,248,0.08);background:linear-gradient(180deg,rgba(99,102,241,0.03),transparent);flex-shrink:0">\
+      <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,'+(isAdmin?'#6366f1,#4f46e5':'#10b981,#059669')+');display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 20px '+(isAdmin?'rgba(99,102,241,0.3)':'rgba(16,185,129,0.3)')+'">⚙️</div>\
+      <div style="flex:1"><div style="font-size:17px;font-weight:900;color:#1e1b4b">لوحة الإعدادات</div><div style="font-size:10px;font-weight:700;margin-top:1px;display:flex;align-items:center;gap:6px"><span style="color:#94a3b8">مرحباً</span><span style="color:'+(isAdmin?'#6366f1':'#10b981')+';background:'+(isAdmin?'rgba(99,102,241,0.08)':'rgba(16,185,129,0.08)')+';padding:1px 8px;border-radius:6px;font-size:9px">'+(isAdmin?'🔑 Admin':'👤 '+userName)+'</span></div></div>\
+      <button onclick="document.getElementById(\'ez-settings-overlay\').remove()" style="width:32px;height:32px;border-radius:10px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.04);color:#94a3b8;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>\
+    </div>\
+    <div style="flex:1;overflow-y:auto;padding:16px 22px">\
+      <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap" id="ez-cfg-tabs">\
+        <button class="ez-cfg-tab active" data-tab="ramadan" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🌙 أوقات رمضان</button>\
+        <button class="ez-cfg-tab" data-tab="normal" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">⏰ الأوقات العادية</button>\
+        <button class="ez-cfg-tab" data-tab="keywords" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">📝 كلمات مخصصة</button>\
+        <button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>\
+        <button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🗓️ الجرعات الأسبوعية</button>\
+        <button class="ez-cfg-tab" data-tab="codetimes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🕐 أوقات الأكواد</button>\
+        <button class="ez-cfg-tab" data-tab="users" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">👥 المستخدمين</button>\
+      </div>\
+      <div id="ez-cfg-panel-ramadan" class="ez-cfg-panel">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان الأساسية</div>\
+        '+timeInput('cfg-rm-bi','قبل الفطار',RT.beforeIftar,'🌅')+'\
+        '+timeInput('cfg-rm-ai','بعد الفطار',RT.afterIftar,'🍽️')+'\
+        '+timeInput('cfg-rm-bs','قبل السحور',RT.beforeSuhoor,'🌃')+'\
+        '+timeInput('cfg-rm-as','بعد السحور',RT.afterSuhoor,'🌄')+'\
+        '+(function(){
+          var customHtml='';
+          if(cc.customRamadanRules&&cc.customRamadanRules.length>0){
+            customHtml+='<div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(251,191,36,0.12)"><div style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="font-size:14px">✨</span> أوقات مخصصة</div>';
+            for(var i=0;i<cc.customRamadanRules.length;i++){
+              var cr=cc.customRamadanRules[i];
+              customHtml+='<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(251,191,36,0.04);border-radius:10px;border:1px solid rgba(251,191,36,0.08);margin-bottom:6px"><span style="font-size:12px;width:18px;text-align:center">⭐</span><span style="flex:1;font-size:11px;font-weight:700;color:#64748b;direction:rtl">'+cr.label+'</span><input type="time" id="cfg-rm-custom-'+i+'" value="'+cr.time+'" data-pattern="'+cr.pattern+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(251,191,36,0.15);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /><button class="ez-cfg-del-rm-custom" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+            }
+            customHtml+='</div>';
+          }
+          return customHtml;
+        })()+'\
+      </div>\
+      <div id="ez-cfg-panel-normal" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⏰</span> أوقات الجرعات العادية الأساسية</div>\
+        '+timeInput('cfg-nt-empty','على الريق',NT.empty,'🌅')+'\
+        '+timeInput('cfg-nt-bm','قبل الأكل',NT.beforeMeal,'🍴')+'\
+        '+timeInput('cfg-nt-bb','قبل الفطار',NT.beforeBreakfast,'☀️')+'\
+        '+timeInput('cfg-nt-ab','بعد الفطار',NT.afterBreakfast,'🌤️')+'\
+        '+timeInput('cfg-nt-morn','الصباح',NT.morning,'🌞')+'\
+        '+timeInput('cfg-nt-noon','الظهر',NT.noon,'☀️')+'\
+        '+timeInput('cfg-nt-bl','قبل الغداء',NT.beforeLunch,'🍽️')+'\
+        '+timeInput('cfg-nt-al','بعد الغداء',NT.afterLunch,'🥗')+'\
+        '+timeInput('cfg-nt-aftn','العصر',NT.afternoon,'🌇')+'\
+        '+timeInput('cfg-nt-magh','المغرب',NT.maghrib,'🌆')+'\
+        '+timeInput('cfg-nt-bd','قبل العشاء',NT.beforeDinner,'🌙')+'\
+        '+timeInput('cfg-nt-ad','بعد العشاء',NT.afterDinner,'🍲')+'\
+        '+timeInput('cfg-nt-eve','المساء',NT.evening,'🌃')+'\
+        '+timeInput('cfg-nt-bed','قبل النوم',NT.bed,'😴')+'\
+        '+timeInput('cfg-nt-def','الافتراضي',NT.defaultTime,'⏱️')+'\
+        '+(function(){
+          var customHtml='';
+          if(cc.customTimeRules&&cc.customTimeRules.length>0){
+            customHtml+='<div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(129,140,248,0.12)"><div style="font-size:11px;font-weight:800;color:#6366f1;margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="font-size:14px">✨</span> أوقات مخصصة</div>';
+            for(var i=0;i<cc.customTimeRules.length;i++){
+              var cr=cc.customTimeRules[i];
+              customHtml+='<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(139,92,246,0.04);border-radius:10px;border:1px solid rgba(139,92,246,0.08);margin-bottom:6px"><span style="font-size:12px;width:18px;text-align:center">⭐</span><span style="flex:1;font-size:11px;font-weight:700;color:#64748b;direction:rtl">'+cr.label+'</span><input type="time" id="cfg-nt-custom-'+i+'" value="'+cr.time+'" data-pattern="'+cr.pattern+'" style="width:110px;padding:4px 8px;border:1.5px solid rgba(139,92,246,0.15);border-radius:8px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;color:#1e1b4b;outline:none;text-align:center" /><button class="ez-cfg-del-nt-custom" data-idx="'+i+'" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(239,68,68,0.06);color:#ef4444;cursor:pointer;font-size:10px;flex-shrink:0">✕</button></div>';
+            }
+            customHtml+='</div>';
+          }
+          return customHtml;
+        })()+'\
+      </div>\
+      <div id="ez-cfg-panel-codes" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">💊</span> أكواد الأصناف ذات الحجم الثابت <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+fscKeys.length+' كود</span></div>\
+        <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-code" placeholder="كود الصنف" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><input type="number" id="ez-cfg-new-count" placeholder="العدد" style="width:70px;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /><button id="ez-cfg-add-fsc" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(16,185,129,0.2)">+ إضافة</button></div>\
+        <div style="max-height:280px;overflow-y:auto;border:1px solid rgba(129,140,248,0.08);border-radius:12px"><table style="width:100%;border-collapse:collapse" id="ez-cfg-fsc-table"><thead><tr style="background:linear-gradient(145deg,#f8f7ff,#eef2ff)"><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:right">الكود</th><th style="padding:8px;font-size:10px;font-weight:800;color:#6366f1;text-align:center">العدد</th><th style="padding:8px;width:40px"></th></tr></thead><tbody>'+fscRows+'</tbody></table></div>\
+      </div>\
+      <div id="ez-cfg-panel-weekly" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🗓️</span> أكواد الجرعات الأسبوعية <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+weeklyInjections.length+' كود</span></div>\
+        <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr"><input type="text" id="ez-cfg-new-wi" placeholder="كود الجرعة الأسبوعية" style="flex:1;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /><button id="ez-cfg-add-wi" style="padding:0 16px;border:none;border-radius:10px;background:linear-gradient(145deg,#06b6d4,#0891b2);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(6,182,212,0.2)">+ إضافة</button></div>\
+        <div id="ez-cfg-wi-list">'+wiRows+'</div>\
+      </div>\
+      <div id="ez-cfg-panel-keywords" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">📝</span> كلمات مخصصة للجرعات</div>\
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">أضف كلمة أو عبارة مخصصة وحدد نوعها: للأوقات العادية أو لأوقات رمضان.<br>مثال للعادي: "بعد الغروب" → 18:45<br>مثال لرمضان: "بعد التراويح" → بعد الفطار</div>\
+        \
+        <div style="margin-bottom:16px;padding:12px;background:rgba(99,102,241,0.04);border-radius:10px;border:1px solid rgba(129,140,248,0.08)">\
+          <div style="font-size:11px;font-weight:800;color:#6366f1;margin-bottom:8px">⏰ إضافة للأوقات العادية</div>\
+          <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;align-items:end">\
+            <div style="flex:1;min-width:140px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">الكلمة / العبارة</label><input type="text" id="ez-cfg-new-kw-normal" placeholder="مثال: بعد الغروب" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
+            <div style="width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">الوقت</label><input type="time" id="ez-cfg-new-kw-normal-time" value="09:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
+            <button id="ez-cfg-add-kw-normal" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#8b5cf6,#7c3aed);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(139,92,246,0.2);white-space:nowrap">+ إضافة</button>\
+          </div>\
+        </div>\
+        \
+        <div style="margin-bottom:12px;padding:12px;background:rgba(251,191,36,0.04);border-radius:10px;border:1px solid rgba(251,191,36,0.12)">\
+          <div style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:8px">🌙 إضافة لأوقات رمضان</div>\
+          <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;align-items:end">\
+            <div style="flex:1;min-width:140px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">الكلمة / العبارة</label><input type="text" id="ez-cfg-new-kw-ramadan" placeholder="مثال: بعد التراويح" style="width:100%;padding:8px 10px;border:1.5px solid rgba(251,191,36,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
+            <div style="width:140px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">اسم الجرعة</label><input type="text" id="ez-cfg-new-kw-ramadan-label" placeholder="مثال: بعد الفطار" style="width:100%;padding:8px 6px;border:1.5px solid rgba(251,191,36,0.15);border-radius:10px;font-size:11px;font-weight:700;font-family:Cairo,sans-serif;outline:none;text-align:center;direction:rtl" /></div>\
+            <div style="width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">الوقت</label><input type="time" id="ez-cfg-new-kw-ramadan-time" value="19:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(251,191,36,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
+            <button id="ez-cfg-add-kw-ramadan" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#fbbf24,#f59e0b);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(251,191,36,0.2);white-space:nowrap">+ إضافة</button>\
+          </div>\
+        </div>\
+        \
+        <div id="ez-cfg-kw-list">'+kwRows+'</div>\
+      </div>\
+      <div id="ez-cfg-panel-codetimes" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🕐</span> أوقات بدء مخصصة للأكواد <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+cstKeys.length+' كود</span></div>\
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(6,182,212,0.03);border-radius:8px;border:1px solid rgba(6,182,212,0.08)">أضف كود صنف معين ووقت بدء مخصص ليه.<br>لو النوت فاضي أو مش مفهوم → هيستخدم الوقت المخصص للكود بدل الافتراضي (9:00).<br>⚠️ الأولوية: لو النوت فيه جرعة مفهومة → هيتجاهل وقت الكود.</div>\
+        <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr;align-items:end">\
+          <div style="flex:1"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">كود الصنف</label><input type="text" id="ez-cfg-new-cst-code" placeholder="مثال: 102785890" style="width:100%;padding:8px 12px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /></div>\
+          <div style="width:110px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">وقت البدء</label><input type="time" id="ez-cfg-new-cst-time" value="09:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
+          <button id="ez-cfg-add-cst" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#06b6d4,#0891b2);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(6,182,212,0.2);white-space:nowrap">+ إضافة</button>\
+        </div>\
+        <div id="ez-cfg-cst-list">'+cstRows+'</div>\
+      </div>\
+      <div id="ez-cfg-panel-users" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">👥</span> المستخدمين <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+usrRows_count+' مستخدم</span></div>\
+        '+(isAdmin?'<div style="display:flex;gap:6px;margin-bottom:10px;direction:rtl;flex-wrap:wrap;align-items:end">\
+          <div style="flex:1;min-width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">اسم المستخدم</label><input type="text" id="ez-cfg-new-usr-name" placeholder="مثال: أحمد" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:rtl" /></div>\
+          <div style="width:120px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:3px">الرقم السري</label><input type="password" id="ez-cfg-new-usr-pin" placeholder="رقم سري" style="width:100%;padding:8px 10px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center;letter-spacing:3px" /></div>\
+          <button id="ez-cfg-add-usr" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#f59e0b,#d97706);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 3px 10px rgba(245,158,11,0.2);white-space:nowrap">+ إضافة مستخدم</button>\
+        </div>':'<div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;padding:6px 10px;background:rgba(99,102,241,0.03);border-radius:8px;border:1px solid rgba(129,140,248,0.06)">إضافة وحذف المستخدمين متاح للأدمن فقط</div>')+'\
+        <div id="ez-cfg-usr-list">'+usrRows+'</div>\
+      </div>\
+    </div>\
+    <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4)">\
+      <button id="ez-cfg-save" style="flex:1;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 16px rgba(16,185,129,0.25);transition:all 0.3s">💾 حفظ التعديلات</button>\
+      <button id="ez-cfg-reset" style="height:46px;padding:0 18px;border:1.5px solid rgba(239,68,68,0.15);border-radius:14px;background:rgba(239,68,68,0.03);color:#ef4444;cursor:pointer;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;transition:all 0.3s">🗑️ استعادة الافتراضي</button>\
+    </div>\
+  </div>';
+
+  document.body.appendChild(overlay);
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+
+  /* Tab switching */
+  var tabs=overlay.querySelectorAll('.ez-cfg-tab');
+  tabs.forEach(function(tab){
+    tab.onclick=function(){
+      tabs.forEach(function(t){t.style.background='#fff';t.style.color='#6366f1';t.classList.remove('active');});
+      this.style.background='linear-gradient(145deg,#6366f1,#4f46e5)';this.style.color='#fff';this.classList.add('active');
+      var panels=overlay.querySelectorAll('.ez-cfg-panel');panels.forEach(function(p){p.style.display='none';});
+      document.getElementById('ez-cfg-panel-'+this.getAttribute('data-tab')).style.display='block';
+    };
+  });
+
+  /* Add Fixed Size Code */
+  if(document.getElementById('ez-cfg-add-fsc')){
+  document.getElementById('ez-cfg-add-fsc').onclick=function(){
+    var code=document.getElementById('ez-cfg-new-code').value.trim();
+    var count=parseInt(document.getElementById('ez-cfg-new-count').value);
+    if(!code||!count||count<1){window.ezShowToast('أدخل الكود والعدد','warning');return;}
+    var c2=loadCustomConfig();if(!c2.fixedSizeCodes)c2.fixedSizeCodes={};
+    c2.fixedSizeCodes[code]=count;saveCustomConfig(c2);
+    window.ezShowToast('✅ تم إضافة كود '+code+' = '+count,'success');
+    overlay.remove();_ezShowSettingsPanel(role,userName);
+  };
+
+  /* Delete Fixed Size Code */
+  overlay.querySelectorAll('.ez-cfg-del-fsc').forEach(function(btn){
+    btn.onclick=function(){
+      var code=this.getAttribute('data-code');
+      var c2=loadCustomConfig();if(!c2.removedCodes)c2.removedCodes=[];
+      if(c2.removedCodes.indexOf(code)===-1)c2.removedCodes.push(code);
+      if(c2.fixedSizeCodes)delete c2.fixedSizeCodes[code];
+      saveCustomConfig(c2);
+      window.ezShowToast('🗑️ تم حذف كود '+code,'info');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  });
+
+  /* Update Fixed Size Code values on change */
+  overlay.querySelectorAll('.ez-cfg-fsc-val').forEach(function(inp){
+    inp.onchange=function(){
+      var code=this.getAttribute('data-code');var val=parseInt(this.value);
+      if(!val||val<1)return;
+      var c2=loadCustomConfig();if(!c2.fixedSizeCodes)c2.fixedSizeCodes={};
+      c2.fixedSizeCodes[code]=val;saveCustomConfig(c2);
+      this.style.borderColor='#10b981';setTimeout(function(){inp.style.borderColor='rgba(129,140,248,0.15)';},1000);
+    };
+  });
+
+  /* Add Weekly Injection */
+  if(document.getElementById('ez-cfg-add-wi')){
+  document.getElementById('ez-cfg-add-wi').onclick=function(){
+    var code=document.getElementById('ez-cfg-new-wi').value.trim();
+    if(!code){window.ezShowToast('أدخل الكود','warning');return;}
+    var c2=loadCustomConfig();if(!c2.addedWeekly)c2.addedWeekly=[];
+    if(c2.addedWeekly.indexOf(code)===-1)c2.addedWeekly.push(code);
+    saveCustomConfig(c2);
+    window.ezShowToast('✅ تم إضافة جرعة أسبوعية '+code,'success');
+    overlay.remove();_ezShowSettingsPanel(role,userName);
+  };}
+
+  /* Delete Weekly Injection */
+  overlay.querySelectorAll('.ez-cfg-del-wi').forEach(function(btn){
+    btn.onclick=function(){
+      var code=this.getAttribute('data-code');
+      var c2=loadCustomConfig();if(!c2.removedWeekly)c2.removedWeekly=[];
+      if(c2.removedWeekly.indexOf(code)===-1)c2.removedWeekly.push(code);
+      if(c2.addedWeekly){c2.addedWeekly=c2.addedWeekly.filter(function(c){return c!==code;});}
+      saveCustomConfig(c2);
+      window.ezShowToast('🗑️ تم حذف '+code,'info');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  });
+
+  }/* end codes+weekly block */
+
+  /* Add Custom Keyword for NORMAL times */
+  if(document.getElementById('ez-cfg-add-kw-normal')){
+  document.getElementById('ez-cfg-add-kw-normal').onclick=function(){
+    var kw=document.getElementById('ez-cfg-new-kw-normal').value.trim();
+    var kwTime=document.getElementById('ez-cfg-new-kw-normal-time').value;
+    if(!kw){window.ezShowToast('أدخل الكلمة أو العبارة','warning');return;}
+    /* Escape special regex chars but keep it as a simple text match */
+    var pattern=kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    var c2=loadCustomConfig();
+    if(!c2.customTimeRules)c2.customTimeRules=[];
+    /* Check for duplicate */
+    for(var i=0;i<c2.customTimeRules.length;i++){if(c2.customTimeRules[i].pattern===pattern){window.ezShowToast('الكلمة موجودة بالفعل','warning');return;}}
+    c2.customTimeRules.push({pattern:pattern,time:kwTime,label:kw});
+    saveCustomConfig(c2);
+    window.ezShowToast('✅ تم إضافة "'+kw+'" للأوقات العادية → '+kwTime,'success');
+    overlay.remove();_ezShowSettingsPanel(role,userName);
+  };
+  }
+
+  /* Add Custom Keyword for RAMADAN times */
+  var addRamadanBtn=document.getElementById('ez-cfg-add-kw-ramadan');
+  if(addRamadanBtn){
+    console.log('Ramadan button found, attaching event');
+    addRamadanBtn.onclick=function(){
+      try{
+        console.log('Ramadan button clicked');
+        var kwInput=document.getElementById('ez-cfg-new-kw-ramadan');
+        var kwLabelInput=document.getElementById('ez-cfg-new-kw-ramadan-label');
+        var kwTimeInput=document.getElementById('ez-cfg-new-kw-ramadan-time');
+        
+        if(!kwInput||!kwLabelInput||!kwTimeInput){
+          console.error('Missing inputs:',{kw:!!kwInput,label:!!kwLabelInput,time:!!kwTimeInput});
+          window.ezShowToast('❌ خطأ: الحقول غير موجودة','error');
+          ezBeep('error');
+          return;
+        }
+        
+        var kw=kwInput.value.trim();
+        var kwLabel=kwLabelInput.value.trim();
+        var kwTime=kwTimeInput.value;
+        
+        /* If label is empty, use the keyword as label */
+        if(!kwLabel && kw){
+          kwLabel=kw;
+          console.log('Label empty, using keyword as label:',kwLabel);
+        }
+        
+        console.log('Values: kw=',kw,'label=',kwLabel,'time=',kwTime);
+        
+        if(!kw){window.ezShowToast('أدخل الكلمة أو العبارة','warning');ezBeep('warning');return;}
+        if(!kwLabel){window.ezShowToast('أدخل اسم الجرعة أو الكلمة','warning');ezBeep('warning');return;}
+        if(!kwTime){window.ezShowToast('أدخل الوقت','warning');ezBeep('warning');return;}
+        
+        /* Escape special regex chars but keep it as a simple text match */
+        var pattern=kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        var c2=loadCustomConfig();
+        if(!c2.customRamadanRules)c2.customRamadanRules=[];
+        
+        console.log('Current ramadan rules:',c2.customRamadanRules.length);
+        
+        /* Check for duplicate in ramadan rules */
+        for(var i=0;i<c2.customRamadanRules.length;i++){
+          if(c2.customRamadanRules[i].pattern===pattern){
+            window.ezShowToast('⚠️ الكلمة موجودة بالفعل في أوقات رمضان','warning');
+            ezBeep('warning');
+            console.log('Duplicate in ramadan');
+            return;
+          }
+        }
+        /* Check for duplicate in normal rules too */
+        if(c2.customTimeRules){
+          for(var i=0;i<c2.customTimeRules.length;i++){
+            if(c2.customTimeRules[i].pattern===pattern){
+              window.ezShowToast('⚠️ الكلمة موجودة بالفعل في الأوقات العادية','warning');
+              ezBeep('warning');
+              console.log('Duplicate in normal');
+              return;
+            }
+          }
+        }
+        /* Save with custom label and time */
+        var newRule={pattern:pattern,meal:'custom',time:kwTime,label:kwLabel,label_ar:kwLabel,label_en:kwLabel};
+        console.log('Saving rule:',newRule);
+        c2.customRamadanRules.push(newRule);
+        saveCustomConfig(c2);
+        console.log('Saved successfully');
+        window.ezShowToast('✅ تم إضافة "'+kw+'" لرمضان → '+kwLabel+' ('+kwTime+')','success');
+        ezBeep('success');
+        overlay.remove();_ezShowSettingsPanel(role,userName);
+      }catch(e){
+        console.error('Error in ramadan add:',e);
+        window.ezShowToast('❌ خطأ: '+e.message,'error');
+        ezBeep('error');
+      }
+    };
+  }else{
+    console.error('Ramadan add button NOT found!');
+  }
+
+  /* Delete Custom Keyword */
+  overlay.querySelectorAll('.ez-cfg-del-kw').forEach(function(btn){
+    btn.onclick=function(){
+      var type=this.getAttribute('data-type');
+      var originalIdx=parseInt(this.getAttribute('data-original-idx'));
+      var c2=loadCustomConfig();
+      if(type==='normal'){
+        if(c2.customTimeRules&&c2.customTimeRules[originalIdx]){
+          c2.customTimeRules.splice(originalIdx,1);
+        }
+      } else if(type==='ramadan'){
+        if(c2.customRamadanRules&&c2.customRamadanRules[originalIdx]){
+          c2.customRamadanRules.splice(originalIdx,1);
+        }
+      }
+      saveCustomConfig(c2);
+      window.ezShowToast('🗑️ تم حذف الكلمة المخصصة','info');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  });
+
+  /* Delete Custom Ramadan time from main panel */
+  overlay.querySelectorAll('.ez-cfg-del-rm-custom').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(this.getAttribute('data-idx'));
+      var c2=loadCustomConfig();
+      if(c2.customRamadanRules&&c2.customRamadanRules[idx]){
+        var label=c2.customRamadanRules[idx].label;
+        c2.customRamadanRules.splice(idx,1);
+        saveCustomConfig(c2);
+        window.ezShowToast('🗑️ تم حذف "'+label+'"','info');
+        overlay.remove();_ezShowSettingsPanel(role,userName);
+      }
+    };
+  });
+
+  /* Delete Custom Normal time from main panel */
+  overlay.querySelectorAll('.ez-cfg-del-nt-custom').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(this.getAttribute('data-idx'));
+      var c2=loadCustomConfig();
+      if(c2.customTimeRules&&c2.customTimeRules[idx]){
+        var label=c2.customTimeRules[idx].label;
+        c2.customTimeRules.splice(idx,1);
+        saveCustomConfig(c2);
+        window.ezShowToast('🗑️ تم حذف "'+label+'"','info');
+        overlay.remove();_ezShowSettingsPanel(role,userName);
+      }
+    };
+  });
+
+  /* Update Custom Ramadan times on change */
+  for(var cri=0;cri<(cc.customRamadanRules||[]).length;cri++){
+    (function(idx){
+      var inp=document.getElementById('cfg-rm-custom-'+idx);
+      if(inp){
+        inp.onchange=function(){
+          var newTime=this.value;
+          var c2=loadCustomConfig();
+          if(c2.customRamadanRules&&c2.customRamadanRules[idx]){
+            c2.customRamadanRules[idx].time=newTime;
+            saveCustomConfig(c2);
+            this.style.borderColor='#10b981';
+            setTimeout(function(){inp.style.borderColor='rgba(251,191,36,0.15)';},1000);
+          }
+        };
+      }
+    })(cri);
+  }
+
+  /* Update Custom Normal times on change */
+  for(var cni=0;cni<(cc.customTimeRules||[]).length;cni++){
+    (function(idx){
+      var inp=document.getElementById('cfg-nt-custom-'+idx);
+      if(inp){
+        inp.onchange=function(){
+          var newTime=this.value;
+          var c2=loadCustomConfig();
+          if(c2.customTimeRules&&c2.customTimeRules[idx]){
+            c2.customTimeRules[idx].time=newTime;
+            saveCustomConfig(c2);
+            this.style.borderColor='#10b981';
+            setTimeout(function(){inp.style.borderColor='rgba(139,92,246,0.15)';},1000);
+          }
+        };
+      }
+    })(cni);
+  }
+
+  /* Add User (admin only) */
+  if(isAdmin && document.getElementById('ez-cfg-add-usr')){
+    document.getElementById('ez-cfg-add-usr').onclick=function(){
+      var uName=document.getElementById('ez-cfg-new-usr-name').value.trim();
+      var uPin=document.getElementById('ez-cfg-new-usr-pin').value.trim();
+      if(!uName||!uPin){window.ezShowToast('أدخل الاسم والرقم السري','warning');return;}
+      if(uPin.length<4){window.ezShowToast('الرقم السري لازم 4 أرقام على الأقل','warning');return;}
+      var hash=_ezHashPin(uPin);
+      if(hash===_EZ_PIN_HASH){window.ezShowToast('لا يمكن استخدام رقم الأدمن','warning');return;}
+      var users=loadUsers();
+      for(var i=0;i<users.length;i++){if(users[i].hash===hash){window.ezShowToast('الرقم السري مستخدم بالفعل','warning');return;}}
+      users.push({name:uName,hash:hash});saveUsers(users);
+      window.ezShowToast('✅ تم إضافة المستخدم '+uName,'success');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  }
+
+  /* Delete User (admin only) */
+  if(isAdmin){
+  overlay.querySelectorAll('.ez-cfg-del-usr').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(this.getAttribute('data-idx'));
+      var users=loadUsers();
+      var delName=users[idx]?users[idx].name:'';
+      users.splice(idx,1);saveUsers(users);
+      window.ezShowToast('🗑️ تم حذف المستخدم '+delName,'info');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  });
+  }
+
+  /* Add Code Start Time */
+  if(document.getElementById('ez-cfg-add-cst')){
+    document.getElementById('ez-cfg-add-cst').onclick=function(){
+      var code=document.getElementById('ez-cfg-new-cst-code').value.trim().replace(/\D/g,'');
+      var time=document.getElementById('ez-cfg-new-cst-time').value;
+      if(!code){window.ezShowToast('أدخل كود الصنف','warning');ezBeep('warning');return;}
+      if(!time){window.ezShowToast('أدخل وقت البدء','warning');ezBeep('warning');return;}
+      var c2=loadCustomConfig();if(!c2.codeStartTimes)c2.codeStartTimes={};
+      c2.codeStartTimes[code]=time;saveCustomConfig(c2);
+      window.ezShowToast('✅ تم إضافة وقت بدء للكود '+code+' → '+time,'success');
+      ezBeep('success');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  }
+
+  /* Delete Code Start Time */
+  overlay.querySelectorAll('.ez-cfg-del-cst').forEach(function(btn){
+    btn.onclick=function(){
+      var code=this.getAttribute('data-code');
+      var c2=loadCustomConfig();
+      if(c2.codeStartTimes)delete c2.codeStartTimes[code];
+      saveCustomConfig(c2);
+      window.ezShowToast('🗑️ تم حذف وقت الكود '+code,'info');
+      overlay.remove();_ezShowSettingsPanel(role,userName);
+    };
+  });
+
+  /* Update Code Start Time on change */
+  overlay.querySelectorAll('.ez-cfg-cst-val').forEach(function(inp){
+    inp.onchange=function(){
+      var code=this.getAttribute('data-code');var val=this.value;
+      if(!val)return;
+      var c2=loadCustomConfig();if(!c2.codeStartTimes)c2.codeStartTimes={};
+      c2.codeStartTimes[code]=val;saveCustomConfig(c2);
+      this.style.borderColor='#10b981';var ref=this;setTimeout(function(){ref.style.borderColor='rgba(6,182,212,0.15)';},1000);
+    };
+  });
+
+  /* SAVE ALL */
+  document.getElementById('ez-cfg-save').onclick=function(){
+    var c2=loadCustomConfig();
+    /* Ramadan times */
+    c2.ramadanTimes={
+      beforeIftar:document.getElementById('cfg-rm-bi').value,
+      afterIftar:document.getElementById('cfg-rm-ai').value,
+      beforeSuhoor:document.getElementById('cfg-rm-bs').value,
+      afterSuhoor:document.getElementById('cfg-rm-as').value
+    };
+    /* Normal times */
+    c2.normalTimes={
+      empty:document.getElementById('cfg-nt-empty').value,
+      beforeMeal:document.getElementById('cfg-nt-bm').value,
+      beforeBreakfast:document.getElementById('cfg-nt-bb').value,
+      afterBreakfast:document.getElementById('cfg-nt-ab').value,
+      morning:document.getElementById('cfg-nt-morn').value,
+      noon:document.getElementById('cfg-nt-noon').value,
+      beforeLunch:document.getElementById('cfg-nt-bl').value,
+      afterLunch:document.getElementById('cfg-nt-al').value,
+      afternoon:document.getElementById('cfg-nt-aftn').value,
+      maghrib:document.getElementById('cfg-nt-magh').value,
+      beforeDinner:document.getElementById('cfg-nt-bd').value,
+      afterDinner:document.getElementById('cfg-nt-ad').value,
+      evening:document.getElementById('cfg-nt-eve').value,
+      bed:document.getElementById('cfg-nt-bed').value,
+      defaultTime:document.getElementById('cfg-nt-def').value
+    };
+    saveCustomConfig(c2);
+    /* Refresh CODE_START_TIMES in memory */
+    if(c2.codeStartTimes){for(var k in c2.codeStartTimes)CODE_START_TIMES[k]=c2.codeStartTimes[k];}
+    overlay.remove();
+    window.ezShowToast('✅ تم حفظ جميع الإعدادات - أعد تشغيل الأداة لتطبيقها','success');
+    ezBeep('success');
+  };
+
+  /* RESET */
+  document.getElementById('ez-cfg-reset').onclick=function(){
+    if(!confirm('هل أنت متأكد من استعادة الإعدادات الافتراضية؟ سيتم حذف جميع التعديلات.')) return;
+    localStorage.removeItem(EZ_CUSTOM_KEY);
+    overlay.remove();
+    window.ezShowToast('🔄 تم استعادة الإعدادات الافتراضية - أعد تشغيل الأداة','info');
+  };
+}
+var hasDuplicateNotes=scanForDuplicateNotes();
+var _rm_setting=savedSettings.ramadanMode||false;
+/* Ramadan mode: post dialog is shown ONLY after processing if actual duplicates were created */
+/* We don't force hasDuplicateNotes=true here anymore */
+
+var d_box=document.createElement('div');
+d_box.id='ez-dialog-box';
+d_box.className='ez-dialog-v2';
+d_box.setAttribute('data-m',String(savedSettings.m||1));
+d_box.setAttribute('data-t',String(savedSettings.t||30));
+var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!==false,_sw=savedSettings.showWarnings!==false,_dk=savedSettings.darkMode||false,_rm=savedSettings.ramadanMode||false;
+d_box.innerHTML='\
+<div class="ez-header">\
+  <div class="ez-logo-group">\
+    <div class="ez-logo">💊</div>\
+    <div class="ez-title-block">\
+      <div class="ez-title">EZ_Pill <span class="ez-brand">Farmadosis</span></div>\
+      <div class="ez-subtitle">معالج الجرعات الذكي</div>\
+    </div>\
+  </div>\
+  <div class="ez-header-actions">\
+    <div class="ez-version">v'+APP_VERSION+'</div>\
+    <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة" style="font-size:14px">⚙️</button>\
+    <button class="ez-btn-icon" onclick="window.ezToggleDark()" title="الوضع الليلي" style="font-size:14px">'+(_dk?'☀️':'🌙')+'</button>\
+    <button class="ez-btn-icon ez-btn-icon-min" onclick="window.ezMinimize()">−</button>\
+  </div>\
+</div>\
+<div class="ez-content">\
+  <div class="ez-section-label"><span class="dot">📅</span><span>عدد الأشهر</span></div>\
+  <div class="ez-pill-group">\
+    <button class="ez-pill '+(_m===1?'active':'')+'" onclick="window.ezSelect(this,\'m\',1)"><span>1</span><span class="ez-pill-sub">شهر</span></button>\
+    <button class="ez-pill '+(_m===2?'active':'')+'" onclick="window.ezSelect(this,\'m\',2)"><span>2</span><span class="ez-pill-sub">شهرين</span></button>\
+    <button class="ez-pill '+(_m===3?'active':'')+'" onclick="window.ezSelect(this,\'m\',3)"><span>3</span><span class="ez-pill-sub">٣ شهور</span></button>\
+  </div>\
+  <div class="ez-section-label"><span class="dot">🗓️</span><span>أيام الشهر</span></div>\
+  <div class="ez-pill-group">\
+    <button class="ez-pill '+(_t===28?'active':'')+'" onclick="window.ezSelect(this,\'t\',28)"><span>28</span><span class="ez-pill-sub">يوم</span></button>\
+    <button class="ez-pill '+(_t===30?'active':'')+'" onclick="window.ezSelect(this,\'t\',30)"><span>30</span><span class="ez-pill-sub">يوم</span></button>\
+  </div>\
+  <div class="ez-sep"></div>\
+  <label class="ez-toggle-row '+(_ad?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){t.classList.toggle(\'ez-tog-on\',t.querySelector(\'input\').checked)},10)">\
+    <div class="ez-switch"><input type="checkbox" id="auto-duration" '+(_ad?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
+    <span class="ez-toggle-text">استخراج المدة تلقائياً</span>\
+    <span class="ez-toggle-icon">✨</span>\
+  </label>\
+  <label class="ez-toggle-row '+(_sw?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){t.classList.toggle(\'ez-tog-on\',t.querySelector(\'input\').checked)},10)">\
+    <div class="ez-switch"><input type="checkbox" id="show-warnings" '+(_sw?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
+    <span class="ez-toggle-text">عرض التحذيرات</span>\
+    <span class="ez-toggle-icon">⚠️</span>\
+  </label>\
+  <label class="ez-toggle-row '+(hasDuplicateNotes?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){t.classList.toggle(\'ez-tog-on\',t.querySelector(\'input\').checked)},10)">\
+    <div class="ez-switch"><input type="checkbox" id="show-post-dialog" '+(hasDuplicateNotes?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
+    <span class="ez-toggle-text">خيارات إضافية'+(hasDuplicateNotes?' <span class="auto-tag">تقسيم مكتشف</span>':'')+'</span>\
+    <span class="ez-toggle-icon">⚙️</span>\
+  </label>\
+  <label class="ez-toggle-row ez-ramadan-toggle '+(_rm?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){var ch=t.querySelector(\'input\').checked;t.classList.toggle(\'ez-tog-on\',ch);var badge=document.getElementById(\'ez-ramadan-badge\');if(badge)badge.style.display=ch?\'flex\':\'none\';},10)">\
+    <div class="ez-switch"><input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+'><div class="ez-switch-track ez-ramadan-track"></div><div class="ez-switch-knob"></div></div>\
+    <span class="ez-toggle-text">جرعات شهر رمضان</span>\
+    <span class="ez-toggle-icon">🌙</span>\
+  </label>\
+  <div class="ez-actions">\
+    <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
+    <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
+    <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+  </div>\
+</div>\
+<div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
+
+document.body.appendChild(d_box);
+if(_dk) document.body.classList.add('ez-dark-mode');
+/* Pulse effect on primary button */
+setInterval(function(){var btn=document.querySelector('.ez-btn-primary');if(btn){btn.classList.toggle('ez-pulse');}},2000);
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'){var sub=document.querySelector('.ez-btn-primary');if(sub)sub.click();}
+  else if(e.key==='Escape'){window.ezCancel();}
+});
+
+makeDraggable(d_box);
+beautifyPage();
+showWhatsNew();
+
+/* ══════════════════════════════════════════
+   NAME EXTRACTION FROM PRESCRIPTION NOTES
+   ══════════════════════════════════════════ */
+function extractAndConfirmName(){
+  try{
+    /* Find Prescription Notes field */
+    function findNotesField(){
+      var inputs=document.querySelectorAll('input[type="text"],textarea');
+      for(var i=0;i<inputs.length;i++){
+        var lbl=null;
+        /* Check associated label */
+        if(inputs[i].id){lbl=document.querySelector('label[for="'+inputs[i].id+'"]');}
+        if(!lbl){var prev=inputs[i].previousElementSibling;if(prev) lbl=prev;}
+        if(!lbl){var parent=inputs[i].parentElement;if(parent){var spans=parent.querySelectorAll('label,span,b,strong,td');for(var j=0;j<spans.length;j++){var st=spans[j].textContent.toLowerCase();if(st.indexOf('prescription')>-1||st.indexOf('note')>-1){lbl=spans[j];break;}}}}
+        if(lbl){
+          var lt=(lbl.textContent||'').toLowerCase();
+          if(lt.indexOf('prescription')>-1&&lt.indexOf('note')>-1) return inputs[i];
+        }
+        /* Check by name/id/placeholder */
+        var attrs=(inputs[i].name||'')+(inputs[i].id||'')+(inputs[i].placeholder||'');
+        if(/presc.*note|prescription.*note/i.test(attrs)) return inputs[i];
+      }
+      /* Last resort: large text input with Arabic content */
+      for(var i=0;i<inputs.length;i++){
+        var v=inputs[i].value||'';
+        if(v.length>30&&/[\u0600-\u06FF]/.test(v)&&(/ضيف|اسم|توصيل|صيدل/i.test(v))) return inputs[i];
+      }
+      return null;
+    }
+
+    /* Extract name from text */
+    function extractName(text){
+      if(!text||text.length<5) return null;
+      var s=text.trim();
+
+      /* Generic title words - NOT actual names */
+      var genericWords=['الضيف','الضيفه','الضيفة','ضيف','ضيفه','ضيفة',
+        'المريض','المريضه','المريضة','مريض','مريضه','مريضة',
+        'العميل','العميله','العميلة','عميل','عميله','عميلة'];
+
+      function isGeneric(w){
+        var n=w.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+        for(var g=0;g<genericWords.length;g++){
+          if(n===genericWords[g].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')) return true;
+        }
+        return false;
+      }
+
+      /* PRIORITY 1: Look for name in parentheses after keywords */
+      var parenPatterns=[
+        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
+        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*[:\-]?\s*\(([^)]+)\)/i
+      ];
+      for(var pp=0;pp<parenPatterns.length;pp++){
+        var pm=s.match(parenPatterns[pp]);
+        if(pm&&pm[1]&&pm[1].trim().length>=2){
+          return pm[1].trim();
+        }
+      }
+
+      /* PRIORITY 2: Standard Arabic name patterns */
+      var patterns=[
+        /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:يكتب\s*(?:عليه|عليها)?\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:كتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:وكتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:باسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:الاسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i
+      ];
+
+      /* Stop words - remove from end of extracted name */
+      var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
+        'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
+        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة','الى','الي','على','عند','اليوم',
+        'شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','والتوصيل','في'];
+
+      for(var p=0;p<patterns.length;p++){
+        var m=s.match(patterns[p]);
+        if(m&&m[1]){
+          var name=m[1].trim();
+          /* If first word is generic (الضيف/المريض), check for English name in parens after it */
+          var firstWord=name.split(/\s+/)[0];
+          if(isGeneric(firstWord)){
+            var afterMatch=s.substring(s.indexOf(m[0])+m[0].length);
+            var parenMatch=afterMatch.match(/^\s*\(([^)]+)\)/);
+            if(parenMatch&&parenMatch[1]&&parenMatch[1].trim().length>=2){
+              return parenMatch[1].trim();
+            }
+            /* Skip this match - الضيف is not a real name */
+            continue;
+          }
+          /* Remove stop words from end */
+          var words=name.split(/\s+/);
+          var cleaned=[];
+          for(var w=0;w<words.length;w++){
+            var wl=words[w].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+            var isStop=false;
+            for(var st=0;st<stopWords.length;st++){
+              if(wl===stopWords[st].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')){isStop=true;break;}
+            }
+            if(isStop) break;
+            /* Skip single-letter words unless first */
+            if(words[w].length<=1&&cleaned.length>0) break;
+            cleaned.push(words[w]);
+          }
+          if(cleaned.length>=1&&cleaned.join(' ').length>=3){
+            return cleaned.join(' ');
+          }
+        }
+      }
+      return null;
+    }
+
+    /* Find Name input in top form */
+    function findNameField(){
+      /* Direct ID match */
+      var direct=document.getElementById('pname');
+      if(direct) return direct;
+      var inp=document.querySelector('input[id*="name" i]:not([id*="user"]):not([type="hidden"]):not([id*="mobile"]):not([id*="phone"])');
+      if(inp) return inp;
+      inp=document.querySelector('input[placeholder*="Patient Name" i]');
+      if(inp) return inp;
+      /* Search by label */
+      var labels=document.querySelectorAll('td,th,label,span');
+      for(var i=0;i<labels.length;i++){
+        var lt=labels[i].textContent.trim().toLowerCase();
+        if(lt==='name:'||lt==='name'){
+          var parent2=labels[i].parentElement;
+          if(parent2){
+            var nextTd=parent2.nextElementSibling;
+            if(nextTd){var nInp3=nextTd.querySelector('input');if(nInp3) return nInp3;}
+          }
+        }
+      }
+      return null;
+    }
+
+    var notesField=findNotesField();
+    if(!notesField) return;
+    var notesText=(notesField.value||'').trim();
+    if(!notesText) return;
+    var extractedName=extractName(notesText);
+    if(!extractedName) return;
+    var nameField=findNameField();
+    if(!nameField) return;
+
+    /* Show as gentle slide-down banner */
+    var banner=document.createElement('div');
+    banner.id='ez-name-confirm';
+    banner.style.cssText='position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:460px;max-width:94vw;z-index:9999999;transition:top 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif';
+
+    banner.innerHTML='\
+    <div style="background:#fff;border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 12px 40px rgba(99,102,241,0.15),0 4px 12px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);border-top:none">\
+      <div style="height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div>\
+      <div style="padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(129,140,248,0.06)">\
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(99,102,241,0.2);flex-shrink:0">👤</div>\
+        <div style="flex:1"><div style="font-size:13px;font-weight:800;color:#1e1b4b">تم اكتشاف اسم في الملاحظات</div></div>\
+        <button id="ez-name-no" style="width:28px;height:28px;border:none;border-radius:8px;font-size:14px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;transition:all 0.25s;flex-shrink:0">✕</button>\
+      </div>\
+      <div style="padding:12px 18px">\
+        <div style="background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.08);border-radius:10px;padding:8px 12px;margin-bottom:10px;direction:rtl;max-height:50px;overflow-y:auto">\
+          <div style="font-size:11px;font-weight:700;color:#64748b;line-height:1.6">'+notesText.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>\
+        </div>\
+        <div style="display:flex;align-items:center;gap:10px;direction:rtl">\
+          <div style="flex:1;background:linear-gradient(145deg,#ecfdf5,#d1fae5);border:1.5px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 14px;text-align:center">\
+            <div style="font-size:9px;font-weight:800;color:#047857;letter-spacing:0.5px;margin-bottom:2px">الاسم المستخلص</div>\
+            <div style="font-size:18px;font-weight:900;color:#064e3b" id="ez-extracted-name">'+extractedName+'</div>\
+            <input type="text" id="ez-name-edit" value="'+extractedName+'" style="display:none;width:100%;padding:4px 8px;border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:16px;font-weight:800;color:#064e3b;text-align:center;font-family:Cairo,sans-serif;outline:none;direction:rtl;margin-top:2px" />\
+          </div>\
+        </div>\
+      </div>\
+      <div style="padding:8px 18px 14px;display:flex;gap:6px">\
+        <button id="ez-name-ok" style="flex:1;height:38px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 3px 10px rgba(16,185,129,0.2);transition:all 0.3s">✅ تأكيد وكتابة الاسم</button>\
+        <button id="ez-name-edit-btn" style="height:38px;padding:0 12px;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12);transition:all 0.3s;display:flex;align-items:center;justify-content:center">✏️</button>\
+      </div>\
+    </div>';
+
+    document.body.appendChild(banner);
+    /* Smooth slide down */
+    setTimeout(function(){banner.style.top='0px';},50);
+
+    function closeBanner(){
+      banner.style.top='-200px';
+      setTimeout(function(){banner.remove();},600);
+    }
+
+    /* Edit mode toggle */
+    var editMode=false;
+    document.getElementById('ez-name-edit-btn').addEventListener('click',function(){
+      var display=document.getElementById('ez-extracted-name');
+      var input=document.getElementById('ez-name-edit');
+      if(!editMode){
+        display.style.display='none';
+        input.style.display='block';
+        input.focus();
+        input.select();
+        this.innerHTML='💾';
+        this.style.color='#10b981';
+        editMode=true;
+      } else {
+        var newVal=input.value.trim();
+        if(newVal){display.textContent=newVal;}
+        display.style.display='block';
+        input.style.display='none';
+        this.innerHTML='✏️';
+        this.style.color='#6366f1';
+        editMode=false;
+      }
+    });
+
+    /* Confirm */
+    document.getElementById('ez-name-ok').addEventListener('click',function(){
+      var finalName=editMode?document.getElementById('ez-name-edit').value.trim():document.getElementById('ez-extracted-name').textContent.trim();
+      if(finalName&&nameField){
+        nameField.value=finalName;
+        nameField.dispatchEvent(new Event('input',{bubbles:true}));
+        nameField.dispatchEvent(new Event('change',{bubbles:true}));
+        if(typeof angular!=='undefined'){try{angular.element(nameField).triggerHandler('change');}catch(e){}}
+        if(typeof jQuery!=='undefined'){try{jQuery(nameField).trigger('change');}catch(e){}}
+        window.ezShowToast('تم كتابة الاسم: '+finalName+' ✅','success');
+      }
+      closeBanner();
+    });
+
+    /* Reject */
+    document.getElementById('ez-name-no').addEventListener('click',function(){
+      closeBanner();
+    });
+
+    /* Auto-dismiss after 30 seconds if no action */
+    setTimeout(function(){if(document.getElementById('ez-name-confirm'))closeBanner();},30000);
+
+  }catch(e){console.log('EZ NameExtract:',e);}
+}
+
+/* ══════════════════════════════════════════
+   IMPORT INVOICE - SMART SEARCH
+   ══════════════════════════════════════════ */
+(function(){
+  /* Get current invoice number from main page */
+  function getCurrentInvoice(){
+    var allEls=document.querySelectorAll('td,span,div,label,input,b,strong');
+    for(var i=0;i<allEls.length;i++){
+      var txt=(allEls[i].textContent||'').trim();
+      if(txt.toLowerCase().indexOf('invoice')>-1){
+        var next=allEls[i].nextElementSibling;
+        if(next){
+          var val=(next.value||next.textContent||'').trim();
+          if(val&&/\d{5,}/.test(val)) return val.replace(/\D/g,'');
+        }
+        var parent=allEls[i].parentElement;
+        if(parent){
+          var inp=parent.querySelector('input');
+          if(inp&&inp.value&&/\d{5,}/.test(inp.value)) return inp.value.trim();
+        }
+      }
+    }
+    /* Try finding in top form area by pattern */
+    var inputs=document.querySelectorAll('input[type="text"],input:not([type])');
+    for(var i=0;i<inputs.length;i++){
+      var v=inputs[i].value||'';
+      if(/^0\d{8,}$/.test(v.trim())) return v.trim();
+    }
+    /* Try from URL or page content */
+    var bodyText=document.body.innerText;
+    var invMatch=bodyText.match(/Invoice\s*(?:Number|No|#)?[:\s]*(\d{8,})/i);
+    if(invMatch) return invMatch[1];
+    return '';
+  }
+
+  var currentInvoice=getCurrentInvoice();
+  var searchInjected=false;
+
+  function injectSearch(){
+    var modal=document.querySelector('#exampleModal');
+    if(!modal) return;
+    var modalBody=modal.querySelector('.modal-body');
+    if(!modalBody) return;
+    if(modal.querySelector('.ez-search-box')) return;
+
+    var tb=modalBody.querySelector('table');
+    if(!tb) return;
+
+    /* Build search UI */
+    var box=document.createElement('div');
+    box.className='ez-search-box';
+    box.style.cssText='display:flex;gap:10px;padding:14px 18px;margin:0 0 12px;background:linear-gradient(145deg,#f8f7ff,#eef2ff);border:1.5px solid rgba(129,140,248,0.15);border-radius:14px;font-family:Cairo,sans-serif;align-items:stretch;box-shadow:0 2px 10px rgba(99,102,241,0.06);position:relative;z-index:5';
+
+    /* Invoice search */
+    var invWrap=document.createElement('div');
+    invWrap.style.cssText='flex:1;position:relative';
+    invWrap.innerHTML='\
+      <label style="display:block;font-size:9px;font-weight:900;color:#6366f1;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase">🔍 Invoice Number</label>\
+      <div style="position:relative">\
+        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:800;color:#d4d4e0;pointer-events:none;font-family:Cairo,sans-serif;letter-spacing:1px" id="ez-inv-ghost">0</span>\
+        <input type="text" id="ez-inv-search" placeholder="رقم الفاتورة..." style="width:100%;padding:9px 14px;padding-right:24px;border:1.5px solid rgba(129,140,248,0.15);border-radius:10px;font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif;outline:none;background:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,0.04);transition:all 0.25s;direction:ltr;text-align:left" />\
+      </div>';
+    box.appendChild(invWrap);
+
+    /* ERX search */
+    var erxWrap=document.createElement('div');
+    erxWrap.style.cssText='flex:1;position:relative';
+    erxWrap.innerHTML='\
+      <label style="display:block;font-size:9px;font-weight:900;color:#8b5cf6;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase">🔍 ERX Number</label>\
+      <div style="position:relative">\
+        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:800;color:#d4d4e0;pointer-events:none;font-family:Cairo,sans-serif;letter-spacing:0.5px" id="ez-erx-ghost">ERX-</span>\
+        <input type="text" id="ez-erx-search" placeholder="رقم الطلب..." style="width:100%;padding:9px 14px;padding-right:48px;border:1.5px solid rgba(139,92,246,0.15);border-radius:10px;font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif;outline:none;background:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,0.04);transition:all 0.25s;direction:ltr;text-align:left" />\
+      </div>';
+    box.appendChild(erxWrap);
+
+    /* Result counter */
+    var counter=document.createElement('div');
+    counter.id='ez-search-counter';
+    counter.style.cssText='display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:50px;background:linear-gradient(145deg,#818cf8,#6366f1);border-radius:10px;padding:4px 10px;box-shadow:0 3px 10px rgba(99,102,241,0.2),inset 0 1px 0 rgba(255,255,255,0.2)';
+    counter.innerHTML='<div style="font-size:18px;font-weight:900;color:#fff;line-height:1" id="ez-match-count">-</div><div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.5px">نتيجة</div>';
+    box.appendChild(counter);
+
+    modalBody.insertBefore(box,modalBody.firstChild);
+
+    /* ── Search Logic ── */
+    function getAllRows(){
+      return Array.from(tb.querySelectorAll('tr')).slice(1);
+    }
+
+    function getRowAllText(row){
+      var txt=(row.innerText||row.textContent||'').trim();
+      /* Also grab onclick attributes from buttons */
+      var btns=row.querySelectorAll('button[onclick]');
+      for(var b=0;b<btns.length;b++){txt+=' '+(btns[b].getAttribute('onclick')||'');}
+      /* Also grab input values */
+      var inps=row.querySelectorAll('input,textarea,select');
+      for(var b=0;b<inps.length;b++){txt+=' '+(inps[b].value||'');}
+      return txt;
+    }
+
+    function doSearch(){
+      var invVal=(document.getElementById('ez-inv-search').value||'').trim();
+      var erxVal=(document.getElementById('ez-erx-search').value||'').trim();
+      /* Strip non-digits for invoice search */
+      var invDigits=invVal.replace(/\D/g,'');
+      var rows=getAllRows();
+      var matched=[];
+      var unmatched=[];
+      var hasSearch=invDigits.length>0||erxVal.length>0;
+
+      /* Update ghost visibility */
+      var invGhost=document.getElementById('ez-inv-ghost');
+      var erxGhost=document.getElementById('ez-erx-ghost');
+      if(invGhost) invGhost.style.display=invDigits.length>0?'none':'block';
+      if(erxGhost) erxGhost.style.display=erxVal.length>0?'none':'block';
+
+      rows.forEach(function(r){
+        var allText=getRowAllText(r);
+        var isMatch=true;
+
+        /* Invoice search: find any number containing the search digits */
+        if(invDigits.length>0){
+          if(allText.indexOf(invDigits)===-1) isMatch=false;
+        }
+
+        /* ERX search: smart match */
+        if(erxVal.length>0){
+          var searchUpper=erxVal.toUpperCase();
+          var allUpper=allText.toUpperCase();
+          var searchDigitsOnly=erxVal.replace(/[^0-9]/g,'');
+          var erxFound=false;
+          /* Direct text match */
+          if(allUpper.indexOf(searchUpper)>-1) erxFound=true;
+          /* Smart: user typed just digits - find in ERX numbers */
+          if(!erxFound&&searchDigitsOnly.length>0){
+            var erxMatches=allUpper.match(/ERX-(\d+)/g);
+            if(erxMatches){
+              for(var e=0;e<erxMatches.length;e++){
+                var erxD=erxMatches[e].replace(/[^0-9]/g,'');
+                if(erxD.indexOf(searchDigitsOnly)>-1||erxD.endsWith(searchDigitsOnly)){erxFound=true;break;}
+              }
+            }
+            /* Also try plain number match anywhere */
+            if(!erxFound&&allText.indexOf(searchDigitsOnly)>-1) erxFound=true;
+          }
+          if(!erxFound) isMatch=false;
+        }
+
+        if(!hasSearch||isMatch) matched.push(r);
+        else unmatched.push(r);
+
+        /* Highlight/unhighlight */
+        if(hasSearch&&isMatch){
+          r.style.cssText='background:rgba(129,140,248,0.06)!important;border-right:3px solid #818cf8!important;transition:all 0.3s!important';
+        } else if(hasSearch&&!isMatch){
+          r.style.cssText='opacity:0.35!important;transition:all 0.3s!important';
+        } else {
+          r.style.cssText='transition:all 0.3s!important';
+        }
+
+        /* Protect current invoice - disable Import button */
+        if(currentInvoice&&allText.indexOf(currentInvoice)>-1){
+          var btns=r.querySelectorAll('button');
+          btns.forEach(function(b){
+            var bt=(b.innerText||'').toLowerCase();
+            if(bt.indexOf('import')>-1){
+              b.disabled=true;
+              b.style.cssText='background:#94a3b8!important;color:#fff!important;border:none!important;padding:4px 12px!important;border-radius:8px!important;font-size:11px!important;font-weight:700!important;cursor:not-allowed!important;font-family:Cairo,sans-serif!important;opacity:0.6!important';
+              b.innerHTML='✅ الحالي';
+            }
+          });
+        }
+      });
+
+      /* Reorder: matched first, then unmatched */
+      if(hasSearch){
+        var parent=tb.querySelector('tbody')||tb;
+        matched.forEach(function(r){parent.appendChild(r);});
+        unmatched.forEach(function(r){parent.appendChild(r);});
+      }
+
+      /* Update counter */
+      var countEl=document.getElementById('ez-match-count');
+      if(countEl){
+        if(hasSearch) countEl.textContent=matched.length;
+        else countEl.textContent=rows.length;
+      }
+    }
+
+    /* Bind events */
+    var invInput=document.getElementById('ez-inv-search');
+    var erxInput=document.getElementById('ez-erx-search');
+    if(invInput) invInput.addEventListener('input',doSearch);
+    if(erxInput) erxInput.addEventListener('input',doSearch);
+
+    /* Focus animation */
+    [invInput,erxInput].forEach(function(inp){
+      if(!inp) return;
+      inp.addEventListener('focus',function(){this.style.borderColor='#818cf8';this.style.boxShadow='0 0 0 3px rgba(129,140,248,0.12)';});
+      inp.addEventListener('blur',function(){this.style.borderColor='rgba(129,140,248,0.15)';this.style.boxShadow='inset 0 1px 3px rgba(0,0,0,0.04)';});
+    });
+
+    /* Style modal itself */
+    var modalContent=modal.querySelector('.modal-content');
+    if(modalContent){
+      modalContent.style.cssText+='border-radius:18px!important;border:2px solid rgba(129,140,248,0.15)!important;overflow:hidden!important;box-shadow:0 20px 60px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06)!important';
+    }
+    var modalHeader=modal.querySelector('.modal-header');
+    if(modalHeader){
+      modalHeader.style.cssText+='background:linear-gradient(145deg,#6366f1,#4f46e5)!important;border-bottom:2px solid #4338ca!important;padding:14px 20px!important';
+      var title=modalHeader.querySelector('.modal-title,h4,h5');
+      if(title) title.style.cssText='color:#fff!important;font-family:Cairo,sans-serif!important;font-weight:900!important;font-size:16px!important;text-shadow:0 1px 3px rgba(0,0,0,0.15)!important';
+      var closeBtn=modalHeader.querySelector('button.close,[data-dismiss="modal"]');
+      if(closeBtn) closeBtn.style.cssText+='color:#fff!important;opacity:0.8!important;text-shadow:none!important;font-size:22px!important';
+    }
+
+    /* Style modal table header */
+    var mThs=tb.querySelectorAll('th');
+    for(var i=0;i<mThs.length;i++){
+      mThs[i].style.cssText='background:linear-gradient(145deg,#818cf8,#6366f1)!important;color:#fff!important;font-size:11px!important;font-weight:800!important;padding:8px 6px!important;text-align:center!important;border:none!important;border-left:1px solid rgba(255,255,255,0.12)!important;white-space:nowrap!important;font-family:Cairo,sans-serif!important;text-shadow:0 1px 2px rgba(0,0,0,0.15)!important;position:sticky!important;top:0!important;z-index:2!important';
+    }
+
+    /* Style modal table */
+    tb.style.cssText+='border-collapse:separate!important;border-spacing:0!important;width:100%!important;font-family:Cairo,sans-serif!important;border-radius:10px!important;overflow:hidden!important';
+
+    /* Init counter */
+    doSearch();
+    searchInjected=true;
+  }
+
+  /* Watch for modal open */
+  var modal=document.querySelector('#exampleModal');
+  if(modal){
+    var observer=new MutationObserver(function(mutations){
+      mutations.forEach(function(m){
+        if(m.attributeName==='style'||m.attributeName==='class'){
+          var isVisible=modal.classList.contains('show')||
+                        modal.style.display==='block'||
+                        getComputedStyle(modal).display!=='none';
+          if(isVisible&&!searchInjected){
+            setTimeout(injectSearch,200);
+          }
+          if(!isVisible) searchInjected=false;
+        }
+      });
+    });
+    observer.observe(modal,{attributes:true});
+
+    /* Also hook the button click */
+    var importBtn=document.getElementById('importinv');
+    if(importBtn){
+      importBtn.addEventListener('click',function(){
+        searchInjected=false;
+        setTimeout(injectSearch,500);
+      });
+    }
+  }
+})();
+
+})();
