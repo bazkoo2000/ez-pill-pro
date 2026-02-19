@@ -303,7 +303,8 @@ var weeklyInjections=(function(){var base=_defaultWeeklyInjections.slice();if(cu
 var NORMAL_TIMES=(function(){var base={};for(var k in _defaultNormalTimes)base[k]=_defaultNormalTimes[k];if(customConfig.normalTimes){for(var k in customConfig.normalTimes)base[k]=customConfig.normalTimes[k];}return base;})();
 
 /* Code-specific start times (used when note is empty/unrecognized instead of default 9:00) */
-var CODE_START_TIMES=(function(){var base={};if(customConfig.codeStartTimes){for(var k in customConfig.codeStartTimes){var v=customConfig.codeStartTimes[k];if(typeof v==='string')base[k]={time:v,every:24};else base[k]=v;}}return base;})();
+var _defaultCodeStartTimes={};
+var CODE_START_TIMES=(function(){var base={};var k;for(k in _defaultCodeStartTimes){var dv=_defaultCodeStartTimes[k];if(typeof dv==='string')base[k]={time:dv,every:24};else base[k]=dv;}if(customConfig.codeStartTimes){for(k in customConfig.codeStartTimes){var v=customConfig.codeStartTimes[k];if(typeof v==='string')base[k]={time:v,every:24};else base[k]=v;}}return base;})();
 
 /* ══════════════════════════════════════════
    RAMADAN MODE CONSTANTS & HELPERS
@@ -2340,7 +2341,7 @@ function _ezShowSettingsPanel(role,userName){
       </div>\
       <div id="ez-cfg-panel-codetimes" class="ez-cfg-panel" style="display:none">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🕐</span> أوقات بدء مخصصة للأكواد <span style="font-size:9px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.08);padding:2px 8px;border-radius:6px">'+cstKeys.length+' كود</span></div>\
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(6,182,212,0.03);border-radius:8px;border:1px solid rgba(6,182,212,0.08)">أضف كود صنف معين ووقت بدء + تكرار مخصص ليه.<br>لو النوت <b>فاضي تماماً</b> → هيستخدم الوقت والتكرار المخصص بدل الافتراضي.<br>لو النوت فيه جرعة <b>مش مفهومة</b> → هيظهر تحذير عادي ومش هيستخدم إعدادات الكود.<br>⚠️ الأولوية: لو النوت فيه جرعة مفهومة → هيتجاهل إعدادات الكود.</div>\
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:12px;direction:rtl;line-height:1.6;padding:8px 10px;background:rgba(6,182,212,0.03);border-radius:8px;border:1px solid rgba(6,182,212,0.08)">أضف كود صنف معين ووقت بدء + تكرار مخصص ليه.<br>لو النوت <b>فاضي تماماً</b> → هيستخدم الوقت والتكرار المخصص بدل الافتراضي.<br>لو النوت فيه جرعة <b>مش مفهومة</b> → هيظهر تحذير عادي ومش هيستخدم إعدادات الكود.<br>💡 الإعدادات هنا بتضاف فوق الافتراضيات المحفوظة في الكود.<br>⚠️ الأولوية: لو النوت فيه جرعة مفهومة → هيتجاهل إعدادات الكود.</div>\
         <div style="display:flex;gap:6px;margin-bottom:10px;direction:ltr;align-items:end">\
           <div style="flex:1"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">كود الصنف</label><input type="text" id="ez-cfg-new-cst-code" placeholder="مثال: 102785890" style="width:100%;padding:8px 12px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;outline:none;direction:ltr" /></div>\
           <div style="width:100px"><label style="display:block;font-size:9px;font-weight:800;color:#64748b;margin-bottom:3px;letter-spacing:0.5px">وقت البدء</label><input type="time" id="ez-cfg-new-cst-time" value="09:00" style="width:100%;padding:8px 6px;border:1.5px solid rgba(6,182,212,0.15);border-radius:10px;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>\
@@ -2753,8 +2754,9 @@ function _ezShowSettingsPanel(role,userName){
       defaultTime:document.getElementById('cfg-nt-def').value
     };
     saveCustomConfig(c2);
-    /* Refresh CODE_START_TIMES in memory */
-    if(c2.codeStartTimes){for(var k in c2.codeStartTimes){var v=c2.codeStartTimes[k];if(typeof v==='string')CODE_START_TIMES[k]={time:v,every:24};else CODE_START_TIMES[k]=v;}}
+    /* Refresh CODE_START_TIMES in memory (merge defaults + config) */
+    var _cstK;for(_cstK in _defaultCodeStartTimes){var dv2=_defaultCodeStartTimes[_cstK];if(typeof dv2==='string')CODE_START_TIMES[_cstK]={time:dv2,every:24};else CODE_START_TIMES[_cstK]=dv2;}
+    if(c2.codeStartTimes){for(_cstK in c2.codeStartTimes){var v=c2.codeStartTimes[_cstK];if(typeof v==='string')CODE_START_TIMES[_cstK]={time:v,every:24};else CODE_START_TIMES[_cstK]=v;}}
     overlay.remove();
     window.ezShowToast('✅ تم حفظ جميع الإعدادات - أعد تشغيل الأداة لتطبيقها','success');
     ezBeep('success');
