@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.4';
+var APP_VERSION='136.5';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.5':{
+    title:'تصدير واستيراد الإعدادات 📤📥',
+    features:[
+      {icon:'📤',text:'تصدير الإعدادات: يحفظ كل الإعدادات في ملف JSON'},
+      {icon:'📥',text:'استيراد الإعدادات: يرجّع الإعدادات من ملف محفوظ'},
+      {icon:'🛡️',text:'حماية الإعدادات من ضياع الكاش أو مسح المتصفح'},
+      {icon:'💡',text:'نصيحة: صدّر الإعدادات بعد كل تعديل واحتفظ بالملف'}
+    ]
+  },
   '136.4':{
     title:'أوقات وتكرار مخصص للأكواد 🕐',
     features:[
@@ -2350,9 +2359,14 @@ function _ezShowSettingsPanel(role,userName){
         <div id="ez-cfg-usr-list">'+usrRows+'</div>\
       </div>\
     </div>\
-    <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4)">\
+    <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4);flex-wrap:wrap">\
       <button id="ez-cfg-save" style="flex:1;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 16px rgba(16,185,129,0.25);transition:all 0.3s">💾 حفظ التعديلات</button>\
-      <button id="ez-cfg-reset" style="height:46px;padding:0 18px;border:1.5px solid rgba(239,68,68,0.15);border-radius:14px;background:rgba(239,68,68,0.03);color:#ef4444;cursor:pointer;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;transition:all 0.3s">🗑️ استعادة الافتراضي</button>\
+      <button id="ez-cfg-reset" style="height:46px;padding:0 18px;border:1.5px solid rgba(239,68,68,0.15);border-radius:14px;background:rgba(239,68,68,0.03);color:#ef4444;cursor:pointer;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;transition:all 0.3s">🗑️ استعادة</button>\
+      <div style="width:100%;display:flex;gap:8px;margin-top:4px">\
+        <button id="ez-cfg-export" style="flex:1;height:38px;border:1.5px solid rgba(99,102,241,0.15);border-radius:12px;background:linear-gradient(145deg,#eef2ff,#e0e7ff);color:#4f46e5;cursor:pointer;font-size:11px;font-weight:800;font-family:Cairo,sans-serif;transition:all 0.3s">📤 تصدير الإعدادات</button>\
+        <button id="ez-cfg-import" style="flex:1;height:38px;border:1.5px solid rgba(99,102,241,0.15);border-radius:12px;background:linear-gradient(145deg,#eef2ff,#e0e7ff);color:#4f46e5;cursor:pointer;font-size:11px;font-weight:800;font-family:Cairo,sans-serif;transition:all 0.3s">📥 استيراد الإعدادات</button>\
+        <input type="file" id="ez-cfg-import-file" accept=".json" style="display:none" />\
+      </div>\
     </div>\
   </div>';
 
@@ -2752,6 +2766,71 @@ function _ezShowSettingsPanel(role,userName){
     localStorage.removeItem(EZ_CUSTOM_KEY);
     overlay.remove();
     window.ezShowToast('🔄 تم استعادة الإعدادات الافتراضية - أعد تشغيل الأداة','info');
+  };
+
+  /* EXPORT SETTINGS */
+  document.getElementById('ez-cfg-export').onclick=function(){
+    try{
+      var exportData={
+        _export:'EZ_Pill_Farmadosis_Settings',
+        _version:APP_VERSION,
+        _date:new Date().toISOString(),
+        custom:loadCustomConfig(),
+        settings:loadSettings(),
+        users:loadUsers()
+      };
+      var blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url;
+      a.download='EZ_Pill_Settings_'+new Date().toISOString().slice(0,10)+'.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      window.ezShowToast('📤 تم تصدير الإعدادات بنجاح','success');
+      ezBeep('success');
+    }catch(e){
+      window.ezShowToast('❌ خطأ في التصدير: '+e.message,'error');
+      ezBeep('error');
+    }
+  };
+
+  /* IMPORT SETTINGS */
+  document.getElementById('ez-cfg-import').onclick=function(){
+    document.getElementById('ez-cfg-import-file').click();
+  };
+  document.getElementById('ez-cfg-import-file').onchange=function(e){
+    var file=e.target.files[0];
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var data=JSON.parse(ev.target.result);
+        if(!data._export||data._export!=='EZ_Pill_Farmadosis_Settings'){
+          window.ezShowToast('❌ الملف مش ملف إعدادات EZ_Pill','error');
+          ezBeep('error');return;
+        }
+        var msg='هل تريد استيراد الإعدادات';
+        if(data._version) msg+=' (v'+data._version+')';
+        if(data._date) msg+=' من '+data._date.slice(0,10);
+        msg+='?\n\nسيتم استبدال جميع الإعدادات الحالية.';
+        if(!confirm(msg))return;
+        if(data.custom) saveCustomConfig(data.custom);
+        if(data.settings){for(var k in data.settings) saveSettings(data.settings);}
+        if(data.users) saveUsers(data.users);
+        /* Restore version to prevent What's New popup */
+        try{localStorage.setItem('ez_pill_version',APP_VERSION);}catch(ex){}
+        overlay.remove();
+        window.ezShowToast('📥 تم استيراد الإعدادات بنجاح - أعد تشغيل الأداة','success');
+        ezBeep('success');
+      }catch(ex){
+        window.ezShowToast('❌ خطأ في قراءة الملف: '+ex.message,'error');
+        ezBeep('error');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
   };
 }
 var hasDuplicateNotes=scanForDuplicateNotes();
