@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.5';
+var APP_VERSION='136.6';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.6':{
+    title:'إصلاح جرعة "كل 12 ساعة بعد الاكل" وتحذيرات ذكية ⚠️✅',
+    features:[
+      {icon:'✅',text:'إصلاح: "بعد الاكل / after meal / pc" معروف الآن → وقت 09:00'},
+      {icon:'🧠',text:'تحذير ذكي: يعرض الجرعة المكتوبة لكل صنف غير مفهوم'},
+      {icon:'✏️',text:'تعديل مباشر من التحذير: Size + Every + Start Time لكل صنف'},
+      {icon:'🔁',text:'تطبيق التعديلات فورياً على الصنف المحدد'}
+    ]
+  },
   '136.5':{
     title:'تصدير واستيراد الإعدادات 📤📥',
     features:[
@@ -832,6 +841,10 @@ window.showWarnings=function(warnings,callback){
       reason='🌙 جرعة غير واضحة في رمضان';
       detail='الجرعة المكتوبة: '+w.currentNote+'\n\nلم يتم التعرف على وقت رمضان محدد. عدّل التكرار والوقت أدناه ثم اضغط تطبيق.';
       actionLabel='تطبيق التعديلات';
+    } else if(w.type==='unrecognized_dose'){
+      reason='❓ الجرعة المكتوبة غير مفهومة';
+      detail='النص المكتوب: "'+w.currentNote+'" - لم يتم التعرف على الوقت أو التكرار. عدّل القيم أدناه ثم اضغط تطبيق.';
+      actionLabel='تطبيق التعديلات';
     } else {
       reason='📌 يحتاج مراجعة';
       detail=msgText;
@@ -861,6 +874,24 @@ window.showWarnings=function(warnings,callback){
         html+='<option value="168"'+(w.currentEvery===168?' selected':'')+'>كل 168 ساعة (أسبوعياً)</option>';
         html+='</select></div>';
         html+='<div style="width:140px"><label style="display:block;font-size:10px;font-weight:800;color:'+lc.labelColor+';margin-bottom:3px">وقت الجرعة (Start Time)</label>';
+        html+='<input type="time" id="edit-time-'+i+'" value="'+w.currentTime+'" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
+        html+='</div>';
+      } else if(w.type==='unrecognized_dose'){
+        /* Smart UI for unrecognized_dose: size + every + time */
+        html+='<div style="font-size:11px;font-weight:800;color:#92400e;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:8px;padding:8px 10px;margin-bottom:8px;direction:rtl">📝 الجرعة المكتوبة: <span style="color:#1e1b4b;font-size:12px">'+w.currentNote+'</span></div>';
+        html+='<div style="display:flex;gap:8px;direction:rtl;margin-bottom:8px;flex-wrap:wrap">';
+        html+='<div style="flex:1;min-width:100px"><label style="display:block;font-size:10px;font-weight:800;color:'+lc.labelColor+';margin-bottom:3px">الحجم (Size)</label>';
+        html+='<input type="number" id="edit-size-'+i+'" value="'+w.currentSize+'" min="1" max="9999" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
+        html+='<div style="flex:1;min-width:120px"><label style="display:block;font-size:10px;font-weight:800;color:'+lc.labelColor+';margin-bottom:3px">Every (كل كام ساعة)</label>';
+        html+='<select id="edit-every-'+i+'" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;direction:rtl">';
+        html+='<option value="24"'+(w.currentEvery===24?' selected':'')+'>كل 24 ساعة (مرة)</option>';
+        html+='<option value="12"'+(w.currentEvery===12?' selected':'')+'>كل 12 ساعة (مرتين)</option>';
+        html+='<option value="8"'+(w.currentEvery===8?' selected':'')+'>كل 8 ساعات (3 مرات)</option>';
+        html+='<option value="6"'+(w.currentEvery===6?' selected':'')+'>كل 6 ساعات (4 مرات)</option>';
+        html+='<option value="48"'+(w.currentEvery===48?' selected':'')+'>كل 48 ساعة (يوم بعد يوم)</option>';
+        html+='<option value="168"'+(w.currentEvery===168?' selected':'')+'>كل 168 ساعة (أسبوعياً)</option>';
+        html+='</select></div>';
+        html+='<div style="width:140px"><label style="display:block;font-size:10px;font-weight:800;color:'+lc.labelColor+';margin-bottom:3px">وقت البدء (Start Time)</label>';
         html+='<input type="time" id="edit-time-'+i+'" value="'+w.currentTime+'" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
         html+='</div>';
       } else {
@@ -920,6 +951,17 @@ window.applyWarning=function(idx){
       var newTime=timeInput.value;
       w.onEdit(newEvery,newTime);
       window.ezShowToast('✅ تم تطبيق Every='+newEvery+'h و Time='+newTime,'success');
+    }
+  } else if(w.type==='unrecognized_dose'&&w.onEdit){
+    var everySelUD=document.getElementById('edit-every-'+idx);
+    var timeInpUD=document.getElementById('edit-time-'+idx);
+    var sizeInpUD=document.getElementById('edit-size-'+idx);
+    if(everySelUD&&timeInpUD){
+      var newEvery2=parseInt(everySelUD.value);
+      var newTime2=timeInpUD.value;
+      var newSize2=sizeInpUD?parseInt(sizeInpUD.value):0;
+      w.onEdit(newEvery2,newTime2,newSize2);
+      window.ezShowToast('✅ تم تطبيق Every='+newEvery2+'h, Time='+newTime2+(newSize2>0?', Size='+newSize2:''),'success');
     }
   }
 
@@ -1367,7 +1409,7 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\\s*(الاكل|الأكل|meal)|before\\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\\b(morning|am|a\\.m)\\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\\b(noon|midday)\\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\\b(asr|afternoon|pm|p\\.m)\\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\\.s/,time:'22:00'}];
+  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\\s*(الاكل|الأكل|meal)|before\\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/بعد.*(الاكل|الأكل|وجبه|وجبهـ|وجبات|الاكل)|after.*(meal|food|eating)|\\bpc\\b|\\bp\\.c\\b/,time:NT.afterBreakfast},{test:/\\b(morning|am|a\\.m)\\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\\b(noon|midday)\\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\\b(asr|afternoon|pm|p\\.m)\\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\\.s/,time:'22:00'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -1709,13 +1751,24 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(rd.note&&rd.note.trim().length>=3){
         var timeResult=getTimeFromWords(rd.note);
         if(timeResult.isUnrecognized){
+          var curEvery=rd.hourlyInfo&&rd.hourlyInfo.hasInterval?rd.hourlyInfo.hours:24;
+          var curSize=rd.calculatedSize||0;
           warningQueue.push({
             level:'warning',
-            message:'⚠️ الصنف: '+rd.itemName+' - الجرعة غير مفهومة',
-            detail:'النص: "'+rd.note+'" - تم استخدام الوقت الافتراضي '+timeResult.time,
-            editable:false,
+            message:'\u26a0\ufe0f \u0627\u0644\u0635\u0646\u0641: '+rd.itemName,
+            currentNote:rd.note,
+            currentEvery:curEvery,
+            currentTime:timeResult.time,
+            currentSize:curSize,
+            editable:true,
             rowIndex:i,
-            type:'unrecognized_dose'
+            type:'unrecognized_dose',
+            onEdit:(function(idx2){return function(newEvery,newTime,newSize){
+              allRowsData[idx2].unrecognizedEvery=newEvery;
+              allRowsData[idx2].unrecognizedTime=newTime;
+              if(newSize&&newSize>0)allRowsData[idx2].unrecognizedSize=newSize;
+              allRowsData[idx2].warningOverride=true;
+            };})(i)
           });
         }
       }
@@ -1815,6 +1868,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
+      /* Apply unrecognized_dose warning overrides if user set them */
+      if(rd.unrecognizedTime){tm2_obj={time:rd.unrecognizedTime,isUnrecognized:false};}
+      if(rd.unrecognizedEvery){rd.hourlyInfo={hasInterval:true,hours:rd.unrecognizedEvery,timesPerDay:Math.floor(24/rd.unrecognizedEvery)};}
       var is48h=/48|يوم بعد يوم|يوم ويوم|every\s*other\s*day|day\s*after\s*day|alternate\s*day|eod|e\.o\.d/i.test(rd.note);
       if(is48h){setEvry(tds_nodes[ei_main],'48');var mult2=doseMultiplier;if(doseInfo.count>=2)setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*mult2));else setSize(tds_nodes[si_main],Math.ceil((rd.calculatedSize*mult2)/2));setTime(r_node,tm2_obj.time);continue;}
       var finalTPD=rd.timesPerDay;if(rd.hourlyInfo.hasInterval)finalTPD=rd.hourlyInfo.timesPerDay;
@@ -1825,6 +1881,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else if(doseInfo.count===3||finalTPD===3){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*3));setEvry(tds_nodes[ei_main],'8');}
       else if(doseInfo.count===2){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*2));setEvry(tds_nodes[ei_main],'12');setTime(r_node,tm2_obj.time);}
       else{setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier));setEvry(tds_nodes[ei_main],'24');}
+      /* Apply size override from unrecognized_dose warning */
+      if(rd.unrecognizedSize&&rd.unrecognizedSize>0){setSize(tds_nodes[si_main],rd.unrecognizedSize);}
       if(di_main>=0)setDose(tds_nodes[di_main],doseMultiplier>=1?doseMultiplier:1);
       if(!isE12)setTime(r_node,tm2_obj.time);
       /* Code-aware every override: if note was empty/unrecognized and code has custom every */
