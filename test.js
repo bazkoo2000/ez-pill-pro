@@ -315,6 +315,7 @@ var _defaultFixedSizeCodes={
   '100015955':24,
   '100015971':24,
   '100015980':24,
+  '100016077':15,
   '100016106':10,
   '100017942':20,
   '100023592':30,
@@ -328,6 +329,8 @@ var _defaultFixedSizeCodes={
   '101284170':30,
   '101826688':20,
   '101859640':20,
+  '102073622':10,
+  '102073631':10,
   '102077738':10,
   '102371620':24,
   '102988654':48,
@@ -348,7 +351,7 @@ var weeklyInjections=(function(){var base=_defaultWeeklyInjections.slice();if(cu
 var NORMAL_TIMES=(function(){var base={};for(var k in _defaultNormalTimes)base[k]=_defaultNormalTimes[k];if(customConfig.normalTimes){for(var k in customConfig.normalTimes)base[k]=customConfig.normalTimes[k];}return base;})();
 
 /* Code-specific start times (used when note is empty/unrecognized instead of default 9:00) */
-var _defaultCodeStartTimes={'100010652':{time:'21:00',every:24},'100016077':{time:'21:00',every:24},'100016851':{time:'21:00',every:24},'100030493':{time:'09:00',every:12},'100634019':{time:'14:00',every:24},'100726280':{time:'14:00',every:24},'100954004':{time:'21:00',every:24},'101148979':{time:'21:00',every:24},'102073631':{time:'21:00',every:24},'102782795':{time:'21:00',every:24},'102988654':{time:'09:00',every:12},'103008671':{time:'21:00',every:24},'103069617':{time:'21:00',every:24},'103340593':{time:'21:00',every:24},'103344851':{time:'21:00',every:24},'103344869':{time:'21:00',every:24},'103483965':{time:'21:00',every:24}};
+var _defaultCodeStartTimes={'100010652':{time:'21:00',every:24},'100016077':{time:'21:00',every:24},'100016851':{time:'21:00',every:24},'100030493':{time:'09:00',every:12},'100634019':{time:'14:00',every:24},'100726280':{time:'14:00',every:24},'100954004':{time:'21:00',every:24},'101148979':{time:'21:00',every:24},'101284188':{time:'21:00',every:24},'102073622':{time:'21:00',every:24},'102073631':{time:'21:00',every:24},'102782795':{time:'21:00',every:24},'102988654':{time:'09:00',every:12},'103008671':{time:'21:00',every:24},'103069617':{time:'21:00',every:24},'103340593':{time:'21:00',every:24},'103344851':{time:'21:00',every:24},'103344869':{time:'21:00',every:24},'103350804':{time:'09:00',every:12},'103483965':{time:'21:00',every:24}};
 var CODE_START_TIMES=(function(){var base={};var k;for(k in _defaultCodeStartTimes){var dv=_defaultCodeStartTimes[k];if(typeof dv==='string')base[k]={time:dv,every:24};else base[k]=dv;}if(customConfig.codeStartTimes){for(k in customConfig.codeStartTimes){var v=customConfig.codeStartTimes[k];if(typeof v==='string')base[k]={time:v,every:24};else base[k]=v;}}return base;})();
 
 /* ══════════════════════════════════════════
