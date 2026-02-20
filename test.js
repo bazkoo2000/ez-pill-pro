@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.6';
+var APP_VERSION='136.7';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.7':{
+    title:'إصلاح "بعد الاكل" المبهمة → مرة واحدة فقط ✅',
+    features:[
+      {icon:'✅',text:'إصلاح: "بعد الاكل / after meal / pc" المبهمة = مرة واحدة بعد الفطار (09:00)'},
+      {icon:'✅',text:'إصلاح: "قبل الاكل / before meal / ac" المبهمة = مرة واحدة قبل الفطار (08:00)'},
+      {icon:'🧠',text:'التقسيم 3 مرات فقط لما يكون صريح: "3 مرات بعد الاكل" أو "بعد الوجبات الثلاث"'},
+      {icon:'🧠',text:'مثال: "مرة بعد الاكل" أو "بعد الاكل" = مرة واحدة، مش 3 مرات'}
+    ]
+  },
   '136.6':{
     title:'إصلاح جرعة "كل 12 ساعة بعد الاكل" وتحذيرات ذكية ⚠️✅',
     features:[
@@ -1377,9 +1386,13 @@ function smartDoseRecognizer(note){
   if(res.hasL||res.hasN) mealCount++;
   if(res.hasD||res.hasE) mealCount++;
   if(res.hasA&&mealCount<3) mealCount++;
-  if(/قبل\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)?|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){res.count=3;res.isBefore=true;return res;}
-  if(/بعد\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)?|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){res.count=3;return res;}
-  if(/قبل\s*(الاكل|الأكل|الوجبات)\s*مرتين|before\s*meals?\s*twice/i.test(s)){res.count=2;res.isBefore=true;return res;}
+  /* قبل/بعد الاكل الثلاث أو before all meals = 3 مرات صريحة */
+  if(/قبل\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)|قبل\s*كل\s*(وجبه|وجبة)|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){res.count=3;res.isBefore=true;return res;}
+  if(/بعد\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)|بعد\s*كل\s*(وجبه|وجبة)|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){res.count=3;return res;}
+  /* قبل/بعد الاكل مبهمة (بدون تحديد عدد) = مرة واحدة فقط */
+  if(/قبل\s*(الاكل|الأكل|الوجبات?)\s*مرتين|before\s*meals?\s*twice/i.test(s)){res.count=2;res.isBefore=true;return res;}
+  if(/^(قبل\s*(الاكل|الأكل|الوجبه?)|before\s*meal|before\s*food|ac)\s*$|^(مره?\s*)?(واحده?\s*)?(قبل\s*(الاكل|الأكل))/i.test(s)){res.count=1;res.isBefore=true;return res;}
+  if(/^(بعد\s*(الاكل|الأكل|الوجبه?)|after\s*meal|after\s*food|pc)\s*$|^(مره?\s*)?(واحده?\s*)?(بعد\s*(الاكل|الأكل))/i.test(s)){res.count=1;return res;}
   if(mealCount>=3){res.count=3;return res;}
   var pairDual=/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
   if(mealCount===2||pairDual.test(s)){res.count=2;return res;}
@@ -1408,6 +1421,10 @@ function getTimeFromWords(w){
   /* CRITICAL FIX: "قبل الأكل مرتين" should be beforeMeal (8:00) not morning (9:30) */
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
+  /* بعد الاكل المبهمة → 09:00 (بعد الفطار) */
+  if(/بعد\s*(الاكل|الأكل|الوجبه?)\b|after\s*(meal|food)\b|\bpc\b/i.test(s))return{time:'09:00'};
+  /* قبل الاكل المبهمة → 08:00 (قبل الفطار) */
+  if(/قبل\s*(الاكل|الأكل|الوجبه?)\b|before\s*(meal|food)\b|\bac\b/i.test(s))return{time:'08:00'};
   
   var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\\s*(الاكل|الأكل|meal)|before\\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\\b(morning|am|a\\.m)\\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\\b(noon|midday)\\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\\b(asr|afternoon|pm|p\\.m)\\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\\.s/,time:'22:00'}];
   /* Custom time rules from settings (checked FIRST for priority) */
