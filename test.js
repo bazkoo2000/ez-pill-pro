@@ -251,6 +251,17 @@ var _DEFAULT_USERS = [
 
 var _EZ_RAMADAN_RULES=[{test:/beforeIftar/,time:'18:30',label:'قبل الإفطار'},{test:/afterIftar/,time:'19:00',label:'بعد الإفطار'},{test:/beforeSuhoor/,time:'03:00',label:'قبل السحور'},{test:/afterSuhoor/,time:'04:00',label:'بعد السحور'}];
 
+/* ── User System (Master Control) ── */
+var EZ_USERS_KEY='ez_pill_users';
+function _ezHashPin(pin){var h=0,s=String(pin);for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'ezh_'+(h>>>0).toString(36);}
+function loadUsers(){try{var s=localStorage.getItem(EZ_USERS_KEY);if(s)return JSON.parse(s);if(typeof _DEFAULT_USERS!=='undefined'){localStorage.setItem(EZ_USERS_KEY,JSON.stringify(_DEFAULT_USERS));return _DEFAULT_USERS;}return[];}catch(e){return[];}}
+function saveUsers(u){try{localStorage.setItem(EZ_USERS_KEY,JSON.stringify(u));}catch(e){}}
+var _DEFAULT_USERS = [
+  { name: 'اسامه السقا', hash: _ezHashPin(105893) }
+];
+
+var _EZ_RAMADAN_RULES=[{test:/beforeIftar/,time:'18:30',label:'قبل الإفطار'},{test:/afterIftar/,time:'19:00',label:'بعد الإفطار'},{test:/beforeSuhoor/,time:'03:00',label:'قبل السحور'},{test:/afterSuhoor/,time:'04:00',label:'بعد السحور'}];
+
 var customConfig=loadCustomConfig();
 
 /* ══════════════════════════════════════════
@@ -303,7 +314,7 @@ var weeklyInjections=(function(){var base=_defaultWeeklyInjections.slice();if(cu
 var NORMAL_TIMES=(function(){var base={};for(var k in _defaultNormalTimes)base[k]=_defaultNormalTimes[k];if(customConfig.normalTimes){for(var k in customConfig.normalTimes)base[k]=customConfig.normalTimes[k];}return base;})();
 
 /* Code-specific start times (used when note is empty/unrecognized instead of default 9:00) */
-var _defaultCodeStartTimes={};
+var _defaultCodeStartTimes={'100016851':{time:'21:00',every:24},'101148979':{time:'21:00',every:24},'102782795':{time:'21:00',every:24},'102988654':{time:'09:00',every:12},'103008671':{time:'21:00',every:24},'103069617':{time:'21:00',every:24},'103344851':{time:'21:00',every:24}};
 var CODE_START_TIMES=(function(){var base={};var k;for(k in _defaultCodeStartTimes){var dv=_defaultCodeStartTimes[k];if(typeof dv==='string')base[k]={time:dv,every:24};else base[k]=dv;}if(customConfig.codeStartTimes){for(k in customConfig.codeStartTimes){var v=customConfig.codeStartTimes[k];if(typeof v==='string')base[k]={time:v,every:24};else base[k]=v;}}return base;})();
 
 /* ══════════════════════════════════════════
