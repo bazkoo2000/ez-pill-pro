@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// تقفيل الطلبات v3.4 - (محرك API السريع موجه لصفحة Packed خصيصاً)
+// تقفيل الطلبات v3.5 - (حساب تلقائي ذكي لعدد الصفحات من السيرفر)
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7,7 +7,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v3';
-  const VERSION = '3.4';
+  const VERSION = '3.5';
   const VER_KEY = 'munhi_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -29,7 +29,7 @@ javascript:(function(){
 
   window.name = "ali_main_window";
 
-  // استخراج العدد الافتراضي لصفحات Packed من الواجهة لتسهيل الأمر عليك
+  // استخراج العدد الافتراضي كبداية فقط (الكود سيصححه تلقائياً لاحقاً)
   const bodyText = document.body.innerText;
   const packedMatch = bodyText.match(/packed\s*\n*\s*(\d+)/i);
   const totalPacked = packedMatch ? parseInt(packedMatch[1]) : 0;
@@ -41,7 +41,7 @@ javascript:(function(){
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
     const prefix = { info: '📋', warn: '⚠️', error: '❌', success: '✅' }[type] || '📋';
-    console.log(`[مُنهي v3.4 ${ts}] ${prefix} ${msg}`);
+    console.log(`[مُنهي v3.5 ${ts}] ${prefix} ${msg}`);
   }
 
   // ─── Toast Notifications ───
@@ -72,7 +72,7 @@ javascript:(function(){
     const lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
       localStorage.setItem(VER_KEY,VERSION);
-      if(lv)setTimeout(()=>showToast('تم التحديث لـ v'+VERSION+' (ربط API مباشر بـ Packed) 🚀','success'),1000);
+      if(lv)setTimeout(()=>showToast('تم التحديث لـ v'+VERSION+' (حساب الصفحات الذكي) 🧠','success'),1000);
     }
   }catch(e){}
 
@@ -331,7 +331,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">تقفيل الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.4 Packed-API</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.5 Auto-Page</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -357,12 +357,12 @@ javascript:(function(){
         </div>
         
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">
-          <span>✅</span><span>جاهز للبدء في Packed</span>
+          <span>✅</span><span>جاهز للبدء التلقائي (Packed)</span>
         </div>
         
         <div id="ali_dynamic_area">
           <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">
-            ⚡ بدء الفحص السريع
+            ⚡ بدء الفحص الذكي
           </button>
         </div>
         
@@ -438,26 +438,25 @@ javascript:(function(){
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // ─── المحرك الجديد: API موجه لصفحة Packed ───
+  // ─── المحرك الجديد: حساب تلقائي + API لصفحة Packed ───
   // ══════════════════════════════════════════════════════════════════
 
-  async function scanAllPages(totalLimit, isSync) {
+  async function scanAllPages(isSync) {
     state.isProcessing = true;
     state.isSyncing = isSync;
     const fill = document.getElementById('p-fill');
     const baseUrl = window.location.origin + "/ez_pill_web/";
-
-    // توجيه المحرك للبحث في Packed حصراً كما طلبت
-    const currentStatus = 'packed';
+    const currentStatus = 'packed'; // الكود موجه حصرياً للـ packed هنا
 
     if (isSync) {
       setStatus('جاري المزامنة بالخلفية...', 'sync');
     } else {
-      setStatus('جاري الفحص السريع...', 'working');
+      setStatus('جاري حساب الصفحات...', 'working');
     }
 
     state.startTime = Date.now();
-    logScan(`═══ بداية الفحص: ${totalLimit} صفحة (من Packed) ═══`);
+    let maxPages = parseInt(document.getElementById('p_lim').value) || 1;
+    let consecutiveEmpty = 0;
 
     // نسخ صف من الجدول للحفاظ على تصميم الموقع
     var tables = document.querySelectorAll('table');
@@ -470,11 +469,9 @@ javascript:(function(){
     var tbody = targetTable ? targetTable.querySelector('tbody') || targetTable : null;
     var templateRow = tbody ? tbody.querySelector('tr') : null;
 
-    let consecutiveEmpty = 0;
-
-    for (let page = 1; page <= totalLimit; page++) {
-      if (fill) fill.style.width = ((page / totalLimit) * 100) + '%';
-      setStatus(`تحليل الصفحة ${page} من ${totalLimit}...`, isSync ? 'sync' : 'working');
+    for (let page = 1; page <= maxPages; page++) {
+      if (fill) fill.style.width = ((page / maxPages) * 100) + '%';
+      setStatus(`تحليل الصفحة ${page} من ${maxPages}...`, isSync ? 'sync' : 'working');
 
       try {
         const res = await fetch(baseUrl + 'Home/getOrders', {
@@ -484,6 +481,17 @@ javascript:(function(){
         });
         
         const data = await res.json();
+        
+        // 🟢 الحساب التلقائي الذكي لعدد الصفحات (يحدث في أول صفحة فقط) 🟢
+        if (page === 1 && data.total_orders) {
+          const exactTotal = parseInt(data.total_orders) || 0;
+          if (exactTotal > 0) {
+            maxPages = Math.ceil(exactTotal / 10);
+            document.getElementById('p_lim').value = maxPages; // تحديث الرقم في الواجهة أمام المستخدم
+            logScan(`العدد الإجمالي من السيرفر: ${exactTotal} طلب، سيتم فحص ${maxPages} صفحة تلقائياً.`);
+          }
+        }
+
         let orders = [];
         try { 
           orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
@@ -507,7 +515,7 @@ javascript:(function(){
           if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
             state.visitedSet.add(inv);
 
-            // استنتاج الحالة من خلال البحث عن كلمة received داخل بيانات الطلب
+            // استنتاج الحالة من خلال بيانات الطلب
             const itemStr = JSON.stringify(item).toLowerCase();
             const isR = itemStr.includes('received');
             const isP = itemStr.includes('packed');
@@ -531,7 +539,6 @@ javascript:(function(){
               clone.innerHTML = `<td>${inv}</td><td>${onl}</td><td>${item.guestName || ''}</td><td>${item.guestMobile || item.mobile || ''}</td>`;
             }
 
-            // تطبيق التلوين حسب الحالة كما في الإصدار القديم
             if (st === 'received') clone.style.background = 'rgba(16,185,129,0.08)';
             if (st === 'packed') clone.style.background = 'rgba(245,158,11,0.08)';
 
@@ -756,14 +763,16 @@ javascript:(function(){
       }
     });
 
-    // ─── Sync (المزامنة الذكية) ───
+    // ─── Sync ───
     document.getElementById('ali_btn_sync').addEventListener('click', async()=>{
       if (state.isSyncing || state.isProcessing) {
         showToast('المزامنة شغالة بالفعل — انتظر!', 'warning');
         return;
       }
       const oldCount = state.savedRows.length;
-      const pages = parseInt(document.getElementById('p_lim').value) || defaultPages;
+      // المزامنة ستسحب الرقم الحالي كحد أقصى، أو يقرأ من السيرفر كالعادة
+      const pages = parseInt(document.getElementById('p_lim').value) || 1; 
+      
       const result = await showDialog({
         icon: '🔄',
         iconColor: 'blue',
@@ -771,8 +780,7 @@ javascript:(function(){
         desc: 'سيتم جلب البيانات الحديثة بالخلفية وتحديث القائمة',
         info: [
           { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
-          { label: 'العملية', value: 'حذف القديم + جلب بيانات Packed', color: '#3b82f6' },
-          { label: 'الصفحات المستهدفة', value: pages + ' صفحة', color: '#f59e0b' }
+          { label: 'العملية', value: 'حذف القديم + جلب بيانات Packed', color: '#3b82f6' }
         ],
         buttons: [
           { text: 'إلغاء', value: 'cancel' },
@@ -792,7 +800,7 @@ javascript:(function(){
       state.savedRows = [];
       state.visitedSet = new Set();
       state.scanLog = [];
-      scanAllPages(pages, true);
+      scanAllPages(true); // نمرر true فقط وهو سيحسب الصفحات من السيرفر
     });
   }
 
@@ -804,8 +812,7 @@ javascript:(function(){
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
     
-    const pages = parseInt(document.getElementById('p_lim').value) || defaultPages;
-    scanAllPages(pages, false);
+    scanAllPages(false);
   });
 
 })();
