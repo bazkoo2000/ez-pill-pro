@@ -1,12 +1,12 @@
 javascript:(function(){
   'use strict';
   // ═══════════════════════════════════════════════════════════════════
-  // EZ-PILL PRO v4.5 - (إصلاح وتفعيل زر المزامنة الذكية)
+  // EZ-PILL PRO v4.6 - (حساب تلقائي لعدد الصفحات من السيرفر)
   // المطور الأصلي: علي الباز
   // ═══════════════════════════════════════════════════════════════════
   //
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.5';
+  const VERSION = '4.6';
   const VER_KEY = 'ezpill_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -55,7 +55,7 @@ javascript:(function(){
     var lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
       localStorage.setItem(VER_KEY,VERSION);
-      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' (إصلاح زر المزامنة) 🔄','success')},1000);
+      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' (حساب الصفحات التلقائي) 🧠','success')},1000);
     }
   }catch(e){}
   
@@ -151,7 +151,7 @@ javascript:(function(){
           '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">EZ-PILL PRO</h3>' +
         '</div>' +
         '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.5</span>' +
+          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.6 Auto-Page</span>' +
         '</div>' +
       '</div>' +
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">' +
@@ -175,13 +175,13 @@ javascript:(function(){
           '</div>' +
         '</div>' +
         '<div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">' +
-          '<span>✅</span><span>جاهز لبدء تجميع البيانات</span>' +
+          '<span>✅</span><span>جاهز للبدء التلقائي</span>' +
         '</div>' +
         
         // --- المنطقة المتغيرة (يتم استبدال الزر بالبحث لاحقاً) ---
         '<div id="ali_dynamic_area">' +
           '<button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">' +
-            '🚀 بدء تجميع البيانات' +
+            '🚀 بدء الفحص الذكي' +
           '</button>' +
         '</div>' +
         
@@ -266,10 +266,10 @@ javascript:(function(){
   });
   
   // ═══════════════════════════════════════════
-  // API Page Scanner
+  // API Page Scanner (مع الحساب التلقائي لعدد الصفحات)
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
-  async function scanPage(curr, totalLimit, isSync) {
+  async function scanPage(isSync) {
     state.isProcessing = true;
     var fill = document.getElementById('p-fill');
     var baseUrl = window.location.origin + "/ez_pill_web/";
@@ -284,28 +284,10 @@ javascript:(function(){
       if (isSync) {
         setStatus('جاري المزامنة...', 'sync');
       } else {
-        setStatus('جاري التهيئة...', 'working');
+        setStatus('جاري حساب الصفحات...', 'working');
       }
 
-      var userLimit = parseInt(totalLimit) || 20;
-      
-      var exactTotalOrders = 0;
-      var allDivs = document.querySelectorAll('div, span');
-      for (var d = 0; d < allDivs.length; d++) {
-        var txt = allDivs[d].innerText || '';
-        if (txt.indexOf('Showing') > -1 && txt.indexOf('entries') > -1) {
-          var m = txt.match(/of\s+(\d+)\s+entries/i);
-          if (m) {
-            exactTotalOrders = parseInt(m[1]);
-            break;
-          }
-        }
-      }
-      
-      var expectedPages = 10;
-      if (exactTotalOrders > 0) {
-        expectedPages = Math.ceil((exactTotalOrders + 1) / 10);
-      }
+      var maxPages = parseInt(document.getElementById('p_lim').value) || 1;
 
       var tables = document.querySelectorAll('table');
       var targetTable = tables[0];
@@ -320,14 +302,13 @@ javascript:(function(){
 
       var consecutiveEmpty = 0;
       
-      for (var page = 1; page <= userLimit; page++) {
-        var displayTotal = Math.max(expectedPages, Math.min(page, userLimit));
-        if (fill) fill.style.width = ((page / displayTotal) * 100) + '%';
+      for (var page = 1; page <= maxPages; page++) {
+        if (fill) fill.style.width = ((page / maxPages) * 100) + '%';
         
         if (isSync) {
-          setStatus('مزامنة الصفحة ' + page + ' من ' + userLimit + '...', 'sync');
+          setStatus('مزامنة الصفحة ' + page + ' من ' + maxPages + '...', 'sync');
         } else {
-          setStatus('تحليل الصفحة ' + page + ' من ' + userLimit + ' ...', 'working');
+          setStatus('تحليل الصفحة ' + page + ' من ' + maxPages + ' ...', 'working');
         }
 
         var res = await fetch(baseUrl + 'Home/getOrders', {
@@ -337,6 +318,16 @@ javascript:(function(){
         });
         
         var data = await res.json();
+
+        // 🟢 الحساب التلقائي الذكي لعدد الصفحات (يحدث في أول صفحة فقط) 🟢
+        if (page === 1 && data.total_orders) {
+          var exactTotal = parseInt(data.total_orders) || 0;
+          if (exactTotal > 0) {
+            maxPages = Math.ceil(exactTotal / 10);
+            document.getElementById('p_lim').value = maxPages; // تحديث الواجهة أمام المستخدم
+          }
+        }
+
         var orders = [];
         try { 
           orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
@@ -633,8 +624,7 @@ javascript:(function(){
         desc: 'سيتم جلب البيانات الحديثة من الخادم وتحديث القائمة',
         info: [
           { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
-          { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' },
-          { label: 'الصفحات', value: (document.getElementById('p_lim').value || '10') + ' صفحة', color: '#f59e0b' }
+          { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' }
         ],
         buttons: [
           { text: 'إلغاء', value: 'cancel' },
@@ -654,8 +644,7 @@ javascript:(function(){
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
-      var pages = parseInt(document.getElementById('p_lim').value) || 20;
-      scanPage(1, pages, true);
+      scanPage(true); // الاستدعاء بدون رقم لينفذ الحساب التلقائي مرة أخرى
     });
   }
   
@@ -665,12 +654,11 @@ javascript:(function(){
   document.getElementById('ali_start').addEventListener('click', function() {
     if (state.isProcessing) return;
     this.disabled = true;
-    this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري التجميع...';
+    this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري الفحص...';
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
     
     totalNoArgs = 0;
-    var pages = parseInt(document.getElementById('p_lim').value) || 20;
-    scanPage(1, pages, false);
+    scanPage(false);
   });
 })();
