@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// محرك البحث الصاروخي (Ready to Pack / New) 🔍🚀
+// محرك البحث الصاروخي (Ready to Pack / New) 🔍🚀 - الإصدار المحدث للترقيم التلقائي
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7,7 +7,6 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_fast_search';
-  const VERSION = '1.0';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -49,14 +48,14 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">محرك البحث الصاروخي</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(139,92,246,0.3);color:#ddd6fe;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Ready To Pack / New</span>
+          <span style="display:inline-block;background:rgba(139,92,246,0.3);color:#ddd6fe;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Auto-Paging Edition</span>
         </div>
       </div>
       
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)">
         
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:800;background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe">
-          <span>✅</span><span>جاهز لسحب الطلبات</span>
+          <span>✅</span><span>جاهز لسحب جميع الصفحات تلقائياً</span>
         </div>
 
         <button id="ali_start_fetch" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(139,92,246,0.3);transition:all 0.3s;margin-bottom:16px">
@@ -124,25 +123,13 @@ javascript:(function(){
     // تحديد الحالة تلقائياً (Ready to Pack أو New بناءً على الصفحة)
     let currentStatus = 'readypack';
     if (window.location.href.toLowerCase().includes('new')) currentStatus = 'new';
+    else if (window.location.href.toLowerCase().includes('packed')) currentStatus = 'packed'; // للحماية
 
     const baseUrl = window.location.origin + "/ez_pill_web/";
     state.savedRows = [];
     state.visitedSet.clear();
 
     try {
-      setStatus('حساب عدد الصفحات...', 'working');
-      
-      // أول طلب لمعرفة العدد الإجمالي
-      let res = await fetch(baseUrl + 'Home/getOrders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' })
-      });
-      let data = await res.json();
-      
-      let exactTotal = parseInt(data.total_orders) || 0;
-      let maxPages = exactTotal > 0 ? Math.ceil(exactTotal / 10) : 1;
-
       // نسخ صف فارغ من الجدول للحفاظ على التصميم
       let tables = document.querySelectorAll('table');
       let targetTable = tables[0];
@@ -152,22 +139,31 @@ javascript:(function(){
       let tbody = targetTable ? targetTable.querySelector('tbody') || targetTable : null;
       let templateRow = tbody ? tbody.querySelector('tr') : null;
 
-      // لوب لسحب جميع الصفحات
-      for (let page = 1; page <= maxPages; page++) {
-        setStatus(`جلب البيانات: صفحة ${page} من ${maxPages}...`, 'working');
-        btn.innerHTML = `🚀 سحب صفحة (${page}/${maxPages})`;
+      let page = 1;
+      let hasMorePages = true;
 
-        if(page > 1) { // الصفحة الأولى جبناها خلاص
-          res = await fetch(baseUrl + 'Home/getOrders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
-          });
-          data = await res.json();
+      // حلقة مفتوحة لا تعتمد على total_orders
+      while (hasMorePages && page <= 50) { 
+        setStatus(`جلب البيانات: صفحة ${page}...`, 'working');
+        btn.innerHTML = `🚀 سحب صفحة (${page})`;
+
+        let res = await fetch(baseUrl + 'Home/getOrders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
+        });
+        
+        let data = await res.json();
+        
+        let orders = [];
+        try { 
+          orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
+        } catch(e) {}
+
+        // لو الصفحة رجعت فاضية تماماً، نخرج من اللوب
+        if (!orders || orders.length === 0) {
+          break;
         }
-
-        let orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list;
-        if (!orders || orders.length === 0) continue;
 
         for (let i = 0; i < orders.length; i++) {
           let item = orders[i];
@@ -184,7 +180,6 @@ javascript:(function(){
               clone = templateRow.cloneNode(true);
               let cells = clone.querySelectorAll('td');
               if (cells.length > 3) {
-                // جعل رقم الفاتورة قابل للضغط ويفتح تفاصيل الطلب
                 cells[0].innerHTML = `<label style="cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:900;" onclick="getDetails('${onl.replace(/ERX/gi, '')}','${inv}','${typee}','${head_id}')">${inv}</label>`;
                 cells[1].innerText = onl;
                 cells[2].innerText = item.guestName || '';
@@ -195,7 +190,7 @@ javascript:(function(){
               clone.innerHTML = `<td><label style="cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:900;" onclick="getDetails('${onl.replace(/ERX/gi, '')}','${inv}','${typee}','${head_id}')">${inv}</label></td><td>${onl}</td><td>${item.guestName || ''}</td><td>${item.guestMobile || item.mobile || ''}</td>`;
             }
             
-            clone.className = 'ali-row-hover'; // تأثير عند الوقوف بالماوس
+            clone.className = 'ali-row-hover'; 
             clone.style.transition = 'background 0.2s';
 
             state.savedRows.push({
@@ -204,6 +199,13 @@ javascript:(function(){
               node: clone
             });
           }
+        }
+
+        // الخوارزمية الذكية: لو السيرفر رجّع أقل من 10 طلبات، أكيد دي آخر صفحة.
+        if (orders.length < 10) {
+          hasMorePages = false;
+        } else {
+          page++;
         }
       }
 
