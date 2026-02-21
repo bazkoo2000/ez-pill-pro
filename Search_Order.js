@@ -1,34 +1,19 @@
 javascript:(function(){
   'use strict';
   // ═══════════════════════════════════════════════════════════════════
-  // EZ-PILL PRO v4.1 - النسخة المطوّرة والمصلّحة
+  // EZ-PILL PRO v4.2 - دمج محرك API السريع مع واجهة v4.1
   // المطور الأصلي: علي الباز
   // ═══════════════════════════════════════════════════════════════════
-  //
-  // ┌─────────────────────────────────────────────────────────────────┐
-  // │ إصلاحات v4.1 │
-  // ├─────────────────────────────────────────────────────────────────┤
-  // │ ✅ إزالة سطر javascript الزائد │
-  // │ ✅ إصلاح منطق الـ 0 في البحث (لا يغير قيمة الـ input) │
-  // │ ✅ حذف دالة smartSync الميتة │
-  // │ ✅ إضافة تنبيه للطلبات بدون args │
-  // │ ✅ إضافة Debounce للبحث │
-  // │ ✅ حماية من تشغيل المزامنة مرتين │
-  // │ ✅ عداد أوضح لما مفيش فلتر │
-  // │ ✅ تحسين الأنيميشن بـ requestAnimationFrame │
-  // │ ✅ إضافة عداد الطلبات بدون args + تحذير │
-  // │ ✅ إضافة زر "فتح الكل" + "فتح المطابق" │
-  // │ ✅ تلوين ذكي لخانة البحث │
-  // │ ✅ حساب الصفحات التلقائي أدق │
-  // │ ✅ دايلوج إنجاز المزامنة مع مقارنة (قبل/بعد) │
-  // └─────────────────────────────────────────────────────────────────┘
+  
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.1';
+  const VERSION = '4.2';
   const VER_KEY = 'ezpill_ver';
+  
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
     return;
   }
+  
   const state = {
     savedRows: [],
     visitedSet: new Set(),
@@ -38,11 +23,7 @@ javascript:(function(){
     tbody: null,
     noNewStreak: 0
   };
-  // حساب عدد الصفحات من الـ Pagination
-  const pNodes = Array.from(document.querySelectorAll('.pagination a, .pagination li, .pagination span'))
-    .map(el => parseInt(el.innerText.trim()))
-    .filter(n => !isNaN(n) && n > 0);
-  const defaultPages = pNodes.length > 0 ? Math.max(...pNodes) : 1;
+  
   // ═══════════════════════════════════════════
   // Toast Notifications
   // ═══════════════════════════════════════════
@@ -68,8 +49,10 @@ javascript:(function(){
       setTimeout(function() { toast.remove(); }, 300);
     }, 3500);
   }
+  
   // ─── Update Check ───
-  try{var lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(function(){showToast('تم تلقي تحديث جديد 🎉 → v'+VERSION,'success')},1000);}}catch(e){}
+  try{var lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(function(){showToast('تم التحديث لمحرك API السريع 🚀 → v'+VERSION,'success')},1000);}}catch(e){}
+  
   // ═══════════════════════════════════════════
   // Dialog System
   // ═══════════════════════════════════════════
@@ -120,6 +103,7 @@ javascript:(function(){
       document.body.appendChild(overlay);
     });
   }
+  
   // ═══════════════════════════════════════════
   // CSS
   // ═══════════════════════════════════════════
@@ -138,6 +122,7 @@ javascript:(function(){
     '#' + PANEL_ID + '.ali-minimized .ali-inner{display:none!important}' +
     '#' + PANEL_ID + '.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
   document.head.appendChild(styleEl);
+  
   // ═══════════════════════════════════════════
   // Panel
   // ═══════════════════════════════════════════
@@ -155,7 +140,7 @@ javascript:(function(){
           '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">EZ-PILL PRO</h3>' +
         '</div>' +
         '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.1</span>' +
+          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.2</span>' +
         '</div>' +
       '</div>' +
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">' +
@@ -167,7 +152,7 @@ javascript:(function(){
         '<div id="ali_main_body">' +
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-              '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
+              '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات (أقصى)</span>' +
               '<div style="display:flex;align-items:center;gap:6px">' +
                 '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
                 '<input type="number" id="p_lim" value="200" min="1" style="width:48px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
@@ -181,13 +166,14 @@ javascript:(function(){
             '<span>✅</span><span>جاهز لبدء تجميع البيانات</span>' +
           '</div>' +
           '<button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">' +
-            '🚀 بدء تجميع البيانات' +
+            '🚀 بدء التجميع عبر API' +
           '</button>' +
         '</div>' +
         '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>' +
       '</div>' +
     '</div>';
   document.body.appendChild(panel);
+  
   // ═══════════════════════════════════════════
   // Helper Functions
   // ═══════════════════════════════════════════
@@ -238,37 +224,7 @@ javascript:(function(){
       timer = setTimeout(fn, delay);
     };
   }
-  // كشف زر التالي الذكي (الإصلاح الرئيسي)
-  function findNextButton() {
-    const selectors = [
-      '.pagination .next a', '.pagination li.next a', '.pagination li.next button',
-      'a[rel="next"]', '.next a', 'a.next', 'button.next',
-      'a[title*="التالي"]', 'a[title*="التالية"]',
-      '.pagination a:last-of-type'
-    ];
-    for (let sel of selectors) {
-      const els = document.querySelectorAll(sel);
-      for (let el of els) {
-        if (isButtonEnabled(el)) return el;
-      }
-    }
-    const links = document.querySelectorAll('.pagination a, .pagination button, .pagination li a');
-    for (let el of links) {
-      const text = (el.innerText || el.textContent || '').trim().toLowerCase();
-      if (text === '»' || text === '›' || text.includes('التال') || text === 'next') {
-        if (isButtonEnabled(el)) return el;
-      }
-    }
-    return null;
-  }
-  function isButtonEnabled(el) {
-    if (!el) return false;
-    return !el.disabled &&
-           el.getAttribute('disabled') !== 'true' &&
-           el.getAttribute('aria-disabled') !== 'true' &&
-           !el.classList.contains('disabled') &&
-           !(el.parentElement && el.parentElement.classList.contains('disabled'));
-  }
+  
   // ═══════════════════════════════════════════
   // Header Events
   // ═══════════════════════════════════════════
@@ -287,93 +243,120 @@ javascript:(function(){
     e.stopPropagation();
     panel.classList.add('ali-minimized');
   });
+  
   // ═══════════════════════════════════════════
-  // Data Collection
-  // ═══════════════════════════════════════════
-  function collectFromCurrentPage() {
-    var newCount = 0;
-    var noArgsCount = 0;
-    document.querySelectorAll('table tr').forEach(function(row) {
-      var cells = row.querySelectorAll('td');
-      if (cells.length > 1) {
-        var key = cells[0].innerText.trim();
-        if (key.length > 3 && !state.visitedSet.has(key)) {
-          state.visitedSet.add(key);
-          var args = null;
-          var label = row.querySelector('label[onclick^="getDetails"]');
-          if (label) {
-            var m = label.getAttribute('onclick').match(/'(.*?)','(.*?)','(.*?)','(.*?)'/);
-            if (m) args = [m[1], m[2], m[3], m[4]];
-          }
-          if (!args) noArgsCount++;
-          var clone = row.cloneNode(true);
-          state.savedRows.push({
-            id: key,
-            onl: cells[1].innerText.trim(),
-            node: clone,
-            args: args
-          });
-          newCount++;
-        }
-      }
-    });
-    return { newCount: newCount, noArgs: noArgsCount };
-  }
-  // ═══════════════════════════════════════════
-  // Page Scanner
+  // API Page Scanner (استبدال الـ Scraping بـ Fetch)
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
-  function scanPage(curr, total, isSync) {
+  async function scanPage(curr, total, isSync) {
     state.isProcessing = true;
     var fill = document.getElementById('p-fill');
-    if (fill) fill.style.width = ((curr / total) * 100) + '%';
-    if (isSync) {
-      setStatus('مزامنة الصفحة ' + curr + ' من ' + total + '...', 'sync');
-    } else {
-      setStatus('تحليل الصفحة ' + curr + ' من ' + total + ' ... تم رصد ' + state.savedRows.length + ' طلب', 'working');
-    }
-    var result = collectFromCurrentPage();
-    totalNoArgs += result.noArgs;
-    updateStats();
-    // إيقاف آمن لو 3 صفحات متتالية بدون جديد
-    if (result.newCount === 0) {
-      state.noNewStreak++;
-      if (state.noNewStreak >= 3) {
-        finishScan(isSync);
-        return;
-      }
-    } else {
-      state.noNewStreak = 0;
-    }
-    if (curr < total) {
-      var nxt = findNextButton();
-      // fallback للطريقة القديمة
-      if (!nxt) {
-        var allLinks = document.querySelectorAll('.pagination a, .pagination li, .pagination span');
-        for (var i = 0; i < allLinks.length; i++) {
-          if (allLinks[i].innerText.trim() == String(curr + 1)) {
-            nxt = allLinks[i];
-            break;
+    var baseUrl = window.location.origin + "/ez_pill_web/";
+    
+    // 1. تحديد الحالة الحالية بناءً على الرابط لمنع الأخطاء
+    var currentStatus = 'readypack';
+    var loc = window.location.href.toLowerCase();
+    if (loc.indexOf('new') !== -1) currentStatus = 'new';
+    else if (loc.indexOf('packed') !== -1 && loc.indexOf('ready') === -1) currentStatus = 'packed';
+    else if (loc.indexOf('delivered') !== -1) currentStatus = 'delivered';
+
+    try {
+      if (isSync) setStatus('جاري الاتصال بالسيرفر للمزامنة...', 'sync');
+      else setStatus('جاري حساب إجمالي الطلبات...', 'working');
+
+      // 2. طلب الصفحة الأولى لمعرفة إجمالي الطلبات بدقة
+      var firstRes = await fetch(baseUrl + 'Home/getOrders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' })
+      });
+      var firstData = await firstRes.json();
+      var totalOrders = firstData.total_orders || 0;
+      var totalPages = Math.ceil(totalOrders / 10) || 1;
+      
+      // التوقف عند الحد الأقصى الذي أدخله المستخدم أو عدد الصفحات الفعلي
+      var pagesToScan = Math.min(totalPages, total);
+
+      // 3. الدوران على جميع الصفحات وسحب البيانات بلمح البصر
+      for (var page = 1; page <= pagesToScan; page++) {
+        if (fill) fill.style.width = ((page / pagesToScan) * 100) + '%';
+        if (isSync) {
+          setStatus('مزامنة الصفحة ' + page + ' من ' + pagesToScan + '...', 'sync');
+        } else {
+          setStatus('تحليل الصفحة ' + page + ' من ' + pagesToScan + ' ... تم رصد ' + state.savedRows.length + ' طلب', 'working');
+        }
+
+        var res = await fetch(baseUrl + 'Home/getOrders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
+        });
+        var data = await res.json();
+
+        var orders = [];
+        try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; }
+        catch(e) {}
+
+        if (!orders || orders.length === 0) break;
+
+        var noArgsCount = 0;
+        for (var i = 0; i < orders.length; i++) {
+          var item = orders[i];
+          var key = item.Invoice || '';
+          var onl = (item.onlineNumber || '').replace(/ERX/gi, '');
+
+          if (key.length > 3 && !state.visitedSet.has(key)) {
+            state.visitedSet.add(key);
+
+            var args = null;
+            if (item.onlineNumber && item.Invoice && item.typee && item.head_id) {
+              args = [item.onlineNumber, item.Invoice, item.typee, item.head_id];
+            } else {
+              noArgsCount++;
+            }
+
+            // بناء عنصر DOM وهمي ليطابق آلية عمل v4.1 في الواجهة
+            var tr = document.createElement('tr');
+            tr.innerHTML = 
+              '<td style="padding:12px; border-bottom:1px solid #e2e8f0; font-weight:bold">' + key + '</td>' +
+              '<td style="padding:12px; border-bottom:1px solid #e2e8f0; color:#3b82f6">' + (item.onlineNumber || '') + '</td>' +
+              '<td style="padding:12px; border-bottom:1px solid #e2e8f0">' + (item.guestName || '') + '</td>' +
+              '<td style="padding:12px; border-bottom:1px solid #e2e8f0">' + (item.guestMobile || item.mobile || '') + '</td>' +
+              '<td style="padding:12px; border-bottom:1px solid #e2e8f0; text-align:center">' +
+                (args ? '<span style="background:#dcfce7;color:#166534;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:bold">متاح</span>' : '<span style="background:#fee2e2;color:#991b1b;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:bold">ناقص</span>') +
+              '</td>';
+
+            state.savedRows.push({
+              id: key,
+              onl: onl,
+              node: tr,
+              args: args
+            });
           }
         }
+        totalNoArgs += noArgsCount;
+        updateStats();
       }
-      if (nxt) {
-        nxt.click();
-        setTimeout(function() { scanPage(curr + 1, total, isSync); }, 18000);
-      } else {
-        finishScan(isSync);
-      }
-    } else {
+
       finishScan(isSync);
+
+    } catch (err) {
+      console.error(err);
+      setStatus('حدث خطأ في الاتصال بالخادم', 'error');
+      showToast('مشكلة في سحب البيانات!', 'error');
+      state.isProcessing = false;
+      state.isSyncing = false;
     }
   }
+  
   // ═══════════════════════════════════════════
   // Finish Scan — Build Search UI
   // ═══════════════════════════════════════════
   function finishScan(isSync) {
     state.isProcessing = false;
     state.isSyncing = false;
-    // ترتيب الجدول الأصلي
+    
+    // ترتيب الجدول الأصلي وعرض النتائج فيه
     var tables = document.querySelectorAll('table');
     var target = tables[0];
     for (var t = 0; t < tables.length; t++) {
@@ -396,7 +379,8 @@ javascript:(function(){
       setStatus('تم التجميع — ' + state.savedRows.length + ' طلب جاهز', 'done');
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
-    // بناء واجهة البحث (نفسها بالظبط)
+    
+    // بناء واجهة البحث (لم يتم تغييرها إطلاقاً)
     var mainBody = document.getElementById('ali_main_body');
     mainBody.innerHTML =
       '<div style="margin-bottom:10px">' +
@@ -420,12 +404,14 @@ javascript:(function(){
       '<button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:13px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">' +
         '🔄 مزامنة (تحديث + حذف المُغلق + إضافة الجديد)' +
       '</button>';
-    // ─── Search Logic ─── (نفسها)
+      
+    // ─── Search Logic ───
     var sI = document.getElementById('ali_sI');
     var sO = document.getElementById('ali_sO');
     var searchCount = document.getElementById('ali_search_count');
     var openBtn = document.getElementById('ali_btn_open');
     var currentMatches = [];
+    
     function filterResults() {
       var rawInvoice = sI.value.trim();
       var invoiceSearch = rawInvoice !== '' ? '0' + rawInvoice : '';
@@ -482,10 +468,12 @@ javascript:(function(){
         sO.style.background = '#f8fafc';
       }
     }
+    
     var debouncedFilter = debounce(filterResults, 150);
     sI.addEventListener('input', debouncedFilter);
     sO.addEventListener('input', debouncedFilter);
-    // ─── Open Button ─── (بدون دايلوج)
+    
+    // ─── Open Button ───
     openBtn.addEventListener('click', async function() {
       var rawInvoice = sI.value.trim();
       var orderSearch = sO.value.trim().toLowerCase();
@@ -512,7 +500,7 @@ javascript:(function(){
       var base = window.location.origin + "/ez_pill_web/getEZPill_Details";
       for (var idx = 0; idx < openable.length; idx++) {
         var item = openable[idx];
-        var url = base + "?onlineNumber=" + item.args[0].replace("ERX", "") +
+        var url = base + "?onlineNumber=" + item.args[0] +
           "&Invoice=" + item.args[1] + "&typee=" + item.args[2] + "&head_id=" + item.args[3];
         try {
           var w = window.open(url, "_blank");
@@ -540,6 +528,7 @@ javascript:(function(){
       openBtn.innerHTML = '⚡ فتح المطابق (' + openable.length + ' طلب)';
       filterResults();
     });
+    
     // ─── Sync Button ───
     document.getElementById('ali_btn_sync').addEventListener('click', async function() {
       if (state.isSyncing || state.isProcessing) {
@@ -552,7 +541,7 @@ javascript:(function(){
         icon: '🔄',
         iconColor: 'blue',
         title: 'المزامنة الذكية',
-        desc: 'سيتم إعادة فحص الصفحات لتحديث القائمة',
+        desc: 'سيتم جلب البيانات الحديثة من الخادم وتحديث القائمة',
         info: [
           { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
           { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' },
@@ -569,15 +558,16 @@ javascript:(function(){
       syncBtn.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة...';
       syncBtn.style.borderColor = '#3b82f6';
       syncBtn.style.color = '#1d4ed8';
-      showToast('جاري المزامنة...', 'info');
+      showToast('جاري المزامنة عبر الخادم...', 'info');
+      
       state.visitedSet.clear();
       state.savedRows = [];
-      state.noNewStreak = 0;
       totalNoArgs = 0;
       var pages = parseInt(document.getElementById('p_lim').value) || 200;
       scanPage(1, pages, true);
     });
   }
+  
   // ═══════════════════════════════════════════
   // Start
   // ═══════════════════════════════════════════
@@ -587,7 +577,7 @@ javascript:(function(){
     this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري التجميع...';
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
-    state.noNewStreak = 0;
+    
     totalNoArgs = 0;
     var pages = parseInt(document.getElementById('p_lim').value) || 200;
     scanPage(1, pages, false);
