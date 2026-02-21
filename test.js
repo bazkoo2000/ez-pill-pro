@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-// إدارة الطلبات v4.1 - (محرك المعالجة المتوازية فائق السرعة)
+// إدارة الطلبات v4.2 - (محرك المعالجة المتوازية + المطابقة المطلقة للحالة)
 // ═══════════════════════════════════════════════════════════════════
 
 javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.1';
+  const VERSION = '4.2';
   const VER_KEY = 'munhi_ver_v4';
   
   if (document.getElementById(PANEL_ID)) {
@@ -35,7 +35,7 @@ javascript:(function(){
     const ts = new Date().toLocaleTimeString('ar-EG');
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
-    console.log(`[إدارة الطلبات v4.1 ${ts}] ${msg}`);
+    console.log(`[إدارة الطلبات v4.2 ${ts}] ${msg}`);
   }
 
   function showToast(message, type = 'info') {
@@ -182,7 +182,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">إدارة وتسليم الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.1 Parallel Engine</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.2 True Status</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -289,7 +289,16 @@ javascript:(function(){
     var tbody = targetTable ? targetTable.querySelector('tbody') || targetTable : null;
     var templateRow = tbody ? tbody.querySelector('tr') : null;
 
-    // دالة المعالجة الموحدة (تعمل بدقة ونظافة للبيانات)
+    // الخوارزمية الجديدة: البحث الدقيق عن عمود Status لتحديثه لاحقاً
+    var statusColIndex = -1;
+    var headers = targetTable ? targetTable.querySelectorAll('th') : [];
+    for (var h = 0; h < headers.length; h++) {
+      if (headers[h].innerText.toLowerCase().includes('status')) {
+        statusColIndex = h;
+        break;
+      }
+    }
+
     function processData(data, pageNum) {
       let orders = [];
       try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
@@ -327,10 +336,23 @@ javascript:(function(){
               cells[1].innerText = onl;
               cells[2].innerText = gName;
               cells[3].innerText = gMobile;
+
+              // تحديث خلية الحالة الحقيقية لتجنب تكرار حالة الصف المنسوخ
+              if (statusColIndex !== -1 && cells[statusColIndex]) {
+                  cells[statusColIndex].innerHTML = `<span style="font-weight:900; color:${st==='received'?'#059669':'#d97706'}; text-transform:capitalize;">${st}</span>`;
+              } else {
+                  for(let c=0; c<cells.length; c++){
+                      let origText = templateRow.querySelectorAll('td')[c].innerText.toLowerCase();
+                      if(origText.includes('packed') || origText.includes('received')){
+                          cells[c].innerHTML = `<span style="font-weight:900; color:${st==='received'?'#059669':'#d97706'}; text-transform:capitalize;">${st}</span>`;
+                          break;
+                      }
+                  }
+              }
             }
           } else {
             clone = document.createElement('tr');
-            clone.innerHTML = `<td>${inv}</td><td>${onl}</td><td>${gName}</td><td>${gMobile}</td>`;
+            clone.innerHTML = `<td>${inv}</td><td>${onl}</td><td>${gName}</td><td>${gMobile}</td><td style="font-weight:900; color:${st==='received'?'#059669':'#d97706'}">${st}</td>`;
           }
 
           if (st === 'received') clone.style.background = 'rgba(16,185,129,0.08)';
@@ -344,7 +366,6 @@ javascript:(function(){
     }
 
     try {
-      // 1. جلب الصفحة الأولى لتحديد العدد الفعلي وبدء التحليل
       setStatus(`تحليل بيانات الترقيم (الصفحة 1)...`, 'working');
       let res1 = await fetch(baseUrl + 'Home/getOrders', {
         method: 'POST',
@@ -366,7 +387,6 @@ javascript:(function(){
       updateStats();
       if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
 
-      // 2. الاستعلام المتوازي لباقي الصفحات (10 صفحات معاً في نفس اللحظة)
       const BATCH_SIZE = 10;
       for (let i = 2; i <= maxPages; i += BATCH_SIZE) {
           const batchPromises = [];
@@ -383,7 +403,7 @@ javascript:(function(){
                   })
                   .then(r => r.json())
                   .then(data => {
-                      let added = processData(data, j);
+                      processData(data, j);
                       state.scanLog.push({ page: j, success: true, cumulative: state.savedRows.length });
                       updateStats();
                   })
@@ -394,7 +414,6 @@ javascript:(function(){
               );
           }
 
-          // انتظار اكتمال الدفعة قبل طلب الدفعة التالية لحماية الخادم
           await Promise.all(batchPromises);
           if (fill) fill.style.width = ((endPage / maxPages) * 100) + '%';
       }
@@ -531,6 +550,12 @@ javascript:(function(){
             item.st = 'processed';
             item.node.style.background = 'rgba(226,232,240,0.5)';
             item.node.style.opacity = '0.5';
+            
+            // تحديث خلية الحالة بعد نجاح التسليم
+            var cells = item.node.querySelectorAll('td');
+            if (statusColIndex !== -1 && cells[statusColIndex]) {
+               cells[statusColIndex].innerHTML = `<span style="font-weight:900; color:#3b82f6;">Processed</span>`;
+            }
           } else { failCount++; }
         } catch(e) { failCount++; }
         
