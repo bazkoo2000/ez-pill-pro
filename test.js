@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// تقفيل الطلبات v3.7 - (إصلاح جذري لتصنيف الحالات الصارم) 🚀
+// إدارة الطلبات v3.8 - (تحديث خوارزمية تصنيف الحالات واعتماد لغة رسمية)
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7,7 +7,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v3';
-  const VERSION = '3.7';
+  const VERSION = '3.8';
   const VER_KEY = 'munhi_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -37,7 +37,7 @@ javascript:(function(){
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
     const prefix = { info: '📋', warn: '⚠️', error: '❌', success: '✅' }[type] || '📋';
-    console.log(`[مُنهي v3.7 ${ts}] ${prefix} ${msg}`);
+    console.log(`[إدارة الطلبات v3.8 ${ts}] ${prefix} ${msg}`);
   }
 
   function showToast(message, type = 'info') {
@@ -66,7 +66,7 @@ javascript:(function(){
     const lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
       localStorage.setItem(VER_KEY,VERSION);
-      if(lv)setTimeout(()=>showToast('تم التحديث لـ v'+VERSION+' (إصلاح قراءة الحالات) 🧠','success'),1000);
+      if(lv)setTimeout(()=>showToast('تم التحديث للإصدار v'+VERSION,'success'),1000);
     }
   }catch(e){}
 
@@ -136,33 +136,33 @@ javascript:(function(){
         <div style="background:white;border-radius:24px;width:460px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">
           <div style="padding:24px 24px 0;text-align:center">
             <div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:linear-gradient(135deg,#fef3c7,#fde68a)">📥</div>
-            <div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">تصدير الطلبات</div>
-            <div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">تصدير أرقام ERX للطلبات Packed — أقصى ${MAX_PER_FILE} طلب لكل ملف</div>
+            <div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">تصدير بيانات الطلبات</div>
+            <div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">سيتم تصدير أرقام ERX للحالات Packed بحد أقصى ${MAX_PER_FILE} طلب لكل ملف.</div>
           </div>
           <div style="padding:20px 24px">
             <div style="margin-bottom:16px">
               <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-                🏥 فلتر حسب الصيدلية <span style="font-size:11px;color:#94a3b8;font-weight:500">(اختياري)</span>
+                التصفية برمز الفرع <span style="font-size:11px;color:#94a3b8;font-weight:500">(اختياري)</span>
               </div>
               <div style="position:relative">
                 <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:900;color:#cbd5e1;z-index:1;pointer-events:none;font-family:monospace">0</span>
-                <input type="text" id="ali_pharmacy_filter" maxlength="10" placeholder="أدخل كود الصيدلية" style="width:100%;padding:12px 16px 12px 16px;padding-right:32px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:'Tajawal',monospace;outline:none;background:#fafbfc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700">
+                <input type="text" id="ali_pharmacy_filter" maxlength="10" placeholder="أدخل رمز الفرع" style="width:100%;padding:12px 16px 12px 16px;padding-right:32px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:'Tajawal',monospace;outline:none;background:#fafbfc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700">
               </div>
             </div>
             <div id="ali_export_stats">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px">
-                <span style="color:#64748b;font-weight:600">بعد فلترة NA</span>
+                <span style="color:#64748b;font-weight:600">إجمالي الطلبات الصالحة</span>
                 <span id="ali_exp_valid" style="font-weight:800;color:#10b981">${allValid.length} طلب</span>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:6px;font-size:13px">
-                <span style="color:#15803d;font-weight:700">🏥 المطابق للفلتر</span>
+                <span style="color:#15803d;font-weight:700">الطلبات المطابقة للتصفية</span>
                 <span id="ali_exp_filtered" style="font-weight:900;color:#15803d">${allValid.length} طلب</span>
               </div>
             </div>
           </div>
           <div style="padding:16px 24px 24px;display:flex;gap:10px">
-            <button id="ali_exp_cancel" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:#f1f5f9;color:#475569;transition:all 0.2s">إلغاء</button>
-            <button id="ali_exp_download" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:0 4px 12px rgba(245,158,11,0.3);transition:all 0.2s">📥 تحميل</button>
+            <button id="ali_exp_cancel" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:#f1f5f9;color:#475569;transition:all 0.2s">إلغاء الأمر</button>
+            <button id="ali_exp_download" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:0 4px 12px rgba(245,158,11,0.3);transition:all 0.2s">تأكيد التصدير</button>
           </div>
         </div>
       `;
@@ -221,7 +221,7 @@ javascript:(function(){
         a.href = url; a.download = prefix + (i + 1) + '.txt';
         document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         downloadedCount++;
-        if (downloadedCount === numFiles) showToast(`تم تحميل ${numFiles} ملف (${orders.length} طلب)`, 'success');
+        if (downloadedCount === numFiles) showToast(`تم التصدير بنجاح: ${numFiles} ملف (${orders.length} طلب)`, 'success');
       }, i * 500);
     }
   }
@@ -238,7 +238,7 @@ javascript:(function(){
     #${PANEL_ID}{position:fixed;top:3%;right:2%;width:400px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(59,130,246,0.1);z-index:999999;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}
     #${PANEL_ID}.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#1e40af,#3b82f6)!important;box-shadow:0 8px 30px rgba(59,130,246,0.4)!important;animation:aliPulse 2s infinite;overflow:hidden}
     #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
-    #${PANEL_ID}.ali-minimized::after{content:"🚀";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    #${PANEL_ID}.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
   `;
   document.head.appendChild(styleEl);
 
@@ -253,10 +253,10 @@ javascript:(function(){
             <span id="ali_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer">−</span>
             <span id="ali_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>
           </div>
-          <h3 style="font-size:20px;font-weight:900;margin:0">تقفيل الطلبات</h3>
+          <h3 style="font-size:20px;font-weight:900;margin:0">إدارة وتسليم الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.7 Strict Status</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.8 System</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -269,9 +269,8 @@ javascript:(function(){
         
         <div id="ali_settings_box" style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-size:13px;font-weight:700;color:#475569">📄 صفحات الفحص</span>
+            <span style="font-size:13px;font-weight:700;color:#475569">نطاق الفحص (الصفحات)</span>
             <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>
               <input type="number" id="p_lim" value="${defaultPages}" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:'Tajawal',sans-serif">
             </div>
           </div>
@@ -282,12 +281,12 @@ javascript:(function(){
         </div>
         
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">
-          <span>✅</span><span>جاهز للبدء التلقائي</span>
+          <span>✅</span><span>النظام جاهز للعمل</span>
         </div>
         
         <div id="ali_dynamic_area">
           <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">
-            ⚡ بدء الفحص الذكي
+            بدء الفحص الآلي
           </button>
         </div>
         
@@ -313,7 +312,7 @@ javascript:(function(){
       ready:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'},
       working:{bg:'#eff6ff',color:'#1d4ed8',border:'#bfdbfe',icon:'spinner'},
       error:{bg:'#fef2f2',color:'#dc2626',border:'#fecaca',icon:'❌'},
-      done:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'🎉'},
+      done:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'},
       sync:{bg:'#fefce8',color:'#a16207',border:'#fef08a',icon:'spinner'}
     }[type] || {bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'};
     const iconHTML = c.icon === 'spinner'
@@ -366,8 +365,8 @@ javascript:(function(){
     const baseUrl = window.location.origin + "/ez_pill_web/";
     const currentStatus = 'packed'; 
 
-    if (isSync) setStatus('جاري المزامنة بالخلفية...', 'sync');
-    else setStatus('جاري حساب الصفحات...', 'working');
+    if (isSync) setStatus('جاري مزامنة البيانات...', 'sync');
+    else setStatus('جاري حساب العمليات...', 'working');
 
     state.startTime = Date.now();
     let maxPages = parseInt(document.getElementById('p_lim').value) || 1;
@@ -383,7 +382,7 @@ javascript:(function(){
 
     for (let page = 1; page <= maxPages; page++) {
       if (fill) fill.style.width = ((page / maxPages) * 100) + '%';
-      setStatus(`تحليل الصفحة ${page} من ${maxPages}...`, isSync ? 'sync' : 'working');
+      setStatus(`معالجة بيانات الصفحة ${page} من ${maxPages}...`, isSync ? 'sync' : 'working');
 
       try {
         const res = await fetch(baseUrl + 'Home/getOrders', {
@@ -425,14 +424,18 @@ javascript:(function(){
           if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
             state.visitedSet.add(inv);
 
-            // 🟢 الإصلاح الجذري: الأولوية المطلقة لكلمة Packed وعدم التداخل مع التواريخ 🟢
-            const itemStr = JSON.stringify(item).toLowerCase();
+            // المعالجة الدقيقة للحالات باستخدام استخراج القيم المطابق
             let st = 'other';
+            const exactValues = Object.values(item).map(v => String(v).toLowerCase().trim());
             
-            if (itemStr.includes('packed')) {
-                st = 'packed';
-            } else if (itemStr.includes('received')) {
+            if (exactValues.includes('received')) {
                 st = 'received';
+            } else if (exactValues.includes('packed')) {
+                st = 'packed';
+            } else {
+                let rawStatus = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase();
+                if (rawStatus.includes('received')) st = 'received';
+                else if (rawStatus.includes('packed')) st = 'packed';
             }
 
             var clone;
@@ -462,22 +465,22 @@ javascript:(function(){
 
         state.scanLog.push({ page: page, success: true, cumulative: state.savedRows.length });
         updateStats();
-        updateProgressDetail(`صفحة ${page}: +${newCount} جديد`);
+        updateProgressDetail(`تمت معالجة الصفحة ${page}: إضافة ${newCount} سجل`);
 
       } catch (err) {
-        logScan(`فشل تحميل الصفحة ${page}: ${err.message}`, 'error');
+        logScan(`تعذر معالجة الصفحة ${page}: ${err.message}`, 'error');
         state.scanLog.push({ page: page, success: false, cumulative: state.savedRows.length });
       }
     }
 
-    logScan(`═══ انتهى الفحص: ${state.savedRows.length} طلب ═══`, 'success');
+    logScan(`اكتملت عملية المعالجة الكلية بنجاح. الإجمالي: ${state.savedRows.length} سجل`, 'success');
     finishScan(isSync);
   }
 
   function printScanSummary() {
-    console.log('%c═══ ملخص الفحص ═══', 'color:#1d4ed8;font-weight:bold;font-size:14px');
-    console.table(state.scanLog.filter(e => e.page).map(e => ({ 'الصفحة': e.page, 'النتيجة': e.success !== false ? '✅' : '❌', 'الإجمالي التراكمي': e.cumulative })));
-    console.log(`إجمالي: ${state.savedRows.length} طلب`);
+    console.log('%c═══ سجل العمليات ═══', 'color:#1d4ed8;font-weight:bold;font-size:14px');
+    console.table(state.scanLog.filter(e => e.page).map(e => ({ 'رقم الصفحة': e.page, 'حالة التنفيذ': e.success !== false ? 'مكتمل' : 'فشل', 'إجمالي السجلات': e.cumulative })));
+    console.log(`الإجمالي النهائي: ${state.savedRows.length} سجل`);
   }
 
   function finishScan(isSync) {
@@ -497,11 +500,11 @@ javascript:(function(){
     const recCount=updateStats();
     
     if (isSync) {
-      setStatus(`تمت المزامنة! — ${state.savedRows.length} طلب`,'done');
-      showToast(`تمت المزامنة: ${state.savedRows.length} طلب`, 'success');
+      setStatus(`تمت المزامنة بنجاح. إجمالي السجلات: ${state.savedRows.length}`,'done');
+      showToast(`تمت المزامنة: ${state.savedRows.length} سجل`, 'success');
     } else {
-      setStatus(`تم! — ${state.savedRows.length} طلب`,'done');
-      showToast(`تم رصد ${state.savedRows.length} طلب بنجاح`,'success');
+      setStatus(`تم الفحص. إجمالي السجلات: ${state.savedRows.length}`,'done');
+      showToast(`اكتملت العملية: ${state.savedRows.length} سجل`,'success');
     }
 
     const dynArea = document.getElementById('ali_dynamic_area');
@@ -510,36 +513,35 @@ javascript:(function(){
         <div style="position:relative;margin-bottom:8px">
           <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🧾</span>
           <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:900;color:#cbd5e1;pointer-events:none;font-family:monospace;z-index:1">0</span>
-          <input type="text" id="ali_sI" placeholder="أدخل الأرقام بعد الـ 0..." style="width:100%;padding:12px 42px 12px 32px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:'Tajawal',monospace;outline:none;background:#fafbfc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700">
+          <input type="text" id="ali_sI" placeholder="البحث برقم الفاتورة..." style="width:100%;padding:12px 42px 12px 32px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:'Tajawal',monospace;outline:none;background:#fafbfc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700">
         </div>
         <div style="position:relative;margin-bottom:8px">
           <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🔗</span>
-          <input type="text" id="ali_sO" placeholder="بحث برقم الطلب (ERX)..." style="width:100%;padding:12px 42px 12px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:'Tajawal',sans-serif;outline:none;background:#fafbfc;color:#1e293b;direction:rtl;transition:all 0.25s">
+          <input type="text" id="ali_sO" placeholder="البحث بالرمز المرجعي (ERX)..." style="width:100%;padding:12px 42px 12px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:'Tajawal',sans-serif;outline:none;background:#fafbfc;color:#1e293b;direction:rtl;transition:all 0.25s">
         </div>
-        <div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:4px 0">عرض ${state.savedRows.length} من ${state.savedRows.length} نتيجة</div>
+        <div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:4px 0">إجمالي النتائج المعروضة: ${state.savedRows.length}</div>
       </div>
       
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1d4ed8;font-weight:600;text-align:center">
-        📊 تم جمع <strong>${state.savedRows.length}</strong> طلب
-        ${state.scanLog.filter(e=>e.success===false).length > 0 ? ' — <span style="color:#dc2626">⚠️ بعض الصفحات لم تكتمل</span>' : ' — <span style="color:#059669">✅ فحص سليم</span>'}
+        تم إدراج <strong>${state.savedRows.length}</strong> سجل
       </div>
       
       <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:14px;font-weight:700;color:#475569">عدد الطلبات للتسليم:</span>
+        <span style="font-size:14px;font-weight:700;color:#475569">الطلبات الجاهزة للتسليم:</span>
         <input type="number" id="ali_open_count" value="${recCount}" style="width:64px;padding:8px;border:2px solid #dc2626;border-radius:10px;text-align:center;font-size:18px;font-weight:900;color:#991b1b;background:white;outline:none;font-family:'Tajawal',sans-serif" onfocus="this.value=''">
       </div>
       
       <button id="ali_btn_deliver_silent" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:0 4px 15px rgba(220,38,38,0.3);transition:all 0.3s;margin-bottom:8px">
-        🚀 تسليم صامت لـ Received
+        تنفيذ التسليم (Received)
       </button>
       <button id="ali_btn_export" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;transition:all 0.3s;margin-bottom:8px">
-        📥 تصدير Packed (فلترة ذكية)
+        تصدير الطلبات (Packed)
       </button>
       <button id="ali_btn_log" style="width:100%;padding:10px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:13px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#fef3c7;color:#92400e;transition:all 0.3s;margin-bottom:8px">
-        📋 عرض سجل الفحص (Console)
+        عرض سجل العمليات (Console)
       </button>
       <button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:13px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">
-        🔄 مزامنة (تحديث وحذف القديم)
+        مزامنة البيانات
       </button>
     `;
 
@@ -552,14 +554,14 @@ javascript:(function(){
       state.savedRows.forEach(r=>{
         if((v1!==''&&r.id.toLowerCase().startsWith(v1))||(v2!==''&&r.onl.toLowerCase().includes(v2))||(rawV1===''&&v2==='')){tbody2.appendChild(r.node);shown++}
       });
-      sC.innerText=`عرض ${shown} من ${state.savedRows.length} نتيجة`;
+      sC.innerText=`إجمالي النتائج المعروضة: ${shown}`;
     }
     sI.addEventListener('input',filterTbl);
     sO.addEventListener('input',filterTbl);
 
     document.getElementById('ali_btn_log').addEventListener('click', () => {
       printScanSummary();
-      showToast('تم طباعة السجل في Console (F12)', 'info');
+      showToast('تم استخراج السجل. يرجى مراجعة Console', 'info');
     });
 
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async()=>{
@@ -567,18 +569,18 @@ javascript:(function(){
       const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
       const toDeliver = list.slice(0, count);
       
-      if(!toDeliver.length){ showToast('لا توجد طلبات Received جاهزة للتسليم!', 'warning'); return; }
+      if(!toDeliver.length){ showToast('لا توجد سجلات مطابقة لعملية التسليم.', 'warning'); return; }
 
       const res = await showDialog({
-        icon: '🚀', iconColor: 'red', title: 'تسليم صامت للطلبات',
-        desc: 'سيتم إرسال أوامر التسليم للسيرفر بالخلفية بدون فتح أي نوافذ.',
+        icon: '⚙️', iconColor: 'red', title: 'تسليم الطلبات',
+        desc: 'سيتم إرسال أوامر التسليم للخادم بالخلفية.',
         info: [
-          { label: 'عدد الطلبات', value: toDeliver.length + ' طلب', color: '#ef4444' },
-          { label: 'الوقت المتوقع', value: '~' + Math.ceil(toDeliver.length * 0.4) + ' ثانية', color: '#f59e0b' }
+          { label: 'عدد السجلات', value: toDeliver.length, color: '#ef4444' },
+          { label: 'الوقت المقدر', value: Math.ceil(toDeliver.length * 0.4) + ' ثانية', color: '#f59e0b' }
         ],
         buttons: [
-          { text: 'إلغاء', value: 'cancel' },
-          { text: '🚀 تأكيد التسليم', value: 'confirm', style: 'background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:0 4px 12px rgba(220,38,38,0.3)' }
+          { text: 'إلغاء الأمر', value: 'cancel' },
+          { text: 'تأكيد التسليم', value: 'confirm', style: 'background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:0 4px 12px rgba(220,38,38,0.3)' }
         ]
       });
 
@@ -594,8 +596,8 @@ javascript:(function(){
 
       for(let i=0; i<toDeliver.length; i++) {
         const item = toDeliver[i];
-        btn.innerHTML = `🚀 جاري التسليم (${i+1}/${toDeliver.length})...`;
-        setStatus(`تسليم ${i+1} من ${toDeliver.length}: ${item.onl}`, 'working');
+        btn.innerHTML = `تحديث البيانات (${i+1}/${toDeliver.length})...`;
+        setStatus(`معالجة السجل المعرف: ${item.onl}`, 'working');
 
         try {
           var params = new URLSearchParams();
@@ -624,46 +626,45 @@ javascript:(function(){
       const elapsed = Math.round((Date.now() - state.startTime) / 1000);
       
       await showDialog({
-        icon: '🎉', iconColor: 'green', title: 'تم التسليم الصاروخي!', desc: 'تم إرسال أوامر التسليم بنجاح.',
+        icon: '✅', iconColor: 'green', title: 'اكتملت العملية', desc: 'تم إرسال أوامر التسليم للخادم بنجاح.',
         info: [
-          { label: 'تم تسليمها', value: successCount.toString(), color: '#10b981' },
-          { label: 'فشلت', value: failCount.toString(), color: '#ef4444' },
-          { label: '⏱️ الوقت الإجمالي', value: elapsed + ' ثانية', color: '#15803d' }
+          { label: 'العمليات الناجحة', value: successCount.toString(), color: '#10b981' },
+          { label: 'العمليات المرفوضة', value: failCount.toString(), color: '#ef4444' },
+          { label: 'مدة التنفيذ', value: elapsed + ' ثانية', color: '#15803d' }
         ],
-        buttons: [{ text: '👍 إغلاق', value: 'close', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white' }]
+        buttons: [{ text: 'إغلاق', value: 'close', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white' }]
       });
 
-      btn.innerHTML = '✅ تم التسليم';
+      btn.innerHTML = 'اكتمل التسليم';
       btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
       btn.disabled = false;
-      setStatus(`اكتملت العملية: تسليم ${successCount} طلب`, 'done');
+      setStatus(`تم الانتهاء من معالجة ${successCount} سجل`, 'done');
     });
 
     document.getElementById('ali_btn_export').addEventListener('click', async()=>{
       const packedRows=state.savedRows.filter(r=>r.st==='packed');
-      if(!packedRows.length){showToast('لا توجد طلبات Packed!','warning');return}
+      if(!packedRows.length){showToast('لا توجد سجلات مطابقة لعملية التصدير.','warning');return}
       const result = await showExportDialog(packedRows);
       if(result.action==='download' && result.orders.length > 0){
         downloadSplitFiles(result.orders, result.pharmacyCode);
       } else if(result.action==='download' && result.orders.length === 0){
-        showToast('لا توجد طلبات مطابقة للتصدير!','warning');
+        showToast('لم يتم العثور على سجلات مطابقة للبيانات المدخلة.','warning');
       }
     });
 
     document.getElementById('ali_btn_sync').addEventListener('click', async()=>{
-      if (state.isSyncing || state.isProcessing) { showToast('المزامنة شغالة بالفعل — انتظر!', 'warning'); return; }
+      if (state.isSyncing || state.isProcessing) { showToast('يرجى الانتظار حتى اكتمال العملية الحالية.', 'warning'); return; }
       const oldCount = state.savedRows.length;
-      const pages = parseInt(document.getElementById('p_lim').value) || 1; 
       
       const result = await showDialog({
-        icon: '🔄', iconColor: 'blue', title: 'المزامنة الذكية', desc: 'سيتم جلب البيانات الحديثة بالخلفية وتحديث القائمة',
+        icon: '⚙️', iconColor: 'blue', title: 'مزامنة البيانات', desc: 'سيتم تحديث السجلات الحالية استناداً لقاعدة البيانات.',
         info: [
-          { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
-          { label: 'العملية', value: 'حذف القديم + جلب بيانات Packed', color: '#3b82f6' }
+          { label: 'عدد السجلات الحالي', value: oldCount.toString(), color: '#8b5cf6' },
+          { label: 'الإجراء', value: 'إعادة بناء القائمة', color: '#3b82f6' }
         ],
         buttons: [
-          { text: 'إلغاء', value: 'cancel' },
-          { text: '🔄 بدء المزامنة', value: 'confirm', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 12px rgba(59,130,246,0.3)' }
+          { text: 'إلغاء الأمر', value: 'cancel' },
+          { text: 'بدء المزامنة', value: 'confirm', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 12px rgba(59,130,246,0.3)' }
         ]
       });
 
@@ -674,7 +675,7 @@ javascript:(function(){
       syncBtn.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة...';
       syncBtn.style.borderColor = '#3b82f6'; syncBtn.style.color = '#1d4ed8';
       
-      showToast('جاري المزامنة...', 'info');
+      showToast('جاري تحديث البيانات...', 'info');
       state.savedRows = []; state.visitedSet = new Set(); state.scanLog = [];
       scanAllPages(true);
     });
@@ -683,7 +684,7 @@ javascript:(function(){
   document.getElementById('ali_start').addEventListener('click',function(){
     if (state.isProcessing) return;
     this.disabled = true;
-    this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري الفحص...';
+    this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> المعالجة قيد التنفيذ...';
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
     
