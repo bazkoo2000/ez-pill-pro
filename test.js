@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-// إدارة الطلبات v4.0 - (إصدار الاستقرار: معالجة الـ HTML والأداء العالي)
+// إدارة الطلبات v4.1 - (محرك المعالجة المتوازية فائق السرعة)
 // ═══════════════════════════════════════════════════════════════════
 
 javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.0';
+  const VERSION = '4.1';
   const VER_KEY = 'munhi_ver_v4';
   
   if (document.getElementById(PANEL_ID)) {
@@ -35,8 +35,7 @@ javascript:(function(){
     const ts = new Date().toLocaleTimeString('ar-EG');
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
-    const prefix = { info: '📋', warn: '⚠️', error: '❌', success: '✅' }[type] || '📋';
-    console.log(`[إدارة الطلبات v4.0 ${ts}] ${prefix} ${msg}`);
+    console.log(`[إدارة الطلبات v4.1 ${ts}] ${msg}`);
   }
 
   function showToast(message, type = 'info') {
@@ -183,7 +182,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">إدارة وتسليم الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.0 Final</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.1 Parallel Engine</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -213,7 +212,7 @@ javascript:(function(){
         
         <div id="ali_dynamic_area">
           <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">
-            بدء الفحص الآلي
+            بدء الاستعلام المتوازي الآلي
           </button>
         </div>
       </div>
@@ -228,13 +227,7 @@ javascript:(function(){
   function setStatus(text, type) {
     const el = document.getElementById('status-msg');
     if (!el) return;
-    const c = {
-      ready:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'},
-      working:{bg:'#eff6ff',color:'#1d4ed8',border:'#bfdbfe',icon:'spinner'},
-      error:{bg:'#fef2f2',color:'#dc2626',border:'#fecaca',icon:'❌'},
-      done:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'},
-      sync:{bg:'#fefce8',color:'#a16207',border:'#fef08a',icon:'spinner'}
-    }[type] || {bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'};
+    const c = { ready:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'}, working:{bg:'#eff6ff',color:'#1d4ed8',border:'#bfdbfe',icon:'spinner'}, error:{bg:'#fef2f2',color:'#dc2626',border:'#fecaca',icon:'❌'}, done:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'} }[type] || {bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'};
     const iconHTML = c.icon === 'spinner' ? '<div style="width:16px;height:16px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite;flex-shrink:0"></div>' : `<span>${c.icon}</span>`;
     el.style.cssText = `display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:${c.bg};color:${c.color};border:1px solid ${c.border}`;
     el.innerHTML = `${iconHTML}<span>${text}</span>`;
@@ -256,7 +249,6 @@ javascript:(function(){
     animNum('stat_pack',packed);
     animNum('stat_done',done);
     animNum('stat_total',state.savedRows.length);
-    return rec;
   }
 
   function animNum(id,val){
@@ -283,12 +275,11 @@ javascript:(function(){
     const baseUrl = window.location.origin + "/ez_pill_web/";
     const currentStatus = 'packed'; 
 
-    if (isSync) setStatus('جاري مزامنة البيانات...', 'sync');
-    else setStatus('جاري حساب العمليات...', 'working');
+    if (isSync) setStatus('جاري مزامنة البيانات...', 'working');
+    else setStatus('تجهيز محرك الاستعلام المتوازي...', 'working');
 
     state.startTime = Date.now();
     let maxPages = parseInt(document.getElementById('p_lim').value) || 1;
-    let consecutiveEmpty = 0;
 
     var tables = document.querySelectorAll('table');
     var targetTable = tables[0];
@@ -298,109 +289,123 @@ javascript:(function(){
     var tbody = targetTable ? targetTable.querySelector('tbody') || targetTable : null;
     var templateRow = tbody ? tbody.querySelector('tr') : null;
 
-    for (let page = 1; page <= maxPages; page++) {
-      if (fill) fill.style.width = ((page / maxPages) * 100) + '%';
-      setStatus(`معالجة بيانات الصفحة ${page} من ${maxPages}...`, isSync ? 'sync' : 'working');
+    // دالة المعالجة الموحدة (تعمل بدقة ونظافة للبيانات)
+    function processData(data, pageNum) {
+      let orders = [];
+      try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
+      if (!orders || orders.length === 0) return 0;
 
-      try {
-        const res = await fetch(baseUrl + 'Home/getOrders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
-        });
+      let added = 0;
+      for (let i = 0; i < orders.length; i++) {
+        const item = orders[i];
+        const inv = item.Invoice || '';
+        const onl = item.onlineNumber || '';
+        const hId = item.head_id || '';
+        const gName = item.guestName || '';
+        const gMobile = item.guestMobile || item.mobile || '';
         
-        const data = await res.json();
-        
-        if (page === 1 && data.total_orders) {
-          const exactTotal = parseInt(data.total_orders) || 0;
-          if (exactTotal > 0) {
-            maxPages = Math.ceil(exactTotal / 10);
-            document.getElementById('p_lim').value = maxPages;
-          }
-        }
+        if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
+          state.visitedSet.add(inv);
 
-        let orders = [];
-        try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
-
-        if (!orders || orders.length === 0) {
-          consecutiveEmpty++;
-          if (consecutiveEmpty >= 2) break;
-          continue;
-        } else {
-          consecutiveEmpty = 0;
-        }
-
-        let newCount = 0;
-        for (let i = 0; i < orders.length; i++) {
-          const item = orders[i];
-          const inv = item.Invoice || '';
-          const onl = item.onlineNumber || '';
-          const hId = item.head_id || '';
-          const gName = item.guestName || '';
-          const gMobile = item.guestMobile || item.mobile || '';
-          
-          if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
-            state.visitedSet.add(inv);
-
-            // 🟢 الإصلاح الجذري (Sanitization): إزالة أي وسوم HTML والبحث عن الكلمة المجردة
-            let st = 'other';
-            for (let key in item) {
-                if (item.hasOwnProperty(key) && typeof item[key] === 'string') {
-                    // إزالة وسوم HTML (مثل <td>) والمسافات الزائدة
-                    let cleanVal = item[key].replace(/<[^>]*>?/gm, '').toLowerCase().trim();
-                    if (cleanVal === 'packed') {
-                        st = 'packed';
-                        break;
-                    } else if (cleanVal === 'received') {
-                        st = 'received';
-                        break;
-                    }
-                }
-            }
-
-            var clone;
-            if (templateRow) {
-              clone = templateRow.cloneNode(true);
-              var cells = clone.querySelectorAll('td');
-              if (cells.length > 3) {
-                var label = cells[0].querySelector('label');
-                if (label) label.innerText = inv;
-                else cells[0].innerText = inv;
-                cells[1].innerText = onl;
-                cells[2].innerText = gName;
-                cells[3].innerText = gMobile;
+          let st = 'other';
+          for (let key in item) {
+              if (item.hasOwnProperty(key) && typeof item[key] === 'string') {
+                  let cleanVal = item[key].replace(/<[^>]*>?/gm, '').toLowerCase().trim();
+                  if (cleanVal === 'packed') { st = 'packed'; break; }
+                  else if (cleanVal === 'received') { st = 'received'; break; }
               }
-            } else {
-              clone = document.createElement('tr');
-              clone.innerHTML = `<td>${inv}</td><td>${onl}</td><td>${gName}</td><td>${gMobile}</td>`;
-            }
-
-            if (st === 'received') clone.style.background = 'rgba(16,185,129,0.08)';
-            if (st === 'packed') clone.style.background = 'rgba(245,158,11,0.08)';
-
-            state.savedRows.push({ id: inv, onl: onl, node: clone, st: st, hid: hId, guestName: gName, guestMobile: gMobile });
-            newCount++;
           }
+
+          var clone;
+          if (templateRow) {
+            clone = templateRow.cloneNode(true);
+            var cells = clone.querySelectorAll('td');
+            if (cells.length > 3) {
+              var label = cells[0].querySelector('label');
+              if (label) label.innerText = inv;
+              else cells[0].innerText = inv;
+              cells[1].innerText = onl;
+              cells[2].innerText = gName;
+              cells[3].innerText = gMobile;
+            }
+          } else {
+            clone = document.createElement('tr');
+            clone.innerHTML = `<td>${inv}</td><td>${onl}</td><td>${gName}</td><td>${gMobile}</td>`;
+          }
+
+          if (st === 'received') clone.style.background = 'rgba(16,185,129,0.08)';
+          if (st === 'packed') clone.style.background = 'rgba(245,158,11,0.08)';
+
+          state.savedRows.push({ id: inv, onl: onl, node: clone, st: st, hid: hId, guestName: gName, guestMobile: gMobile });
+          added++;
         }
-
-        state.scanLog.push({ page: page, success: true, cumulative: state.savedRows.length });
-        updateStats();
-        updateProgressDetail(`تمت معالجة الصفحة ${page}: إضافة ${newCount} سجل`);
-
-      } catch (err) {
-        logScan(`تعذر معالجة الصفحة ${page}: ${err.message}`, 'error');
-        state.scanLog.push({ page: page, success: false, cumulative: state.savedRows.length });
       }
+      return added;
     }
 
-    logScan(`اكتملت عملية المعالجة الكلية بنجاح. الإجمالي: ${state.savedRows.length} سجل`, 'success');
-    finishScan(isSync);
-  }
+    try {
+      // 1. جلب الصفحة الأولى لتحديد العدد الفعلي وبدء التحليل
+      setStatus(`تحليل بيانات الترقيم (الصفحة 1)...`, 'working');
+      let res1 = await fetch(baseUrl + 'Home/getOrders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' })
+      });
+      let data1 = await res1.json();
+      
+      if (data1.total_orders) {
+        const exactTotal = parseInt(data1.total_orders) || 0;
+        if (exactTotal > 0) {
+          maxPages = Math.ceil(exactTotal / 10);
+          document.getElementById('p_lim').value = maxPages;
+        }
+      }
 
-  function printScanSummary() {
-    console.log('%c═══ سجل العمليات ═══', 'color:#1d4ed8;font-weight:bold;font-size:14px');
-    console.table(state.scanLog.filter(e => e.page).map(e => ({ 'رقم الصفحة': e.page, 'حالة التنفيذ': e.success !== false ? 'مكتمل' : 'فشل', 'إجمالي السجلات': e.cumulative })));
-    console.log(`الإجمالي النهائي: ${state.savedRows.length} سجل`);
+      let added1 = processData(data1, 1);
+      state.scanLog.push({ page: 1, success: true, cumulative: state.savedRows.length });
+      updateStats();
+      if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
+
+      // 2. الاستعلام المتوازي لباقي الصفحات (10 صفحات معاً في نفس اللحظة)
+      const BATCH_SIZE = 10;
+      for (let i = 2; i <= maxPages; i += BATCH_SIZE) {
+          const batchPromises = [];
+          const endPage = Math.min(i + BATCH_SIZE - 1, maxPages);
+
+          setStatus(`جلب البيانات متوازياً (الدفعة ${i} إلى ${endPage})...`, 'working');
+
+          for (let j = i; j <= endPage; j++) {
+              batchPromises.push(
+                  fetch(baseUrl + 'Home/getOrders', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ status: currentStatus, pageSelected: j, searchby: '' })
+                  })
+                  .then(r => r.json())
+                  .then(data => {
+                      let added = processData(data, j);
+                      state.scanLog.push({ page: j, success: true, cumulative: state.savedRows.length });
+                      updateStats();
+                  })
+                  .catch(err => {
+                      logScan(`تعذر معالجة الصفحة ${j}: ${err.message}`, 'error');
+                      state.scanLog.push({ page: j, success: false, cumulative: state.savedRows.length });
+                  })
+              );
+          }
+
+          // انتظار اكتمال الدفعة قبل طلب الدفعة التالية لحماية الخادم
+          await Promise.all(batchPromises);
+          if (fill) fill.style.width = ((endPage / maxPages) * 100) + '%';
+      }
+
+      logScan(`اكتملت عملية المعالجة الكلية بنجاح. الإجمالي: ${state.savedRows.length} سجل`, 'success');
+
+    } catch (err) {
+      logScan(`حدث خطأ رئيسي أثناء الاتصال: ${err.message}`, 'error');
+    }
+
+    finishScan(isSync);
   }
 
   function finishScan(isSync) {
@@ -417,7 +422,8 @@ javascript:(function(){
       sorted.forEach(r=>tbody.appendChild(r.node));
     }
     
-    const recCount=updateStats();
+    let recCount = 0;
+    state.savedRows.forEach(r => { if(r.st==='received') recCount++; });
     
     if (isSync) {
       setStatus(`تمت المزامنة بنجاح. إجمالي السجلات: ${state.savedRows.length}`,'done');
@@ -454,9 +460,6 @@ javascript:(function(){
       <button id="ali_btn_export" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;transition:all 0.3s;margin-bottom:8px">
         تصدير الطلبات (Packed)
       </button>
-      <button id="ali_btn_log" style="width:100%;padding:10px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:13px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#fef3c7;color:#92400e;transition:all 0.3s;margin-bottom:8px">
-        عرض سجل العمليات (Console)
-      </button>
       <button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:13px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">
         مزامنة البيانات
       </button>
@@ -475,11 +478,6 @@ javascript:(function(){
     }
     sI.addEventListener('input',filterTbl);
     sO.addEventListener('input',filterTbl);
-
-    document.getElementById('ali_btn_log').addEventListener('click', () => {
-      printScanSummary();
-      showToast('تم استخراج السجل. يرجى مراجعة Console', 'info');
-    });
 
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async()=>{
       const list = state.savedRows.filter(r => r.st === 'received');
