@@ -3030,6 +3030,9 @@ function extractAndConfirmName(){
   try{
     /* Find Prescription Notes field */
     function findNotesField(){
+      /* Direct ID match for known field */
+      var directNotes=document.getElementById('epresNotes');
+      if(directNotes) return directNotes;
       var inputs=document.querySelectorAll('input[type="text"],textarea');
       for(var i=0;i<inputs.length;i++){
         var lbl=null;
@@ -3053,89 +3056,110 @@ function extractAndConfirmName(){
       return null;
     }
 
-    /* Extract name from text */
+    /* Extract name from text - v2 (improved) */
     function extractName(text){
       if(!text||text.length<5) return null;
-      var s=text.trim();
+      /* Normalize newlines to spaces */
+      var s=text.trim().replace(/\r?\n/g,' ');
 
       /* Generic title words - NOT actual names */
       var genericWords=['الضيف','الضيفه','الضيفة','ضيف','ضيفه','ضيفة',
         'المريض','المريضه','المريضة','مريض','مريضه','مريضة',
-        'العميل','العميله','العميلة','عميل','عميله','عميلة'];
+        'العميل','العميله','العميلة','عميل','عميله','عميلة',
+        'الزوج','الزوجه','الزوجة','الام','الأم','الاب','الأب'];
 
-      function isGeneric(w){
-        var n=w.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
-        for(var g=0;g<genericWords.length;g++){
-          if(n===genericWords[g].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')) return true;
+      function normA(w){return w.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();}
+      function normG(w){return normA(w).replace(/ى/g,'ي');}
+      function isGeneric(w){var n=normG(w);for(var g=0;g<genericWords.length;g++)if(n===normG(genericWords[g]))return true;return false;}
+
+      /* Stop words - على excluded from list: handled contextually below to support names like "على الباز" */
+      var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
+        'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
+        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة','الى','الي',
+        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في'];
+
+      /* على as preposition: only when followed by known location/object word */
+      var alaStopNext=['الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
+        'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب'];
+
+      function isStopWord(word,nextWord){
+        /* على: stop ONLY when followed by a known object/location (preposition context) */
+        if(word==='على'){
+          if(nextWord&&alaStopNext.some(function(s){return normA(nextWord)===normA(s);})) return true;
+          return false; /* otherwise treat as a name (على الباز، سارة على) */
         }
+        var wn=normA(word);
+        for(var st=0;st<stopWords.length;st++)if(wn===normA(stopWords[st]))return true;
         return false;
       }
 
-      /* PRIORITY 1: Look for name in parentheses after keywords */
+      function cleanName(raw){
+        var words=raw.trim().split(/\s+/);
+        var cleaned=[];
+        for(var w=0;w<words.length;w++){
+          if(!words[w]) continue;
+          if(isStopWord(words[w],words[w+1]||null)) break;
+          if(words[w].length<=1&&cleaned.length>0) break;
+          /* Skip leading generic title (الزوج/الأم/etc) */
+          if(cleaned.length===0&&isGeneric(words[w])) continue;
+          cleaned.push(words[w]);
+        }
+        return cleaned.join(' ');
+      }
+
+      /* PRIORITY 1: name in parentheses after keywords */
       var parenPatterns=[
         /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
         /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*[:\-]?\s*\(([^)]+)\)/i
       ];
       for(var pp=0;pp<parenPatterns.length;pp++){
         var pm=s.match(parenPatterns[pp]);
-        if(pm&&pm[1]&&pm[1].trim().length>=2){
-          return pm[1].trim();
-        }
+        if(pm&&pm[1]&&pm[1].trim().length>=2) return pm[1].trim();
       }
 
-      /* PRIORITY 2: Standard Arabic name patterns */
+      /* PRIORITY 2: English name directly after keyword (no parens) */
+      var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
+      if(engM&&engM[1]&&engM[1].trim().length>=3) return engM[1].trim();
+
+      /* PRIORITY 3: Arabic name patterns */
       var patterns=[
         /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
-        /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
-        /(?:يكتب\s*(?:عليه|عليها)?\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل[ـ]?))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:(?:يكتب|اكتب|اكتبي)\s*(?:عليه|عليها)?\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:كتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:وكتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:باسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
-        /(?:الاسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i
+        /(?:الاسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:للضيف[ةه]?|للمريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:^|[،,\s])اسم\s*[:\-]?\s*([\u0600-\u06FF]{3,}(?:\s+[\u0600-\u06FF]+){0,3})/i
       ];
-
-      /* Stop words - remove from end of extracted name */
-      var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
-        'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
-        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة','الى','الي','على','عند','اليوم',
-        'شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','والتوصيل','في'];
 
       for(var p=0;p<patterns.length;p++){
         var m=s.match(patterns[p]);
         if(m&&m[1]){
-          var name=m[1].trim();
-          /* If first word is generic (الضيف/المريض), check for English name in parens after it */
-          var firstWord=name.split(/\s+/)[0];
+          var raw=m[1].trim();
+          var firstWord=raw.split(/\s+/)[0];
           if(isGeneric(firstWord)){
-            var afterMatch=s.substring(s.indexOf(m[0])+m[0].length);
-            var parenMatch=afterMatch.match(/^\s*\(([^)]+)\)/);
-            if(parenMatch&&parenMatch[1]&&parenMatch[1].trim().length>=2){
-              return parenMatch[1].trim();
-            }
-            /* Skip this match - الضيف is not a real name */
+            /* Check for name in parens right after */
+            var afterIdx=s.indexOf(m[0])+m[0].length;
+            var ep=s.substring(afterIdx).match(/^\s*\(([^)]+)\)/);
+            if(ep&&ep[1]&&ep[1].trim().length>=2) return ep[1].trim();
+            /* Try words after the generic title */
+            var rest=raw.split(/\s+/).slice(1).join(' ').trim();
+            if(rest.length>=2&&!isGeneric(rest.split(' ')[0])){var rc=cleanName(rest);if(rc.length>=2) return rc;}
             continue;
           }
-          /* Remove stop words from end */
-          var words=name.split(/\s+/);
-          var cleaned=[];
-          for(var w=0;w<words.length;w++){
-            var wl=words[w].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
-            var isStop=false;
-            for(var st=0;st<stopWords.length;st++){
-              if(wl===stopWords[st].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')){isStop=true;break;}
-            }
-            if(isStop) break;
-            /* Skip single-letter words unless first */
-            if(words[w].length<=1&&cleaned.length>0) break;
-            cleaned.push(words[w]);
-          }
-          if(cleaned.length>=1&&cleaned.join(' ').length>=3){
-            return cleaned.join(' ');
-          }
+          var result=cleanName(raw);
+          if(result.length>=2) return result;
         }
       }
+
+      /* LAST RESORT: any English name in parens */
+      var anyParen=s.match(/\(([A-Za-z][A-Za-z\s]{2,})\)/);
+      if(anyParen&&anyParen[1].trim().length>=3) return anyParen[1].trim();
+
       return null;
     }
 
