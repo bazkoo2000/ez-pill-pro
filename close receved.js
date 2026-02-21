@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// تقفيل الطلبات v3.3 - (محرك الفحص السريع بالخلفية + المزامنة الذكية)
+// تقفيل الطلبات v3.4 - (محرك API السريع موجه لصفحة Packed خصيصاً)
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7,7 +7,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v3';
-  const VERSION = '3.3';
+  const VERSION = '3.4';
   const VER_KEY = 'munhi_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -24,12 +24,12 @@ javascript:(function(){
     startTime: null,
     isProcessing: false,
     isSyncing: false,
-    scanLog: [],
-    basePageUrl: '',
+    scanLog: []
   };
 
   window.name = "ali_main_window";
 
+  // استخراج العدد الافتراضي لصفحات Packed من الواجهة لتسهيل الأمر عليك
   const bodyText = document.body.innerText;
   const packedMatch = bodyText.match(/packed\s*\n*\s*(\d+)/i);
   const totalPacked = packedMatch ? parseInt(packedMatch[1]) : 0;
@@ -41,7 +41,7 @@ javascript:(function(){
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
     const prefix = { info: '📋', warn: '⚠️', error: '❌', success: '✅' }[type] || '📋';
-    console.log(`[مُنهي v3.3 ${ts}] ${prefix} ${msg}`);
+    console.log(`[مُنهي v3.4 ${ts}] ${prefix} ${msg}`);
   }
 
   // ─── Toast Notifications ───
@@ -72,7 +72,7 @@ javascript:(function(){
     const lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
       localStorage.setItem(VER_KEY,VERSION);
-      if(lv)setTimeout(()=>showToast('تم التحديث لـ v'+VERSION+' (محرك سريع + مزامنة) 🚀','success'),1000);
+      if(lv)setTimeout(()=>showToast('تم التحديث لـ v'+VERSION+' (ربط API مباشر بـ Packed) 🚀','success'),1000);
     }
   }catch(e){}
 
@@ -331,7 +331,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">تقفيل الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.3 Precision Sync</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.4 Packed-API</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -357,7 +357,7 @@ javascript:(function(){
         </div>
         
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">
-          <span>✅</span><span>جاهز للبدء</span>
+          <span>✅</span><span>جاهز للبدء في Packed</span>
         </div>
         
         <div id="ali_dynamic_area">
@@ -433,69 +433,22 @@ javascript:(function(){
   document.getElementById('ali_close').addEventListener('click',e=>{e.stopPropagation();panel.style.animation='aliSlideIn 0.3s reverse';setTimeout(()=>panel.remove(),280)});
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
-  // ══════════════════════════════════════════════════════════════════
-  // ─── المحرك الجديد: الفحص السريع بالخلفية ───
-  // ══════════════════════════════════════════════════════════════════
-
-  function extractRowsFromDocument(doc) {
-    const results = [];
-    const tables = doc.querySelectorAll('table');
-    for (const table of tables) {
-      const rows = table.querySelectorAll('tr');
-      for (const row of rows) {
-        const cells = row.querySelectorAll('td');
-        if (cells.length < 2) continue;
-
-        const firstCell = cells[0].innerText ? cells[0].innerText.trim() : (cells[0].textContent || '').trim();
-        const secondCell = cells[1].innerText ? cells[1].innerText.trim() : (cells[1].textContent || '').trim();
-
-        if (firstCell.length >= 5 && /^0\d+/.test(firstCell)) {
-          const rowText = row.innerText ? row.innerText.toLowerCase() : (row.textContent || '').toLowerCase();
-          const isR = rowText.includes('received');
-          const isP = rowText.includes('packed');
-
-          let hId = "";
-          const lnk = row.querySelector('a[href*="head_id="]');
-          if (lnk) {
-            const href = lnk.href || lnk.getAttribute('href') || '';
-            if (href.includes('head_id=')) {
-              hId = href.split('head_id=')[1].split('&')[0];
-            }
-          }
-
-          results.push({
-            id: firstCell,
-            onl: secondCell,
-            rowHTML: row.outerHTML,
-            st: isR ? 'received' : (isP ? 'packed' : 'other'),
-            hid: hId
-          });
-        }
-      }
-    }
-    return results;
-  }
-
-  function buildPageUrl(pageNum) {
-    const currentUrl = window.location.href;
-    if (/[?&](page|pageNum|pagenum|p|pg|pn)=\d+/i.test(currentUrl)) {
-      return currentUrl.replace(/([?&](page|pageNum|pagenum|p|pg|pn)=)\d+/i, '$1' + pageNum);
-    } else if (currentUrl.includes('?')) {
-      return currentUrl + '&page=' + pageNum;
-    } else {
-      return currentUrl + '?page=' + pageNum;
-    }
-  }
-
   function sleep(ms) {
     return new Promise(r => setTimeout(r, ms));
   }
+
+  // ══════════════════════════════════════════════════════════════════
+  // ─── المحرك الجديد: API موجه لصفحة Packed ───
+  // ══════════════════════════════════════════════════════════════════
 
   async function scanAllPages(totalLimit, isSync) {
     state.isProcessing = true;
     state.isSyncing = isSync;
     const fill = document.getElementById('p-fill');
-    let consecutiveEmpty = 0;
+    const baseUrl = window.location.origin + "/ez_pill_web/";
+
+    // توجيه المحرك للبحث في Packed حصراً كما طلبت
+    const currentStatus = 'packed';
 
     if (isSync) {
       setStatus('جاري المزامنة بالخلفية...', 'sync');
@@ -504,52 +457,92 @@ javascript:(function(){
     }
 
     state.startTime = Date.now();
-    logScan(`═══ بداية الفحص: ${totalLimit} صفحة ═══`);
+    logScan(`═══ بداية الفحص: ${totalLimit} صفحة (من Packed) ═══`);
+
+    // نسخ صف من الجدول للحفاظ على تصميم الموقع
+    var tables = document.querySelectorAll('table');
+    var targetTable = tables[0];
+    for (var t = 0; t < tables.length; t++) {
+      if (tables[t].innerText.length > targetTable.innerText.length) {
+        targetTable = tables[t];
+      }
+    }
+    var tbody = targetTable ? targetTable.querySelector('tbody') || targetTable : null;
+    var templateRow = tbody ? tbody.querySelector('tr') : null;
+
+    let consecutiveEmpty = 0;
 
     for (let page = 1; page <= totalLimit; page++) {
       if (fill) fill.style.width = ((page / totalLimit) * 100) + '%';
       setStatus(`تحليل الصفحة ${page} من ${totalLimit}...`, isSync ? 'sync' : 'working');
 
       try {
-        const url = buildPageUrl(page);
-        const resp = await fetch(url, { credentials: 'include', cache: 'no-store' });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const html = await resp.text();
+        const res = await fetch(baseUrl + 'Home/getOrders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
+        });
+        
+        const data = await res.json();
+        let orders = [];
+        try { 
+          orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
+        } catch(e) {}
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const extracted = extractRowsFromDocument(doc);
-
-        if (extracted.length === 0) {
+        if (!orders || orders.length === 0) {
           consecutiveEmpty++;
-          if (consecutiveEmpty >= 2) break; // توقف إذا كانت هناك صفحتين متتاليتين فارغتين
+          if (consecutiveEmpty >= 2) break;
           continue;
         } else {
           consecutiveEmpty = 0;
         }
 
         let newCount = 0;
-        for (const item of extracted) {
-          if (!state.visitedSet.has(item.id)) {
-            state.visitedSet.add(item.id);
+        for (let i = 0; i < orders.length; i++) {
+          const item = orders[i];
+          const inv = item.Invoice || '';
+          const onl = item.onlineNumber || '';
+          const hId = item.head_id || '';
+          
+          if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
+            state.visitedSet.add(inv);
 
-            const temp = document.createElement('tbody');
-            temp.innerHTML = item.rowHTML;
-            const clone = temp.firstElementChild;
+            // استنتاج الحالة من خلال البحث عن كلمة received داخل بيانات الطلب
+            const itemStr = JSON.stringify(item).toLowerCase();
+            const isR = itemStr.includes('received');
+            const isP = itemStr.includes('packed');
+            const st = isR ? 'received' : (isP ? 'packed' : 'other');
 
-            if (clone) {
-              if (item.st === 'received') clone.style.background = 'rgba(16,185,129,0.08)';
-              if (item.st === 'packed') clone.style.background = 'rgba(245,158,11,0.08)';
-              
-              state.savedRows.push({
-                id: item.id,
-                onl: item.onl,
-                node: clone,
-                st: item.st,
-                hid: item.hid
-              });
-              newCount++;
+            var clone;
+            if (templateRow) {
+              clone = templateRow.cloneNode(true);
+              var cells = clone.querySelectorAll('td');
+              if (cells.length > 3) {
+                var label = cells[0].querySelector('label');
+                if (label) label.innerText = inv;
+                else cells[0].innerText = inv;
+
+                cells[1].innerText = onl;
+                cells[2].innerText = item.guestName || '';
+                cells[3].innerText = item.guestMobile || item.mobile || '';
+              }
+            } else {
+              clone = document.createElement('tr');
+              clone.innerHTML = `<td>${inv}</td><td>${onl}</td><td>${item.guestName || ''}</td><td>${item.guestMobile || item.mobile || ''}</td>`;
             }
+
+            // تطبيق التلوين حسب الحالة كما في الإصدار القديم
+            if (st === 'received') clone.style.background = 'rgba(16,185,129,0.08)';
+            if (st === 'packed') clone.style.background = 'rgba(245,158,11,0.08)';
+
+            state.savedRows.push({
+              id: inv,
+              onl: onl,
+              node: clone,
+              st: st,
+              hid: hId
+            });
+            newCount++;
           }
         }
 
@@ -763,7 +756,7 @@ javascript:(function(){
       }
     });
 
-    // ─── Sync (المزامنة الذكية بدلاً من التحديث القديم) ───
+    // ─── Sync (المزامنة الذكية) ───
     document.getElementById('ali_btn_sync').addEventListener('click', async()=>{
       if (state.isSyncing || state.isProcessing) {
         showToast('المزامنة شغالة بالفعل — انتظر!', 'warning');
@@ -778,7 +771,7 @@ javascript:(function(){
         desc: 'سيتم جلب البيانات الحديثة بالخلفية وتحديث القائمة',
         info: [
           { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
-          { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' },
+          { label: 'العملية', value: 'حذف القديم + جلب بيانات Packed', color: '#3b82f6' },
           { label: 'الصفحات المستهدفة', value: pages + ' صفحة', color: '#f59e0b' }
         ],
         buttons: [
@@ -795,7 +788,7 @@ javascript:(function(){
       syncBtn.style.borderColor = '#3b82f6';
       syncBtn.style.color = '#1d4ed8';
       
-      showToast('جاري المزامنة عبر السيرفر...', 'info');
+      showToast('جاري المزامنة مع صفحة Packed...', 'info');
       state.savedRows = [];
       state.visitedSet = new Set();
       state.scanLog = [];
