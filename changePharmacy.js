@@ -1,18 +1,8 @@
 javascript:(function(){
   'use strict';
-  // ═══════════════════════════════════════════════════════════════════
-  // مُبدل الصيدليات السريع (EZ-Admin Switcher) - إصدار الـ VIP
-  // المطور الأصلي: علي الباز
-  // ═══════════════════════════════════════════════════════════════════
-
   const PANEL_ID = 'ali_store_changer';
-  
-  if (document.getElementById(PANEL_ID)) {
-    document.getElementById(PANEL_ID).remove();
-    return;
-  }
+  if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
-  // ─── قائمة المستخدمين ───
   const USERS = [
     { display: "علي الباز (الأساسي)", emp_id: "101093", emp_name: "Ali Elbaz", user_name: "albaz.aa" },
     { display: "منصور البكرى", emp_id: "102599", emp_name: "ELBAKRI.MM", user_name: "ELBAKRI.MM" },
@@ -30,171 +20,79 @@ javascript:(function(){
     { display: "عبدالله راشد", emp_id: "102370", emp_name: "Abdallah Rashed", user_name: "rashed.am1" }
   ];
 
-  // ─── قائمة الصيدليات ───
   const PHARMACIES = [
-    { code: "1300", name: "الجودى" },
-    { code: "4083", name: "كريم" },
-    { code: "1119", name: "ابن الوليد" },
-    { code: "6079", name: "النهج" },
-    { code: "2525", name: "النقاء" },
-    { code: "4061", name: "مجزيه" },
-    { code: "7607", name: "الجامح" },
-    { code: "7111", name: "الارتال" },
-    { code: "5070", name: "العاج" },
-    { code: "2095", name: "السيره" },
-    { code: "3080", name: "الباز" }
+    { code: "1300", name: "الجودى" }, { code: "4083", name: "كريم" }, { code: "1119", name: "ابن الوليد" },
+    { code: "6079", name: "النهج" }, { code: "2525", name: "النقاء" }, { code: "4061", name: "مجزيه" },
+    { code: "7607", name: "الجامح" }, { code: "7111", name: "الارتال" }, { code: "5070", name: "العاج" },
+    { code: "2095", name: "السيره" }, { code: "3080", name: "الباز" }
   ];
 
-  let usersHTML = '';
-  USERS.forEach((user, index) => {
-    usersHTML += `<option value="${index}">${user.display}</option>`;
-  });
+  let usersHTML = ''; USERS.forEach((u, i) => usersHTML += `<option value="${i}">${u.display}</option>`);
+  let pharmHTML = ''; PHARMACIES.forEach(p => pharmHTML += `<option value="${p.code} - ${p.name}">`);
 
-  let pharmHTML = '';
-  PHARMACIES.forEach(pharm => {
-    pharmHTML += `<option value="${pharm.code} - ${pharm.name}">`;
-  });
-
-  // ─── CSS Styles & Animations (Premium Edition) ───
   var styleEl = document.createElement('style');
   styleEl.innerHTML = `
-    @keyframes aliFadeBlur {
-      from { opacity: 0; backdrop-filter: blur(0px); }
-      to { opacity: 1; backdrop-filter: blur(6px); }
-    }
-    @keyframes aliDropIn {
-      from { opacity: 0; transform: translate(-50%, -60%) scale(0.95); }
-      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    }
-    .ali-input-premium {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 14px;
-      font-size: 15px;
-      font-weight: 800;
-      color: #1e293b;
-      outline: none;
-      box-sizing: border-box;
-      background: #f8fafc;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-    }
-    .ali-input-premium:focus, .ali-input-premium:hover {
-      border-color: #3b82f6;
-      background: #ffffff;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
-    }
-    .ali-select-premium {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23475569%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-      background-repeat: no-repeat;
-      background-position: left 16px top 50%;
-      background-size: 12px auto;
-      padding-left: 40px; /* Space for the arrow in RTL */
-    }
+    @keyframes aliFadeBlur { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(6px); } }
+    @keyframes aliDropIn { from { opacity: 0; transform: translate(-50%, -60%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    .ali-input-premium { width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 15px; font-weight: 800; color: #1e293b; outline: none; box-sizing: border-box; background: #f8fafc; transition: all 0.3s; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    .ali-input-premium:focus, .ali-input-premium:hover { border-color: #3b82f6; background: #ffffff; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1); }
+    .ali-select-premium { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23475569%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 16px top 50%; background-size: 12px auto; padding-left: 40px; }
   `;
   document.head.appendChild(styleEl);
 
-  // ─── بناء النافذة والخلفية (Overlay) ───
   const overlay = document.createElement('div');
   overlay.id = PANEL_ID;
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(15,23,42,0.5);z-index:9999999;animation:aliFadeBlur 0.3s forwards;';
   
   overlay.innerHTML = `
-    <div style="position:absolute;top:50%;left:50%;width:380px;background:#ffffff;border-radius:24px;box-shadow:0 25px 60px rgba(0,0,0,0.4), 0 0 100px rgba(59,130,246,0.15);font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;animation:aliDropIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards;">
-      
+    <div style="position:absolute;top:50%;left:50%;width:380px;background:#ffffff;border-radius:24px;box-shadow:0 25px 60px rgba(0,0,0,0.4);font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;animation:aliDropIn 0.4s forwards;">
       <div style="background:linear-gradient(135deg, #1e3a5f, #0f2744);padding:22px 24px;color:white;position:relative;overflow:hidden;">
         <div style="position:absolute;top:-50%;right:-20%;width:150px;height:150px;background:radial-gradient(circle,rgba(59,130,246,0.2),transparent 70%);border-radius:50%;"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:24px;">🎛️</span>
-            <h3 style="margin:0;font-size:18px;font-weight:900;letter-spacing:-0.5px;">مُدير النظام المتقدم</h3>
-          </div>
-          <span id="close_changer" style="cursor:pointer;background:rgba(239,68,68,0.2);color:#fca5a5;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:14px;font-weight:900;transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)';this.style.color='#fff';" onmouseout="this.style.background='rgba(239,68,68,0.2)';this.style.color='#fca5a5';">✕</span>
+          <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">🎛️</span><h3 style="margin:0;font-size:18px;font-weight:900;">مُدير النظام المتقدم</h3></div>
+          <span id="close_changer" style="cursor:pointer;background:rgba(239,68,68,0.2);color:#fca5a5;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:14px;font-weight:900;transition:all 0.2s;">✕</span>
         </div>
       </div>
-
       <div style="padding:24px;">
-        
         <div style="margin-bottom:18px;">
-          <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">
-            <span>👤</span> اختيار الحساب:
-          </label>
-          <select id="ali_user_select" class="ali-input-premium ali-select-premium" style="color:#1d4ed8;">
-            ${usersHTML}
-          </select>
+          <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">👤 اختيار الحساب:</label>
+          <select id="ali_user_select" class="ali-input-premium ali-select-premium" style="color:#1d4ed8;">${usersHTML}</select>
         </div>
-
         <div style="margin-bottom:18px;">
-          <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">
-            <span>🏥</span> الصيدلية (بحث بالاسم أو الكود):
-          </label>
-          <input list="ali_pharmacies_list" type="text" id="ali_new_store" placeholder="مثلاً: 1300 أو الجودي" autocomplete="off" class="ali-input-premium" style="text-align:center;font-size:18px;letter-spacing:1px;color:#059669;">
-          <datalist id="ali_pharmacies_list">
-            ${pharmHTML}
-          </datalist>
+          <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">🏥 الصيدلية (الاسم أو الكود):</label>
+          <input list="ali_pharmacies_list" type="text" id="ali_new_store" placeholder="مثلاً: 1300 أو الجودي" class="ali-input-premium" style="text-align:center;font-size:18px;letter-spacing:1px;color:#059669;">
+          <datalist id="ali_pharmacies_list">${pharmHTML}</datalist>
         </div>
-
         <div style="margin-bottom:28px;">
-          <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">
-            <span>⚙️</span> نوع بيئة العمل (Format):
-          </label>
-          <select id="ali_new_format" class="ali-input-premium ali-select-premium">
-            <option value="OCS" selected>OCS</option>
-            <option value="JSON">JSON</option>
-          </select>
+          <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">⚙️ نوع بيئة العمل:</label>
+          <select id="ali_new_format" class="ali-input-premium ali-select-premium"><option value="OCS" selected>OCS</option><option value="JSON">JSON</option></select>
         </div>
-        
-        <button id="ali_save_store" style="width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;border-radius:16px;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(16,185,129,0.35);transition:all 0.3s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 25px rgba(16,185,129,0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 20px rgba(16,185,129,0.35)';">
-          <span>🚀</span> تنفيذ التحديث
-        </button>
-        
+        <button id="ali_save_store" style="width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;border-radius:16px;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(16,185,129,0.35);transition:all 0.3s;">🚀 تنفيذ التحديث</button>
       </div>
-      
-      <div style="background:#f8fafc;padding:12px;text-align:center;border-top:1px solid #f1f5f9;">
-        <span style="font-size:10px;font-weight:800;color:#94a3b8;letter-spacing:1px;">DEVELOPED BY ALI EL-BAZ</span>
-      </div>
-
     </div>
   `;
   document.body.appendChild(overlay);
 
-  // Focus and Selection logic
-  const storeInput = document.getElementById('ali_new_store');
-  storeInput.focus();
+  document.getElementById('ali_new_store').focus();
 
-  // إغلاق النافذة بنعومة
   document.getElementById('close_changer').onclick = function() {
     overlay.style.opacity = '0';
-    overlay.style.transition = 'all 0.3s';
     setTimeout(function() { overlay.remove(); }, 300);
   };
 
-  // إغلاق عند الضغط خارج الدايلوج
-  overlay.addEventListener('click', function(e) {
-    if (e.target === overlay) {
-      document.getElementById('close_changer').click();
-    }
+  overlay.addEventListener('mousedown', function(e) {
+    if (e.target === overlay) document.getElementById('close_changer').click();
   });
 
   document.getElementById('ali_save_store').onclick = async function() {
     var btn = this;
     var userIndex = document.getElementById('ali_user_select').value;
     var selectedUser = USERS[userIndex];
-    
-    var rawStoreValue = storeInput.value.trim();
+    var rawStoreValue = document.getElementById('ali_new_store').value.trim();
     var format = document.getElementById('ali_new_format').value;
 
     if (!rawStoreValue) {
-      storeInput.style.borderColor = '#ef4444';
-      storeInput.style.background = '#fef2f2';
-      storeInput.classList.add('ali-error-shake');
-      setTimeout(() => {
-        storeInput.style.borderColor = '#e2e8f0';
-        storeInput.style.background = '#f8fafc';
-      }, 1500);
+      document.getElementById('ali_new_store').style.borderColor = '#ef4444';
       return;
     }
 
@@ -202,9 +100,8 @@ javascript:(function(){
     var storeCode = storeMatch ? storeMatch[0] : rawStoreValue;
 
     btn.disabled = true;
-    btn.innerHTML = '<span>⏳</span> جاري التحديث بالخلفية...';
+    btn.innerHTML = '⏳ جاري التحديث بالخلفية...';
     btn.style.opacity = '0.9';
-    btn.style.transform = 'scale(0.98)';
 
     try {
       var params = new URLSearchParams();
@@ -214,51 +111,32 @@ javascript:(function(){
       params.append('storecode', storeCode);
       params.append('machine_format', format);
 
-      var baseUrl = window.location.origin + '/ez_pill_web/manageUsers/addNew';
-
-      var res = await fetch(baseUrl, {
+      var res = await fetch(window.location.origin + '/ez_pill_web/manageUsers/addNew', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
         body: params
       });
 
       if (res.ok) {
-        btn.innerHTML = '<span>✅</span> تم! أغلق المتصفح لإنهاء الجلسة';
+        btn.innerHTML = '✅ تم! أغلق المتصفح لإنهاء الجلسة';
         btn.style.background = 'linear-gradient(135deg, #1e40af, #3b82f6)';
-        btn.style.boxShadow = '0 8px 20px rgba(59,130,246,0.3)';
-        
         sessionStorage.clear();
-        
-        setTimeout(function() {
-          if (document.getElementById(PANEL_ID)) {
-             document.getElementById('close_changer').click();
-          }
-        }, 3000);
-
       } else {
         throw new Error('Server Error');
       }
     } catch (e) {
-      btn.innerHTML = '<span>❌</span> حدث خطأ، أعد المحاولة';
+      btn.innerHTML = '❌ حدث خطأ، أعد المحاولة';
       btn.style.background = 'linear-gradient(135deg, #dc2626, #ef4444)';
-      btn.style.boxShadow = '0 8px 20px rgba(239,68,68,0.3)';
       setTimeout(function() { 
         btn.disabled = false; 
-        btn.innerHTML = '<span>🚀</span> تنفيذ التحديث'; 
+        btn.innerHTML = '🚀 تنفيذ التحديث'; 
         btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'; 
-        btn.style.boxShadow = '0 8px 20px rgba(16,185,129,0.35)';
-        btn.style.opacity = '1';
-        btn.style.transform = 'scale(1)';
       }, 2500);
     }
   };
 
-  storeInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      document.getElementById('ali_save_store').click();
-    }
+  document.getElementById('ali_new_store').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') document.getElementById('ali_save_store').click();
   });
 
 })();
