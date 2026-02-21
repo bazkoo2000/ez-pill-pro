@@ -3132,16 +3132,23 @@ function extractAndConfirmName(){
       function normG(w){return normA(w).replace(/ى/g,'ي');}
       function isGeneric(w){var n=normG(w);for(var g=0;g<genericWords.length;g++)if(n===normG(genericWords[g]))return true;return false;}
 
-      /* Stop words - NOTE: "على" excluded intentionally - it collides with the common name "علي" */
+      /* Stop words - على excluded from list: handled contextually below to support names like "على الباز" */
       var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
         'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
         'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة','الى','الي',
         'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في'];
 
-      function isStopWord(w){
-        /* على with ى is a preposition - not the name علي */
-        if(w==='على') return true;
-        var wn=normA(w);
+      /* على as preposition: only when followed by known location/object word */
+      var alaStopNext=['الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
+        'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب'];
+
+      function isStopWord(word,nextWord){
+        /* على: stop ONLY when followed by a known object/location (preposition context) */
+        if(word==='على'){
+          if(nextWord&&alaStopNext.some(function(s){return normA(nextWord)===normA(s);})) return true;
+          return false; /* otherwise treat as a name (على الباز، سارة على) */
+        }
+        var wn=normA(word);
         for(var st=0;st<stopWords.length;st++)if(wn===normA(stopWords[st]))return true;
         return false;
       }
@@ -3151,7 +3158,7 @@ function extractAndConfirmName(){
         var cleaned=[];
         for(var w=0;w<words.length;w++){
           if(!words[w]) continue;
-          if(isStopWord(words[w])) break;
+          if(isStopWord(words[w],words[w+1]||null)) break;
           if(words[w].length<=1&&cleaned.length>0) break;
           /* Skip leading generic title (الزوج/الأم/etc) */
           if(cleaned.length===0&&isGeneric(words[w])) continue;
