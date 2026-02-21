@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// إدارة الطلبات v3.8 - (تحديث خوارزمية تصنيف الحالات واعتماد لغة رسمية)
+// إدارة الطلبات v3.9 - (معالجة الأداء الصاروخي وتصنيف الحالات الصارم)
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7,7 +7,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v3';
-  const VERSION = '3.8';
+  const VERSION = '3.9';
   const VER_KEY = 'munhi_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -37,7 +37,7 @@ javascript:(function(){
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
     const prefix = { info: '📋', warn: '⚠️', error: '❌', success: '✅' }[type] || '📋';
-    console.log(`[إدارة الطلبات v3.8 ${ts}] ${prefix} ${msg}`);
+    console.log(`[إدارة الطلبات v3.9 ${ts}] ${prefix} ${msg}`);
   }
 
   function showToast(message, type = 'info') {
@@ -256,7 +256,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">إدارة وتسليم الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.8 System</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.9 Fast & Strict</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -424,18 +424,20 @@ javascript:(function(){
           if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
             state.visitedSet.add(inv);
 
-            // المعالجة الدقيقة للحالات باستخدام استخراج القيم المطابق
+            // 🟢 تحسين الأداء والدقة: الاعتماد على التحليل النصي السريع والقيم الصريحة المباشرة
             let st = 'other';
-            const exactValues = Object.values(item).map(v => String(v).toLowerCase().trim());
+            let directStatus = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().trim();
             
-            if (exactValues.includes('received')) {
-                st = 'received';
-            } else if (exactValues.includes('packed')) {
-                st = 'packed';
+            if (directStatus === 'packed' || directStatus === 'received') {
+                st = directStatus;
             } else {
-                let rawStatus = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase();
-                if (rawStatus.includes('received')) st = 'received';
-                else if (rawStatus.includes('packed')) st = 'packed';
+                const itemStr = JSON.stringify(item).toLowerCase();
+                // البحث عن المفاتيح الصريحة أو القيم الدقيقة حصراً لتجنب أي تعارض
+                if (itemStr.includes(':"packed"') || itemStr.includes('"packed"')) {
+                    st = 'packed';
+                } else if (itemStr.includes(':"received"') || itemStr.includes('"received"')) {
+                    st = 'received';
+                }
             }
 
             var clone;
