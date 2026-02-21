@@ -1,14 +1,13 @@
 // ═══════════════════════════════════════════════════════════════════
-// إدارة الطلبات v3.9 - (معالجة الأداء الصاروخي وتصنيف الحالات الصارم)
-// المطور الأصلي: علي الباز
+// إدارة الطلبات v4.0 - (إصدار الاستقرار: معالجة الـ HTML والأداء العالي)
 // ═══════════════════════════════════════════════════════════════════
 
 javascript:(function(){
   'use strict';
 
-  const PANEL_ID = 'ali_sys_v3';
-  const VERSION = '3.9';
-  const VER_KEY = 'munhi_ver';
+  const PANEL_ID = 'ali_sys_v4';
+  const VERSION = '4.0';
+  const VER_KEY = 'munhi_ver_v4';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -37,7 +36,7 @@ javascript:(function(){
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
     const prefix = { info: '📋', warn: '⚠️', error: '❌', success: '✅' }[type] || '📋';
-    console.log(`[إدارة الطلبات v3.9 ${ts}] ${prefix} ${msg}`);
+    console.log(`[إدارة الطلبات v4.0 ${ts}] ${prefix} ${msg}`);
   }
 
   function showToast(message, type = 'info') {
@@ -74,50 +73,19 @@ javascript:(function(){
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
-      const iconBg = {
-        blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',
-        green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',
-        amber:'linear-gradient(135deg,#fef3c7,#fde68a)',
-        red:'linear-gradient(135deg,#fee2e2,#fecaca)'
-      };
+      const iconBg = { blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)', green:'linear-gradient(135deg,#dcfce7,#bbf7d0)', amber:'linear-gradient(135deg,#fef3c7,#fde68a)', red:'linear-gradient(135deg,#fee2e2,#fecaca)' };
       let infoHTML = '';
       if (info && info.length) {
-        infoHTML = info.map(r =>
-          `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px">
-            <span style="color:#64748b;font-weight:600">${r.label}</span>
-            <span style="font-weight:800;color:${r.color||'#1e293b'};font-size:12px">${r.value}</span>
-          </div>`
-        ).join('');
+        infoHTML = info.map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">${r.label}</span><span style="font-weight:800;color:${r.color||'#1e293b'};font-size:12px">${r.value}</span></div>`).join('');
       }
       let buttonsHTML = '';
       if (buttons && buttons.length) {
-        buttonsHTML = buttons.map((btn, idx) =>
-          `<button data-idx="${idx}" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;${btn.style||'background:#f1f5f9;color:#475569'};transition:all 0.2s">${btn.text}</button>`
-        ).join('');
+        buttonsHTML = buttons.map((btn, idx) => `<button data-idx="${idx}" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;${btn.style||'background:#f1f5f9;color:#475569'};transition:all 0.2s">${btn.text}</button>`).join('');
       }
-      overlay.innerHTML = `
-        <div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">
-          <div style="padding:24px 24px 0;text-align:center">
-            <div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:${iconBg[iconColor]||iconBg.blue}">${icon}</div>
-            <div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">${title}</div>
-            <div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">${desc}</div>
-          </div>
-          <div style="padding:20px 24px">
-            ${infoHTML}
-            ${body||''}
-          </div>
-          <div style="padding:16px 24px 24px;display:flex;gap:10px">
-            ${buttonsHTML}
-          </div>
-        </div>
-      `;
+      overlay.innerHTML = `<div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:${iconBg[iconColor]||iconBg.blue}">${icon}</div><div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">${title}</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">${desc}</div></div><div style="padding:20px 24px">${infoHTML}${body||''}</div><div style="padding:16px 24px 24px;display:flex;gap:10px">${buttonsHTML}</div></div>`;
       overlay.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-idx]');
-        if (btn) {
-          const idx = parseInt(btn.getAttribute('data-idx'));
-          overlay.remove();
-          resolve({ action: buttons[idx].value, overlay: overlay });
-        }
+        if (btn) { const idx = parseInt(btn.getAttribute('data-idx')); overlay.remove(); resolve({ action: buttons[idx].value, overlay: overlay }); }
       });
       document.body.appendChild(overlay);
     });
@@ -127,45 +95,8 @@ javascript:(function(){
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
-
       const allValid = packedRows.filter(r => r.onl.toUpperCase() !== 'NA' && r.onl.toUpperCase() !== 'N/A' && r.onl.trim() !== '');
-      const naCount = packedRows.length - allValid.length;
-      const totalFiles = Math.ceil(allValid.length / MAX_PER_FILE);
-
-      overlay.innerHTML = `
-        <div style="background:white;border-radius:24px;width:460px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">
-          <div style="padding:24px 24px 0;text-align:center">
-            <div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:linear-gradient(135deg,#fef3c7,#fde68a)">📥</div>
-            <div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">تصدير بيانات الطلبات</div>
-            <div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">سيتم تصدير أرقام ERX للحالات Packed بحد أقصى ${MAX_PER_FILE} طلب لكل ملف.</div>
-          </div>
-          <div style="padding:20px 24px">
-            <div style="margin-bottom:16px">
-              <div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-                التصفية برمز الفرع <span style="font-size:11px;color:#94a3b8;font-weight:500">(اختياري)</span>
-              </div>
-              <div style="position:relative">
-                <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:900;color:#cbd5e1;z-index:1;pointer-events:none;font-family:monospace">0</span>
-                <input type="text" id="ali_pharmacy_filter" maxlength="10" placeholder="أدخل رمز الفرع" style="width:100%;padding:12px 16px 12px 16px;padding-right:32px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:'Tajawal',monospace;outline:none;background:#fafbfc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700">
-              </div>
-            </div>
-            <div id="ali_export_stats">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px">
-                <span style="color:#64748b;font-weight:600">إجمالي الطلبات الصالحة</span>
-                <span id="ali_exp_valid" style="font-weight:800;color:#10b981">${allValid.length} طلب</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:6px;font-size:13px">
-                <span style="color:#15803d;font-weight:700">الطلبات المطابقة للتصفية</span>
-                <span id="ali_exp_filtered" style="font-weight:900;color:#15803d">${allValid.length} طلب</span>
-              </div>
-            </div>
-          </div>
-          <div style="padding:16px 24px 24px;display:flex;gap:10px">
-            <button id="ali_exp_cancel" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:#f1f5f9;color:#475569;transition:all 0.2s">إلغاء الأمر</button>
-            <button id="ali_exp_download" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:0 4px 12px rgba(245,158,11,0.3);transition:all 0.2s">تأكيد التصدير</button>
-          </div>
-        </div>
-      `;
+      overlay.innerHTML = `<div style="background:white;border-radius:24px;width:460px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:linear-gradient(135deg,#fef3c7,#fde68a)">📥</div><div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">تصدير بيانات الطلبات</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">سيتم تصدير أرقام ERX للحالات Packed بحد أقصى ${MAX_PER_FILE} طلب لكل ملف.</div></div><div style="padding:20px 24px"><div style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px">التصفية برمز الفرع <span style="font-size:11px;color:#94a3b8;font-weight:500">(اختياري)</span></div><div style="position:relative"><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:900;color:#cbd5e1;z-index:1;pointer-events:none;font-family:monospace">0</span><input type="text" id="ali_pharmacy_filter" maxlength="10" placeholder="أدخل رمز الفرع" style="width:100%;padding:12px 16px 12px 16px;padding-right:32px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:'Tajawal',monospace;outline:none;background:#fafbfc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700"></div></div><div id="ali_export_stats"><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">إجمالي الطلبات الصالحة</span><span id="ali_exp_valid" style="font-weight:800;color:#10b981">${allValid.length} طلب</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#15803d;font-weight:700">الطلبات المطابقة للتصفية</span><span id="ali_exp_filtered" style="font-weight:900;color:#15803d">${allValid.length} طلب</span></div></div></div><div style="padding:16px 24px 24px;display:flex;gap:10px"><button id="ali_exp_cancel" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:#f1f5f9;color:#475569;transition:all 0.2s">إلغاء الأمر</button><button id="ali_exp_download" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:0 4px 12px rgba(245,158,11,0.3);transition:all 0.2s">تأكيد التصدير</button></div></div>`;
       document.body.appendChild(overlay);
 
       const filterInput = overlay.querySelector('#ali_pharmacy_filter');
@@ -176,13 +107,9 @@ javascript:(function(){
         const matched = getFilteredOrders(allValid, code);
         filteredSpan.innerText = matched.length + ' طلب';
         filteredSpan.style.color = matched.length > 0 ? '#15803d' : '#ef4444';
-        if (code.length > 0 && matched.length === 0) {
-          filterInput.style.borderColor = '#ef4444'; filterInput.style.background = '#fef2f2';
-        } else if (code.length > 0 && matched.length > 0) {
-          filterInput.style.borderColor = '#10b981'; filterInput.style.background = '#f0fdf4';
-        } else {
-          filterInput.style.borderColor = '#e2e8f0'; filterInput.style.background = '#fafbfc';
-        }
+        if (code.length > 0 && matched.length === 0) { filterInput.style.borderColor = '#ef4444'; filterInput.style.background = '#fef2f2'; } 
+        else if (code.length > 0 && matched.length > 0) { filterInput.style.borderColor = '#10b981'; filterInput.style.background = '#f0fdf4'; } 
+        else { filterInput.style.borderColor = '#e2e8f0'; filterInput.style.background = '#fafbfc'; }
       });
       filterInput.focus();
 
@@ -256,7 +183,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">إدارة وتسليم الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.9 Fast & Strict</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.0 Final</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -289,20 +216,13 @@ javascript:(function(){
             بدء الفحص الآلي
           </button>
         </div>
-        
-        <div style="text-align:center;padding:12px 0 4px;font-size:11px;color:#cbd5e1;font-weight:600">بواسطة المطور: <span style="color:#3b82f6;font-weight:700">علي الباز</span></div>
       </div>
     </div>
   `;
   document.body.appendChild(panel);
 
   function buildStatCard(icon,val,label,color,id,border){
-    return `<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden">
-      <div style="position:absolute;top:0;right:0;left:0;height:3px;background:${border}"></div>
-      <div style="font-size:18px;margin-bottom:4px">${icon}</div>
-      <div id="${id}" style="font-size:22px;font-weight:900;color:${color};line-height:1;margin-bottom:2px">${val}</div>
-      <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">${label}</div>
-    </div>`;
+    return `<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:${border}"></div><div style="font-size:18px;margin-bottom:4px">${icon}</div><div id="${id}" style="font-size:22px;font-weight:900;color:${color};line-height:1;margin-bottom:2px">${val}</div><div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">${label}</div></div>`;
   }
 
   function setStatus(text, type) {
@@ -315,9 +235,7 @@ javascript:(function(){
       done:{bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'},
       sync:{bg:'#fefce8',color:'#a16207',border:'#fef08a',icon:'spinner'}
     }[type] || {bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0',icon:'✅'};
-    const iconHTML = c.icon === 'spinner'
-      ? '<div style="width:16px;height:16px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite;flex-shrink:0"></div>'
-      : `<span>${c.icon}</span>`;
+    const iconHTML = c.icon === 'spinner' ? '<div style="width:16px;height:16px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite;flex-shrink:0"></div>' : `<span>${c.icon}</span>`;
     el.style.cssText = `display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:${c.bg};color:${c.color};border:1px solid ${c.border}`;
     el.innerHTML = `${iconHTML}<span>${text}</span>`;
   }
@@ -424,19 +342,19 @@ javascript:(function(){
           if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
             state.visitedSet.add(inv);
 
-            // 🟢 تحسين الأداء والدقة: الاعتماد على التحليل النصي السريع والقيم الصريحة المباشرة
+            // 🟢 الإصلاح الجذري (Sanitization): إزالة أي وسوم HTML والبحث عن الكلمة المجردة
             let st = 'other';
-            let directStatus = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().trim();
-            
-            if (directStatus === 'packed' || directStatus === 'received') {
-                st = directStatus;
-            } else {
-                const itemStr = JSON.stringify(item).toLowerCase();
-                // البحث عن المفاتيح الصريحة أو القيم الدقيقة حصراً لتجنب أي تعارض
-                if (itemStr.includes(':"packed"') || itemStr.includes('"packed"')) {
-                    st = 'packed';
-                } else if (itemStr.includes(':"received"') || itemStr.includes('"received"')) {
-                    st = 'received';
+            for (let key in item) {
+                if (item.hasOwnProperty(key) && typeof item[key] === 'string') {
+                    // إزالة وسوم HTML (مثل <td>) والمسافات الزائدة
+                    let cleanVal = item[key].replace(/<[^>]*>?/gm, '').toLowerCase().trim();
+                    if (cleanVal === 'packed') {
+                        st = 'packed';
+                        break;
+                    } else if (cleanVal === 'received') {
+                        st = 'received';
+                        break;
+                    }
                 }
             }
 
@@ -523,16 +441,13 @@ javascript:(function(){
         </div>
         <div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:4px 0">إجمالي النتائج المعروضة: ${state.savedRows.length}</div>
       </div>
-      
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1d4ed8;font-weight:600;text-align:center">
         تم إدراج <strong>${state.savedRows.length}</strong> سجل
       </div>
-      
       <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:14px;font-weight:700;color:#475569">الطلبات الجاهزة للتسليم:</span>
         <input type="number" id="ali_open_count" value="${recCount}" style="width:64px;padding:8px;border:2px solid #dc2626;border-radius:10px;text-align:center;font-size:18px;font-weight:900;color:#991b1b;background:white;outline:none;font-family:'Tajawal',sans-serif" onfocus="this.value=''">
       </div>
-      
       <button id="ali_btn_deliver_silent" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:0 4px 15px rgba(220,38,38,0.3);transition:all 0.3s;margin-bottom:8px">
         تنفيذ التسليم (Received)
       </button>
