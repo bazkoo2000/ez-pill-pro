@@ -112,13 +112,35 @@ var CHANGELOG={
   }
 };
 
+/* ── helpers: read/write version from localStorage + cookie fallback ── */
+function _ezGetSeenVersion(){
+  try{
+    var ls=localStorage.getItem('ez_pill_version');
+    if(ls) return ls;
+  }catch(e){}
+  /* cookie fallback */
+  try{
+    var m=document.cookie.match(/(?:^|;\s*)ez_pill_version=([^;]+)/);
+    if(m) return decodeURIComponent(m[1]);
+  }catch(e){}
+  return null;
+}
+function _ezSetSeenVersion(v){
+  try{localStorage.setItem('ez_pill_version',v);}catch(e){}
+  /* also set cookie with 1-year expiry as fallback */
+  try{
+    var exp=new Date();exp.setFullYear(exp.getFullYear()+1);
+    document.cookie='ez_pill_version='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
+  }catch(e){}
+}
+
 function showWhatsNew(){
   try{
-    var lastSeen=localStorage.getItem('ez_pill_version');
+    var lastSeen=_ezGetSeenVersion();
     if(lastSeen===APP_VERSION) return;
     var info=CHANGELOG[APP_VERSION];
-    if(!info&&lastSeen) {localStorage.setItem('ez_pill_version',APP_VERSION);return;}
-    if(!info) info={title:'تحديث جديد ✨',features:[{icon:'🚀',text:'تم التحديث إلى النسخة '+APP_VERSION}]};
+    /* No changelog entry for this version → silently mark as seen and skip */
+    if(!info){_ezSetSeenVersion(APP_VERSION);return;}
 
     /* Build features HTML */
     var featuresHtml='';
@@ -194,7 +216,7 @@ function showWhatsNew(){
 
     /* Close handlers */
     function closeWN(){
-      localStorage.setItem('ez_pill_version',APP_VERSION);
+      _ezSetSeenVersion(APP_VERSION);
       overlay.style.animation='ezWnFadeIn 0.3s ease reverse';
       setTimeout(function(){overlay.remove();},300);
     }
@@ -1377,8 +1399,9 @@ function smartDoseRecognizer(note){
   if(res.hasL||res.hasN) mealCount++;
   if(res.hasD||res.hasE) mealCount++;
   if(res.hasA&&mealCount<3) mealCount++;
-  if(/قبل\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)?|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){res.count=3;res.isBefore=true;return res;}
-  if(/بعد\s*(الوجبات|الاكل|الأكل)\s*(الثلاث|3)?|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){res.count=3;return res;}
+  /* FIX: "قبل الاكل" alone = 1 meal. Only count=3 when الوجبات or الثلاث/3 explicitly mentioned */
+  if(/قبل\s*(الوجبات)\s*|قبل\s*(الاكل|الأكل)\s*(الثلاث|3)\s*|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){res.count=3;res.isBefore=true;return res;}
+  if(/بعد\s*(الوجبات)\s*|بعد\s*(الاكل|الأكل)\s*(الثلاث|3)\s*|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){res.count=3;return res;}
   if(/قبل\s*(الاكل|الأكل|الوجبات)\s*مرتين|before\s*meals?\s*twice/i.test(s)){res.count=2;res.isBefore=true;return res;}
   if(mealCount>=3){res.count=3;return res;}
   var pairDual=/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
@@ -2928,7 +2951,7 @@ function _ezShowSettingsPanel(role,userName){
         if(data.settings){for(var k in data.settings) saveSettings(data.settings);}
         if(data.users) saveUsers(data.users);
         /* Restore version to prevent What's New popup */
-        try{localStorage.setItem('ez_pill_version',APP_VERSION);}catch(ex){}
+        _ezSetSeenVersion(APP_VERSION);
         overlay.remove();
         window.ezShowToast('📥 تم استيراد الإعدادات بنجاح - أعد تشغيل الأداة','success');
         ezBeep('success');
