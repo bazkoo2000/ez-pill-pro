@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// محرك البحث الصاروخي (Ready to Pack / New) 🔍🚀 - الإصدار المحدث للترقيم التلقائي
+// محرك البحث الصاروخي (Ready to Pack / New) 🔍🚀 - (إصدار البلدوزر)
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -48,14 +48,14 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">محرك البحث الصاروخي</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(139,92,246,0.3);color:#ddd6fe;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Auto-Paging Edition</span>
+          <span style="display:inline-block;background:rgba(139,92,246,0.3);color:#ddd6fe;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Bulldozer Edition 🚜</span>
         </div>
       </div>
       
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)">
         
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:800;background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe">
-          <span>✅</span><span>جاهز لسحب جميع الصفحات تلقائياً</span>
+          <span>✅</span><span>جاهز للحصاد الشامل</span>
         </div>
 
         <button id="ali_start_fetch" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(139,92,246,0.3);transition:all 0.3s;margin-bottom:16px">
@@ -110,27 +110,24 @@ javascript:(function(){
     el.innerHTML = `${iconHTML}<span>${text}</span>`;
   }
 
-  // ─── جلب الداتا الصاروخي ───
+  // ─── جلب الداتا البلدوزر ───
   document.getElementById('ali_start_fetch').addEventListener('click', async function() {
     if(state.isProcessing) return;
     state.isProcessing = true;
     
     const btn = this;
     btn.disabled = true;
-    btn.innerHTML = '⏳ جاري الاتصال بالسيرفر...';
     btn.style.opacity = '0.7';
 
-    // تحديد الحالة تلقائياً (Ready to Pack أو New بناءً على الصفحة)
     let currentStatus = 'readypack';
     if (window.location.href.toLowerCase().includes('new')) currentStatus = 'new';
-    else if (window.location.href.toLowerCase().includes('packed')) currentStatus = 'packed'; // للحماية
+    else if (window.location.href.toLowerCase().includes('packed')) currentStatus = 'packed'; 
 
     const baseUrl = window.location.origin + "/ez_pill_web/";
     state.savedRows = [];
     state.visitedSet.clear();
 
     try {
-      // نسخ صف فارغ من الجدول للحفاظ على التصميم
       let tables = document.querySelectorAll('table');
       let targetTable = tables[0];
       for (let t = 0; t < tables.length; t++) {
@@ -140,10 +137,10 @@ javascript:(function(){
       let templateRow = tbody ? tbody.querySelector('tr') : null;
 
       let page = 1;
-      let hasMorePages = true;
+      let consecutiveEmpty = 0; // عداد الصفحات الفاضية
 
-      // حلقة مفتوحة لا تعتمد على total_orders
-      while (hasMorePages && page <= 50) { 
+      // حلقة قوية تسحب لحد 30 صفحة، وتقف بس لو لقت صفحتين فاضيين ورا بعض
+      while (page <= 30) { 
         setStatus(`جلب البيانات: صفحة ${page}...`, 'working');
         btn.innerHTML = `🚀 سحب صفحة (${page})`;
 
@@ -154,72 +151,63 @@ javascript:(function(){
         });
         
         let data = await res.json();
-        
         let orders = [];
-        try { 
-          orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
-        } catch(e) {}
+        try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
 
-        // لو الصفحة رجعت فاضية تماماً، نخرج من اللوب
         if (!orders || orders.length === 0) {
-          break;
-        }
+          consecutiveEmpty++;
+          if (consecutiveEmpty >= 2) break; // خلاص اتأكدنا إن مفيش داتا بعد كدة
+        } else {
+          consecutiveEmpty = 0; // نصفر العداد لو لقينا داتا
+          
+          for (let i = 0; i < orders.length; i++) {
+            let item = orders[i];
+            let inv = item.Invoice || '';
+            let onl = item.onlineNumber || '';
+            let typee = item.typee || '';
+            let head_id = item.head_id || '';
 
-        for (let i = 0; i < orders.length; i++) {
-          let item = orders[i];
-          let inv = item.Invoice || '';
-          let onl = item.onlineNumber || '';
-          let typee = item.typee || '';
-          let head_id = item.head_id || '';
-
-          if (inv.length >= 5 && !state.visitedSet.has(inv)) {
-            state.visitedSet.add(inv);
-            
-            let clone;
-            if (templateRow) {
-              clone = templateRow.cloneNode(true);
-              let cells = clone.querySelectorAll('td');
-              if (cells.length > 3) {
-                cells[0].innerHTML = `<label style="cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:900;" onclick="getDetails('${onl.replace(/ERX/gi, '')}','${inv}','${typee}','${head_id}')">${inv}</label>`;
-                cells[1].innerText = onl;
-                cells[2].innerText = item.guestName || '';
-                cells[3].innerText = item.guestMobile || item.mobile || '';
+            if (inv.length >= 5 && !state.visitedSet.has(inv)) {
+              state.visitedSet.add(inv);
+              
+              let clone;
+              if (templateRow) {
+                clone = templateRow.cloneNode(true);
+                let cells = clone.querySelectorAll('td');
+                if (cells.length > 3) {
+                  cells[0].innerHTML = `<label style="cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:900;" onclick="getDetails('${onl.replace(/ERX/gi, '')}','${inv}','${typee}','${head_id}')">${inv}</label>`;
+                  cells[1].innerText = onl;
+                  cells[2].innerText = item.guestName || '';
+                  cells[3].innerText = item.guestMobile || item.mobile || '';
+                }
+              } else {
+                clone = document.createElement('tr');
+                clone.innerHTML = `<td><label style="cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:900;" onclick="getDetails('${onl.replace(/ERX/gi, '')}','${inv}','${typee}','${head_id}')">${inv}</label></td><td>${onl}</td><td>${item.guestName || ''}</td><td>${item.guestMobile || item.mobile || ''}</td>`;
               }
-            } else {
-              clone = document.createElement('tr');
-              clone.innerHTML = `<td><label style="cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:900;" onclick="getDetails('${onl.replace(/ERX/gi, '')}','${inv}','${typee}','${head_id}')">${inv}</label></td><td>${onl}</td><td>${item.guestName || ''}</td><td>${item.guestMobile || item.mobile || ''}</td>`;
-            }
-            
-            clone.className = 'ali-row-hover'; 
-            clone.style.transition = 'background 0.2s';
+              
+              clone.className = 'ali-row-hover'; 
+              clone.style.transition = 'background 0.2s';
 
-            state.savedRows.push({
-              id: inv,
-              onl: onl,
-              node: clone
-            });
+              state.savedRows.push({
+                id: inv,
+                onl: onl,
+                node: clone
+              });
+            }
           }
         }
-
-        // الخوارزمية الذكية: لو السيرفر رجّع أقل من 10 طلبات، أكيد دي آخر صفحة.
-        if (orders.length < 10) {
-          hasMorePages = false;
-        } else {
-          page++;
-        }
+        page++; // ادخل على الصفحة اللي بعدها بدون شروط معقدة
       }
 
       setStatus(`تم تجميع ${state.savedRows.length} طلب بنجاح!`, 'ready');
       document.getElementById('ali_total_memory').innerText = state.savedRows.length;
       document.getElementById('ali_search_count').innerText = state.savedRows.length;
       
-      // إخفاء زر الجلب وإظهار منطقة البحث
       btn.style.display = 'none';
       const searchArea = document.getElementById('ali_search_area');
       searchArea.style.display = 'block';
       setTimeout(() => searchArea.style.opacity = '1', 50);
 
-      // تفريغ الجدول الأصلي ووضع البيانات الجديدة
       if (tbody) {
         tbody.innerHTML = '';
         state.savedRows.forEach(r => tbody.appendChild(r.node));
@@ -265,7 +253,6 @@ javascript:(function(){
 
     document.getElementById('ali_search_count').innerText = shown;
     
-    // تلوين خانات البحث حسب النتيجة
     if (rawInv.length > 0 && shown === 0) {
       sI.style.borderColor = '#ef4444'; sI.style.background = '#fef2f2';
     } else if (rawInv.length > 0 && shown > 0) {
