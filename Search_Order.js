@@ -1,12 +1,12 @@
 javascript:(function(){
   'use strict';
   // ═══════════════════════════════════════════════════════════════════
-  // EZ-PILL PRO v4.4 - (حل مشكلة ترقيم الصفحات وتوسيع خانة الإدخال)
+  // EZ-PILL PRO v4.5 - (إصلاح وتفعيل زر المزامنة الذكية)
   // المطور الأصلي: علي الباز
   // ═══════════════════════════════════════════════════════════════════
   //
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.4';
+  const VERSION = '4.5';
   const VER_KEY = 'ezpill_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -55,7 +55,7 @@ javascript:(function(){
     var lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
       localStorage.setItem(VER_KEY,VERSION);
-      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' (إصلاح عدد الصفحات) 🎉','success')},1000);
+      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' (إصلاح زر المزامنة) 🔄','success')},1000);
     }
   }catch(e){}
   
@@ -151,7 +151,7 @@ javascript:(function(){
           '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">EZ-PILL PRO</h3>' +
         '</div>' +
         '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.4</span>' +
+          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.5</span>' +
         '</div>' +
       '</div>' +
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">' +
@@ -160,26 +160,31 @@ javascript:(function(){
           buildStatCard('🔍', '0', 'مطابق', '#10b981', 'stat_match', 'linear-gradient(90deg,#10b981,#34d399)') +
           buildStatCard('🚀', '0', 'تم فتحه', '#3b82f6', 'stat_opened', 'linear-gradient(90deg,#3b82f6,#60a5fa)') +
         '</div>' +
-        '<div id="ali_main_body">' +
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-              '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
-              '<div style="display:flex;align-items:center;gap:6px">' +
-                '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-                '<input type="number" id="p_lim" value="10" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
-              '</div>' +
-            '</div>' +
-            '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
-              '<div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd);border-radius:10px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1)"></div>' +
+        
+        // --- منطقة الإعدادات الثابتة (لا يتم مسحها) ---
+        '<div id="ali_settings_box" style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+            '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
+              '<input type="number" id="p_lim" value="10" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
             '</div>' +
           '</div>' +
-          '<div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">' +
-            '<span>✅</span><span>جاهز لبدء تجميع البيانات</span>' +
+          '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
+            '<div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd);border-radius:10px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1)"></div>' +
           '</div>' +
+        '</div>' +
+        '<div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">' +
+          '<span>✅</span><span>جاهز لبدء تجميع البيانات</span>' +
+        '</div>' +
+        
+        // --- المنطقة المتغيرة (يتم استبدال الزر بالبحث لاحقاً) ---
+        '<div id="ali_dynamic_area">' +
           '<button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">' +
             '🚀 بدء تجميع البيانات' +
           '</button>' +
         '</div>' +
+        
         '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>' +
       '</div>' +
     '</div>';
@@ -261,7 +266,7 @@ javascript:(function(){
   });
   
   // ═══════════════════════════════════════════
-  // API Page Scanner (Improved Pagination)
+  // API Page Scanner
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
   async function scanPage(curr, totalLimit, isSync) {
@@ -284,7 +289,6 @@ javascript:(function(){
 
       var userLimit = parseInt(totalLimit) || 20;
       
-      // استخراج عدد الصفحات الدقيق لتشغيل شريط التقدم بسلاسة
       var exactTotalOrders = 0;
       var allDivs = document.querySelectorAll('div, span');
       for (var d = 0; d < allDivs.length; d++) {
@@ -298,7 +302,6 @@ javascript:(function(){
         }
       }
       
-      // حساب ذكي: الصفحة الأولى 9 طلبات والباقي 10
       var expectedPages = 10;
       if (exactTotalOrders > 0) {
         expectedPages = Math.ceil((exactTotalOrders + 1) / 10);
@@ -317,7 +320,6 @@ javascript:(function(){
 
       var consecutiveEmpty = 0;
       
-      // الدوران يعتمد على الرقم الذي أدخلته، ولا يتوقف حتى يجد صفحة فارغة من السيرفر!
       for (var page = 1; page <= userLimit; page++) {
         var displayTotal = Math.max(expectedPages, Math.min(page, userLimit));
         if (fill) fill.style.width = ((page / displayTotal) * 100) + '%';
@@ -340,7 +342,6 @@ javascript:(function(){
           orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
         } catch(e) {}
 
-        // التوقف الفعلي هنا: إذا رد السيرفر بأنه لا يوجد طلبات أخرى، يتوقف الكود!
         if (!orders || orders.length === 0) {
           consecutiveEmpty++;
           if (consecutiveEmpty >= 2) break;
@@ -448,8 +449,9 @@ javascript:(function(){
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
     
-    var mainBody = document.getElementById('ali_main_body');
-    mainBody.innerHTML =
+    // استبدال المنطقة الديناميكية فقط (مع الإبقاء على خانة الصفحات وشريط التقدم)
+    var dynArea = document.getElementById('ali_dynamic_area');
+    dynArea.innerHTML =
       '<div style="margin-bottom:10px">' +
         '<div style="position:relative">' +
           '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;color:#94a3b8;z-index:1;pointer-events:none;font-family:monospace">0</span>' +
