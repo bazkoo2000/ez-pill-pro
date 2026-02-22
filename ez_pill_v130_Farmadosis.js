@@ -1157,6 +1157,61 @@ window.ezNextMonth=function(){
 /* ══════════════════════════════════════════
    🌙 RAMADAN SPLIT - SHOW INPUT DIALOG
    ══════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   🌙 CUSTOM RAMADAN CONFIRM DIALOG
+   ══════════════════════════════════════════ */
+function _ezRamadanConfirm(opts, onYes, onNo){
+  /* opts = {ramLeft, normalDays, totalDays, t, m, rmDays, startDate, normalStart} */
+  var existing=document.getElementById('ez-ramadan-confirm-overlay');
+  if(existing) existing.remove();
+
+  var overlay=document.createElement('div');
+  overlay.id='ez-ramadan-confirm-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,10,40,0.75);backdrop-filter:blur(12px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.25s ease';
+
+  var mLabel=opts.m>1?('<span style="color:#a5b4fc;font-size:11px;font-weight:600"> ('+opts.m+' × '+opts.t+' يوم)</span>'):'';
+
+  overlay.innerHTML=`
+  <div style="width:340px;border-radius:24px;background:linear-gradient(160deg,#1e1b4b 0%,#0f0a28 100%);border:1.5px solid rgba(129,140,248,0.25);box-shadow:0 32px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04);overflow:hidden;font-family:Cairo,sans-serif;direction:rtl">
+    <div style="height:3px;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fbbf24);background-size:200% 100%;animation:barShift 3s ease infinite"></div>
+    <div style="padding:22px 22px 10px;text-align:center">
+      <div style="font-size:36px;margin-bottom:6px;animation:pulse 2s infinite">🌙</div>
+      <div style="font-size:17px;font-weight:900;color:#fbbf24;letter-spacing:-0.5px;margin-bottom:4px">تأكيد تقسيم رمضان</div>
+      <div style="font-size:11px;color:#a5b4fc;font-weight:600;letter-spacing:0.5px">وضع رمضان مفعّل</div>
+    </div>
+    <div style="margin:6px 16px 16px;background:rgba(255,255,255,0.04);border-radius:14px;border:1px solid rgba(129,140,248,0.12);overflow:hidden">
+      <div style="padding:10px 14px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:#94a3b8;font-weight:700">🌙 جرعات رمضان</span>
+        <span style="font-size:15px;font-weight:900;color:#fbbf24">${opts.ramLeft} يوم</span>
+      </div>
+      <div style="padding:10px 14px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:#94a3b8;font-weight:700">✅ جرعات عادية بعده</span>
+        <span style="font-size:15px;font-weight:900;color:#34d399">${opts.normalDays} يوم</span>
+      </div>
+      <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:#94a3b8;font-weight:700">📦 الإجمالي</span>
+        <span style="font-size:13px;font-weight:900;color:#c7d2fe">${opts.totalDays} يوم${mLabel?(' '+opts.m+'×'+opts.t):''}</span>
+      </div>
+    </div>
+    <div style="padding:6px 16px 4px;font-size:10px;color:#64748b;text-align:center;font-weight:600">
+      📅 رمضان: ${opts.startDate||'—'} &nbsp;→&nbsp; ✅ بعده: ${opts.normalStart||'—'}
+    </div>
+    <div style="padding:14px 16px 18px;display:flex;gap:10px">
+      <button id="ez-ram-confirm-yes" style="flex:2;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#1e1b4b;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 6px 20px rgba(245,158,11,0.35),inset 0 1px 0 rgba(255,255,255,0.4);transition:all 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+        ✅ تأكيد
+      </button>
+      <button id="ez-ram-confirm-no" style="flex:1;height:46px;border:1.5px solid rgba(129,140,248,0.2);border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#818cf8;background:rgba(129,140,248,0.06);transition:all 0.2s" onmouseover="this.style.background='rgba(129,140,248,0.12)'" onmouseout="this.style.background='rgba(129,140,248,0.06)'">
+        إلغاء
+      </button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+  document.getElementById('ez-ram-confirm-yes').onclick=function(){overlay.remove();if(onYes)onYes();};
+  document.getElementById('ez-ram-confirm-no').onclick=function(){overlay.remove();if(onNo)onNo();};
+  overlay.onclick=function(e){if(e.target===overlay){overlay.remove();if(onNo)onNo();}};
+}
+
 window.ezRamadanSplit=function(){
   /* نستخدم القيمة المحفوظة من الدايلوج الرئيسي مباشرة */
   var daysLeft=window._rmDaysLeft||null;
@@ -1391,12 +1446,15 @@ window.ezRamadanToNormal=function(){
     window.ezShowToast('❌ لا يوجد أيام عادية بعد رمضان','error');return;
   }
 
-  var msg='🔄 إلغاء جرعات رمضان:\n📅 '+ramLeft+' يوم رمضان يُحذف\n✅ '+normalDays+' يوم جرعات عادية تبدأ بعد رمضان\n📦 إجمالي: '+totalDays+' يوم'+(_m>1?' ('+_m+' × '+_t+' يوم)':'')+' \n\nهل تريد المتابعة؟';
-  if(!confirm(msg)) return;
+  var _normalStart=addDays(startDateStr,ramLeft);
+  _ezRamadanConfirm({ramLeft:ramLeft,normalDays:normalDays,totalDays:totalDays,t:_t,m:_m,startDate:startDateStr,normalStart:_normalStart},
+  function(){
+  /* بعد التأكيد: تطبيق الإلغاء */
 
-  /* رجوع للـ snapshot لو موجود */
-  if(window._ramadanSplitSnapshot){
-    tb.innerHTML=window._ramadanSplitSnapshot;
+  /* رجوع للـ pre-process snapshot (قبل المعالجة) */
+  var _snapToUse=window._ramadanPreProcessSnapshot||window._ramadanSplitSnapshot;
+  if(_snapToUse){
+    tb.innerHTML=_snapToUse;
     var fire2=_ezFire;
     tb.querySelectorAll('input,select,textarea').forEach(function(el){fire2(el);});
   }
@@ -1505,6 +1563,7 @@ window.ezRamadanToNormal=function(){
   window.ezShowToast('✅ إلغاء رمضان: '+normalDays+' يوم عادي من '+normalStartDate,'success');
   ezBeep('success');
   window._refreshPostDialogBtns();
+  }); // end confirm callback
 };
 
 /* تحديث أزرار الـ post dialog بعد التقسيم/الإلغاء */
@@ -1786,6 +1845,7 @@ function scanForDuplicateNotes(){
    ══════════════════════════════════════════ */
 function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode){
   window._ezLastTVal=t; window._ezLastMVal=m; window._ezLastMVal=m; /* حفظ t و m للاستخدام في تقسيم رمضان */
+  if(ramadanMode){ var _snapTb=_ezFindTable(); if(_snapTb) window._ramadanPreProcessSnapshot=_snapTb.innerHTML; }
   warningQueue=[];duplicatedRows=[];duplicatedCount=0;var detectedLanguagesPerRow=[];window._ezDose2Applied=null;window._ramadanMode=ramadanMode||false;window._ramadanSplitDone=false;window._ramadanSplitSnapshot=null;window._ramadanSplitData=null;
   var fire=_ezFire,norm=_ezNorm,normL=_ezNormL,get=_ezGet,idx=_ezIdx;
   function getCleanCode(td){var text=get(td);var match=text.match(/\d+/);return match?match[0]:'';}
@@ -1868,8 +1928,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
     var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
 
-    /* Size = t_val (days) for each row */
-    var ns=t_val;
+    /* Size = rmDaysLeft for ramadan rows (how many ramadan days remain) */
+    var ns=(window._rmDaysLeft&&window._rmDaysLeft>0)?window._rmDaysLeft:t_val;
     if(fixedSizeCodes[u_code]){ns=Math.floor(fixedSizeCodes[u_code]/2);var rem=fixedSizeCodes[u_code]%2;setSize(nt1[si],ns+(rem>0?1:0));setSize(nt2[si],ns);}
     else{setSize(nt1[si],ns);setSize(nt2[si],ns);}
     setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');
@@ -2152,7 +2212,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           var ck=getCheckmarkCellIndex(r_node);
           resetCheckmark(r_node,ck);
         }
-        ramadanRtd.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;
+        var _rmCalcDays=window._rmDaysLeft&&window._rmDaysLeft>0?window._rmDaysLeft:rd.calculatedDays;
+        ramadanRtd.push({row:r_node,info:rd.dui,calcDays:_rmCalcDays});continue;
       }
 
       /* ── RAMADAN MODE: Once daily → single Ramadan time ── */
@@ -2167,10 +2228,11 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}
           continue;
         }
-        /* Single dose Ramadan: apply Ramadan time */
+        /* Single dose Ramadan: apply Ramadan time, size = rmDaysLeft */
         var rmEvery=rd.ramadanOverrideEvery||24;
+        var _rmDays=window._rmDaysLeft&&window._rmDaysLeft>0?window._rmDaysLeft:rd.calculatedSize;
         setEvry(tds_nodes[ei_main],String(rmEvery));
-        setSize(tds_nodes[si_main],rd.calculatedSize);
+        setSize(tds_nodes[si_main],_rmDays);
         setTime(r_node,rd.ramadanInfo.time);
         if(di_main>=0){var tpi_once=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_once.dose);}
         if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
