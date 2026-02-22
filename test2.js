@@ -27,13 +27,11 @@ javascript:(function(){
     scanLog: []
   };
 
-  // استخراج العدد الافتراضي كبداية فقط
   const bodyText = document.body.innerText;
   const packedMatch = bodyText.match(/packed\s*\n*\s*(\d+)/i);
   const totalPacked = packedMatch ? parseInt(packedMatch[1]) : 0;
   const defaultPages = totalPacked > 0 ? Math.ceil(totalPacked / 10) : 1;
 
-  // ─── Debug Logger ───
   function logScan(msg, type = 'info') {
     const ts = new Date().toLocaleTimeString('ar-EG');
     const entry = { ts, msg, type };
@@ -42,7 +40,6 @@ javascript:(function(){
     console.log(`[مُنهي v3.6 ${ts}] ${prefix} ${msg}`);
   }
 
-  // ─── Toast Notifications ───
   function showToast(message, type = 'info') {
     let container = document.getElementById('ali-toast-container');
     if (!container) {
@@ -65,7 +62,6 @@ javascript:(function(){
     }, 3500);
   }
 
-  // ─── Update Check ───
   try{
     const lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
@@ -74,11 +70,10 @@ javascript:(function(){
     }
   }catch(e){}
 
-  // ─── Dialog System ───
   function showDialog({ icon, iconColor, title, desc, info, buttons, body }) {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s forwards';
       const iconBg = {
         blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',
         green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',
@@ -101,7 +96,7 @@ javascript:(function(){
         ).join('');
       }
       overlay.innerHTML = `
-        <div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">
+        <div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards">
           <div style="padding:24px 24px 0;text-align:center">
             <div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:${iconBg[iconColor]||iconBg.blue}">${icon}</div>
             <div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">${title}</div>
@@ -128,18 +123,17 @@ javascript:(function(){
     });
   }
 
-  // ─── Export Dialog ───
   function showExportDialog(packedRows) {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s forwards';
 
       const allValid = packedRows.filter(r => r.onl.toUpperCase() !== 'NA' && r.onl.toUpperCase() !== 'N/A' && r.onl.trim() !== '');
       const naCount = packedRows.length - allValid.length;
       const totalFiles = Math.ceil(allValid.length / MAX_PER_FILE);
 
       overlay.innerHTML = `
-        <div style="background:white;border-radius:24px;width:460px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">
+        <div style="background:white;border-radius:24px;width:460px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards">
           <div style="padding:24px 24px 0;text-align:center">
             <div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:linear-gradient(135deg,#fef3c7,#fde68a)">📥</div>
             <div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">تصدير الطلبات</div>
@@ -232,7 +226,6 @@ javascript:(function(){
     }
   }
 
-  // ─── CSS ───
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
     @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}
@@ -249,7 +242,6 @@ javascript:(function(){
   `;
   document.head.appendChild(styleEl);
 
-  // ─── Panel ───
   const panel = document.createElement('div');
   panel.id = PANEL_ID;
   panel.innerHTML = `
@@ -361,7 +353,6 @@ javascript:(function(){
     }
   }
 
-  // Events
   panel.addEventListener('click',e=>{if(panel.classList.contains('ali-minimized')){panel.classList.remove('ali-minimized');e.stopPropagation()}});
   document.getElementById('ali_close').addEventListener('click',e=>{e.stopPropagation();panel.style.animation='aliSlideIn 0.3s reverse';setTimeout(()=>panel.remove(),280)});
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
@@ -370,16 +361,12 @@ javascript:(function(){
     return new Promise(r => setTimeout(r, ms));
   }
 
-  // ══════════════════════════════════════════════════════════════════
-  // ─── المحرك الجديد: حساب تلقائي + API
-  // ══════════════════════════════════════════════════════════════════
-
   async function scanAllPages(isSync) {
     state.isProcessing = true;
     state.isSyncing = isSync;
     const fill = document.getElementById('p-fill');
     const baseUrl = window.location.origin + "/ez_pill_web/";
-    const currentStatus = 'packed'; // الكود موجه لـ packed كالعادة
+    const currentStatus = 'packed'; 
 
     if (isSync) {
       setStatus('جاري المزامنة بالخلفية...', 'sync');
@@ -473,7 +460,6 @@ javascript:(function(){
             if (st === 'received') clone.style.background = 'rgba(16,185,129,0.08)';
             if (st === 'packed') clone.style.background = 'rgba(245,158,11,0.08)';
 
-            // حفظ كل البيانات الأساسية للتسليم الصامت لاحقاً
             state.savedRows.push({
               id: inv,
               onl: onl,
@@ -501,17 +487,6 @@ javascript:(function(){
     finishScan(isSync);
   }
 
-  function printScanSummary() {
-    console.log('%c═══ ملخص الفحص ═══', 'color:#1d4ed8;font-weight:bold;font-size:14px');
-    console.table(state.scanLog.filter(e => e.page).map(e => ({
-      'الصفحة': e.page,
-      'النتيجة': e.success !== false ? '✅' : '❌',
-      'الإجمالي التراكمي': e.cumulative
-    })));
-    console.log(`إجمالي: ${state.savedRows.length} طلب`);
-  }
-
-  // ─── Finish Scan ───
   function finishScan(isSync) {
     state.isProcessing = false;
     state.isSyncing = false;
@@ -536,7 +511,6 @@ javascript:(function(){
       showToast(`تم رصد ${state.savedRows.length} طلب بنجاح`,'success');
     }
 
-    // استبدال المنطقة الديناميكية
     const dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML=`
       <div style="margin-bottom:16px">
@@ -591,14 +565,15 @@ javascript:(function(){
     sO.addEventListener('input',filterTbl);
 
     document.getElementById('ali_btn_log').addEventListener('click', () => {
-      printScanSummary();
+      console.log('%c═══ ملخص الفحص ═══', 'color:#1d4ed8;font-weight:bold;font-size:14px');
+      console.table(state.scanLog.filter(e => e.page).map(e => ({ 'الصفحة': e.page, 'النتيجة': e.success !== false ? '✅' : '❌', 'الإجمالي التراكمي': e.cumulative })));
       showToast('تم طباعة السجل في Console (F12)', 'info');
     });
 
-    // ─── Silent Delivery API (التسليم الصاروخي) ───
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async()=>{
       const list = state.savedRows.filter(r => r.st === 'received');
-      const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
+      const countInput = document.getElementById('ali_open_count');
+      const count = parseInt(countInput.value) || list.length;
       const toDeliver = list.slice(0, count);
       
       if(!toDeliver.length){ showToast('لا توجد طلبات Received جاهزة للتسليم!', 'warning'); return; }
@@ -656,7 +631,6 @@ javascript:(function(){
         }
         
         updateStats();
-        // تأخير بسيط جداً (200 ملي ثانية) لمنع حظر السيرفر للطلبات المتتالية
         await sleep(200); 
       }
 
@@ -678,7 +652,6 @@ javascript:(function(){
       setStatus(`اكتملت العملية: تسليم ${successCount} طلب`, 'done');
     });
 
-    // ─── Export ───
     document.getElementById('ali_btn_export').addEventListener('click', async()=>{
       const packedRows=state.savedRows.filter(r=>r.st==='packed');
       if(!packedRows.length){showToast('لا توجد طلبات Packed!','warning');return}
@@ -690,11 +663,9 @@ javascript:(function(){
       }
     });
 
-    // ─── Sync ───
     document.getElementById('ali_btn_sync').addEventListener('click', async()=>{
       if (state.isSyncing || state.isProcessing) { showToast('المزامنة شغالة بالفعل — انتظر!', 'warning'); return; }
       const oldCount = state.savedRows.length;
-      const pages = parseInt(document.getElementById('p_lim').value) || 1; 
       
       const result = await showDialog({
         icon: '🔄', iconColor: 'blue', title: 'المزامنة الذكية', desc: 'سيتم جلب البيانات الحديثة بالخلفية وتحديث القائمة',
@@ -721,14 +692,12 @@ javascript:(function(){
     });
   }
 
-  // ─── Start Button ───
   document.getElementById('ali_start').addEventListener('click',function(){
     if (state.isProcessing) return;
     this.disabled = true;
     this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري الفحص...';
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
-    
     scanAllPages(false);
   });
 
