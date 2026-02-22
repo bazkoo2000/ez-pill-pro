@@ -9,7 +9,7 @@ javascript:(function(){
   const PANEL_ID = 'ali_sys_v3';
   const VERSION = '3.6';
   const VER_KEY = 'munhi_ver';
-  
+  
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
     return;
@@ -274,7 +274,7 @@ javascript:(function(){
           ${buildStatCard('✅','0','المنجز','#3b82f6','stat_done','linear-gradient(90deg,#3b82f6,#60a5fa)')}
           ${buildStatCard('📊','0','إجمالي','#8b5cf6','stat_total','linear-gradient(90deg,#8b5cf6,#a78bfa)')}
         </div>
-        
+        
         <div id="ali_settings_box" style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <span style="font-size:13px;font-weight:700;color:#475569">📄 صفحات الفحص</span>
@@ -288,17 +288,17 @@ javascript:(function(){
           </div>
           <div id="p-detail" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px;font-weight:600"></div>
         </div>
-        
+        
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">
           <span>✅</span><span>جاهز للبدء التلقائي</span>
         </div>
-        
+        
         <div id="ali_dynamic_area">
           <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">
             ⚡ بدء الفحص الذكي
           </button>
         </div>
-        
+        
         <div style="text-align:center;padding:12px 0 4px;font-size:11px;color:#cbd5e1;font-weight:600">بواسطة المطور: <span style="color:#3b82f6;font-weight:700">علي الباز</span></div>
       </div>
     </div>
@@ -411,9 +411,9 @@ javascript:(function(){
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
         });
-        
+        
         const data = await res.json();
-        
+        
         if (page === 1 && data.total_orders) {
           const exactTotal = parseInt(data.total_orders) || 0;
           if (exactTotal > 0) {
@@ -423,8 +423,8 @@ javascript:(function(){
         }
 
         let orders = [];
-        try { 
-          orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
+        try { 
+          orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
         } catch(e) {}
 
         if (!orders || orders.length === 0) {
@@ -443,7 +443,7 @@ javascript:(function(){
           const hId = item.head_id || '';
           const gName = item.guestName || '';
           const gMobile = item.guestMobile || item.mobile || '';
-          
+          
           if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
             state.visitedSet.add(inv);
 
@@ -464,9 +464,6 @@ javascript:(function(){
                 cells[1].innerText = onl;
                 cells[2].innerText = gName;
                 cells[3].innerText = gMobile;
-                if (cells.length > 6) {
-                  cells[6].innerText = st;
-                }
               }
             } else {
               clone = document.createElement('tr');
@@ -518,7 +515,7 @@ javascript:(function(){
   function finishScan(isSync) {
     state.isProcessing = false;
     state.isSyncing = false;
-    
+    
     const tables=document.querySelectorAll('table');
     let target=tables[0];
     if (target) {
@@ -528,9 +525,9 @@ javascript:(function(){
       const sorted=state.savedRows.filter(r=>['received','processed','packed'].includes(r.st)).concat(state.savedRows.filter(r=>!['received','processed','packed'].includes(r.st)));
       sorted.forEach(r=>tbody.appendChild(r.node));
     }
-    
+    
     const recCount=updateStats();
-    
+    
     if (isSync) {
       setStatus(`تمت المزامنة! — ${state.savedRows.length} طلب (${recCount} جاهز)`,'done');
       showToast(`تمت المزامنة: ${state.savedRows.length} طلب`, 'success');
@@ -554,17 +551,17 @@ javascript:(function(){
         </div>
         <div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:4px 0">عرض ${state.savedRows.length} من ${state.savedRows.length} نتيجة</div>
       </div>
-      
+      
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1d4ed8;font-weight:600;text-align:center">
         📊 تم جمع <strong>${state.savedRows.length}</strong> طلب
         ${state.scanLog.filter(e=>e.success===false).length > 0 ? ' — <span style="color:#dc2626">⚠️ بعض الصفحات لم تكتمل</span>' : ' — <span style="color:#059669">✅ فحص سليم</span>'}
       </div>
-      
+      
       <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:14px;font-weight:700;color:#475569">عدد الطلبات للتسليم:</span>
         <input type="number" id="ali_open_count" value="${recCount}" style="width:64px;padding:8px;border:2px solid #dc2626;border-radius:10px;text-align:center;font-size:18px;font-weight:900;color:#991b1b;background:white;outline:none;font-family:'Tajawal',sans-serif" onfocus="this.value=''">
       </div>
-      
+      
       <button id="ali_btn_deliver_silent" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:0 4px 15px rgba(220,38,38,0.3);transition:all 0.3s;margin-bottom:8px">
         🚀 تسليم صامت لـ Received
       </button>
@@ -603,7 +600,7 @@ javascript:(function(){
       const list = state.savedRows.filter(r => r.st === 'received');
       const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
       const toDeliver = list.slice(0, count);
-      
+      
       if(!toDeliver.length){ showToast('لا توجد طلبات Received جاهزة للتسليم!', 'warning'); return; }
 
       const res = await showDialog({
@@ -657,14 +654,14 @@ javascript:(function(){
         } catch(e) {
           failCount++;
         }
-        
+        
         updateStats();
         // تأخير بسيط جداً (200 ملي ثانية) لمنع حظر السيرفر للطلبات المتتالية
-        await sleep(200); 
+        await sleep(200); 
       }
 
       const elapsed = Math.round((Date.now() - state.startTime) / 1000);
-      
+      
       await showDialog({
         icon: '🎉', iconColor: 'green', title: 'تم التسليم الصاروخي!', desc: 'تم إرسال أوامر التسليم بنجاح.',
         info: [
@@ -697,8 +694,8 @@ javascript:(function(){
     document.getElementById('ali_btn_sync').addEventListener('click', async()=>{
       if (state.isSyncing || state.isProcessing) { showToast('المزامنة شغالة بالفعل — انتظر!', 'warning'); return; }
       const oldCount = state.savedRows.length;
-      const pages = parseInt(document.getElementById('p_lim').value) || 1; 
-      
+      const pages = parseInt(document.getElementById('p_lim').value) || 1; 
+      
       const result = await showDialog({
         icon: '🔄', iconColor: 'blue', title: 'المزامنة الذكية', desc: 'سيتم جلب البيانات الحديثة بالخلفية وتحديث القائمة',
         info: [
@@ -717,7 +714,7 @@ javascript:(function(){
       syncBtn.disabled = true;
       syncBtn.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة...';
       syncBtn.style.borderColor = '#3b82f6'; syncBtn.style.color = '#1d4ed8';
-      
+      
       showToast('جاري المزامنة مع صفحة Packed...', 'info');
       state.savedRows = []; state.visitedSet = new Set(); state.scanLog = [];
       scanAllPages(true);
@@ -731,7 +728,7 @@ javascript:(function(){
     this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري الفحص...';
     this.style.opacity = '0.7';
     this.style.cursor = 'not-allowed';
-    
+    
     scanAllPages(false);
   });
 
