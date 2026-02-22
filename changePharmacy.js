@@ -1,3 +1,7 @@
+// ═══════════════════════════════════════════════════════════════════
+// مدير النظام v6.0 - (محرك التطهير الشامل للبيانات وإعادة التشغيل)
+// ═══════════════════════════════════════════════════════════════════
+
 javascript:(function(){
   'use strict';
   const PANEL_ID = 'ali_store_changer';
@@ -27,13 +31,13 @@ javascript:(function(){
     { code: "2095", name: "السيره" }, { code: "3080", name: "الباز" }
   ];
 
-  // ─── وظيفة التصفير الشامل للبيانات (Simulating Delete Data) ───
-  function performFullDataReset() {
-    // 1. تصفير مخازن البيانات البرمجية
+  // ─── وظيفة التطهير الشامل والنهائي (Aggressive Data Purge) ───
+  async function performAggressiveReset() {
+    /* 1. مسح التخزين المحلي والجلسات */
     localStorage.clear();
     sessionStorage.clear();
 
-    // 2. تصفير كافة ملفات تعريف الارتباط (Cookies) على جميع المسارات
+    /* 2. تطهير ملفات تعريف الارتباط (Cookies) بكافة مستوياتها */
     const cookies = document.cookie.split(";");
     for (let i = 0; i < cookies.length; i++) {
         const cookie = cookies[i];
@@ -43,8 +47,32 @@ javascript:(function(){
         document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/ez_pill_web";
     }
 
-    // 3. إعادة تحميل الصفحة لسحب الجلسة الجديدة من السيرفر
-    window.location.reload();
+    /* 3. حذف كافة قواعد بيانات IndexedDB (المسؤولة عن حفظ الحالات العميقة) */
+    if (window.indexedDB && window.indexedDB.databases) {
+        try {
+            const dbs = await window.indexedDB.databases();
+            dbs.forEach(db => window.indexedDB.deleteDatabase(db.name));
+        } catch (e) {}
+    }
+
+    /* 4. إيقاف وإلغاء تسجيل الـ Service Workers */
+    if ('serviceWorker' in navigator) {
+        try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let reg of registrations) { await reg.unregister(); }
+        } catch (e) {}
+    }
+
+    /* 5. مسح التخزين المؤقت (Cache Storage) */
+    if (window.caches) {
+        try {
+            const cacheKeys = await caches.keys();
+            await Promise.all(cacheKeys.map(key => caches.delete(key)));
+        } catch (e) {}
+    }
+
+    /* 6. إعادة توجيه نظيفة للموقع لفرض استلام جلسة جديدة */
+    window.location.href = window.location.origin + "/ez_pill_web/";
   }
 
   let usersHTML = ''; USERS.forEach((u, i) => usersHTML += `<option value="${i}">${u.display}</option>`);
@@ -87,7 +115,7 @@ javascript:(function(){
           <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">⚙️ نوع بيئة العمل:</label>
           <select id="ali_new_format" class="ali-input-premium ali-select-premium"><option value="OCS" selected>OCS</option><option value="JSON">JSON</option></select>
         </div>
-        <button id="ali_save_store" style="width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;border-radius:16px;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(16,185,129,0.35);transition:all 0.3s;">🚀 تنفيذ التحديث والتصفير</button>
+        <button id="ali_save_store" style="width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;border-radius:16px;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(16,185,129,0.35);transition:all 0.3s;">🚀 تنفيذ التحديث والتطهير الشامل</button>
       </div>
     </div>
   `;
@@ -120,7 +148,7 @@ javascript:(function(){
     var storeCode = storeMatch ? storeMatch[0] : rawStoreValue;
 
     btn.disabled = true;
-    btn.innerHTML = '⏳ جاري الحفظ والتصفير...';
+    btn.innerHTML = '⏳ جاري الحفظ والتطهير...';
     btn.style.opacity = '0.9';
 
     try {
@@ -138,11 +166,11 @@ javascript:(function(){
       });
 
       if (res.ok) {
-        btn.innerHTML = '⚡ جاري تصفير البيانات...';
+        btn.innerHTML = '⚡ جاري تطهير البيانات بالكامل...';
         btn.style.background = 'linear-gradient(135deg, #1e40af, #3b82f6)';
         
-        // تنفيذ التصفير الشامل للمتصفح فوراً بعد نجاح الطلب
-        setTimeout(performFullDataReset, 1000); 
+        /* تنفيذ التطهير العنيف لضمان خروج كافة الجلسات المعلقة */
+        await performAggressiveReset(); 
       } else {
         throw new Error('Server Error');
       }
@@ -151,7 +179,7 @@ javascript:(function(){
       btn.style.background = 'linear-gradient(135deg, #dc2626, #ef4444)';
       setTimeout(function() { 
         btn.disabled = false; 
-        btn.innerHTML = '🚀 تنفيذ التحديث والتصفير'; 
+        btn.innerHTML = '🚀 تنفيذ التحديث والتطهير الشامل'; 
         btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'; 
       }, 2500);
     }
