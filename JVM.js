@@ -348,7 +348,7 @@ var _defaultFixedSizeCodes={
 };
 var _defaultWeeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
 var _defaultNormalTimes={empty:'08:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:00',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'14:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:00',bed:'22:00',defaultTime:'09:00'};
-var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00'};
+var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00',afterTarawih:'23:00'};
 
 /* Merge defaults with custom overrides */
 var fixedSizeCodes=(function(){var base={};for(var k in _defaultFixedSizeCodes)base[k]=_defaultFixedSizeCodes[k];if(customConfig.fixedSizeCodes){for(var k in customConfig.fixedSizeCodes)base[k]=customConfig.fixedSizeCodes[k];}if(customConfig.removedCodes){for(var i=0;i<customConfig.removedCodes.length;i++)delete base[customConfig.removedCodes[i]];}return base;})();
@@ -434,7 +434,9 @@ function ramadanMapNote(note){
   if(/صباح|الصباح|morning|am\b/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   /* Evening / مساء / bed / نوم → بعد السحور (مثل بعد العشاء) */
   if(/مساء|مسا|evening|eve|bed|sleep|نوم|النوم|hs\b/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
-  /* Noon / ظهر / Lunch / غداء → قبل الفطار (closest meaningful time) */
+  /* بعد الغداء / after lunch → بعد التراويح 23:00 */
+  if(/بعد.*غدا|بعد.*غداء|after.*lun|after.*lunch/i.test(note)) return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
+  /* Noon / ظهر / قبل الغداء → قبل الفطار */
   if(/ظهر|الظهر|noon|midday|غدا|غداء|الغدا|الغداء|lunch|lun/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* عصر / afternoon → قبل الفطار */
   if(/عصر|العصر|asr|afternoon/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
@@ -1267,7 +1269,8 @@ window._ezApplyRamadanSplit=function(daysLeft){
     /* هل صف رمضان؟ (فطار أو سحور) */
     var isRam=noteVal.indexOf('الفطار')>-1||noteVal.indexOf('السحور')>-1
               ||noteVal.indexOf('Iftar')>-1||noteVal.indexOf('Suhoor')>-1
-              ||noteVal.indexOf('After Iftar')>-1||noteVal.indexOf('Before Suhoor')>-1;
+              ||noteVal.indexOf('After Iftar')>-1||noteVal.indexOf('Before Suhoor')>-1
+              ||noteVal.indexOf('التراويح')>-1||noteVal.indexOf('Tarawih')>-1;
     rowsData.push({row:r,timeVal:timeVal,noteVal:noteVal,evryVal:evryVal,
                    sizeVal:sizeVal,qtyVal:qtyVal,isRam:isRam});
   });
@@ -1314,6 +1317,11 @@ window._ezApplyRamadanSplit=function(daysLeft){
       else if(origNote.indexOf('قبل السحور')>-1||origNote.indexOf('Before Suhoor')>-1){
         newNote=origNote.replace('⚡ ','').replace('⚡ قبل السحور','قبل العشاء').replace('قبل السحور','قبل العشاء').replace('Before Suhoor','Before Dinner');
         newTime=NORMAL_TIMES.beforeDinner||'20:00';
+      }
+      /* بعد التراويح → بعد الغداء 14:00 */
+      else if(origNote.indexOf('بعد التراويح')>-1||origNote.indexOf('After Tarawih')>-1){
+        newNote=origNote.replace('⚡ ','').replace('⚡ بعد التراويح','بعد الغداء').replace('بعد التراويح','بعد الغداء').replace('After Tarawih','After Lunch');
+        newTime=NORMAL_TIMES.afterLunch||'14:00';
       }
 
       /* نضبط النسخة العادية */
@@ -1443,7 +1451,8 @@ window.ezRamadanToNormal=function(){
     var tds=r.querySelectorAll('td');
     var noteVal=ni>=0&&tds[ni]?get(tds[ni]):'';
     var isRam=noteVal.indexOf('الفطار')>-1||noteVal.indexOf('السحور')>-1
-              ||noteVal.indexOf('Iftar')>-1||noteVal.indexOf('Suhoor')>-1;
+              ||noteVal.indexOf('Iftar')>-1||noteVal.indexOf('Suhoor')>-1
+              ||noteVal.indexOf('التراويح')>-1||noteVal.indexOf('Tarawih')>-1;
     if(isRam){
       /* حول الجرعة لجرعة عادية */
       var newNote=noteVal,newTime='09:00';
@@ -1459,6 +1468,9 @@ window.ezRamadanToNormal=function(){
       } else if(noteVal.indexOf('قبل السحور')>-1||noteVal.indexOf('Before Suhoor')>-1){
         newNote=noteVal.replace('⚡ قبل السحور','قبل العشاء').replace('قبل السحور','قبل العشاء').replace('Before Suhoor','Before Dinner');
         newTime=NORMAL_TIMES.beforeDinner||'20:00';
+      } else if(noteVal.indexOf('بعد التراويح')>-1||noteVal.indexOf('After Tarawih')>-1){
+        newNote=noteVal.replace('⚡ بعد التراويح','بعد الغداء').replace('بعد التراويح','بعد الغداء').replace('After Tarawih','After Lunch');
+        newTime=NORMAL_TIMES.afterLunch||'14:00';
       }
       /* حدّث الـ note والـ time والـ size وتواريخ */
       if(ni>=0&&tds[ni]){var nInp=tds[ni].querySelector('input,textarea');if(nInp){nInp.value=newNote;fire(nInp);}}
