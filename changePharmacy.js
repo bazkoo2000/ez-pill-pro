@@ -27,6 +27,26 @@ javascript:(function(){
     { code: "2095", name: "السيره" }, { code: "3080", name: "الباز" }
   ];
 
+  // ─── وظيفة التصفير الشامل للبيانات (Simulating Delete Data) ───
+  function performFullDataReset() {
+    // 1. تصفير مخازن البيانات البرمجية
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 2. تصفير كافة ملفات تعريف الارتباط (Cookies) على جميع المسارات
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/ez_pill_web";
+    }
+
+    // 3. إعادة تحميل الصفحة لسحب الجلسة الجديدة من السيرفر
+    window.location.reload();
+  }
+
   let usersHTML = ''; USERS.forEach((u, i) => usersHTML += `<option value="${i}">${u.display}</option>`);
   let pharmHTML = ''; PHARMACIES.forEach(p => pharmHTML += `<option value="${p.code} - ${p.name}">`);
 
@@ -67,7 +87,7 @@ javascript:(function(){
           <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#64748b;">⚙️ نوع بيئة العمل:</label>
           <select id="ali_new_format" class="ali-input-premium ali-select-premium"><option value="OCS" selected>OCS</option><option value="JSON">JSON</option></select>
         </div>
-        <button id="ali_save_store" style="width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;border-radius:16px;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(16,185,129,0.35);transition:all 0.3s;">🚀 تنفيذ التحديث</button>
+        <button id="ali_save_store" style="width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;border-radius:16px;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(16,185,129,0.35);transition:all 0.3s;">🚀 تنفيذ التحديث والتصفير</button>
       </div>
     </div>
   `;
@@ -100,7 +120,7 @@ javascript:(function(){
     var storeCode = storeMatch ? storeMatch[0] : rawStoreValue;
 
     btn.disabled = true;
-    btn.innerHTML = '⏳ جاري التحديث بالخلفية...';
+    btn.innerHTML = '⏳ جاري الحفظ والتصفير...';
     btn.style.opacity = '0.9';
 
     try {
@@ -118,9 +138,11 @@ javascript:(function(){
       });
 
       if (res.ok) {
-        btn.innerHTML = '✅ تم! أغلق المتصفح لإنهاء الجلسة';
+        btn.innerHTML = '⚡ جاري تصفير البيانات...';
         btn.style.background = 'linear-gradient(135deg, #1e40af, #3b82f6)';
-        sessionStorage.clear();
+        
+        // تنفيذ التصفير الشامل للمتصفح فوراً بعد نجاح الطلب
+        setTimeout(performFullDataReset, 1000); 
       } else {
         throw new Error('Server Error');
       }
@@ -129,7 +151,7 @@ javascript:(function(){
       btn.style.background = 'linear-gradient(135deg, #dc2626, #ef4444)';
       setTimeout(function() { 
         btn.disabled = false; 
-        btn.innerHTML = '🚀 تنفيذ التحديث'; 
+        btn.innerHTML = '🚀 تنفيذ التحديث والتصفير'; 
         btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'; 
       }, 2500);
     }
