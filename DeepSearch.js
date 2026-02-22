@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-// EZ-PILL PRO v5.5 - (دمج محرك المنهي مع محرك السرعة المتوازية)
+// EZ-PILL PRO v5.6 - (تصحيح الهيكل البصري + محرك البحث الأصلي)
 // ═══════════════════════════════════════════════════════════════════
 
 javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '5.5';
+  const VERSION = '5.6';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -72,6 +72,7 @@ javascript:(function(){
     #${PANEL_ID}.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer;background:linear-gradient(135deg,#1e3a5f,#0f2744)}
     #${PANEL_ID}.ali-minimized .ali-inner{display:none}
     #${PANEL_ID}.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    .fast-row { border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
   `;
   document.head.appendChild(styleEl);
 
@@ -87,7 +88,7 @@ javascript:(function(){
           </div>
           <h3 style="font-size:18px;font-weight:900;margin:0">مُنهي الطلبات الصاروخي</h3>
         </div>
-        <div style="text-align:right;margin-top:4px"><span style="background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v5.5 Hybrid Search</span></div>
+        <div style="text-align:right;margin-top:4px"><span style="background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v5.6 Strict Layout</span></div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
         <div id="ali_stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
@@ -119,7 +120,7 @@ javascript:(function(){
     state.savedRows = []; state.visitedSet.clear();
 
     const statusEl = document.getElementById('status-msg');
-    statusEl.innerHTML = `<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.6s linear infinite"></div><span>جاري السحب...</span>`;
+    statusEl.innerHTML = `<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.6s linear infinite"></div><span>جاري السحب المتوازي...</span>`;
 
     function processData(data) {
       let orders = []; try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
@@ -128,9 +129,24 @@ javascript:(function(){
         const inv = item.Invoice || ''; const onl = item.onlineNumber || '';
         if (inv.length > 3 && !state.visitedSet.has(inv)) {
           state.visitedSet.add(inv);
-          const row = document.createElement('tr');
-          row.innerHTML = `<td style="padding:10px 8px"><label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" onclick="getDetails('${onl}','${inv}','${item.source||'StorePaid'}','${item.head_id||''}');">${inv}</label></td><td style="padding:10px 8px">${onl}</td><td style="padding:10px 8px">${item.guestName || ''}</td><td style="padding:10px 8px">${item.guestMobile || item.mobile || ''}</td>`;
-          state.savedRows.push({ id: inv, onl: onl, node: row, args: [onl, inv, item.source||'StorePaid', item.head_id||''] });
+          
+          let rawSt = String(item.status || item.Status || item.order_status || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+          let st = rawSt.includes('packed') ? 'packed' : (rawSt.includes('received') ? 'received' : 'other');
+          let stColor = st === 'received' ? '#059669' : '#d97706';
+
+          state.savedRows.push({ 
+            id: inv, 
+            onl: onl, 
+            st: st, 
+            stColor: stColor,
+            guestName: item.guestName || '',
+            guestMobile: item.guestMobile || item.mobile || '',
+            payment: item.payment_method || 'Cash',
+            created: item.created_at || item.Created_Time || '',
+            delivery: item.delivery_time || '',
+            source: item.source || 'StorePaid',
+            args: [onl, inv, item.source||'StorePaid', item.head_id||''] 
+          });
         }
       });
     }
@@ -172,7 +188,23 @@ javascript:(function(){
       tbody.innerHTML = ''; let shown = 0; currentMatches = [];
       state.savedRows.forEach(r => {
         if ((v1!=='' && r.id.startsWith(v1)) || (v2!=='' && r.onl.toLowerCase().includes(v2)) || (v1==='' && v2==='')) {
-          tbody.appendChild(r.node); shown++; currentMatches.push(r);
+          const row = document.createElement('tr');
+          row.className = 'fast-row';
+          row.style.background = r.st === 'received' ? 'rgba(16,185,129,0.05)' : 'transparent';
+          
+          // 🟢 بناء الهيكل بـ 9 أعمدة لمطابقة النظام وحل التلوث البصري 🟢
+          row.innerHTML = `
+            <td style="padding:10px 8px"><label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" onclick="getDetails('${r.args[0]}','${r.args[1]}','${r.args[2]}','${r.args[3]}');">${r.id}</label></td>
+            <td style="padding:10px 8px">${r.onl}</td>
+            <td style="padding:10px 8px">${r.guestName}</td>
+            <td style="padding:10px 8px">${r.guestMobile}</td>
+            <td style="padding:10px 8px">${r.payment}</td>
+            <td style="padding:10px 8px">${r.created}</td>
+            <td style="padding:10px 8px">${r.delivery}</td>
+            <td style="padding:10px 8px; font-weight:900; color:${r.stColor}; text-transform:capitalize;">${r.st}</td>
+            <td style="padding:10px 8px">${r.source}</td>
+          `;
+          tbody.appendChild(row); shown++; currentMatches.push(r);
         }
       });
       document.getElementById('stat_match').innerText = shown;
