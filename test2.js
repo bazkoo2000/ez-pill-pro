@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// تقفيل الطلبات v3.7 - (التسليم الصامت الصاروخي بالخلفية) 🚀
+// تقفيل الطلبات v3.6 - (التسليم الصامت الصاروخي بالخلفية) 🚀
 // المطور الأصلي: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
@@ -39,7 +39,7 @@ javascript:(function(){
     const entry = { ts, msg, type };
     state.scanLog.push(entry);
     const prefix = { info: '📋', warn: '⚠️', error: '❌', success: '✅' }[type] || '📋';
-    console.log(`[مُنهي v3.7 ${ts}] ${prefix} ${msg}`);
+    console.log(`[مُنهي v3.6 ${ts}] ${prefix} ${msg}`);
   }
 
   // ─── Toast Notifications ───
@@ -264,7 +264,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">تقفيل الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.7 Silent API</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v3.6 Silent API</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
