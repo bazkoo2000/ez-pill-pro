@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-// إدارة الطلبات v5.1 - (إصدار تصحيح العرض والمطابقة البصرية)
+// إدارة الطلبات v5.2 - (إصدار استعادة وظائف التفاصيل والمطابقة)
 // ═══════════════════════════════════════════════════════════════════
 
 javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '5.1';
+  const VERSION = '5.2';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -101,7 +101,7 @@ javascript:(function(){
           <h3 style="font-size:20px;font-weight:900;margin:0">محرك الأداء الأقصى</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v5.1 Optimized</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v5.2 Interactive</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
@@ -127,7 +127,7 @@ javascript:(function(){
         </div>
         
         <div id="ali_dynamic_area">
-          <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">
+          <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);transition:all 0.3s">
             ⚡ بدء الاستعلام الصاروخي
           </button>
         </div>
@@ -208,9 +208,14 @@ javascript:(function(){
           let bgColor = st === 'received' ? 'rgba(16,185,129,0.05)' : (st === 'packed' ? 'rgba(245,158,11,0.05)' : 'transparent');
           let stColor = st === 'received' ? '#059669' : '#d97706';
 
-          // 🟢 تصحيح الهيكل بـ 8 أعمدة لمطابقة التصميم الأصلي ومنع ترحيل الحالة
+          // 🟢 استعادة دالة getDetails الأصلية بنفس التنسيق المطلوب لفتح النتائج
           let rowHTML = `<tr class="fast-row" id="row_${inv}" style="background:${bgColor}">
-              <td style="padding:12px 8px">${inv}</td>
+              <td style="padding:12px 8px">
+                <label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" 
+                       onclick="getDetails('${onl}','${inv}','${item.source || 'StorePaid'}','${item.head_id || ''}');">
+                    ${inv}
+                </label>
+              </td>
               <td style="padding:12px 8px">${onl}</td>
               <td style="padding:12px 8px">${item.guestName || ''}</td>
               <td style="padding:12px 8px">${item.guestMobile || item.mobile || ''}</td>
@@ -277,7 +282,7 @@ javascript:(function(){
     const dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML=`
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1d4ed8;font-weight:600;text-align:center">
-        تم إدراج <strong>${state.savedRows.length}</strong> سجل بمطابقة بصرية كاملة
+        تم تفعيل نقر رقم الفاتورة لفتح التفاصيل
       </div>
       <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:14px;font-weight:700;color:#475569">الطلبات الجاهزة للتسليم:</span>
