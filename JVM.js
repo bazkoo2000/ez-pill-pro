@@ -1008,6 +1008,15 @@ window.ezSubmit=function(){
     var showWarningsFlag=document.getElementById('show-warnings')?document.getElementById('show-warnings').checked:true;
     var showPostDialog=document.getElementById('show-post-dialog')?document.getElementById('show-post-dialog').checked:false;
     var ramadanMode=document.getElementById('ramadan-mode')?document.getElementById('ramadan-mode').checked:false;
+    /* Read and save ramadan days remaining */
+    if(ramadanMode){
+      var rmDaysInp=document.getElementById('ez-rm-days-left');
+      var rmDaysVal=rmDaysInp?parseInt(rmDaysInp.value)||15:15;
+      if(rmDaysVal<1)rmDaysVal=1;if(rmDaysVal>30)rmDaysVal=30;
+      window._rmDaysLeft=rmDaysVal;
+    } else {
+      window._rmDaysLeft=null;
+    }
     /* Save settings for next time */
     saveSettings({m:m,t:t,autoDuration:autoDuration,showWarnings:showWarningsFlag,ramadanMode:ramadanMode});
     d.remove();
@@ -1160,62 +1169,28 @@ window.ezNextMonth=function(){
    🌙 RAMADAN SPLIT - SHOW INPUT DIALOG
    ══════════════════════════════════════════ */
 window.ezRamadanSplit=function(){
-  /* حساب اليوم التالي من today كتقدير أولي */
-  var today=new Date();
-  var suggestedDay=today.getDate(); /* مجرد تقدير */
-
-  var overlay=document.createElement('div');
-  overlay.id='ez-ramadan-split-overlay';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.65);backdrop-filter:blur(10px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
-  overlay.innerHTML='<div style="background:#fff;border-radius:22px;width:360px;padding:28px 24px;box-shadow:0 30px 80px rgba(124,58,237,0.2);border:2px solid rgba(167,139,250,0.2);animation:ezWnSlideUp 0.35s cubic-bezier(0.16,1,0.3,1)">'
-    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'
-    +'<div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#a78bfa,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 20px rgba(124,58,237,0.3)">🌙</div>'
-    +'<div><div style="font-size:16px;font-weight:900;color:#1e1b4b">تقسيم رمضان</div><div style="font-size:11px;color:#94a3b8;font-weight:700">حدد اليوم الحالي من رمضان</div></div></div>'
-    +'<div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:14px;padding:16px;margin-bottom:16px">'
-    +'<label style="display:block;font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:8px">اليوم الحالي من رمضان (1-30):</label>'
-    +'<input type="number" id="ez-rm-day-input" min="1" max="30" value="'+suggestedDay+'" style="width:100%;padding:10px 14px;border:2px solid rgba(167,139,250,0.25);border-radius:10px;font-size:20px;font-weight:900;color:#1e1b4b;font-family:Cairo,sans-serif;outline:none;text-align:center;box-sizing:border-box" />'
-    +'<div style="font-size:10px;color:#94a3b8;margin-top:6px;text-align:center">مثال: لو اليوم 5 رمضان → فاضل 25 يوم رمضان</div>'
-    +'</div>'
-    +'<div id="ez-rm-preview" style="background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.1);border-radius:10px;padding:12px;margin-bottom:16px;font-size:11px;font-weight:700;color:#4338ca;line-height:1.8;direction:rtl"></div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<button id="ez-rm-confirm-btn" style="flex:1;height:44px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#7c3aed,#5b21b6);box-shadow:0 4px 16px rgba(124,58,237,0.25)">✅ تقسيم</button>'
-    +'<button onclick="document.getElementById(\'ez-ramadan-split-overlay\').remove()" style="height:44px;padding:0 18px;border:1.5px solid rgba(167,139,250,0.2);border-radius:12px;background:#fff;color:#7c3aed;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif">إلغاء</button>'
-    +'</div>'
-    +'</div>';
-  document.body.appendChild(overlay);
-
-  var inp=document.getElementById('ez-rm-day-input');
-  var preview=document.getElementById('ez-rm-preview');
-
-  function updatePreview(){
-    var dayNum=parseInt(inp.value)||0;
-    if(dayNum<1||dayNum>30){preview.textContent='❌ أدخل رقم بين 1 و 30';return;}
-    var ramLeft=30-dayNum+1; /* رمضان المتبقي شامل اليوم الحالي */
-    /* نحسب total days من الـ t_val المحفوظ */
-    var totalDays=window._ezLastTVal||30;
-    var normalDays=Math.max(0,totalDays-ramLeft);
-    var kgRam=Math.round(ramLeft/30*100);
-    preview.innerHTML='📅 <b>'+ramLeft+'</b> يوم جرعات رمضان<br>'
-      +'🔄 <b>'+normalDays+'</b> يوم جرعات عادية بعد رمضان<br>'
-      +'📦 إجمالي: <b>'+totalDays+'</b> يوم';
+  /* نستخدم القيمة المحفوظة من الدايلوج الرئيسي مباشرة */
+  var daysLeft=window._rmDaysLeft||null;
+  if(!daysLeft||daysLeft<1||daysLeft>30){
+    /* لو مش محفوظة، نسأل بسرعة */
+    var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
+    if(!v||v<1||v>30){window.ezShowToast('❌ رقم غير صحيح','error');return;}
+    daysLeft=v;
+    window._rmDaysLeft=daysLeft;
   }
-
-  inp.addEventListener('input',updatePreview);
-  updatePreview();
-  setTimeout(function(){inp.focus();inp.select();},100);
-
-  document.getElementById('ez-rm-confirm-btn').onclick=function(){
-    var dayNum=parseInt(inp.value)||0;
-    if(dayNum<1||dayNum>30){window.ezShowToast('❌ أدخل رقم صحيح بين 1 و 30','error');return;}
-    overlay.remove();
-    window._ezApplyRamadanSplit(dayNum);
-  };
+  var totalDays=window._ezLastTVal||30;
+  var ramLeft=Math.min(daysLeft,totalDays);
+  var normalDays=Math.max(0,totalDays-ramLeft);
+  var msg='🌙 تأكيد التقسيم:\n📅 '+ramLeft+' يوم جرعات رمضان\n🔄 '+normalDays+' يوم جرعات عادية بعد رمضان\n📦 إجمالي: '+totalDays+' يوم\n\nهل تريد المتابعة؟';
+  if(!confirm(msg)) return;
+  window._ezApplyRamadanSplit(daysLeft);
 };
 
 /* ══════════════════════════════════════════
    🌙 APPLY RAMADAN SPLIT
    ══════════════════════════════════════════ */
-window._ezApplyRamadanSplit=function(currentRamadanDay){
+window._ezApplyRamadanSplit=function(daysLeft){
+  /* daysLeft = عدد الأيام الباقية في رمضان (ما أدخله المستخدم) */
   var tb=_ezFindTable();
   if(!tb){window.ezShowToast('❌ لم يتم العثور على الجدول','error');return;}
 
@@ -1226,11 +1201,10 @@ window._ezApplyRamadanSplit=function(currentRamadanDay){
   var sdi=_ezIdx(hs,'start date');
   var fire=_ezFire,get=_ezGet;
 
-  /* حساب الأيام */
+  /* حساب الأيام: daysLeft = الأيام الباقية في رمضان */
   var totalDays=window._ezLastTVal||30;
-  var ramLeft=30-currentRamadanDay+1; /* رمضان المتبقي شامل اليوم الحالي */
-  if(ramLeft>totalDays) ramLeft=totalDays; /* لو المدة أقل من رمضان المتبقي */
-  var normalDays=totalDays-ramLeft;
+  var ramLeft=Math.min(daysLeft,totalDays); /* لو المدة أقل من رمضان المتبقي */
+  var normalDays=Math.max(0,totalDays-ramLeft);
 
   /* تاريخ البداية الحالي (من #fstartDate) */
   var sDateElem=document.querySelector('#fstartDate');
@@ -1307,9 +1281,7 @@ window._ezApplyRamadanSplit=function(currentRamadanDay){
     var tds=rd.row.querySelectorAll('td');
 
     if(rd.isRam){
-      /* صف رمضان: نحدث الـ size = ramLeft */
-      if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=ramLeft;fire(sInp);}}
-      /* نحدث end date = ramEndDate */
+      /* end date رمضان */
       if(ei>=0&&tds[ei]){var eInp=tds[ei].querySelector('input');if(eInp){eInp.value=ramEndDate;fire(eInp);}}
       lastRamRow=rd.row;
 
@@ -1348,8 +1320,38 @@ window._ezApplyRamadanSplit=function(currentRamadanDay){
       if(ni>=0&&ntds[ni]){var nInp=ntds[ni].querySelector('input,textarea');if(nInp){nInp.value=newNote;fire(nInp);}}
       if(ti>=0&&ntds[ti]){var tInp=ntds[ti].querySelector('input[type=\'time\']');if(tInp){tInp.value=newTime;fire(tInp);}}
       if(evi>=0&&ntds[evi]){var evInp=ntds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
-      /* size = normalDays */
-      if(si>=0&&ntds[si]){var snInp=ntds[si].querySelector('input,textarea');if(snInp){snInp.value=normalDays;fire(snInp);}}
+      /* حساب الـ size الصح:
+         - لو الـ size مرتبط بالأيام (عادي) → نقسم بالنسبة
+         - currentSize تم حسابه على أساس totalDays → نحسب للـ normalDays نسبياً */
+      var _curSizeVal=parseInt(rd.sizeVal)||0;
+      var _normalSizeVal;
+      if(_curSizeVal>0&&totalDays>0){
+        /* هل الـ size = totalDays (أي جرعة يومية 1 حبة)؟ */
+        if(_curSizeVal===totalDays){
+          _normalSizeVal=normalDays;
+        } else {
+          /* اقسم بالنسبة: normalSize = round(currentSize * normalDays / totalDays) */
+          _normalSizeVal=Math.round(_curSizeVal*normalDays/totalDays);
+          if(_normalSizeVal<1&&normalDays>0)_normalSizeVal=1;
+        }
+      } else {
+        _normalSizeVal=normalDays;
+      }
+      /* size رمضان بنفس المنطق */
+      var _ramSizeVal;
+      if(_curSizeVal>0&&totalDays>0){
+        if(_curSizeVal===totalDays){
+          _ramSizeVal=ramLeft;
+        } else {
+          _ramSizeVal=_curSizeVal-_normalSizeVal; /* الباقي لرمضان */
+          if(_ramSizeVal<1)_ramSizeVal=1;
+        }
+      } else {
+        _ramSizeVal=ramLeft;
+      }
+      /* تحديث الـ size في صف رمضان بالقيمة الصحيحة */
+      if(si>=0&&tds[si]){var sRamFix=tds[si].querySelector('input,textarea');if(sRamFix){sRamFix.value=_ramSizeVal;fire(sRamFix);}}
+      if(si>=0&&ntds[si]){var snInp=ntds[si].querySelector('input,textarea');if(snInp){snInp.value=_normalSizeVal;fire(snInp);}}
       /* start date = normalStartDate */
       if(sdi>=0&&ntds[sdi]){var sdInp=ntds[sdi].querySelector('input[type=\'date\']');if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
       /* end date = normalEndDate */
@@ -1393,15 +1395,102 @@ window.ezCancelRamadanSplit=function(){
   window._refreshPostDialogBtns();
 };
 
+/* ══════════════════════════════════════════
+   🔄 SKIP RAMADAN - إلغاء جرعات رمضان وتكملة بجرعات عادية
+   يلغي جرعات رمضان من الجدول ويحول الصفوف العادية للمدة الكاملة
+   ══════════════════════════════════════════ */
+window.ezRamadanToNormal=function(){
+  var tb=_ezFindTable();
+  if(!tb){window.ezShowToast('❌ لم يتم العثور على الجدول','error');return;}
+  var daysLeft=window._rmDaysLeft||null;
+  if(!daysLeft||daysLeft<1||daysLeft>30){
+    var v=parseInt(prompt('🌙 باقي كام يوم في رمضان كانت ستكون؟ (1-30)','15'));
+    if(!v||v<1||v>30){window.ezShowToast('❌ رقم غير صحيح','error');return;}
+    daysLeft=v;
+    window._rmDaysLeft=daysLeft;
+  }
+  if(!confirm('⚠️ هيلغي جرعات رمضان ويكمل باقي المدة ('+daysLeft+' يوم) بجرعات عادية\nهل تريد المتابعة؟')) return;
+
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var si=_ezIdx(hs,'size'),ei=_ezIdx(hs,'end date'),ti=_ezIdx(hs,'time');
+  var evi=_ezIdx(hs,'every');if(evi<0)evi=_ezIdx(hs,'evry');
+  var ni=_ezIdx(hs,'note'),qi=_ezIdx(hs,'qty');
+  var sdi=_ezIdx(hs,'start date');
+  var fire=_ezFire,get=_ezGet;
+
+  var totalDays=window._ezLastTVal||30;
+  var ramLeft=Math.min(daysLeft,totalDays);
+  var normalDays=Math.max(0,totalDays-ramLeft);
+
+  /* تاريخ البداية */
+  var sDateElem=document.querySelector('#fstartDate');
+  var startDateStr=sDateElem?sDateElem.value:'';
+  function addDays(dateStr,n){
+    var d=new Date(dateStr);d.setDate(d.getDate()+n);
+    var y=d.getFullYear(),m=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
+    return y+'-'+m+'-'+dd;
+  }
+  /* الجدول الجديد: الأصناف تبدأ من بعد رمضان بجرعات عادية */
+  var normalStartDate=addDays(startDateStr,ramLeft);
+  var normalEndDate=addDays(startDateStr,totalDays-1);
+
+  /* حفظ snapshot قبل التعديل */
+  if(!window._ramadanSplitSnapshot) window._ramadanSplitSnapshot=tb.innerHTML;
+
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+  var rowsToDelete=[];
+  rows.forEach(function(r){
+    var tds=r.querySelectorAll('td');
+    var noteVal=ni>=0&&tds[ni]?get(tds[ni]):'';
+    var isRam=noteVal.indexOf('الفطار')>-1||noteVal.indexOf('السحور')>-1
+              ||noteVal.indexOf('Iftar')>-1||noteVal.indexOf('Suhoor')>-1;
+    if(isRam){
+      /* حول الجرعة لجرعة عادية */
+      var newNote=noteVal,newTime='09:00';
+      if(noteVal.indexOf('بعد الفطار')>-1||noteVal.indexOf('After Iftar')>-1){
+        newNote=noteVal.replace('بعد الفطار','بعد الفطار').replace('After Iftar','After Breakfast');
+        newTime=NORMAL_TIMES.afterBreakfast||'09:00';
+      } else if(noteVal.indexOf('قبل الفطار')>-1||noteVal.indexOf('Before Iftar')>-1){
+        newNote=noteVal.replace('قبل الفطار','قبل الفطار').replace('Before Iftar','Before Breakfast');
+        newTime=NORMAL_TIMES.beforeBreakfast||'08:00';
+      } else if(noteVal.indexOf('بعد السحور')>-1||noteVal.indexOf('After Suhoor')>-1){
+        newNote=noteVal.replace('⚡ بعد السحور','بعد العشاء').replace('بعد السحور','بعد العشاء').replace('After Suhoor','After Dinner');
+        newTime=NORMAL_TIMES.afterDinner||'21:00';
+      } else if(noteVal.indexOf('قبل السحور')>-1||noteVal.indexOf('Before Suhoor')>-1){
+        newNote=noteVal.replace('⚡ قبل السحور','قبل العشاء').replace('قبل السحور','قبل العشاء').replace('Before Suhoor','Before Dinner');
+        newTime=NORMAL_TIMES.beforeDinner||'20:00';
+      }
+      /* حدّث الـ note والـ time والـ size وتواريخ */
+      if(ni>=0&&tds[ni]){var nInp=tds[ni].querySelector('input,textarea');if(nInp){nInp.value=newNote;fire(nInp);}}
+      if(ti>=0&&tds[ti]){var tInp=tds[ti].querySelector('input[type=\'time\']');if(tInp){tInp.value=newTime;fire(tInp);}}
+      if(evi>=0&&tds[evi]){var evInp=tds[evi].querySelector('input,select');if(evInp){evInp.value='24';fire(evInp);}}
+      if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=normalDays;fire(sInp);}}
+      if(sdi>=0&&tds[sdi]){var sdInp=tds[sdi].querySelector('input[type=\'date\']');if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
+      if(ei>=0&&tds[ei]){var eInp=tds[ei].querySelector('input');if(eInp){eInp.value=normalEndDate;fire(eInp);}}
+    } else {
+      /* صف عادي: يشتغل المدة كلها */
+      if(si>=0&&tds[si]){var sInp2=tds[si].querySelector('input,textarea');if(sInp2){sInp2.value=totalDays;fire(sInp2);}}
+      if(sdi>=0&&tds[sdi]){var sdInp2=tds[sdi].querySelector('input[type=\'date\']');if(sdInp2){sdInp2.value=startDateStr;fire(sdInp2);}}
+      if(ei>=0&&tds[ei]){var eInp2=tds[ei].querySelector('input');if(eInp2){eInp2.value=normalEndDate;fire(eInp2);}}
+    }
+  });
+
+  window._ramadanSplitDone=true;
+  window.ezShowToast('🔄 تم إلغاء رمضان - جرعات عادية للمدة الباقية ('+normalDays+' يوم) ✅','success');
+  ezBeep('success');
+  window._refreshPostDialogBtns();
+};
+
 /* تحديث أزرار الـ post dialog بعد التقسيم/الإلغاء */
 window._refreshPostDialogBtns=function(){
   var body=document.querySelector('#ez-post-dialog .ez-post-body');
   if(!body) return;
-  /* نحدث أزرار الرمضان فقط */
   var splitBtn=document.getElementById('ez-ramadan-split-btn');
   var cancelBtn=document.getElementById('ez-ramadan-cancel-btn');
+  var toNormalBtn=document.getElementById('ez-ramadan-tonormal-btn');
   if(window._ramadanSplitDone){
     if(splitBtn) splitBtn.style.display='none';
+    if(toNormalBtn) toNormalBtn.style.display='none';
     if(!cancelBtn){
       var cb=document.createElement('button');
       cb.id='ez-ramadan-cancel-btn';
@@ -1413,6 +1502,15 @@ window._refreshPostDialogBtns=function(){
   } else {
     if(cancelBtn) cancelBtn.style.display='none';
     if(splitBtn) splitBtn.style.display='';
+    /* زر الإلغاء والتكملة بجرعات عادية - يظهر دايماً في وضع رمضان */
+    if(!toNormalBtn&&window._ramadanMode){
+      var tn=document.createElement('button');
+      tn.id='ez-ramadan-tonormal-btn';
+      tn.onclick=window.ezRamadanToNormal;
+      tn.style.cssText='width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0';
+      tn.textContent='🔄 إلغاء رمضان وتكملة بجرعات عادية';
+      body.appendChild(tn);
+    }
   }
 };
 
@@ -1543,7 +1641,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'+(window._ramadanMode&&window._ramadanSplitDone?'<button id="ez-ramadan-cancel-btn" onclick="window.ezCancelRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#ef4444,#dc2626);box-shadow:0 4px 14px rgba(239,68,68,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء تقسيم رمضان</button>':'')+((window._ramadanMode&&duplicatedCount>0&&!window._ramadanSplitDone)?'<button id="ez-ramadan-split-btn" onclick="window.ezRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#a78bfa,#7c3aed);box-shadow:0 4px 14px rgba(124,58,237,0.2);transition:all 0.3s;margin:4px 0">🌙 تقسيم رمضان + باقي المدة</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'+(window._ramadanMode&&window._ramadanSplitDone?'<button id="ez-ramadan-cancel-btn" onclick="window.ezCancelRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#ef4444,#dc2626);box-shadow:0 4px 14px rgba(239,68,68,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء تقسيم رمضان</button>':'')+((window._ramadanMode&&duplicatedCount>0&&!window._ramadanSplitDone)?'<button id="ez-ramadan-split-btn" onclick="window.ezRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#a78bfa,#7c3aed);box-shadow:0 4px 14px rgba(124,58,237,0.2);transition:all 0.3s;margin:4px 0">🌙 تقسيم رمضان + باقي المدة</button>':'')+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">🔄 إلغاء رمضان وتكملة بجرعات عادية</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -3199,7 +3297,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'+(window._ramadanMode&&window._ramadanSplitDone?'<button id="ez-ramadan-cancel-btn" onclick="window.ezCancelRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#ef4444,#dc2626);box-shadow:0 4px 14px rgba(239,68,68,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء تقسيم رمضان</button>':'')+((window._ramadanMode&&duplicatedCount>0&&!window._ramadanSplitDone)?'<button id="ez-ramadan-split-btn" onclick="window.ezRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#a78bfa,#7c3aed);box-shadow:0 4px 14px rgba(124,58,237,0.2);transition:all 0.3s;margin:4px 0">🌙 تقسيم رمضان + باقي المدة</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL JVM · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'+(window._ramadanMode&&window._ramadanSplitDone?'<button id="ez-ramadan-cancel-btn" onclick="window.ezCancelRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#ef4444,#dc2626);box-shadow:0 4px 14px rgba(239,68,68,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء تقسيم رمضان</button>':'')+((window._ramadanMode&&duplicatedCount>0&&!window._ramadanSplitDone)?'<button id="ez-ramadan-split-btn" onclick="window.ezRamadanSplit()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#a78bfa,#7c3aed);box-shadow:0 4px 14px rgba(124,58,237,0.2);transition:all 0.3s;margin:4px 0">🌙 تقسيم رمضان + باقي المدة</button>':'')+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">🔄 إلغاء رمضان وتكملة بجرعات عادية</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL JVM · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -4827,11 +4925,16 @@ d_box.innerHTML='\
     <span class="ez-toggle-text">خيارات إضافية'+(hasDuplicateNotes?' <span class="auto-tag">تقسيم مكتشف</span>':'')+'</span>\
     <span class="ez-toggle-icon">⚙️</span>\
   </label>\
-  <label class="ez-toggle-row ez-ramadan-toggle '+(_rm?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){var ch=t.querySelector(\'input\').checked;t.classList.toggle(\'ez-tog-on\',ch);var badge=document.getElementById(\'ez-ramadan-badge\');if(badge)badge.style.display=ch?\'flex\':\'none\';},10)">\
+  <label class="ez-toggle-row ez-ramadan-toggle '+(_rm?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){var ch=t.querySelector(\'input\').checked;t.classList.toggle(\'ez-tog-on\',ch);var badge=document.getElementById(\'ez-ramadan-badge\');if(badge)badge.style.display=ch?\'flex\':\'none\';var rmBox=document.getElementById(\'ez-rm-days-box\');if(rmBox)rmBox.style.display=ch?\'block\':\'none\';},10)">\
     <div class="ez-switch"><input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+'><div class="ez-switch-track ez-ramadan-track"></div><div class="ez-switch-knob"></div></div>\
     <span class="ez-toggle-text">جرعات شهر رمضان</span>\
     <span class="ez-toggle-icon">🌙</span>\
   </label>\
+  <div id="ez-rm-days-box" style="display:'+(_rm?"block":"none")+';background:rgba(167,139,250,0.07);border:1.5px solid rgba(167,139,250,0.2);border-radius:12px;padding:12px 14px;margin:4px 0 2px">\
+    <div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:7px;direction:rtl">&#x1F319; &#x628;&#x627;&#x642;&#x64A; &#x643;&#x627;&#x645; &#x64A;&#x648;&#x645; &#x641;&#x64A; &#x631;&#x645;&#x636;&#x627;&#x646;&#x61F;</div>\
+    <input type="number" id="ez-rm-days-left" min="1" max="30" value="15" style="width:100%;padding:8px 12px;border:2px solid rgba(167,139,250,0.3);border-radius:9px;font-size:18px;font-weight:900;color:#1e1b4b;font-family:Cairo,sans-serif;outline:none;text-align:center;box-sizing:border-box" />\
+    <div id="ez-rm-days-preview" style="font-size:10px;font-weight:700;color:#6d28d9;margin-top:5px;text-align:center;direction:rtl">&#x2705; 15 &#x64A;&#x648;&#x645; &#x641;&#x627;&#x62A; + 15 &#x64A;&#x648;&#x645; &#x628;&#x627;&#x642;&#x64A; = 30 &#x64A;&#x648;&#x645;</div>\
+  </div>\
   <div class="ez-actions">\
     <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
     <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
@@ -4851,6 +4954,18 @@ document.addEventListener('keydown',function(e){
 });
 
 makeDraggable(d_box);
+/* إضافة حدث input لحقل أيام رمضان */
+(function(){
+  var rmInp=document.getElementById('ez-rm-days-left');
+  var rmPrev=document.getElementById('ez-rm-days-preview');
+  if(rmInp&&rmPrev){
+    rmInp.addEventListener('input',function(){
+      var v=parseInt(this.value)||0;
+      if(v>0&&v<=30)rmPrev.textContent='✅ '+(30-v)+' يوم فات + '+v+' يوم باقي = 30 يوم';
+      else rmPrev.textContent='❌ أدخل رقم بين 1 و 30';
+    });
+  }
+})();
 beautifyPage();
 showWhatsNew();
 
