@@ -208,17 +208,40 @@ javascript:(function(){
       if (res.ok) {
         btn.innerHTML = '✅ تم — جاري إعادة التشغيل...';
         btn.style.background = 'linear-gradient(135deg,#1e40af,#3b82f6)';
-        toast('تم التحديث ✔ — إعادة تحميل تلقائية خلال ثانيتين', 'success');
+        toast('تم التحديث ✔ — جاري تسجيل الخروج وإعادة الدخول...', 'success');
 
-        setTimeout(function() {
+        setTimeout(async function() {
+          // 1. مسح الـ storage المحلي
           try { sessionStorage.clear(); } catch(e) {}
           try { localStorage.clear();   } catch(e) {}
+
+          // 2. مسح الـ cookies
           document.cookie.split(';').forEach(function(c) {
             const key = c.trim().split('=')[0];
-            if (key) document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/';
+            if (key) {
+              document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/';
+              document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/ez_pill_web/';
+            }
           });
-          // Hard reload يتجاوز الـ cache
-          window.location.href = window.location.origin + window.location.pathname + '?_r=' + Date.now();
+
+          // 3. logout من السيرفر عشان يمسح الـ session من جهته
+          try {
+            await fetch(window.location.origin + '/ez_pill_web/Home/logout', {
+              method: 'POST',
+              credentials: 'include'
+            });
+          } catch(e) {
+            // لو الـ logout endpoint مختلف نجرب الـ GET
+            try {
+              await fetch(window.location.origin + '/ez_pill_web/logout', {
+                method: 'GET',
+                credentials: 'include'
+              });
+            } catch(e2) {}
+          }
+
+          // 4. توجيه لصفحة Login مباشرة بدل reload
+          window.location.href = window.location.origin + '/ez_pill_web/Home/login?_r=' + Date.now();
         }, 2000);
 
       } else {
