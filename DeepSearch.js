@@ -131,6 +131,8 @@ javascript:(function(){
         if (inv.length >= 5 && !state.visitedSet.has(inv)) {
           state.visitedSet.add(inv);
           let cleanedOnl = onl.replace(/ERX/gi, '');
+
+          // 🟢 تم الالتزام بالمفاتيح الحرفية كما في الـ HTML المرسل 🟢
           let createdTime = item['Created Time'] || item.Created_Time || item.created_at || '';
           let deliveryTime = item['Delviery Time'] || item.delviery_time || item.delivery_time || '';
           
