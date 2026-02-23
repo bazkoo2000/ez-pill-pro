@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='137.1';
+var APP_VERSION='137.2';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -930,6 +930,7 @@ window.showWarnings=function(warnings,callback){
   html+='</div>';
   html+='<div style="padding:10px 18px 14px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
   html+='<button onclick="window.closeWarnings()" style="flex:1;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 14px rgba(99,102,241,0.2);transition:all 0.3s">✅ تم المراجعة - متابعة</button>';
+  html+='<button onclick="window.skipAllWarnings()" style="height:42px;padding:0 16px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#ef4444;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.2);transition:all 0.3s">⏭️ تجاهل الكل</button>';
   html+='</div></div>';
 
   var overlay=document.createElement('div');
@@ -993,7 +994,19 @@ window.applyWarning=function(idx){
 };
 
 window.skipWarning=function(idx){
+  var w=warningQueue[idx];
   var card=document.getElementById('warn-card-'+idx);
+  /* Undo any applied overrides for this warning */
+  if(w&&w.rowIndex!=null&&window._ezRows){
+    var rd=window._ezRows[w.rowIndex];
+    if(rd){
+      if(w.type==='dose2') rd.forceDose2=false;
+      if(w.type==='days'){rd.calculatedDays=window._ezLastTVal;rd.calculatedSize=window._ezLastTVal;rd.warningOverride=false;}
+      if(w.type==='unrecognized_dose'){rd.unrecognizedEvery=null;rd.unrecognizedTime=null;rd.unrecognizedSize=null;rd.warningOverride=false;}
+      if(w.type==='ramadan_unclear'){rd.ramadanOverrideEvery=null;rd.ramadanOverrideTime=null;}
+    }
+  }
+  w._skipped=true;
   if(card){
     card.style.cssText='background:rgba(148,163,184,0.03)!important;border:1.5px solid rgba(148,163,184,0.1)!important;border-radius:14px;padding:14px 16px;margin-bottom:10px;opacity:0.4';
     var btns=card.querySelectorAll('button');
@@ -1003,6 +1016,26 @@ window.skipWarning=function(idx){
     badge.textContent='⏭️ تم التجاهل';
     card.appendChild(badge);
   }
+};
+
+window.skipAllWarnings=function(){
+  /* Undo ALL applied overrides then close immediately */
+  for(var i=0;i<warningQueue.length;i++){
+    var w=warningQueue[i];
+    w._skipped=true;
+    if(w&&w.rowIndex!=null&&window._ezRows){
+      var rd=window._ezRows[w.rowIndex];
+      if(rd){
+        if(w.type==='dose2') rd.forceDose2=false;
+        if(w.type==='days'){rd.calculatedDays=window._ezLastTVal;rd.calculatedSize=window._ezLastTVal;rd.warningOverride=false;}
+        if(w.type==='unrecognized_dose'){rd.unrecognizedEvery=null;rd.unrecognizedTime=null;rd.unrecognizedSize=null;rd.warningOverride=false;}
+        if(w.type==='ramadan_unclear'){rd.ramadanOverrideEvery=null;rd.ramadanOverrideTime=null;}
+      }
+    }
+  }
+  var overlay=document.getElementById('warning-overlay');
+  if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
 };
 
 window.closeWarnings=function(){
@@ -2246,7 +2279,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
     }
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
-    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
+    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){if(!enableWarnings||durationInfo.days===t){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else{calculatedDays=t;calculatedSize=t;}}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
     allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
     /* Detect dose=2 patterns AFTER push so rowIndex is correct */
