@@ -52,28 +52,6 @@ javascript:(function(){
     }, 3500);
   }
 
-  function showDialog({ icon, iconColor, title, desc, info, buttons }) {
-    return new Promise((resolve) => {
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.2s';
-      const iconBg = { blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)', green:'linear-gradient(135deg,#dcfce7,#bbf7d0)', amber:'linear-gradient(135deg,#fef3c7,#fde68a)', red:'linear-gradient(135deg,#fee2e2,#fecaca)' };
-      let infoHTML = '';
-      if (info && info.length) {
-        infoHTML = info.map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">${r.label}</span><span style="font-weight:800;color:${r.color||'#1e293b'};font-size:12px">${r.value}</span></div>`).join('');
-      }
-      let buttonsHTML = '';
-      if (buttons && buttons.length) {
-        buttonsHTML = buttons.map((btn, idx) => `<button data-idx="${idx}" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;${btn.style||'background:#f1f5f9;color:#475569'};transition:all 0.2s">${btn.text}</button>`).join('');
-      }
-      overlay.innerHTML = `<div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:${iconBg[iconColor]||iconBg.blue}">${icon}</div><div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">${title}</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">${desc}</div></div><div style="padding:20px 24px">${infoHTML}</div><div style="padding:16px 24px 24px;display:flex;gap:10px">${buttonsHTML}</div></div>`;
-      overlay.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-idx]');
-        if (btn) { const idx = parseInt(btn.getAttribute('data-idx')); overlay.remove(); resolve({ action: buttons[idx].value }); }
-      });
-      document.body.appendChild(overlay);
-    });
-  }
-
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
     @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}
@@ -109,7 +87,7 @@ javascript:(function(){
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
         <div id="ali_stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
-          ${buildStatCard('📥','0','Accepted','#10b981','stat_rec','linear-gradient(90deg,#10b981,#34d399)')}
+          ${buildStatCard('📥','0','Ready','#10b981','stat_rec','linear-gradient(90deg,#10b981,#34d399)')}
           ${buildStatCard('🚀','0','تم فتحه','#3b82f6','stat_opened','linear-gradient(90deg,#3b82f6,#60a5fa)')}
           ${buildStatCard('📊','0','إجمالي','#8b5cf6','stat_total','linear-gradient(90deg,#8b5cf6,#a78bfa)')}
         </div>
@@ -129,7 +107,7 @@ javascript:(function(){
         </div>
         
         <div id="ali_dynamic_area">
-          <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);transition:all 0.3s">
+          <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);transition:all 0.3s">
             بدء عملية البحث والاستعلام
           </button>
         </div>
@@ -161,7 +139,7 @@ javascript:(function(){
 
   function updateStats(matchCount) {
     let acc=0;
-    state.savedRows.forEach(r => { if(r.st==='accepted') acc++; });
+    state.savedRows.forEach(r => { if(r.st==='readypack') acc++; });
     document.getElementById('stat_rec').innerText = matchCount !== undefined ? matchCount : acc;
     document.getElementById('stat_total').innerText = state.savedRows.length;
     document.getElementById('stat_opened').innerText = state.openedCount;
@@ -175,14 +153,13 @@ javascript:(function(){
     state.isProcessing = true;
     const fill = document.getElementById('p-fill');
     const baseUrl = window.location.origin + "/ez_pill_web/";
-    const currentStatus = 'accepted'; 
+    const currentStatus = 'readypack'; 
 
     setStatus(isSync ? 'جاري مزامنة البيانات...' : 'جاري الاتصال بقاعدة البيانات...', 'working');
 
     let maxPages = parseInt(document.getElementById('p_lim').value) || 1;
     state.savedRows = [];
     state.visitedSet.clear();
-    state.htmlBuffer = ''; 
 
     function processData(data) {
       let orders = [];
@@ -196,23 +173,17 @@ javascript:(function(){
         
         if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
           state.visitedSet.add(inv);
-
-          let st = 'other';
-          let rawStatus = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
-          if(rawStatus.includes('accepted')) st = 'accepted';
-          else if(rawStatus.includes('packed')) st = 'packed';
-
-          let bgColor = st === 'accepted' ? 'rgba(59,130,246,0.05)' : (st === 'packed' ? 'rgba(245,158,11,0.05)' : 'transparent');
-
+          let st = 'readypack';
+          const cleanedOnl = onl.replace(/ERX/gi, '');
           const tr = document.createElement('tr');
           tr.className = "fast-row";
           tr.id = `row_${inv}`;
-          tr.style.background = bgColor;
+          tr.style.background = 'rgba(59,130,246,0.05)';
           
           tr.innerHTML = `
               <td style="padding:12px 8px">
                 <label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" 
-                       onclick="getDetails('${onl}','${inv}','${item.source || item.typee || 'StorePaid'}','${item.head_id || ''}');">
+                       onclick="getDetails('${cleanedOnl}','${inv}','${item.source || item.typee || 'StorePaid'}','${item.head_id || ''}');">
                     ${inv}
                 </label>
               </td>
@@ -222,10 +193,10 @@ javascript:(function(){
               <td style="padding:12px 8px">${item.payment_method || 'Cash'}</td>
               <td style="padding:12px 8px">${item.created_at || item.Created_Time || ''}</td>
               <td style="padding:12px 8px">${item.delviery_time || item.delivery_time || ''}</td>
-              <td id="st_${inv}" style="padding:12px 8px;">${st}</td>
+              <td id="st_${inv}" style="padding:12px 8px;">Accepted</td>
               <td style="padding:12px 8px">${item.source || 'StorePaid'}</td>`;
 
-          state.savedRows.push({ id: inv, onl: onl, st: st, node: tr, args: [onl, inv, (item.source || item.typee || 'StorePaid'), (item.head_id || '')] });
+          state.savedRows.push({ id: inv, onl: onl, st: st, node: tr, args: [cleanedOnl, inv, (item.source || item.typee || 'StorePaid'), (item.head_id || '')] });
         }
       }
     }
@@ -260,7 +231,6 @@ javascript:(function(){
     let target = tables[0];
     for(const t of tables) if(t.innerText.length>target.innerText.length) target=t;
     state.tbody = target.querySelector('tbody') || target;
-    
     state.tbody.innerHTML = '';
     state.savedRows.forEach(r => state.tbody.appendChild(r.node));
 
@@ -317,23 +287,13 @@ javascript:(function(){
       updateStats(shown);
       openBtn.innerHTML = hasFilter ? `⚡ فتح المطابق (${currentMatches.length} طلب)` : '⚡ ابحث أولاً ثم افتح المطابق';
       openBtn.style.opacity = (hasFilter && currentMatches.length > 0) ? '1' : '0.6';
-      
-      [sI, sO].forEach(el => {
-        if (el.value.length > 0) {
-          el.style.borderColor = shown === 0 ? '#ef4444' : '#10b981';
-          el.style.background = shown === 0 ? '#fef2f2' : '#f0fdf4';
-        } else { el.style.borderColor = '#e2e8f0'; el.style.background = '#f8fafc'; }
-      });
     }
 
     sI.addEventListener('input', debounce(filterResults, 150));
     sO.addEventListener('input', debounce(filterResults, 150));
 
     openBtn.addEventListener('click', async () => {
-      if (!currentMatches.length) { 
-        showToast('يرجى إدخال بيانات البحث أولاً!', 'warning'); 
-        sI.focus(); sI.style.animation = 'aliBlink 0.5s 3'; return; 
-      }
+      if (!currentMatches.length) { showToast('يرجى إدخال بيانات البحث أولاً!', 'warning'); return; }
       openBtn.disabled = true;
       for (let i = 0; i < currentMatches.length; i++) {
         const item = currentMatches[i];
@@ -355,7 +315,7 @@ javascript:(function(){
   document.getElementById('ali_start').addEventListener('click', function(){
     if (state.isProcessing) return;
     this.disabled = true;
-    this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري المعالجة...';
+    this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري فحص البيانات...';
     scanAllPages(false);
   });
 
