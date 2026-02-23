@@ -175,6 +175,11 @@ javascript:(function(){
           state.visitedSet.add(inv);
           let st = 'readypack';
           const cleanedOnl = onl.replace(/ERX/gi, '');
+
+          // 🟢 تحسين استخراج الوقت بجميع الاحتمالات الممكنة لضمان الظهور 🟢
+          const createdTime = item.created_at || item.Created_Time || item.created_time || item.CreatedTime || '';
+          const deliveryTime = item.delviery_time || item.delivery_time || item.DelvieryTime || item.DeliveryTime || '';
+
           const tr = document.createElement('tr');
           tr.className = "fast-row";
           tr.id = `row_${inv}`;
@@ -191,8 +196,8 @@ javascript:(function(){
               <td style="padding:12px 8px">${item.guestName || ''}</td>
               <td style="padding:12px 8px">${item.guestMobile || item.mobile || ''}</td>
               <td style="padding:12px 8px">${item.payment_method || 'Cash'}</td>
-              <td style="padding:12px 8px">${item.created_at || item.Created_Time || ''}</td>
-              <td style="padding:12px 8px">${item.delviery_time || item.delivery_time || ''}</td>
+              <td style="padding:12px 8px">${createdTime}</td>
+              <td style="padding:12px 8px">${deliveryTime}</td>
               <td id="st_${inv}" style="padding:12px 8px;">Accepted</td>
               <td style="padding:12px 8px">${item.source || 'StorePaid'}</td>`;
 
