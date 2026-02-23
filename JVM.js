@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='137.1';
+var APP_VERSION='137.3';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -933,6 +933,7 @@ window.showWarnings=function(warnings,callback){
   html+='</div>';
   html+='<div style="padding:10px 18px 14px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
   html+='<button onclick="window.closeWarnings()" style="flex:1;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 14px rgba(99,102,241,0.2);transition:all 0.3s">✅ تم المراجعة - متابعة</button>';
+  html+='<button onclick="window.skipAllWarnings()" style="height:42px;padding:0 16px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#ef4444;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.2);transition:all 0.3s">⏭️ تجاهل الكل</button>';
   html+='</div></div>';
 
   var overlay=document.createElement('div');
@@ -996,7 +997,19 @@ window.applyWarning=function(idx){
 };
 
 window.skipWarning=function(idx){
+  var w=warningQueue[idx];
   var card=document.getElementById('warn-card-'+idx);
+  /* Undo any applied overrides for this warning */
+  if(w&&w.rowIndex!=null&&window._ezRows){
+    var rd=window._ezRows[w.rowIndex];
+    if(rd){
+      if(w.type==='dose2') rd.forceDose2=false;
+      if(w.type==='days'){rd.calculatedDays=window._ezLastTVal;rd.calculatedSize=window._ezLastTVal;rd.warningOverride=false;}
+      if(w.type==='unrecognized_dose'){rd.unrecognizedEvery=null;rd.unrecognizedTime=null;rd.unrecognizedSize=null;rd.warningOverride=false;}
+      if(w.type==='ramadan_unclear'){rd.ramadanOverrideEvery=null;rd.ramadanOverrideTime=null;}
+    }
+  }
+  w._skipped=true;
   if(card){
     card.style.cssText='background:rgba(148,163,184,0.03)!important;border:1.5px solid rgba(148,163,184,0.1)!important;border-radius:14px;padding:14px 16px;margin-bottom:10px;opacity:0.4';
     var btns=card.querySelectorAll('button');
@@ -1006,6 +1019,26 @@ window.skipWarning=function(idx){
     badge.textContent='⏭️ تم التجاهل';
     card.appendChild(badge);
   }
+};
+
+window.skipAllWarnings=function(){
+  /* Undo ALL applied overrides then close immediately */
+  for(var i=0;i<warningQueue.length;i++){
+    var w=warningQueue[i];
+    w._skipped=true;
+    if(w&&w.rowIndex!=null&&window._ezRows){
+      var rd=window._ezRows[w.rowIndex];
+      if(rd){
+        if(w.type==='dose2') rd.forceDose2=false;
+        if(w.type==='days'){rd.calculatedDays=window._ezLastTVal;rd.calculatedSize=window._ezLastTVal;rd.warningOverride=false;}
+        if(w.type==='unrecognized_dose'){rd.unrecognizedEvery=null;rd.unrecognizedTime=null;rd.unrecognizedSize=null;rd.warningOverride=false;}
+        if(w.type==='ramadan_unclear'){rd.ramadanOverrideEvery=null;rd.ramadanOverrideTime=null;}
+      }
+    }
+  }
+  var overlay=document.getElementById('warning-overlay');
+  if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
 };
 
 window.closeWarnings=function(){
@@ -1866,9 +1899,10 @@ function smartDoseRecognizer(note){
   res.language=detectLanguage(raw);
 
   /* ── Step 1: Detect meal/time keywords ── */
-  res.hasB=/\b(bre|breakfast|fatur|ftor)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار/i.test(s);
+  /* In non-Ramadan mode: سحور = عشاء (dinner), فطار/افطار = فطار (breakfast) */
+  res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار/i.test(s);
   res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء/i.test(s);
-  res.hasD=/\b(din|dinner|sup|supper|asha|isha)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا/i.test(s);
+  res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|سحور|السحور|سحر/i.test(s);
   res.hasM=/\b(morning|am|morn|a\.m)\b|صباح|الصباح|صبح/i.test(s);
   res.hasN=/\b(noon|midday)\b|ظهر|الظهر/i.test(s);
   res.hasA=/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/i.test(s);
@@ -1952,7 +1986,7 @@ function getTimeFromWords(w){
   /* قبل الاكل المبهمة → 08:00 (قبل الفطار) */
   if(/قبل\s*(الاكل|الأكل|الوجبه?)\b|before\s*(meal|food)\b|\bac\b/i.test(s))return{time:'08:00'};
   
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:00'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'}];
+  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:00'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -2262,7 +2296,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
     }
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
-    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
+    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){if(!enableWarnings||durationInfo.days===t){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else{calculatedDays=t;calculatedSize=t;}}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
     allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
     /* Detect dose=2 patterns AFTER push so rowIndex is correct */
