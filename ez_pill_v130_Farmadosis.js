@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.9';
+var APP_VERSION='136.10';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.10':{
+    title:'3 إصلاحات: التراويح + ترتيب الدمج + تنبيه البوكسات ✅',
+    features:[
+      {icon:'🌙',text:'إصلاح: "بعد الغداء" بتتحول لـ "بعد التراويح" صح - تحركنا الـ check قبل أي قواعد مخصصة'},
+      {icon:'🔄',text:'إصلاح: دمج الجرعات مرتين بيعمل "بعد الفطار والعشاء" صح - الترتيب بالوقت (09:00 قبل 21:00)'},
+      {icon:'📦',text:'إصلاح: تنبيه "3 بوكسات" بيشتغل لأي عدد بوكسات في الملاحظات'},
+      {icon:'📝',text:'أمثلة: "ترتيب على 3 بوكسات" / "في 2 بوكس" / "ثلاث بوكسات" كلها بتطلع التنبيه'}
+    ]
+  },
   '136.9':{
     title:'رمضان: qty=1 أثناء رمضان + دمج النوتات بعد الإلغاء ✅',
     features:[
@@ -382,6 +391,11 @@ var RAMADAN_TIMES=(function(){var base={};for(var k in _defaultRamadanTimes)base
 /* Map normal meal words to Ramadan equivalents */
 function ramadanMapNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
+
+  /* ── PRIORITY: بعد الغداء / after lunch → بعد التراويح - يجب التحقق أولاً قبل أي قواعد مخصصة ── */
+  /* هذا الـ check لازم يكون قبل customTimeRules لأنها بتلتقط "الغداء" وتحوله لـ 14:00 وبيضيع */
+  if(/بعد.*غدا|بعد.*غداء|after.*lun|after.*lunch/i.test(note))
+    return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
 
   /* ── Check custom Ramadan keywords FIRST ── */
   if(customConfig.customRamadanRules){
@@ -1569,7 +1583,20 @@ window.ezRamadanToNormal=function(){
     Object.keys(groups).forEach(function(code){
       var g=groups[code];
       if(g.length<2) return;
-      /* أخذ أول صف كـ master */
+
+      /* FIX: رتّب الصفوف بالوقت المحوّل بحيث الفطار (09:00) يجي قبل العشاء (21:00)
+         بعد التحويل، صف الفطار وقته 09:00 وصف العشاء وقته 21:00
+         لو مش مرتبهم صح، master هيكون صف العشاء وهيكتب start_time=21:00 (غلط) */
+      g.sort(function(ra,rb){
+        var tdsa=ra.querySelectorAll('td');var tdsb=rb.querySelectorAll('td');
+        var getT=function(tds2){
+          if(ti>=0&&tds2[ti]){var inp=tds2[ti].querySelector("input[type='time']");if(inp&&inp.value)return inp.value;}
+          return '99:99';
+        };
+        var ta=getT(tdsa),tb2=getT(tdsb);
+        return ta<tb2?-1:ta>tb2?1:0;
+      });
+
       var master=g[0],mtds=master.querySelectorAll('td');
 
       /* FIX: حساب totalSize = مجموع كل الـ sizes (كل صف = normalDays × جرعة) */
@@ -2493,10 +2520,16 @@ function detectPackagingInstructions(){
         /كل\s*شهر\s*(ب|في|فى)\s*(بوكس|صندوق)/i,
         /(فصل|افصل|يفصل)\s*(كل)?\s*(شهر|بوكس)/i,
         /شهر\s*(ب|في|فى)\s*(صندوق|بوكس)\s*(منفصل)?/i,
-        /جعل\s*كل\s*شهر\s*(ب|في|فى)?\s*(صندوق|بوكس)/i
+        /جعل\s*كل\s*شهر\s*(ب|في|فى)?\s*(صندوق|بوكس)/i,
+        /* FIX: أنماط "N بوكسات" - ترتيب الأدوية على N بوكسات */
+        /(\d+|ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته)\s*(بوكسات|صناديق|كراتين|بوكس)/i,
+        /على\s*(\d+)\s*(بوكس|بوكسات|صندوق|صناديق)/i,
+        /ترتيب.*على\s*(\d+)/i,
+        /في\s*(\d+)\s*(بوكس|بوكسات|صناديق|كراتين)/i,
+        /توزيع.*على\s*(\d+)\s*(بوكس|بوكسات)/i
       ];
 
-      /* Extract month count */
+      /* Extract month/box count */
       var monthCount='';
       var mMatch=s.match(/(\d+)\s*(شهر|اشهر|أشهر|شهور)/i);
       if(mMatch) monthCount=mMatch[1];
@@ -2509,6 +2542,16 @@ function detectPackagingInstructions(){
       if(lMatch){
         var arabicNums3={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','ست':'6'};
         monthCount=arabicNums3[lMatch[1]]||lMatch[1];
+      }
+      /* FIX: استخراج عدد البوكسات من "3 بوكسات" مباشرة */
+      if(!monthCount){
+        var boxMatch=s.match(/(\d+)\s*(بوكسات|بوكس|صناديق|كراتين)/i);
+        if(boxMatch) monthCount=boxMatch[1];
+        var boxMatchAr=s.match(/(ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته)\s*(بوكسات|صناديق|كراتين)/i);
+        if(boxMatchAr){
+          var arabicNums4={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','خمسة':'5','ست':'6','سته':'6'};
+          monthCount=arabicNums4[boxMatchAr[1]]||boxMatchAr[1];
+        }
       }
 
       for(var p2=0;p2<separatePatterns.length;p2++){
