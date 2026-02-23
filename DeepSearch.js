@@ -300,7 +300,6 @@ javascript:(function(){
       var tbody = targetTable.querySelector('tbody') || targetTable;
       var templateRow = tbody.querySelector('tr');
 
-      // دالة مساعدة لمعالجة البيانات وتجهيز واجهة المستخدم (DOM)
       function processDataChunk(data) {
         var orders = [];
         try { 
@@ -362,7 +361,6 @@ javascript:(function(){
         totalNoArgs += noArgsCount;
       }
 
-      // جلب الصفحة الأولى فقط أولاً لحساب إجمالي عدد الطلبات
       var res1 = await fetch(baseUrl + 'Home/getOrders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -371,13 +369,45 @@ javascript:(function(){
       
       var data1 = await res1.json();
 
-      if (data1.total_orders) {
-        var exactTotal = parseInt(data1.total_orders) || 0;
-        if (exactTotal > 0) {
-          maxPages = Math.ceil(exactTotal / 10);
-          document.getElementById('p_lim').value = maxPages; 
-        }
+      // 🟢 التحديث الذكي والصارم لحساب عدد الصفحات 🟢
+      var exactTotal = 0;
+      
+      // 1. محاولة قراءة إجمالي الطلبات من الخادم
+      if (data1.total_orders) exactTotal = parseInt(data1.total_orders);
+      else if (data1.recordsTotal) exactTotal = parseInt(data1.recordsTotal);
+      
+      // 2. قراءة العدد بذكاء من واجهة النظام إذا لم يرسله الخادم (مثل: Ready To Pack (11))
+      if (!exactTotal || isNaN(exactTotal) || exactTotal === 0) {
+         var activeTabs = document.querySelectorAll('.active');
+         for (var act = 0; act < activeTabs.length; act++) {
+             var m = activeTabs[act].innerText.match(/(\d+)/);
+             if (m) { exactTotal = parseInt(m[1]); break; }
+         }
       }
+      
+      // 3. طريقة استخراج احتياطية من كامل الصفحة
+      if (!exactTotal || isNaN(exactTotal) || exactTotal === 0) {
+         var bodyTxt = document.body.innerText;
+         var reg = new RegExp(currentStatus + '[^0-9]*(\\d+)', 'i');
+         if (currentStatus === 'readypack') reg = /ready[^0-9]*pack[^0-9]*(\d+)/i;
+         var matchSt = bodyTxt.match(reg);
+         if (matchSt) exactTotal = parseInt(matchSt[1]);
+      }
+      
+      // تطبيق معادلتك: تقسيم الطلبات على 10 وأي كسر يفتح صفحة جديدة
+      if (exactTotal > 0) {
+          maxPages = Math.ceil(exactTotal / 10);
+          document.getElementById('p_lim').value = maxPages;
+      } else {
+          // إذا فشل العثور على العدد، نتحقق من الصفحة الأولى
+          var firstPageOrders = [];
+          try { firstPageOrders = typeof data1.orders_list === 'string' ? JSON.parse(data1.orders_list) : data1.orders_list; } catch(e) {}
+          if (firstPageOrders && firstPageOrders.length < 10) {
+              maxPages = 1;
+              document.getElementById('p_lim').value = 1;
+          }
+      }
+      // ---------------------------------------------------------
 
       processDataChunk(data1);
       updateStats();
@@ -389,7 +419,6 @@ javascript:(function(){
         setStatus('جلب بيانات ' + maxPages + ' صفحات في وقت واحد...', 'working');
       }
 
-      // إرسال بقية الطلبات في نفس الوقت (Concurrent Fetching) لسرعة الأداء
       var fetchPromises = [];
       for (var page = 2; page <= maxPages; page++) {
         fetchPromises.push(
