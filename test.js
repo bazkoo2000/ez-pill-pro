@@ -201,7 +201,6 @@ javascript:(function(){
           buildStatCard('🚀', '0', 'تم فتحه', '#3b82f6', 'stat_opened', 'linear-gradient(90deg,#3b82f6,#60a5fa)') +
         '</div>' +
         
-        // --- منطقة الإعدادات الثابتة (لا يتم مسحها) ---
         '<div id="ali_settings_box" style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">' +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
             '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
@@ -218,7 +217,6 @@ javascript:(function(){
           '<span>✅</span><span>جاهز للبدء التلقائي</span>' +
         '</div>' +
         
-        // --- المنطقة المتغيرة (يتم استبدال الزر بالبحث لاحقاً) ---
         '<div id="ali_dynamic_area">' +
           '<button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">' +
             '🚀 بدء الفحص الذكي' +
@@ -306,7 +304,23 @@ javascript:(function(){
   });
   
   // ═══════════════════════════════════════════
-  // API Page Scanner (مع الحساب التلقائي لعدد الصفحات)
+  // ✅ دالة آمنة لإنشاء label بدون onclick string
+  // ═══════════════════════════════════════════
+  function createSafeLabel(inv, args) {
+    var label = document.createElement('label');
+    label.style.cssText = 'cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:bold';
+    label.textContent = inv; // ✅ textContent آمن — لا يفسر HTML
+    if (args) {
+      label.addEventListener('click', function() {
+        // ✅ البيانات تتمرر كمتغيرات حقيقية مش كنص
+        getDetails(args[0], args[1], args[2], args[3]);
+      });
+    }
+    return label;
+  }
+
+  // ═══════════════════════════════════════════
+  // API Page Scanner
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
   async function scanPage(isSync) {
@@ -359,12 +373,12 @@ javascript:(function(){
         
         var data = await res.json();
 
-        // 🟢 الحساب التلقائي الذكي لعدد الصفحات (يحدث في أول صفحة فقط) 🟢
+        // الحساب التلقائي لعدد الصفحات في أول صفحة
         if (page === 1 && data.total_orders) {
           var exactTotal = parseInt(data.total_orders) || 0;
           if (exactTotal > 0) {
             maxPages = Math.ceil(exactTotal / 10);
-            document.getElementById('p_lim').value = maxPages; // تحديث الواجهة أمام المستخدم
+            document.getElementById('p_lim').value = maxPages;
           }
         }
 
@@ -405,22 +419,33 @@ javascript:(function(){
               clone = templateRow.cloneNode(true);
               var cells = clone.querySelectorAll('td');
               if (cells.length > 3) {
-                var label = cells[0].querySelector('label');
-                if (!label) {
-                  cells[0].innerHTML = '<label style="cursor:pointer; color:#3b82f6; text-decoration:underline; font-weight:bold;"></label>';
-                  label = cells[0].querySelector('label');
-                }
-                label.setAttribute('onclick', "getDetails('" + (args ? args[0] : '') + "','" + (args ? args[1] : '') + "','" + (args ? args[2] : '') + "','" + (args ? args[3] : '') + "')");
-                label.innerText = inv;
+                // ✅ التعديل الأمني: استبدال innerHTML بـ createSafeLabel
+                cells[0].innerHTML = '';
+                var safeLabel = createSafeLabel(inv, args);
+                cells[0].appendChild(safeLabel);
 
-                cells[1].innerText = onl;
-                cells[2].innerText = item.guestName || '';
-                cells[3].innerText = item.guestMobile || item.mobile || '';
+                // ✅ textContent بدل innerText لمنع XSS
+                cells[1].textContent = onl;
+                cells[2].textContent = item.guestName || '';
+                cells[3].textContent = item.guestMobile || item.mobile || '';
               }
             } else {
               clone = document.createElement('tr');
-              clone.innerHTML = '<td><label onclick="getDetails(\''+(args?args[0]:'')+'\',\''+(args?args[1]:'')+'\',\''+(args?args[2]:'')+'\',\''+(args?args[3]:'')+'\')">' + inv + '</label></td>' +
-                                '<td>' + onl + '</td><td>' + (item.guestName || '') + '</td><td>' + (item.guestMobile || item.mobile || '') + '</td>';
+              var td0 = document.createElement('td');
+              var td1 = document.createElement('td');
+              var td2 = document.createElement('td');
+              var td3 = document.createElement('td');
+
+              // ✅ إنشاء الـ label بالطريقة الآمنة
+              td0.appendChild(createSafeLabel(inv, args));
+              td1.textContent = onl;
+              td2.textContent = item.guestName || '';
+              td3.textContent = item.guestMobile || item.mobile || '';
+
+              clone.appendChild(td0);
+              clone.appendChild(td1);
+              clone.appendChild(td2);
+              clone.appendChild(td3);
             }
 
             state.savedRows.push({
@@ -480,7 +505,6 @@ javascript:(function(){
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
     
-    // استبدال المنطقة الديناميكية فقط (مع الإبقاء على خانة الصفحات وشريط التقدم)
     var dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML =
       '<div style="margin-bottom:10px">' +
@@ -614,8 +638,10 @@ javascript:(function(){
       
       for (var idx = 0; idx < openable.length; idx++) {
         var item = openable[idx];
-        var url = base + "?onlineNumber=" + item.args[0] +
-          "&Invoice=" + item.args[1] + "&typee=" + item.args[2] + "&head_id=" + item.args[3];
+        var url = base + "?onlineNumber=" + encodeURIComponent(item.args[0]) +
+          "&Invoice=" + encodeURIComponent(item.args[1]) +
+          "&typee=" + encodeURIComponent(item.args[2]) +
+          "&head_id=" + encodeURIComponent(item.args[3]);
           
         try {
           var w = window.open(url, "_blank");
@@ -684,7 +710,7 @@ javascript:(function(){
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
-      scanPage(true); // الاستدعاء بدون رقم لينفذ الحساب التلقائي مرة أخرى
+      scanPage(true);
     });
   }
   
