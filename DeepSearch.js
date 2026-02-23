@@ -176,9 +176,9 @@ javascript:(function(){
           let st = 'readypack';
           const cleanedOnl = onl.replace(/ERX/gi, '');
 
-          // 🟢 ربط الحقول بالمسميات الدقيقة الموجودة في HTML النظام 🟢
-          const createdTime = item.Created_Time || item.created_at || '';
-          const deliveryTime = item.delviery_time || item.delivery_time || '';
+          // 🟢 تم التصحيح: قراءة المفاتيح التي تحتوي على مسافات كما في الـ HTML المرسل 🟢
+          const createdTime = item['Created Time'] || item.Created_Time || item.created_at || '';
+          const deliveryTime = item['Delviery Time'] || item.delviery_time || item.delivery_time || '';
 
           const tr = document.createElement('tr');
           tr.className = "fast-row";
