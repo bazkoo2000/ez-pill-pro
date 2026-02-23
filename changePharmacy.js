@@ -211,29 +211,36 @@ javascript:(function(){
         toast('تم التحديث ✔ — جاري تسجيل الخروج وإعادة الدخول...', 'success');
 
         setTimeout(function() {
-          // ✅ الحل: نضغط زرار الـ Log out الموجود فعلاً في الصفحة
-          // السيرفر هيمسح الـ session من جهته (HttpOnly cookies مش قابلة للمسح بـ JS)
+          // ✅ الحل النهائي: نلاقي زرار Log out ونطبع الـ URL بتاعه في الـ console
+          // وفي نفس الوقت نضغطه عشان يمسح الـ session من السيرفر
 
-          var logoutBtn =
-            document.querySelector('a[href*="logout" i]') ||
-            document.querySelector('button[onclick*="logout" i]') ||
-            document.querySelector('[id*="logout" i]') ||
-            document.querySelector('[class*="logout" i]') ||
-            Array.from(document.querySelectorAll('a,button')).find(function(el) {
-              return el.innerText && el.innerText.trim().toLowerCase().includes('log out');
-            }) ||
-            Array.from(document.querySelectorAll('a,button')).find(function(el) {
-              return el.innerText && (
-                el.innerText.includes('تسجيل الخروج') ||
-                el.innerText.includes('خروج')
-              );
-            });
+          // دور على الزرار بكل الطرق
+          var allLinks = Array.from(document.querySelectorAll('a, button, input[type=button], input[type=submit]'));
+
+          // طبع كل الأزرار والروابط في الـ console للمساعدة في التشخيص
+          console.log('[StoreManager] كل الأزرار والروابط في الصفحة:');
+          allLinks.forEach(function(el) {
+            console.log(' - نص:', el.innerText.trim(), '| href:', el.href || 'لا يوجد', '| onclick:', el.getAttribute('onclick') || 'لا يوجد');
+          });
+
+          var logoutBtn = allLinks.find(function(el) {
+            var txt = (el.innerText || el.value || '').trim().toLowerCase();
+            var href = (el.href || el.getAttribute('action') || '').toLowerCase();
+            var onclick = (el.getAttribute('onclick') || '').toLowerCase();
+            return txt.includes('log') || txt.includes('out') ||
+                   txt.includes('خروج') || txt.includes('logout') ||
+                   href.includes('logout') || href.includes('logoff') ||
+                   href.includes('signout') || href.includes('sign-out') ||
+                   onclick.includes('logout') || onclick.includes('logoff');
+          });
 
           if (logoutBtn) {
+            console.log('[StoreManager] ✅ وجدنا الزرار:', logoutBtn.innerText.trim(), '| URL:', logoutBtn.href);
             logoutBtn.click();
           } else {
-            // fallback لو مش لاقي الزرار
-            window.location.href = window.location.origin + '/ez_pill_web/Home/logout';
+            console.warn('[StoreManager] ❌ مش لاقي زرار logout — جرب تبعت الـ URL الصح');
+            // آخر حل: روح لصفحة Login مباشرة وخلي السيرفر يعيد التوثيق
+            window.location.href = window.location.origin + '/ez_pill_web/';
           }
         }, 2000);
 
