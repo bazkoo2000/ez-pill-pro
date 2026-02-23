@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.11';
+var APP_VERSION='137.1';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,14 +8,24 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
-  '136.11':{
-    title:'إصلاح اكتشاف الاسم من Prescription Notes 🐛✅',
+  '137.1':{
+    title:'منطق الـ Duplicate الصح 🧠⚡',
     features:[
-      {icon:'🐛',text:'Bug: "وتغيير الاسم الى على الباز" - الـ pattern كان بيدور على "تغيير" لكن النص فيه "وتغيير" (بـ و الربط)'},
-      {icon:'✅',text:'إصلاح: كل patterns التغيير دلوقتي بتقبل و? (و اختياري في الأول)'},
-      {icon:'✅',text:'إصلاح: "الاسم الى X" بيتجاوز كلمة "الى" ويأخذ الاسم بعدها مباشرة'},
-      {icon:'➕',text:'patterns جديدة: "تعديل الاسم الى X" / "تبديل الاسم لـ X" / "غير الاسم الى X"'},
-      {icon:'📝',text:'مثال يشتغل دلوقتي: "وتغيير الاسم الى على الباز وشكرا" → يكتشف "على الباز"'}
+      {icon:'🧠',text:'shouldDuplicateRow v2: منطق رياضي بدل hardcoded - بيحسب الفارق بين الوجبات'},
+      {icon:'✅',text:'مرتين يومياً/BID/صباح ومساء/فطار+عشاء = فارق 12h → سطر واحد every 12 (صح!)'},
+      {icon:'⚡',text:'فطار+غداء (5h) / غداء+عشاء (7h) / عصر+عشاء (6h) → duplicate (صح!)'},
+      {icon:'📋',text:'createDuplicateRows بيستخدم mealsData مباشرة من shouldDuplicateRow بدل حسابات منفصلة'},
+      {icon:'🌙',text:'رمضان: BID/مرتين بدون وجبات → فطار+سحور. مع وجبات محددة → بيحترم الوجبات'}
+    ]
+  },
+  '137.0':{
+    title:'إصلاح الـ Regex + Claude AI Fallback 🤖🔧',
+    features:[
+      {icon:'🐛',text:'إصلاح: bug في getTimeFromWords - الـ rules كانت مكتوبة كـ strings بـ \\\\ بدل regex literals - ده كان بيخلي قبل الأكل وصباح وغيرها مش بيشتغلوا!'},
+      {icon:'🤖',text:'جديد: Claude AI Fallback - لما الكود مش يفهم النوتة → Claude يفهمها تلقائياً بدون تحذير'},
+      {icon:'⚙️',text:'جديد: تاب "Claude AI" في الإعدادات - أضف API Key واختبر الاتصال'},
+      {icon:'➕',text:'جديد: patterns مفقودة: PRN/عند الحاجة، EOD/كل يومين، pc/بعد الأكل، QW/أسبوعي'},
+      {icon:'🔄',text:'إصلاح: BID/TID/QID مش بتعمل early return - بيكمل يستخرج وقت الوجبة المكتوب'}
     ]
   },
   '136.10':{
@@ -1856,15 +1866,26 @@ function smartDoseRecognizer(note){
   res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s|نوم|النوم|قبل النوم|عند النوم|before\s*bed|before\s*sleep|at\s*bed)\b/i.test(s);
   res.hasEmpty=/\b(empty|fasting|ريق|الريق|على الريق|معدهـ فارغهـ|empty\s*stomach)\b/i.test(s);
   res.isBefore=/\b(before|bef|pre|ac|a\.c|قبل|قبل الاكل|قبل الأكل|before\s*meal|before\s*food)\b/i.test(s);
-  if(/\bqid\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){res.count=4;res.rawFrequency='QID';return res;}
-  if(/\btid\b|t\.i\.d|ثلاث مرات|3\s*مرات|three\s*times?\s*(a\s*day|daily|يوميا)?|3\s*times?\s*(a\s*day|daily)?|thrice\s*(daily)?/i.test(s)){res.count=3;res.rawFrequency='TID';return res;}
-  if(/\bbid\b|b\.i\.d|مرتين|مرتان|مره مرتين|twice\s*(a\s*day|daily)?|2\s*times?\s*(a\s*day|daily|يوميا)?/i.test(s)){res.count=2;res.rawFrequency='BID';return res;}
-  if(/\bod\b|o\.d|\bqd\b|q\.d|once\s*(a\s*day|daily)?|مره واحده يوميا|مرهـ واحدهـ/i.test(s)){res.count=1;res.rawFrequency='OD';return res;}
-  if(/كل\s*6|every\s*6\s*h|q6h|q\s*6\s*h/i.test(s)){res.count=4;res.rawFrequency='Q6H';return res;}
-  if(/كل\s*8|every\s*8\s*h|q8h|q\s*8\s*h/i.test(s)){res.count=3;res.rawFrequency='Q8H';return res;}
-  if(/كل\s*12|every\s*12\s*h|q12h|q\s*12\s*h/i.test(s)){res.count=2;res.rawFrequency='Q12H';return res;}
-  if(/كل\s*24|every\s*24\s*h|q24h|q\s*24\s*h/i.test(s)){res.count=1;res.rawFrequency='Q24H';return res;}
-  if(/كل\s*4\s*ساع|every\s*4\s*h|q4h|q\s*4\s*h/i.test(s)){res.count=6;res.rawFrequency='Q4H';return res;}
+  /* ═══ FIX v137.0: No early return on BID/TID/QID - we continue to detect meal times too ═══
+       مثلاً "BID بعد الفطار والعشاء" كان بيرجع BID ويضيع "بعد الفطار والعشاء"
+       الآن بنحدد count بس منرجعش - نكمل لاستخراج hasB, hasD, etc. */
+  if(/\bqid\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){res.count=4;res.rawFrequency='QID';}
+  else if(/\btid\b|t\.i\.d|ثلاث مرات|3\s*مرات|three\s*times?\s*(a\s*day|daily|يوميا)?|3\s*times?\s*(a\s*day|daily)?|thrice\s*(daily)?/i.test(s)){res.count=3;res.rawFrequency='TID';}
+  else if(/\bbid\b|b\.i\.d|مرتين|مرتان|مره مرتين|twice\s*(a\s*day|daily)?|2\s*times?\s*(a\s*day|daily|يوميا)?/i.test(s)){res.count=2;res.rawFrequency='BID';}
+  else if(/\bod\b|o\.d|\bqd\b|q\.d|once\s*(a\s*day|daily)?|مره واحده يوميا|مرهـ واحدهـ/i.test(s)){res.count=1;res.rawFrequency='OD';}
+  else if(/كل\s*6|every\s*6\s*h|q6h|q\s*6\s*h/i.test(s)){res.count=4;res.rawFrequency='Q6H';}
+  else if(/كل\s*8|every\s*8\s*h|q8h|q\s*8\s*h/i.test(s)){res.count=3;res.rawFrequency='Q8H';}
+  else if(/كل\s*12|every\s*12\s*h|q12h|q\s*12\s*h/i.test(s)){res.count=2;res.rawFrequency='Q12H';}
+  else if(/كل\s*24|every\s*24\s*h|q24h|q\s*24\s*h/i.test(s)){res.count=1;res.rawFrequency='Q24H';}
+  else if(/كل\s*4\s*ساع|every\s*4\s*h|q4h|q\s*4\s*h/i.test(s)){res.count=6;res.rawFrequency='Q4H';}
+  /* ADDED: PRN / عند الحاجة / SOS */
+  if(/\bprn\b|\bsos\b|عند\s*(الحاجهـ|الحاجه|حاجهـ)|لما\s*يحتاج|if\s*needed|as\s*needed|when\s*needed/i.test(s)){res.isPRN=true;if(!res.rawFrequency){res.count=1;res.rawFrequency='PRN';}}
+  /* ADDED: كل يومين / every other day / يوم بعد يوم / alternate day */
+  if(/كل\s*يومين|يوم\s*بعد\s*يوم|يوم\s*وبعده\s*لا|every\s*other\s*day|alternate\s*day|eod/i.test(s)){res.isAlternate=true;res.count=1;res.rawFrequency='EOD';}
+  /* ADDED: مره اسبوعياً / once a week / weekly */
+  if(/مره\s*(اسبوعيا|في الاسبوع)|once\s*(a\s*)?week|weekly|اسبوعيا/i.test(s)){res.isWeekly=true;res.count=1;res.rawFrequency='QW';}
+  /* If we already have a count from abbreviation, return now */
+  if(res.rawFrequency&&res.rawFrequency!=='PRN'){return res;}
   var mealCount=0;
   if(res.hasB||res.hasM) mealCount++;
   if(res.hasL||res.hasN) mealCount++;
@@ -1903,7 +1924,45 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\\s*(الاكل|الأكل|meal)|before\\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\\b(morning|am|a\\.m)\\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\\b(noon|midday)\\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\\b(asr|afternoon|pm|p\\.m)\\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\\.s/,time:'22:00'}];
+  /* ═══ FIX v137.0: All regex are now proper regex literals (not strings with \\) ═══ */
+  var rules=[
+    /* على الريق / فاصل / empty stomach */
+    {test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},
+    /* قبل الأكل - FIXED: was \\s* (broken string escape) now \s* (proper regex) */
+    {test:/قبل\s*(الاكل|الأكل|الوجبهـ|وجبهـ|meal|meals|food)/,time:'08:00'},
+    {test:/before\s*(meal|meals|food|eating)/,time:'08:00'},
+    {test:/\bac\b/,time:'08:00'},
+    /* قبل الفطار */
+    {test:/before.*bre|before.*fatur|before.*breakfast|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},
+    /* بعد الفطار */
+    {test:/after.*bre|after.*fatur|after.*breakfast|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},
+    /* صباح - FIXED: was \\b(morning)\\b now proper \b */
+    {test:/\b(morning|morn|subh)\b|صباح|الصباح|صبح|الصبح|صبحيهـ|الصبحيهـ/,time:'09:30'},
+    /* ظهر */
+    {test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},
+    /* قبل الغداء */
+    {test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*الغدا/,time:'13:00'},
+    /* بعد الغداء */
+    {test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*الغدا/,time:'14:00'},
+    /* بعد الأكل العام (pc / after meal) - ADDED: was missing! */
+    {test:/\bpc\b|after\s*meal|after\s*food|بعد\s*(الاكل|الأكل|الوجبهـ)/,time:'14:00'},
+    /* عصر - FIXED: was \\b(asr)\\b */
+    {test:/\b(asr|afternoon)\b|عصر|العصر/,time:'15:00'},
+    /* pm وحده بيبقى مساء */
+    {test:/\bpm\b|\bp\.m\b/,time:'15:00'},
+    /* مغرب */
+    {test:/maghrib|مغرب|المغرب/,time:'18:00'},
+    /* قبل العشاء */
+    {test:/before.*din|before.*sup|before.*dinner|before.*asha|قبل.*عشا|قبل.*عشو|قبل.*عشاء/,time:'20:00'},
+    /* بعد العشاء */
+    {test:/after.*din|after.*sup|after.*dinner|after.*asha|بعد.*عشا|بعد.*عشو|بعد.*عشاء/,time:'21:00'},
+    /* مساء عام */
+    {test:/مساء|مسا|المساء|المسا|evening|eve/,time:'21:30'},
+    /* وقت النوم - FIXED: was h\\.s */
+    {test:/\b(bed|bedtime|sleep|hs|h\.s)\b|نوم|النوم|قبل.*نوم|عند.*نوم/,time:'22:00'},
+    /* PRN / عند الحاجة / SOS - ADDED */
+    {test:/\bprn\b|\bsos\b|عند.*حاجهـ|عند.*الحاجهـ|لما.*يحتاج|if\s*needed|as\s*needed|when\s*needed/,time:'09:00',isPRN:true}
+  ];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -1922,18 +1981,80 @@ function getCodeAwareTime(timeResult,itemCode){
   return timeResult;
 }
 
+/* ══════════════════════════════════════════
+   ★ CLAUDE AI FALLBACK - v137.0 ★
+   لما الكود مش يفهم النوت → Claude API يفهمه
+   يُستخدم فقط لما isUnrecognized=true
+   ══════════════════════════════════════════ */
+var _claudePendingNotes={};
+function claudeInterpretNote(noteText,callback){
+  var cleaned=(noteText||'').trim();
+  if(!cleaned||cleaned.length<3){callback(null);return;}
+  if(_claudePendingNotes[cleaned]){callback(_claudePendingNotes[cleaned]);return;}
+  var prompt='انت مساعد صيدلاني. استخرج من الجملة دي معلومات الجرعة الدوائية.\nالجملة: "'+cleaned+'"\n\nرجعلي JSON بالشكل ده بس (بدون اي شرح او ماركداون):\n{"count":عدد الجرعات في اليوم رقم 1 او 2 او 3 او 4,"time":"وقت اول جرعة HH:MM","isBefore":true لو قبل الاكل,"isPRN":true لو عند الحاجة,"isAlternate":true لو كل يومين,"rawFrequency":"BID او TID او PRN وغيره","confidence":"high او medium او low"}\n\nامثلة: صبح=09:00, ظهر=12:00, بعد الغدا=14:00, عصر=15:00, مساء=21:00, نوم=22:00, ريق=07:00, قبل الاكل=08:00\nلو مش واضح: count=1, time=09:00, confidence=low';
+  if(!hasClaudeApiKey()){callback(null);return;}
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':customConfig.claudeApiKey},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){return r.json();}).then(function(data){
+    try{var txt=data.content[0].text.replace(/```json|```/g,'').trim();var parsed=JSON.parse(txt);_claudePendingNotes[cleaned]=parsed;callback(parsed);}
+    catch(e){callback(null);}
+  }).catch(function(){callback(null);});
+}
+function hasClaudeApiKey(){return customConfig&&customConfig.claudeApiKey&&customConfig.claudeApiKey.length>10;}
+
+/* ══════════════════════════════════════════════════════════════════
+   shouldDuplicateRow v2 - المنطق الصح
+   ══════════════════════════════════════════════════════════════════
+   المبدأ: لو الجرعات بفوارق منتظمة (12h أو 8h أو 6h) → سطر واحد.
+           لو الوجبات بفوارق مختلفة → duplicate (سطر لكل جرعة every 24h).
+   ══════════════════════════════════════════════════════════════════ */
 function shouldDuplicateRow(note){
   var d=smartDoseRecognizer(note);
-  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
-  var isEvery8=/كل\s*8|every\s*8|q8h/i.test(s);
-  if(isEvery8||d.count===3)return{type:'three',doseInfo:d,isBefore:d.isBefore};
-  var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
-  if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
-  var isRegularTwice=((d.hasB||d.hasM)&&(d.hasD||d.hasE))||/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
-  if(d.count===2&&!isRegularTwice)return{type:'two',doseInfo:d,isBefore:d.isBefore};
-  var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
-  if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
-  return null;
+  var NT=NORMAL_TIMES;
+  function toH(t){return parseFloat(t.split(':')[0])+parseFloat(t.split(':')[1]||0)/60;}
+
+  /* ── اجمع الوجبات الصريحة مع أوقاتها ── */
+  var meals=[];
+  var ib=d.isBefore;
+  if(d.hasEmpty) meals.push({key:'empty',h:toH(NT.empty||'07:00'),ar:'على الريق',en:'Empty Stomach'});
+  if(d.hasB){if(ib)meals.push({key:'beforeBreakfast',h:toH(NT.beforeBreakfast||'08:00'),ar:'قبل الفطار',en:'Before Breakfast'});
+             else  meals.push({key:'afterBreakfast', h:toH(NT.afterBreakfast||'09:00'), ar:'بعد الفطار', en:'After Breakfast'});}
+  if(d.hasL||d.hasN){if(ib)meals.push({key:'beforeLunch',h:toH(NT.beforeLunch||'13:00'),ar:'قبل الغداء',en:'Before Lunch'});
+                     else  meals.push({key:'afterLunch', h:toH(NT.afterLunch||'14:00'), ar:'بعد الغداء', en:'After Lunch'});}
+  if(d.hasA) meals.push({key:'afternoon',h:toH(NT.afternoon||'15:00'),ar:'العصر',en:'Afternoon'});
+  if(d.hasD||d.hasE){if(ib)meals.push({key:'beforeDinner',h:toH(NT.beforeDinner||'20:00'),ar:'قبل العشاء',en:'Before Dinner'});
+                     else  meals.push({key:'afterDinner', h:toH(NT.afterDinner||'21:00'), ar:'بعد العشاء', en:'After Dinner'});}
+  if(d.hasBed) meals.push({key:'bed',h:toH(NT.bed||'22:00'),ar:'قبل النوم',en:'Before Bed'});
+  if(d.hasM&&!d.hasB) meals.push({key:'morning',h:toH(NT.morning||'09:30'),ar:'الصباح',en:'Morning'});
+  meals.sort(function(a,b){return a.h-b.h;});
+
+  /* ── مفيش وجبات صريحة → حكم بالـ count/abbreviation فقط (مش duplicate) ── */
+  if(meals.length===0) return null;
+
+  /* ── وجبة واحدة → سطر واحد ── */
+  if(meals.length===1) return null;
+
+  /* ── وجبتان → احسب الفارق ── */
+  if(meals.length===2){
+    var gap=meals[1].h-meals[0].h;
+    /* فارق 12h بالظبط → every 12 (مش duplicate) */
+    if(Math.abs(gap-12)<0.1) return null;
+    /* أي فارق تاني → duplicate */
+    return{type:'two',doseInfo:d,isBefore:ib,mealsData:meals};
+  }
+
+  /* ── 3 وجبات → احسب الفوارق ── */
+  if(meals.length===3){
+    var g1=meals[1].h-meals[0].h,g2=meals[2].h-meals[1].h;
+    /* فوارق 8h+8h بالظبط → every 8 (مش duplicate) */
+    if(Math.abs(g1-8)<0.1&&Math.abs(g2-8)<0.1) return null;
+    return{type:'three',doseInfo:d,isBefore:ib,mealsData:meals};
+  }
+
+  /* ── 4+ وجبات → duplicate دايماً ── */
+  return{type:'four',doseInfo:d,isBefore:ib,mealsData:meals};
 }
 
 function scanForDuplicateNotes(){
@@ -1966,57 +2087,78 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
   function createDuplicateRows(t_val,r,ni,bs,niIdx,si,ei,di,ti,sdi,edi,m_val,tc,ci,qi){
     var tds=r.querySelectorAll('td');var u_code=getCleanCode(tds[ci]);var ns=bs;
-    if(fixedSizeCodes[u_code]&&ni.type!=='q6h'){var div=(ni.type==='three')?3:2;ns=Math.floor(fixedSizeCodes[u_code]/div);var remainder=fixedSizeCodes[u_code]%div;if(remainder>0){var splits=[];for(var x=0;x<div;x++){if(x<remainder)splits.push(Math.ceil(fixedSizeCodes[u_code]/div));else splits.push(Math.floor(fixedSizeCodes[u_code]/div));}ni.customSplits=splits;}}
+    var rowCount=(ni.type==='three'||ni.type==='four')?((ni.mealsData&&ni.mealsData.length)||3):2;
+    if(fixedSizeCodes[u_code]){
+      var div=rowCount;ns=Math.floor(fixedSizeCodes[u_code]/div);
+      var remainder=fixedSizeCodes[u_code]%div;
+      if(remainder>0){var splits=[];for(var x=0;x<div;x++){splits.push(x<remainder?Math.ceil(fixedSizeCodes[u_code]/div):Math.floor(fixedSizeCodes[u_code]/div));}ni.customSplits=splits;}
+    }
     var on=get(r.querySelectorAll('td')[niIdx]);var isEn=/[a-z]/i.test(on)||ni.doseInfo.language==='english';
-    var p=ni.isBefore?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد ');
-    var bf=isEn?'Breakfast':'الفطار';var ln=isEn?'Lunch':'الغداء';var dn=isEn?'Dinner':'العشاء';
-    var m_lbl=isEn?'Morning':'صباحا';var n_lbl=isEn?'Noon':'ظهرا';var a_lbl=isEn?'Afternoon':'عصرا';var e_lbl=isEn?'Evening':'مساءا';
     var calcQ=1;if(qi>=0){var cur=parseInt(get(tds[qi]))||1;calcQ=cur;}
     var dupRows=[];var meals=[];
-    if(ni.type==='two'){
-      var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
-      var sz1=ni.customSplits?ni.customSplits[0]:ns;var sz2=ni.customSplits?ni.customSplits[1]:ns;
-      setSize(nt1[si],sz1);setSize(nt2[si],sz2);setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');
-      if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
-      if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
-      var n1='',t1='',n2='',t2='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasN){n1=m_lbl;t1='09:30';n2=n_lbl;t2='12:00';meals=['الصباح','الظهر'];}
-      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1='12:00';n2=e_lbl;t2='21:30';meals=['الظهر','المساء'];}
-      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';meals=['الصباح','العصر'];}
-      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1='15:00';n2=e_lbl;t2='21:30';meals=['العصر','المساء'];}
-      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
-      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1='13:00';n2=p+dn;t2='20:00';}else{n1=p+ln;t1='14:00';n2=p+dn;t2='21:00';}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
-      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
-      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
-    } else if(ni.type==='three'){
-      var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);var nr3=r.cloneNode(true);
-      var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');var nt3=nr3.querySelectorAll('td');
-      var sz1=ni.customSplits?ni.customSplits[0]:ns;var sz2=ni.customSplits?ni.customSplits[1]:ns;var sz3=ni.customSplits?ni.customSplits[2]:ns;
-      setSize(nt1[si],sz1);setSize(nt2[si],sz2);setSize(nt3[si],sz3);setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');setEvry(nt3[ei],'24');
-      if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);setDose(nt3[di],tpi.dose);}
-      if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
-      var n1='',t1='',n2='',t2='',n3='',t3='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';n3=e_lbl;t3='21:30';meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
-      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
-      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
-    } else if(ni.type==='q6h'){
-      var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
-      var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
-      var q6hSize=bs*2;
-      setSize(nt1[si],q6hSize);setSize(nt2[si],q6hSize);
-      setEvry(nt1[ei],'12');setEvry(nt2[ei],'12');
-      if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
-      if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
-      var andW=isEn?' & ':' و';var bedLbl=isEn?'Before Bed':'قبل النوم';
-      var n1='',t1='',n2='',t2='';
-      if(ni.isBefore){n1=p+bf+andW+dn;t1='08:00';n2=p+ln+andW+bedLbl;t2='13:00';}
-      else{n1=p+bf+andW+dn;t1='09:00';n2=p+ln+andW+bedLbl;t2='14:00';}
-      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
-      nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
-      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
-      meals=isEn?['Breakfast&Dinner','Lunch&Bed']:['الفطار والعشاء','الغداء والنوم'];
+    var tpi=getTwoPillsPerDoseInfo(on);
+
+    /* ── Helper: clone + fill one row ── */
+    function makeRow(mealObj,sizeVal,idx){
+      var nr=r.cloneNode(true);var nt=nr.querySelectorAll('td');
+      setSize(nt[si],sizeVal);setEvry(nt[ei],'24');
+      if(di>=0)setDose(nt[di],tpi.dose);
+      if(qi>=0)setSize(nt[qi],calcQ);
+      var lbl=isEn?mealObj.en:mealObj.ar;
+      setNote(nt[niIdx],'⚡ '+lbl);
+      /* وقت بالساعة */
+      var h=Math.floor(mealObj.h);var mn=Math.round((mealObj.h-h)*60);
+      setTime(nr,('0'+h).slice(-2)+':'+('0'+mn).slice(-2));
+      return nr;
+    }
+
+    /* ── اجمع الوجبات من mealsData أو fallback للقديم ── */
+    var mData=ni.mealsData||null;
+
+    if((ni.type==='two'||ni.type==='three'||ni.type==='four')&&mData&&mData.length>=2){
+      /* ── المسار الجديد: استخدم mealsData مباشرة ── */
+      for(var mi=0;mi<mData.length;mi++){
+        var sz=ni.customSplits?ni.customSplits[mi]:ns;
+        var nr=makeRow(mData[mi],sz,mi);
+        r.parentNode.insertBefore(nr,r);
+        dupRows.push(nr);
+        meals.push(isEn?mData[mi].en:mData[mi].ar);
+      }
+    } else {
+      /* ── Fallback للحالات القديمة (q6h أو بدون mealsData) ── */
+      var p=ni.isBefore?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد ');
+      var bf=isEn?'Breakfast':'الفطار';var ln=isEn?'Lunch':'الغداء';var dn=isEn?'Dinner':'العشاء';
+      if(ni.type==='q6h'){
+        var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
+        var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
+        var q6hSize=bs*2;
+        setSize(nt1[si],q6hSize);setSize(nt2[si],q6hSize);
+        setEvry(nt1[ei],'12');setEvry(nt2[ei],'12');
+        if(di>=0){setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
+        if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
+        var andW=isEn?' & ':' و';var bedLbl=isEn?'Before Bed':'قبل النوم';
+        var n1,t1,n2,t2;
+        if(ni.isBefore){n1=p+bf+andW+dn;t1='08:00';n2=p+ln+andW+bedLbl;t2='13:00';}
+        else{n1=p+bf+andW+dn;t1='09:00';n2=p+ln+andW+bedLbl;t2='14:00';}
+        setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
+        nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
+        r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
+        meals=isEn?['Breakfast&Dinner','Lunch&Bed']:['الفطار والعشاء','الغداء والنوم'];
+      } else {
+        /* two/three بدون mealsData - fallback بالطريقة القديمة */
+        var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
+        var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
+        var sz1=ni.customSplits?ni.customSplits[0]:ns;var sz2=ni.customSplits?ni.customSplits[1]:ns;
+        setSize(nt1[si],sz1);setSize(nt2[si],sz2);setEvry(nt1[ei],'24');setEvry(nt2[ei],'24');
+        if(di>=0){setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
+        if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
+        var n1,t1,n2,t2;
+        if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}
+        else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}
+        setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
+        r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
+        meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];
+      }
     }
     duplicatedRows.push({originalRow:r,duplicates:dupRows,type:ni.type,meals:meals});duplicatedCount++;
     if(r.parentNode)r.parentNode.removeChild(r);
@@ -2168,9 +2310,23 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else if(h_s){
         ramadanInfo={type:'weekly_ramadan',meal:noteMapR?noteMapR.meal:'afterIftar',time:noteMapR?noteMapR.time:RAMADAN_TIMES.afterIftar};
       }
-      /* ── CASE C: Items with count >= 2: force Ramadan duplicate ── */
+      /* ── CASE C: Items with count >= 2 ── */
       else if(doseRec.count>=2 && !h_s){
-        dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+        /* v137.1: لو عندنا mealsData من shouldDuplicateRow → استخدمها بدل ramadan_two
+           بمعنى لو النوتة مش فطار+سحور صريحة → الـ duplicate العادي أصح في رمضان كمان */
+        if(dui_obj && dui_obj.mealsData && dui_obj.mealsData.length>=2){
+          /* عنده وجبات محددة → الـ duplicate العادي (two/three) بالأوقات الرمضانية */
+          /* نحوّل الأوقات للأوقات الرمضانية */
+          var rdMeals=dui_obj.mealsData.map(function(meal){
+            var noteMapMeal=ramadanMapNote(meal.ar+' '+fn_str)||ramadanMapNote(meal.ar);
+            if(noteMapMeal){return{key:meal.key,h:parseFloat(noteMapMeal.time.split(':')[0])+parseFloat(noteMapMeal.time.split(':')[1]||0)/60,ar:meal.ar,en:meal.en};}
+            return meal;
+          });
+          dui_obj={type:dui_obj.type,doseInfo:doseRec,isBefore:doseRec.isBefore,mealsData:rdMeals};
+        } else {
+          /* مفيش وجبات محددة (BID/مرتين) → ramadan_two (فطار+سحور) */
+          dui_obj={type:'ramadan_two',doseInfo:doseRec,isBefore:doseRec.isBefore};
+        }
       }
       /* ── CASE D: Once daily ── */
       else if(doseRec.count===1 && !h_s){
@@ -2302,7 +2458,48 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   }
 
   warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
-  if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+
+  /* ═══ v137.0: Claude AI Auto-Fix for unrecognized notes ═══
+     لو في Claude API key → نبعت النوتات الغير مفهومة لـ Claude يفهمها تلقائياً
+     وبعدين نشيلها من قائمة التحذيرات لو فهمها */
+  var unrecognizedWarnings=warningQueue.filter(function(w){return w.type==='unrecognized_dose'&&w.currentNote;});
+  if(unrecognizedWarnings.length>0&&hasClaudeApiKey()){
+    var pending=unrecognizedWarnings.length;
+    var allFixed=[];
+    unrecognizedWarnings.forEach(function(w){
+      claudeInterpretNote(w.currentNote,function(result){
+        if(result&&result.confidence!=='low'&&result.time&&result.count){
+          /* Claude فهم الجرعة - طبّق النتيجة تلقائياً */
+          var ri=w.rowIndex;
+          if(allRowsData[ri]){
+            var evHours=result.count>0?(24/result.count):24;
+            allRowsData[ri].unrecognizedEvery=evHours;
+            allRowsData[ri].unrecognizedTime=result.time;
+            allRowsData[ri].warningOverride=true;
+            allRowsData[ri].claudeFixed=true;
+            allFixed.push(w);
+            /* أضف ملاحظة إن Claude عالج الموضوع */
+            w._claudeResult=result;
+          }
+        }
+        pending--;
+        if(pending===0){
+          /* شيل التحذيرات اللي Claude عالجها */
+          if(allFixed.length>0){
+            warningQueue=warningQueue.filter(function(w2){return allFixed.indexOf(w2)<0;});
+            /* لو كان فيه نوتات Claude عالجها، اعرض ملخص سريع */
+            if(allFixed.length>0){
+              var fixedNames=allFixed.map(function(w2){return(w2._claudeResult?'✅':'❓')+' '+((w2.message||'').split(':')[1]||'').trim();}).join('\n');
+              console.log('[EZ Claude] Auto-fixed '+allFixed.length+' notes:\n'+fixedNames);
+            }
+          }
+          if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+        }
+      });
+    });
+  }else{
+    if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+  }
 
   function continueProcessing(){
     var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
@@ -2841,6 +3038,7 @@ function _ezShowSettingsPanel(){
         <button class="ez-cfg-tab" data-tab="codes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">💊 أكواد الأصناف</button>\
         <button class="ez-cfg-tab" data-tab="weekly" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🗓️ الجرعات الأسبوعية</button>\
         <button class="ez-cfg-tab" data-tab="codetimes" style="padding:6px 16px;border:1.5px solid rgba(129,140,248,0.12);border-radius:10px;background:#fff;color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🕐 أوقات الأكواد</button>\
+        <button class="ez-cfg-tab" data-tab="claudeai" style="padding:6px 16px;border:1.5px solid rgba(99,102,241,0.25);border-radius:10px;background:linear-gradient(145deg,rgba(99,102,241,0.06),rgba(167,139,250,0.06));color:#6366f1;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.3s">🤖 Claude AI</button>\
       </div>\
       <div id="ez-cfg-panel-ramadan" class="ez-cfg-panel">\
         <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🌙</span> أوقات جرعات رمضان الأساسية</div>\
@@ -2937,7 +3135,39 @@ function _ezShowSettingsPanel(){
         </div>\
         <div id="ez-cfg-cst-list">'+cstRows+'</div>\
       </div>\
-    </div>\
+      <div id="ez-cfg-panel-claudeai" class="ez-cfg-panel" style="display:none">\
+        <div style="font-size:13px;font-weight:900;color:#1e1b4b;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🤖</span> Claude AI - فهم الجرعات التلقائي</div>\
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:14px;direction:rtl;line-height:1.7;padding:10px;background:rgba(99,102,241,0.04);border-radius:10px;border:1px solid rgba(99,102,241,0.1)">\
+          🧠 لما الكود مش يقدر يفهم الجرعة المكتوبة في النوتة<br>\
+          → هيبعت النوتة لـ Claude AI يفهمها تلقائياً<br>\
+          → لو Claude فهمها: بيطبق الوقت والتكرار أوتوماتيك <b>بدون تحذير</b><br>\
+          → لو Claude مش متأكد: بيظهر التحذير العادي عشان تعدل يدوياً<br><br>\
+          ⚠️ مهم: الـ API key بتتحفظ في المتصفح بس، مش بتتبعت لأي سيرفر خارجي.\
+        </div>\
+        <div style="margin-bottom:12px">\
+          <label style="display:block;font-size:10px;font-weight:800;color:#6366f1;margin-bottom:5px;letter-spacing:0.5px">🔑 Anthropic API Key</label>\
+          <div style="display:flex;gap:6px">\
+            <input type="password" id="ez-cfg-claude-key" value="'+(cc.claudeApiKey||'')+'" placeholder="sk-ant-api..." style="flex:1;padding:10px 12px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;outline:none" />\
+            <button id="ez-cfg-claude-test" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;white-space:nowrap">🧪 اختبار</button>\
+          </div>\
+          <div id="ez-cfg-claude-status" style="font-size:10px;font-weight:700;color:#10b981;margin-top:6px;display:none"></div>\
+        </div>\
+        <div style="padding:10px;background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.12);border-radius:10px;margin-bottom:10px">\
+          <div style="font-size:10px;font-weight:800;color:#059669;margin-bottom:6px">⚙️ إعدادات الاستخدام</div>\
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px">\
+            <input type="checkbox" id="ez-cfg-claude-enabled" '+(cc.claudeEnabled!==false?'checked':'')+' style="width:16px;height:16px;accent-color:#6366f1;cursor:pointer" />\
+            <span style="font-size:11px;font-weight:700;color:#1e1b4b">تفعيل Claude AI Fallback</span>\
+          </label>\
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">\
+            <input type="checkbox" id="ez-cfg-claude-notify" '+(cc.claudeShowNotify!==false?'checked':'')+' style="width:16px;height:16px;accent-color:#6366f1;cursor:pointer" />\
+            <span style="font-size:11px;font-weight:700;color:#1e1b4b">اعرض إشعار لما Claude يصلح نوتة</span>\
+          </label>\
+        </div>\
+        <div style="font-size:9px;color:#94a3b8;font-weight:600;line-height:1.6">\
+          💡 للحصول على API Key: اتفضل على <b>console.anthropic.com</b> → API Keys → Create Key<br>\
+          📊 النموذج المستخدم: claude-haiku (اقتصادي وسريع - مناسب لهذا الاستخدام)\
+        </div>\
+      </div>\
     <div style="padding:12px 22px 16px;border-top:2px solid rgba(129,140,248,0.06);display:flex;gap:8px;flex-shrink:0;background:rgba(241,245,249,0.4);flex-wrap:wrap">\
       <button id="ez-cfg-save" style="flex:1;height:46px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 16px rgba(16,185,129,0.25);transition:all 0.3s">💾 حفظ التعديلات</button>\
       <button id="ez-cfg-reset" style="height:46px;padding:0 18px;border:1.5px solid rgba(239,68,68,0.15);border-radius:14px;background:rgba(239,68,68,0.03);color:#ef4444;cursor:pointer;font-size:12px;font-weight:800;font-family:Cairo,sans-serif;transition:all 0.3s">🗑️ استعادة</button>\
@@ -3290,6 +3520,19 @@ function _ezShowSettingsPanel(){
       defaultTime:document.getElementById('cfg-nt-def').value
     };
     saveCustomConfig(c2);
+    /* Save Claude AI settings */
+    var claudeKeyEl=document.getElementById('ez-cfg-claude-key');
+    var claudeEnabledEl=document.getElementById('ez-cfg-claude-enabled');
+    var claudeNotifyEl=document.getElementById('ez-cfg-claude-notify');
+    if(claudeKeyEl){
+      c2.claudeApiKey=claudeKeyEl.value.trim();
+      c2.claudeEnabled=claudeEnabledEl?claudeEnabledEl.checked:true;
+      c2.claudeShowNotify=claudeNotifyEl?claudeNotifyEl.checked:true;
+      saveCustomConfig(c2);
+      customConfig.claudeApiKey=c2.claudeApiKey;
+      customConfig.claudeEnabled=c2.claudeEnabled;
+      customConfig.claudeShowNotify=c2.claudeShowNotify;
+    }
     /* Refresh CODE_START_TIMES in memory (merge defaults + config) */
     var _cstK;for(_cstK in _defaultCodeStartTimes){var dv2=_defaultCodeStartTimes[_cstK];if(typeof dv2==='string')CODE_START_TIMES[_cstK]={time:dv2,every:24};else CODE_START_TIMES[_cstK]=dv2;}
     if(c2.codeStartTimes){for(_cstK in c2.codeStartTimes){var v=c2.codeStartTimes[_cstK];if(typeof v==='string')CODE_START_TIMES[_cstK]={time:v,every:24};else CODE_START_TIMES[_cstK]=v;}}
@@ -3297,6 +3540,28 @@ function _ezShowSettingsPanel(){
     window.ezShowToast('✅ تم حفظ جميع الإعدادات - أعد تشغيل الأداة لتطبيقها','success');
     ezBeep('success');
   };
+
+  /* CLAUDE AI TEST BUTTON */
+  var claudeTestBtn=document.getElementById('ez-cfg-claude-test');
+  if(claudeTestBtn){
+    claudeTestBtn.onclick=function(){
+      var keyEl=document.getElementById('ez-cfg-claude-key');
+      var statusEl=document.getElementById('ez-cfg-claude-status');
+      var key=keyEl?keyEl.value.trim():'';
+      if(!key||key.length<10){statusEl.style.display='block';statusEl.style.color='#ef4444';statusEl.textContent='❌ أدخل API Key أولاً';return;}
+      claudeTestBtn.textContent='⏳ جاري الاختبار...';claudeTestBtn.disabled=true;statusEl.style.display='none';
+      fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':key},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:50,messages:[{role:'user',content:'رد بكلمة: OK'}]})
+      }).then(function(r){return r.json();}).then(function(data){
+        claudeTestBtn.textContent='🧪 اختبار';claudeTestBtn.disabled=false;
+        if(data&&data.content&&data.content[0]){
+          statusEl.style.display='block';statusEl.style.color='#10b981';statusEl.textContent='✅ الاتصال ناجح! Claude جاهز للعمل';
+        }else{statusEl.style.display='block';statusEl.style.color='#ef4444';statusEl.textContent='❌ رد غير متوقع: '+(data.error?data.error.message:'خطأ غير معروف');}
+      }).catch(function(e){claudeTestBtn.textContent='🧪 اختبار';claudeTestBtn.disabled=false;statusEl.style.display='block';statusEl.style.color='#ef4444';statusEl.textContent='❌ فشل الاتصال: '+e.message;});
+    };
+  }
 
   /* RESET */
   document.getElementById('ez-cfg-reset').onclick=function(){
@@ -3567,29 +3832,18 @@ function extractAndConfirmName(){
       if(engM&&engM[1]&&engM[1].trim().length>=3) return engM[1].trim();
 
       /* PRIORITY 3: Arabic name patterns */
-      /* FIX: أضفنا و? (و الربط اختياري) في بداية patterns التغيير
-         ومعالجة "الاسم الى X" بحيث نتجاوز "الى/إلى" ونأخذ الاسم بعدها مباشرة */
-      var AR_NAME='([\\u0600-\\u06FF]+(?:\\s+[\\u0600-\\u06FF]+){0,3})';
-      var TO_KW='(?:\\s*(?:ال[يى]|[إا]ل[يى]|ل[ـ]?|:)\\s*)'; /* الى / إلى / لـ / : */
       var patterns=[
-        /* اسم الضيف / اسم المريض / اسم العميل */
-        new RegExp('(?:اسم\\s*(?:ال)?ضيف[ةه]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        new RegExp('(?:اسم\\s*(?:ال)?مريض[ةه]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        new RegExp('(?:اسم\\s*(?:ال)?عمي[لة]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* FIX: تغيير/تعديل/تبديل الاسم الى X - مع و? اختياري */
-        new RegExp('(?:و?(?:تغيير|تعديل|تبديل|تحويل|تحويله|تغيير|غير|تبديله?)\\s*(?:ال)?اسم\\s*)'+TO_KW+'?'+AR_NAME,'i'),
-        /* اكتب/يكتب اسم X */
-        new RegExp('(?:(?:يكتب|اكتب|اكتبي)\\s*(?:عليه|عليها)?\\s*اسم)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* كتابة اسم X */
-        new RegExp('(?:و?كتاب[ةه]\\s*اسم)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* باسم X */
-        new RegExp('(?:باسم)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* FIX: الاسم الى X - نتجاوز "الى" صراحةً في الـ pattern */
-        new RegExp('(?:(?:و|ب)?الاسم)\\s*'+TO_KW+AR_NAME,'i'),
-        /* للضيف/للمريض X */
-        new RegExp('(?:للضيف[ةه]?|للمريض[ةه]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* اسم X (standalone) */
-        new RegExp('(?:^|[،,\\s])اسم\\s*[:\\-]?\\s*([\\u0600-\\u06FF]{3,}(?:\\s+[\\u0600-\\u06FF]+){0,3})','i')
+        /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل[ـ]?))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:(?:يكتب|اكتب|اكتبي)\s*(?:عليه|عليها)?\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:كتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:وكتاب[ةه]\s*اسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:باسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:الاسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:للضيف[ةه]?|للمريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:^|[،,\s])اسم\s*[:\-]?\s*([\u0600-\u06FF]{3,}(?:\s+[\u0600-\u06FF]+){0,3})/i
       ];
 
       for(var p=0;p<patterns.length;p++){
