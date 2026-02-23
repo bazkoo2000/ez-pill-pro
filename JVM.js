@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.8';
+var APP_VERSION='136.11';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -8,6 +8,36 @@ var APP_NAME='ez_pill Jvm';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '136.11':{
+    title:'رمضان: qty=1 أثناء رمضان + دمج النوتات بعد الإلغاء ✅',
+    features:[
+      {icon:'🐛',text:'إصلاح: qty كانت بتتضرب في عدد الشهور أثناء رمضان (3شهور → qty=3 × size=25 = 75 غلط!)'},
+      {icon:'✅',text:'qty يبقى 1 طول فترة رمضان - عدد الشهور محفوظ في _rmMVal'},
+      {icon:'📝',text:'لما تلغي رمضان: النوتات بتتدمج - "بعد الفطار"+"بعد العشاء" → "بعد الفطار والعشاء"'},
+      {icon:'🔢',text:'الحساب الصح: 3شهور×30يوم=90 - 25رمضان = 65 يوم عادي بـ size=65/130/195'},
+      {icon:'📅',text:'#fstartDate يتحدث لأول يوم بعد رمضان بعد الإلغاء'}
+    ]
+  },
+  '136.10':{
+    title:'إصلاح "إلغاء جرعات رمضان" - الكميات والتاريخ ✅',
+    features:[
+      {icon:'🐛',text:'إصلاح: size بعد الإلغاء كانت = 65 بدل 130 للأدوية مرتين/اليوم'},
+      {icon:'✅',text:'الإصلاح: totalSize = عدد الجرعات × normalDays (مرتين = 65×2=130)'},
+      {icon:'🕐',text:'إصلاح: every بعد الدمج = 12 للمرتين، 8 للثلاث، 6 للأربع'},
+      {icon:'📅',text:'إصلاح: #fstartDate يتحدث لأول يوم بعد انتهاء رمضان'},
+      {icon:'🌙',text:'التحويل الصح: قبل الفطار→8 | بعد الفطار→9 | قبل السحور→20 | بعد السحور→21 | تراويح→14'}
+    ]
+  },
+  '136.9':{
+    title:'إصلاح زر "إلغاء جرعات رمضان" 🌙↩️✅',
+    features:[
+      {icon:'🐛',text:'إصلاح: زر "إلغاء جرعات رمضان" كان مش شغال بسبب ReferenceError في startDateStr'},
+      {icon:'✅',text:'الإصلاح: تعريف startDateStr و addDays قبل استخدامهم في الـ confirm'},
+      {icon:'🔄',text:'إصلاح: الكود الآن يشتغل على الجدول الحالي مباشرة (مش يرجع للـ snapshot الفاضي)'},
+      {icon:'🌙',text:'التحويل: قبل الفطار→8 | بعد الفطار→9 | قبل السحور→20 | بعد السحور→21 | التراويح→14'},
+      {icon:'🔁',text:'دمج الصفوف المكررة بنفس الكود بعد الإلغاء تلقائياً'}
+    ]
+  },
   '136.8':{
     title:'ez_pill Jvm - تحديث الأوقات والإصدار 🕐',
     features:[
@@ -1486,18 +1516,23 @@ window.ezRamadanToNormal=function(){
     window.ezShowToast('❌ لا يوجد أيام عادية بعد رمضان','error');return;
   }
 
+  /* FIX: تعريف startDateStr و addDays قبل استخدامهم في الـ confirm */
+  var sDateElem=document.querySelector('#fstartDate');
+  var startDateStr=sDateElem?sDateElem.value:'';
+  function addDays(dateStr,n){
+    var d=new Date(dateStr);d.setDate(d.getDate()+n);
+    var y=d.getFullYear(),mo=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
+    return y+'-'+mo+'-'+dd;
+  }
+
   var _normalStart=addDays(startDateStr,ramLeft);
   _ezRamadanConfirm({ramLeft:ramLeft,normalDays:normalDays,totalDays:totalDays,t:_t,m:_m,startDate:startDateStr,normalStart:_normalStart},
   function(){
   /* بعد التأكيد: تطبيق الإلغاء */
 
-  /* رجوع للـ pre-process snapshot (قبل المعالجة) */
-  var _snapToUse=window._ramadanPreProcessSnapshot||window._ramadanSplitSnapshot;
-  if(_snapToUse){
-    tb.innerHTML=_snapToUse;
-    var fire2=_ezFire;
-    tb.querySelectorAll('input,select,textarea').forEach(function(el){fire2(el);});
-  }
+  /* FIX: لا نرجع للـ snapshot - نشتغل على الجدول الحالي مباشرة
+     لأن الـ snapshot قبل المعالجة خالص وفيه نوتات أصلية مش فيها "الفطار" أو "السحور"
+     فالكود هيفشل في إيجاد صفوف رمضان لو رجعنا للـ snapshot */
 
   var fire=_ezFire,get=_ezGet;
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
@@ -1506,14 +1541,7 @@ window.ezRamadanToNormal=function(){
   var ni=_ezIdx(hs,'note'),qi=_ezIdx(hs,'qty'),ci=_ezIdx(hs,'code');
   var sdi=_ezIdx(hs,'start date');
 
-  /* تاريخ البداية */
-  var sDateElem=document.querySelector('#fstartDate');
-  var startDateStr=sDateElem?sDateElem.value:'';
-  function addDays(dateStr,n){
-    var d=new Date(dateStr);d.setDate(d.getDate()+n);
-    var y=d.getFullYear(),mo=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
-    return y+'-'+mo+'-'+dd;
-  }
+  /* تاريخ البداية - نستخدم startDateStr المعرفة في الخارج */
   var normalStartDate=addDays(startDateStr,ramLeft);
   var normalEndDate=addDays(startDateStr,totalDays-1);
 
@@ -1567,7 +1595,6 @@ window.ezRamadanToNormal=function(){
   });
 
   /* ── دمج الدبليكات (الصفوف المقسمة لرمضان وتحولت لعادية) ── */
-  /* نجمع الصفوف اللي ليها نفس الكود */
   if(ci>=0){
     var groups={};
     var allRows=Array.from(tb.querySelectorAll('tr')).slice(1);
@@ -1584,23 +1611,55 @@ window.ezRamadanToNormal=function(){
       if(g.length<2) return;
       /* أخذ أول صف كـ master */
       var master=g[0],mtds=master.querySelectorAll('td');
-      /* جمع الـ sizes */
+
+      /* totalSize = مجموع sizes كل الصفوف = normalDays × عدد الجرعات */
       var totalSize=0;
       g.forEach(function(r2){var tds3=r2.querySelectorAll('td');if(si>=0&&tds3[si])totalSize+=parseInt(get(tds3[si]))||0;});
-      /* تحديث master: size = normalDays (مش مجموع لأنها كلها نفس القيمة) */
-      if(si>=0&&mtds[si]){var sM=mtds[si].querySelector('input,textarea');if(sM){sM.value=normalDays;fire(sM);}}
-      /* تغيير الـ note: إزالة ⚡ */
-      if(ni>=0&&mtds[ni]){var nM=mtds[ni].querySelector('input,textarea');if(nM){nM.value=nM.value.replace(/^⚡\s*/,'');fire(nM);}}
-      /* every → 24 */
-      if(evi>=0&&mtds[evi]){var eM=mtds[evi].querySelector('input,select');if(eM){eM.value='24';fire(eM);}}
-      /* حذف باقي الصفوف */
+
+      /* every بناءً على عدد الصفوف المدموجة */
+      var mergedCount=g.length;
+      var mergedEvery=mergedCount>=4?'6':mergedCount===3?'8':mergedCount===2?'12':'24';
+
+      /* FIX: دمج النوتات - "بعد الفطار" + "بعد العشاء" → "بعد الفطار والعشاء" */
+      var notesList=[];
+      g.forEach(function(r2){
+        var tds3=r2.querySelectorAll('td');
+        if(ni>=0&&tds3[ni]){
+          var nt=(get(tds3[ni])||'').replace(/^⚡\s*/,'').trim();
+          if(nt&&notesList.indexOf(nt)===-1) notesList.push(nt);
+        }
+      });
+      var isEnNotes=notesList.length>0&&/[a-zA-Z]/.test(notesList[0]);
+      var combinedNote='';
+      if(notesList.length===2){
+        if(isEnNotes){
+          var p2en=notesList[1].replace(/^(Before|After)\s+/i,'');
+          combinedNote=notesList[0]+' & '+p2en;
+        } else {
+          var p2ar=notesList[1].replace(/^(بعد|قبل)\s+/,'');
+          combinedNote=notesList[0]+' و'+p2ar;
+        }
+      } else if(notesList.length>2){
+        combinedNote=isEnNotes?notesList.join(' & '):notesList.join(' و');
+      } else {
+        combinedNote=notesList[0]||(get(mtds[ni])||'').replace(/^⚡\s*/,'').trim();
+      }
+
+      if(si>=0&&mtds[si]){var sM=mtds[si].querySelector('input,textarea');if(sM){sM.value=totalSize;fire(sM);}}
+      if(ni>=0&&mtds[ni]){var nM=mtds[ni].querySelector('input,textarea');if(nM){nM.value=combinedNote;fire(nM);}}
+      if(evi>=0&&mtds[evi]){var eM=mtds[evi].querySelector('input,select');if(eM){eM.value=mergedEvery;fire(eM);}}
+      /* qty لا يتغير - يبقى 1 كما وضعناه في وضع رمضان */
       for(var j=1;j<g.length;j++){if(g[j].parentNode)g[j].parentNode.removeChild(g[j]);}
     });
   }
 
+  /* تحديث #fstartDate لأول يوم بعد رمضان */
+  var sDateTopElem=document.querySelector('#fstartDate');
+  if(sDateTopElem){sDateTopElem.value=normalStartDate;fire(sDateTopElem);}
+
   window._ramadanSplitDone=true;
   window._ramadanSplitSnapshot=null;
-  window.ezShowToast('✅ إلغاء رمضان: '+normalDays+' يوم عادي من '+normalStartDate,'success');
+  window.ezShowToast('✅ إلغاء رمضان: '+normalDays+' يوم عادي من '+normalStartDate+' ('+ramLeft+' يوم رمضان)','success');
   ezBeep('success');
   window._refreshPostDialogBtns();
   }); // end confirm callback
@@ -2257,7 +2316,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
       /* ── RAMADAN MODE: Ramadan duplicate (فطار + سحور) ── */
       if(ramadanMode&&rd.dui&&rd.dui.type==='ramadan_two'){
-        if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}
+        /* FIX: في وضع رمضان لا نضرب qty في m - يفضل 1 
+           m محفوظ في _rmMVal لاستخدامه عند إلغاء رمضان لاحقاً */
+        /* qty يبقى كما هو (1) */
         /* Non-tablet items: uncheck and move to skip list */
         if(rd.ramadanInfo&&rd.ramadanInfo.type==='nontablet_ramadan'){
           var ck=getCheckmarkCellIndex(r_node);
@@ -2286,7 +2347,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         setSize(tds_nodes[si_main],_rmDays);
         setTime(r_node,rd.ramadanInfo.time);
         if(di_main>=0){var tpi_once=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_once.dose);}
-        if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
+        /* FIX: في وضع رمضان qty يبقى كما هو (1) - لا نضرب في m */
         /* Set Ramadan start date */
         if(sdi_main>=0&&defaultStartDate){
           var rmSD=getRamadanStartDate(defaultStartDate,rd.ramadanInfo.meal);
