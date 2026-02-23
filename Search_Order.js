@@ -135,6 +135,46 @@ javascript:(function(){
   document.head.appendChild(styleEl);
   
   // ═══════════════════════════════════════════
+  // استخراج عدد الصفحات من واجهة النظام
+  // ═══════════════════════════════════════════
+  var calculatedPages = 10;
+  try {
+    var targetText = 'ready to pack';
+    var loc = window.location.href.toLowerCase();
+    if (loc.indexOf('new') !== -1) targetText = 'new orders';
+    else if (loc.indexOf('packed') !== -1 && loc.indexOf('ready') === -1) targetText = 'packed';
+    else if (loc.indexOf('delivered') !== -1) targetText = 'delivered orders';
+
+    var elements = document.querySelectorAll('*');
+    for (var i = 0; i < elements.length; i++) {
+      var el = elements[i];
+      if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === targetText) {
+        var parent = el.parentElement;
+        for (var j = 0; j < 4; j++) {
+          if (parent) {
+            var txt = parent.innerText || parent.textContent || '';
+            var nums = txt.match(/\d+/g);
+            if (nums && nums.length > 0) {
+              var maxN = 0;
+              for (var k = 0; k < nums.length; k++) {
+                var n = parseInt(nums[k]);
+                if (n > maxN) maxN = n;
+              }
+              if (maxN > 0) {
+                calculatedPages = Math.ceil(maxN / 10);
+                break;
+              }
+            }
+            parent = parent.parentElement;
+          }
+        }
+        break;
+      }
+    }
+    if (calculatedPages < 1) calculatedPages = 1;
+  } catch (err) {}
+
+  // ═══════════════════════════════════════════
   // Panel
   // ═══════════════════════════════════════════
   var panel = document.createElement('div');
@@ -161,13 +201,12 @@ javascript:(function(){
           buildStatCard('🚀', '0', 'تم فتحه', '#3b82f6', 'stat_opened', 'linear-gradient(90deg,#3b82f6,#60a5fa)') +
         '</div>' +
         
-        // --- منطقة الإعدادات الثابتة (لا يتم مسحها) ---
         '<div id="ali_settings_box" style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">' +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
             '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
             '<div style="display:flex;align-items:center;gap:6px">' +
               '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-              '<input type="number" id="p_lim" value="10" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
+              '<input type="number" id="p_lim" value="' + calculatedPages + '" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
             '</div>' +
           '</div>' +
           '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
@@ -178,7 +217,6 @@ javascript:(function(){
           '<span>✅</span><span>جاهز للبدء التلقائي</span>' +
         '</div>' +
         
-        // --- المنطقة المتغيرة (يتم استبدال الزر بالبحث لاحقاً) ---
         '<div id="ali_dynamic_area">' +
           '<button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">' +
             '🚀 بدء الفحص الذكي' +
@@ -266,7 +304,23 @@ javascript:(function(){
   });
   
   // ═══════════════════════════════════════════
-  // API Page Scanner (مع الحساب التلقائي لعدد الصفحات)
+  // ✅ دالة آمنة لإنشاء label بدون onclick string
+  // ═══════════════════════════════════════════
+  function createSafeLabel(inv, args) {
+    var label = document.createElement('label');
+    label.style.cssText = 'cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:bold';
+    label.textContent = inv; // ✅ textContent آمن — لا يفسر HTML
+    if (args) {
+      label.addEventListener('click', function() {
+        // ✅ البيانات تتمرر كمتغيرات حقيقية مش كنص
+        getDetails(args[0], args[1], args[2], args[3]);
+      });
+    }
+    return label;
+  }
+
+  // ═══════════════════════════════════════════
+  // API Page Scanner
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
   async function scanPage(isSync) {
@@ -319,12 +373,12 @@ javascript:(function(){
         
         var data = await res.json();
 
-        // 🟢 الحساب التلقائي الذكي لعدد الصفحات (يحدث في أول صفحة فقط) 🟢
+        // الحساب التلقائي لعدد الصفحات في أول صفحة
         if (page === 1 && data.total_orders) {
           var exactTotal = parseInt(data.total_orders) || 0;
           if (exactTotal > 0) {
             maxPages = Math.ceil(exactTotal / 10);
-            document.getElementById('p_lim').value = maxPages; // تحديث الواجهة أمام المستخدم
+            document.getElementById('p_lim').value = maxPages;
           }
         }
 
@@ -365,22 +419,33 @@ javascript:(function(){
               clone = templateRow.cloneNode(true);
               var cells = clone.querySelectorAll('td');
               if (cells.length > 3) {
-                var label = cells[0].querySelector('label');
-                if (!label) {
-                  cells[0].innerHTML = '<label style="cursor:pointer; color:#3b82f6; text-decoration:underline; font-weight:bold;"></label>';
-                  label = cells[0].querySelector('label');
-                }
-                label.setAttribute('onclick', "getDetails('" + (args ? args[0] : '') + "','" + (args ? args[1] : '') + "','" + (args ? args[2] : '') + "','" + (args ? args[3] : '') + "')");
-                label.innerText = inv;
+                // ✅ التعديل الأمني: استبدال innerHTML بـ createSafeLabel
+                cells[0].innerHTML = '';
+                var safeLabel = createSafeLabel(inv, args);
+                cells[0].appendChild(safeLabel);
 
-                cells[1].innerText = onl;
-                cells[2].innerText = item.guestName || '';
-                cells[3].innerText = item.guestMobile || item.mobile || '';
+                // ✅ textContent بدل innerText لمنع XSS
+                cells[1].textContent = onl;
+                cells[2].textContent = item.guestName || '';
+                cells[3].textContent = item.guestMobile || item.mobile || '';
               }
             } else {
               clone = document.createElement('tr');
-              clone.innerHTML = '<td><label onclick="getDetails(\''+(args?args[0]:'')+'\',\''+(args?args[1]:'')+'\',\''+(args?args[2]:'')+'\',\''+(args?args[3]:'')+'\')">' + inv + '</label></td>' +
-                                '<td>' + onl + '</td><td>' + (item.guestName || '') + '</td><td>' + (item.guestMobile || item.mobile || '') + '</td>';
+              var td0 = document.createElement('td');
+              var td1 = document.createElement('td');
+              var td2 = document.createElement('td');
+              var td3 = document.createElement('td');
+
+              // ✅ إنشاء الـ label بالطريقة الآمنة
+              td0.appendChild(createSafeLabel(inv, args));
+              td1.textContent = onl;
+              td2.textContent = item.guestName || '';
+              td3.textContent = item.guestMobile || item.mobile || '';
+
+              clone.appendChild(td0);
+              clone.appendChild(td1);
+              clone.appendChild(td2);
+              clone.appendChild(td3);
             }
 
             state.savedRows.push({
@@ -440,7 +505,6 @@ javascript:(function(){
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
     
-    // استبدال المنطقة الديناميكية فقط (مع الإبقاء على خانة الصفحات وشريط التقدم)
     var dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML =
       '<div style="margin-bottom:10px">' +
@@ -574,8 +638,10 @@ javascript:(function(){
       
       for (var idx = 0; idx < openable.length; idx++) {
         var item = openable[idx];
-        var url = base + "?onlineNumber=" + item.args[0] +
-          "&Invoice=" + item.args[1] + "&typee=" + item.args[2] + "&head_id=" + item.args[3];
+        var url = base + "?onlineNumber=" + encodeURIComponent(item.args[0]) +
+          "&Invoice=" + encodeURIComponent(item.args[1]) +
+          "&typee=" + encodeURIComponent(item.args[2]) +
+          "&head_id=" + encodeURIComponent(item.args[3]);
           
         try {
           var w = window.open(url, "_blank");
@@ -644,7 +710,7 @@ javascript:(function(){
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
-      scanPage(true); // الاستدعاء بدون رقم لينفذ الحساب التلقائي مرة أخرى
+      scanPage(true);
     });
   }
   
