@@ -56,9 +56,7 @@ javascript:(function(){
     return new Promise(function(resolve) {
       var overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
-      
       var iconBg = { blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)', green:'linear-gradient(135deg,#dcfce7,#bbf7d0)', amber:'linear-gradient(135deg,#fef3c7,#fde68a)', red:'linear-gradient(135deg,#fee2e2,#fecaca)' };
-      
       var infoHTML = '';
       if (opts.info && opts.info.length) {
         for (var i = 0; i < opts.info.length; i++) {
@@ -66,7 +64,6 @@ javascript:(function(){
           infoHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">' + r.label + '</span><span style="font-weight:800;color:' + (r.color || '#1e293b') + ';font-size:12px">' + r.value + '</span></div>';
         }
       }
-      
       var buttonsHTML = '';
       if (opts.buttons && opts.buttons.length) {
         for (var j = 0; j < opts.buttons.length; j++) {
@@ -74,9 +71,7 @@ javascript:(function(){
           buttonsHTML += '<button data-idx="' + j + '" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;' + (btn.style || 'background:#f1f5f9;color:#475569') + ';transition:all 0.2s">' + btn.text + '</button>';
         }
       }
-      
       overlay.innerHTML = '<div style="background:white;border-radius:24px;width:420px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:' + (iconBg[opts.iconColor] || iconBg.blue) + '">' + opts.icon + '</div><div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">' + opts.title + '</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">' + opts.desc + '</div></div><div style="padding:20px 24px">' + infoHTML + (opts.body || '') + '</div><div style="padding:16px 24px 24px;display:flex;gap:10px">' + buttonsHTML + '</div></div>';
-        
       overlay.addEventListener('click', function(e) {
         var btnEl = e.target.closest('[data-idx]');
         if (btnEl) { overlay.remove(); resolve(opts.buttons[parseInt(btnEl.getAttribute('data-idx'))].value); }
@@ -113,7 +108,7 @@ javascript:(function(){
   }
 
   // ═══════════════════════════════════════════
-  // Parallel Search Engine (المحرك المتوازي)
+  // Parallel Search Engine (محرك البحث المتوازي)
   // ═══════════════════════════════════════════
   async function scanPage() {
     state.isProcessing = true;
@@ -132,14 +127,28 @@ javascript:(function(){
           state.visitedSet.add(inv);
           let cleanedOnl = onl.replace(/ERX/gi, '');
 
-          // 🟢 تم الالتزام بالمفاتيح الحرفية كما في الـ HTML المرسل 🟢
+          // 🟢 تم الالتزام بالمفاتيح الحرفية الـ 9 أعمدة لضمان ظهور كافة البيانات 🟢
           let createdTime = item['Created Time'] || item.Created_Time || item.created_at || '';
           let deliveryTime = item['Delviery Time'] || item.delviery_time || item.delivery_time || '';
+          let payment = item.payment_method || item.payment || 'Cash';
+          let source = item.source || item.typee || 'StorePaid';
+          let guestMobile = item.guestMobile || item.mobile || '';
+          let status = item.status || item.Status || 'Accepted';
           
           let tr = document.createElement('tr');
           tr.style.background = 'rgba(59,130,246,0.05)';
-          tr.innerHTML = `<td style="padding:12px 8px"><label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" onclick="getDetails('${cleanedOnl}','${inv}','${item.source || item.typee || 'StorePaid'}','${item.head_id || ''}');">${inv}</label></td><td style="padding:12px 8px">${onl}</td><td style="padding:12px 8px">${item.guestName || ''}</td><td style="padding:12px 8px">${item.guestMobile || item.mobile || ''}</td><td style="padding:12px 8px">${item.payment_method || 'Cash'}</td><td style="padding:12px 8px">${createdTime}</td><td style="padding:12px 8px">${deliveryTime}</td><td style="padding:12px 8px">Accepted</td><td style="padding:12px 8px">${item.source || 'StorePaid'}</td>`;
-          state.savedRows.push({ id: inv, onl: onl, node: tr, args: [cleanedOnl, inv, (item.source || item.typee || 'StorePaid'), (item.head_id || '')] });
+          tr.innerHTML = `
+            <td style="padding:12px 8px"><label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" onclick="getDetails('${cleanedOnl}','${inv}','${source}','${item.head_id || ''}');">${inv}</label></td>
+            <td style="padding:12px 8px">${onl}</td>
+            <td style="padding:12px 8px">${item.guestName || ''}</td>
+            <td style="padding:12px 8px">${guestMobile}</td>
+            <td style="padding:12px 8px">${payment}</td>
+            <td style="padding:12px 8px">${createdTime}</td>
+            <td style="padding:12px 8px">${deliveryTime}</td>
+            <td style="padding:12px 8px">${status}</td>
+            <td style="padding:12px 8px">${source}</td>`;
+            
+          state.savedRows.push({ id: inv, onl: onl, node: tr, args: [cleanedOnl, inv, source, (item.head_id || '')] });
         }
       }
     }
