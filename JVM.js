@@ -2704,7 +2704,7 @@ s_style.textContent='\
 .ez-dialog-v2::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#a78bfa,#818cf8,#6366f1);background-size:300% 100%;animation:barShift 4s ease infinite;z-index:1}\
 .ez-header{padding:20px 24px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.08);cursor:move}\
 .ez-logo-group{display:flex;align-items:center;gap:14px}\
-.ez-logo{width:52px;height:52px;border-radius:16px;object-fit:contain;box-shadow:0 8px 24px rgba(99,102,241,0.15);position:relative}\
+.ez-logo{width:52px;height:52px;border-radius:16px;object-fit:contain;background:#fff;padding:4px;box-sizing:border-box;box-shadow:0 4px 14px rgba(99,102,241,0.15),0 0 0 1px rgba(129,140,248,0.1);position:relative}\
 .ez-logo::after{content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);animation:shimmer 3s ease infinite}\
 .ez-title-block{display:flex;flex-direction:column;gap:2px}\
 .ez-title{font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.5px;line-height:1.2;display:flex;align-items:center;gap:8px}\
