@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-// EZ-PILL PRO v5.6 - (تصحيح الهيكل البصري + محرك البحث الأصلي)
+// EZ-PILL PRO v5.7 - (الإصدار المصلح: مطابقة كاملة للبيانات والخانات)
 // ═══════════════════════════════════════════════════════════════════
 
 javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '5.6';
+  const VERSION = '5.7';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -17,7 +17,8 @@ javascript:(function(){
     savedRows: [],
     visitedSet: new Set(),
     isProcessing: false,
-    openedCount: 0
+    openedCount: 0,
+    htmlBuffer: ''
   };
 
   const bodyText = document.body.innerText;
@@ -86,9 +87,9 @@ javascript:(function(){
             <span id="ali_min" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);cursor:pointer">−</span>
             <span id="ali_close" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>
           </div>
-          <h3 style="font-size:18px;font-weight:900;margin:0">مُنهي الطلبات الصاروخي</h3>
+          <h3 style="font-size:18px;font-weight:900;margin:0">مُنهي الطلبات v5.7</h3>
         </div>
-        <div style="text-align:right;margin-top:4px"><span style="background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v5.6 Strict Layout</span></div>
+        <div style="text-align:right;margin-top:4px"><span style="background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Original Layout Verified</span></div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
         <div id="ali_stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
@@ -120,7 +121,7 @@ javascript:(function(){
     state.savedRows = []; state.visitedSet.clear();
 
     const statusEl = document.getElementById('status-msg');
-    statusEl.innerHTML = `<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.6s linear infinite"></div><span>جاري السحب المتوازي...</span>`;
+    statusEl.innerHTML = `<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.6s linear infinite"></div><span>جاري السحب...</span>`;
 
     function processData(data) {
       let orders = []; try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
@@ -130,21 +131,18 @@ javascript:(function(){
         if (inv.length > 3 && !state.visitedSet.has(inv)) {
           state.visitedSet.add(inv);
           
-          let rawSt = String(item.status || item.Status || item.order_status || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
-          let st = rawSt.includes('packed') ? 'packed' : (rawSt.includes('received') ? 'received' : 'other');
-          let stColor = st === 'received' ? '#059669' : '#d97706';
+          // قراءة الحالة الطبيعية دون تدخل
+          let st = String(item.status || item.Status || item.order_status || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+          let stColor = st.includes('received') ? '#059669' : (st.includes('packed') ? '#d97706' : '#64748b');
 
           state.savedRows.push({ 
-            id: inv, 
-            onl: onl, 
-            st: st, 
-            stColor: stColor,
-            guestName: item.guestName || '',
-            guestMobile: item.guestMobile || item.mobile || '',
-            payment: item.payment_method || 'Cash',
+            id: inv, onl: onl, st: st, stColor: stColor,
+            name: item.guestName || '', 
+            mobile: item.guestMobile || item.mobile || '',
+            pay: item.payment_method || '',
             created: item.created_at || item.Created_Time || '',
             delivery: item.delivery_time || '',
-            source: item.source || 'StorePaid',
+            source: item.source || '',
             args: [onl, inv, item.source||'StorePaid', item.head_id||''] 
           });
         }
@@ -154,7 +152,7 @@ javascript:(function(){
     try {
       const promises = [];
       for (let i = 1; i <= maxPages; i++) {
-        promises.push(fetch(baseUrl+'Home/getOrders', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:'readypack', pageSelected:i, searchby:''}) }).then(r=>r.json()).then(d=>processData(d)));
+        promises.push(fetch(baseUrl+'Home/getOrders', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:'packed', pageSelected:i, searchby:''}) }).then(r=>r.json()).then(d=>processData(d)));
       }
       await Promise.all(promises);
       if (fill) fill.style.width = '100%';
@@ -174,8 +172,8 @@ javascript:(function(){
 
     const dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML = `
-      <div style="margin-bottom:10px; position:relative"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:900;color:#94a3b8;font-family:monospace">0</span><input type="text" id="ali_sI" placeholder="الفاتورة (بعد الـ 0)..." style="width:100%;padding:12px 16px 12px 34px;border:2px solid #e2e8f0;border-radius:12px;font-weight:700;direction:ltr;box-sizing:border-box;outline:none"></div>
-      <div style="margin-bottom:10px; position:relative"><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%)">🔗</span><input type="text" id="ali_sO" placeholder="الرمز المرجعي (ERX)..." style="width:100%;padding:12px 42px 12px 16px;border:2px solid #e2e8f0;border-radius:12px;box-sizing:border-box;outline:none"></div>
+      <div style="margin-bottom:10px; position:relative"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:900;color:#94a3b8;font-family:monospace">0</span><input type="text" id="ali_sI" placeholder="رقم الفاتورة..." style="width:100%;padding:12px 16px 12px 34px;border:2px solid #e2e8f0;border-radius:12px;font-weight:700;direction:ltr;box-sizing:border-box;outline:none"></div>
+      <div style="margin-bottom:10px; position:relative"><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%)">🔗</span><input type="text" id="ali_sO" placeholder="الرمز المرجعي..." style="width:100%;padding:12px 42px 12px 16px;border:2px solid #e2e8f0;border-radius:12px;box-sizing:border-box;outline:none"></div>
       <button id="ali_btn_open" style="width:100%;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;background:linear-gradient(135deg,#059669,#10b981);color:white;margin-bottom:8px">⚡ فتح المطابق</button>
       <button id="ali_btn_sync" style="width:100%;padding:10px;border:none;border-radius:14px;cursor:pointer;font-weight:700;background:#f8fafc;border:2px solid #e2e8f0;color:#475569">🔄 إعادة الفحص</button>
     `;
@@ -190,15 +188,15 @@ javascript:(function(){
         if ((v1!=='' && r.id.startsWith(v1)) || (v2!=='' && r.onl.toLowerCase().includes(v2)) || (v1==='' && v2==='')) {
           const row = document.createElement('tr');
           row.className = 'fast-row';
-          row.style.background = r.st === 'received' ? 'rgba(16,185,129,0.05)' : 'transparent';
+          row.style.background = r.st.includes('received') ? 'rgba(16,185,129,0.05)' : 'transparent';
           
-          // 🟢 بناء الهيكل بـ 9 أعمدة لمطابقة النظام وحل التلوث البصري 🟢
+          // 🟢 بناء الهيكل بـ 9 أعمدة طبق الأصل من النظام 🟢
           row.innerHTML = `
             <td style="padding:10px 8px"><label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" onclick="getDetails('${r.args[0]}','${r.args[1]}','${r.args[2]}','${r.args[3]}');">${r.id}</label></td>
             <td style="padding:10px 8px">${r.onl}</td>
-            <td style="padding:10px 8px">${r.guestName}</td>
-            <td style="padding:10px 8px">${r.guestMobile}</td>
-            <td style="padding:10px 8px">${r.payment}</td>
+            <td style="padding:10px 8px">${r.name}</td>
+            <td style="padding:10px 8px">${r.mobile}</td>
+            <td style="padding:10px 8px">${r.pay}</td>
             <td style="padding:10px 8px">${r.created}</td>
             <td style="padding:10px 8px">${r.delivery}</td>
             <td style="padding:10px 8px; font-weight:900; color:${r.stColor}; text-transform:capitalize;">${r.st}</td>
@@ -212,7 +210,7 @@ javascript:(function(){
     }
 
     sI.addEventListener('input', filter); sO.addEventListener('input', filter);
-    filter(); // العرض الأولي
+    filter();
 
     openBtn.onclick = async () => {
       if (!currentMatches.length) return showToast('لا توجد نتائج', 'warning');
