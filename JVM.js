@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='136.13';
+var APP_VERSION='136.11';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -8,25 +8,6 @@ var APP_NAME='ez_pill Jvm';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
-  '136.13':{
-    title:'إصلاح اكتشاف الاسم من Prescription Notes 🐛✅',
-    features:[
-      {icon:'🐛',text:'Bug: "وتغيير الاسم الى على الباز" - الـ pattern كان بيدور على "تغيير" لكن النص فيه "وتغيير" (بـ و الربط)'},
-      {icon:'✅',text:'إصلاح: كل patterns التغيير دلوقتي بتقبل و? (و اختياري في الأول)'},
-      {icon:'✅',text:'إصلاح: "الاسم الى X" بيتجاوز كلمة "الى" ويأخذ الاسم بعدها مباشرة'},
-      {icon:'➕',text:'patterns جديدة: "تعديل الاسم الى X" / "تبديل الاسم لـ X" / "غير الاسم الى X"'},
-      {icon:'📝',text:'مثال يشتغل دلوقتي: "وتغيير الاسم الى على الباز وشكرا" → يكتشف "على الباز"'}
-    ]
-  },
-  '136.12':{
-    title:'3 إصلاحات: التراويح + ترتيب الدمج + تنبيه البوكسات ✅',
-    features:[
-      {icon:'🌙',text:'إصلاح: "بعد الغداء" بتتحول لـ "بعد التراويح" صح - تحركنا الـ check قبل أي قواعد مخصصة'},
-      {icon:'🔄',text:'إصلاح: دمج الجرعات مرتين بيعمل "بعد الفطار والعشاء" صح - الترتيب بالوقت (09:00 قبل 21:00)'},
-      {icon:'📦',text:'إصلاح: تنبيه "3 بوكسات" بيشتغل لأي عدد بوكسات في الملاحظات'},
-      {icon:'📝',text:'أمثلة: "ترتيب على 3 بوكسات" / "في 2 بوكس" / "ثلاث بوكسات" كلها بتطلع التنبيه'}
-    ]
-  },
   '136.11':{
     title:'رمضان: qty=1 أثناء رمضان + دمج النوتات بعد الإلغاء ✅',
     features:[
@@ -418,10 +399,6 @@ var RAMADAN_TIMES=(function(){var base={};for(var k in _defaultRamadanTimes)base
 /* Map normal meal words to Ramadan equivalents */
 function ramadanMapNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'هـ').replace(/ى/g,'ي').trim();
-
-  /* ── PRIORITY: بعد الغداء / after lunch → بعد التراويح - يجب التحقق أولاً قبل أي قواعد مخصصة ── */
-  if(/بعد.*غدا|بعد.*غداء|after.*lun|after.*lunch/i.test(note))
-    return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
 
   /* ── Check custom Ramadan keywords FIRST ── */
   if(customConfig.customRamadanRules){
@@ -1632,18 +1609,7 @@ window.ezRamadanToNormal=function(){
     Object.keys(groups).forEach(function(code){
       var g=groups[code];
       if(g.length<2) return;
-
-      /* FIX: رتّب الصفوف بالوقت المحوّل بحيث الفطار (09:00) يجي قبل العشاء (21:00) */
-      g.sort(function(ra,rb){
-        var tdsa=ra.querySelectorAll('td');var tdsb=rb.querySelectorAll('td');
-        var getT=function(tds2){
-          if(ti>=0&&tds2[ti]){var inp=tds2[ti].querySelector("input[type='time']");if(inp&&inp.value)return inp.value;}
-          return '99:99';
-        };
-        var ta=getT(tdsa),tb2=getT(tdsb);
-        return ta<tb2?-1:ta>tb2?1:0;
-      });
-
+      /* أخذ أول صف كـ master */
       var master=g[0],mtds=master.querySelectorAll('td');
 
       /* totalSize = مجموع sizes كل الصفوف = normalDays × عدد الجرعات */
@@ -2602,16 +2568,10 @@ function detectPackagingInstructions(){
         /كل\s*شهر\s*(ب|في|فى)\s*(بوكس|صندوق)/i,
         /(فصل|افصل|يفصل)\s*(كل)?\s*(شهر|بوكس)/i,
         /شهر\s*(ب|في|فى)\s*(صندوق|بوكس)\s*(منفصل)?/i,
-        /جعل\s*كل\s*شهر\s*(ب|في|فى)?\s*(صندوق|بوكس)/i,
-        /* FIX: أنماط "N بوكسات" - ترتيب الأدوية على N بوكسات */
-        /(\d+|ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته)\s*(بوكسات|صناديق|كراتين|بوكس)/i,
-        /على\s*(\d+)\s*(بوكس|بوكسات|صندوق|صناديق)/i,
-        /ترتيب.*على\s*(\d+)/i,
-        /في\s*(\d+)\s*(بوكس|بوكسات|صناديق|كراتين)/i,
-        /توزيع.*على\s*(\d+)\s*(بوكس|بوكسات)/i
+        /جعل\s*كل\s*شهر\s*(ب|في|فى)?\s*(صندوق|بوكس)/i
       ];
 
-      /* Extract month/box count */
+      /* Extract month count */
       var monthCount='';
       var mMatch=s.match(/(\d+)\s*(شهر|اشهر|أشهر|شهور)/i);
       if(mMatch) monthCount=mMatch[1];
@@ -2624,16 +2584,6 @@ function detectPackagingInstructions(){
       if(lMatch){
         var arabicNums3={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','ست':'6'};
         monthCount=arabicNums3[lMatch[1]]||lMatch[1];
-      }
-      /* FIX: استخراج عدد البوكسات مباشرة */
-      if(!monthCount){
-        var boxMatch=s.match(/(\d+)\s*(بوكسات|بوكس|صناديق|كراتين)/i);
-        if(boxMatch) monthCount=boxMatch[1];
-        var boxMatchAr=s.match(/(ثلاث|ثلاثة|اربع|أربع|خمس|خمسة|ست|سته)\s*(بوكسات|صناديق|كراتين)/i);
-        if(boxMatchAr){
-          var arabicNums4={'ثلاث':'3','ثلاثة':'3','اربع':'4','أربع':'4','خمس':'5','خمسة':'5','ست':'6','سته':'6'};
-          monthCount=arabicNums4[boxMatchAr[1]]||boxMatchAr[1];
-        }
       }
 
       for(var p2=0;p2<separatePatterns.length;p2++){
@@ -3573,7 +3523,7 @@ function extractAndConfirmName(){
       return null;
     }
 
-    /* Extract name from text - v2 (improved) */
+    /* Extract name from text - v3 (radical fix: handles تغيير اسم الضيف الى + connector words) */
     function extractName(text){
       if(!text||text.length<5) return null;
       /* Normalize newlines to spaces */
@@ -3585,14 +3535,18 @@ function extractAndConfirmName(){
         'العميل','العميله','العميلة','عميل','عميله','عميلة',
         'الزوج','الزوجه','الزوجة','الام','الأم','الاب','الأب'];
 
+      /* Connector words: these appear BETWEEN the keyword and the name - skip them, don't stop */
+      var connectorWords=['الى','إلى','الي','إلي','لـ'];
+
       function normA(w){return w.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();}
       function normG(w){return normA(w).replace(/ى/g,'ي');}
       function isGeneric(w){var n=normG(w);for(var g=0;g<genericWords.length;g++)if(n===normG(genericWords[g]))return true;return false;}
+      function isConnector(w){var n=normA(w);for(var c=0;c<connectorWords.length;c++)if(n===normA(connectorWords[c]))return true;return false;}
 
-      /* Stop words - على excluded from list: handled contextually below to support names like "على الباز" */
+      /* Stop words - على excluded: handled contextually. connector words (الى/الي) removed from here */
       var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
         'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
-        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة','الى','الي',
+        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة',
         'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في'];
 
       /* على as preposition: only when followed by known location/object word */
@@ -3601,27 +3555,50 @@ function extractAndConfirmName(){
 
       function isStopWord(word,nextWord){
         /* على: stop ONLY when followed by a known object/location (preposition context) */
-        if(word==='على'){
-          if(nextWord&&alaStopNext.some(function(s){return normA(nextWord)===normA(s);})) return true;
-          return false; /* otherwise treat as a name (على الباز، سارة على) */
+        if(normA(word)==='على'){
+          if(nextWord&&alaStopNext.some(function(x){return normA(nextWord)===normA(x);})) return true;
+          return false; /* otherwise treat as part of name (على الباز، سارة على) */
         }
         var wn=normA(word);
         for(var st=0;st<stopWords.length;st++)if(wn===normA(stopWords[st]))return true;
         return false;
       }
 
+      /* cleanName: skip leading connectors (الى/الي) and generic titles, stop at stopWords */
       function cleanName(raw){
         var words=raw.trim().split(/\s+/);
         var cleaned=[];
         for(var w=0;w<words.length;w++){
           if(!words[w]) continue;
+          /* Skip leading connectors (الى/الي) - they come between keyword and name */
+          if(cleaned.length===0&&isConnector(words[w])) continue;
+          /* Skip leading generic title (الضيف/الزوج/الأم/etc) */
+          if(cleaned.length===0&&isGeneric(words[w])) continue;
+          /* Stop at stop words */
           if(isStopWord(words[w],words[w+1]||null)) break;
           if(words[w].length<=1&&cleaned.length>0) break;
-          /* Skip leading generic title (الزوج/الأم/etc) */
-          if(cleaned.length===0&&isGeneric(words[w])) continue;
           cleaned.push(words[w]);
         }
         return cleaned.join(' ');
+      }
+
+      /* PRIORITY 0: تغيير اسم / تغيير الاسم + connector + name (radical patterns) */
+      var changePatterns=[
+        /* تغيير اسم الضيف الى على الباز */
+        /(?:تغيير\s*اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /* تغيير الاسم الى / تغيير الاسم ل */
+        /(?:تغيير\s*الاسم)\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /* تغيير اسم (بدون تحديد ضيف/مريض) */
+        /(?:تغيير\s*الاسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /* الاسم يكون / الاسم هو */
+        /(?:الاسم\s*(?:يكون|هو|هي|بيكون)?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
+      ];
+      for(var cp=0;cp<changePatterns.length;cp++){
+        var cm=s.match(changePatterns[cp]);
+        if(cm&&cm[1]){
+          var cr=cleanName(cm[1].trim());
+          if(cr.length>=2) return cr;
+        }
       }
 
       /* PRIORITY 1: name in parentheses after keywords */
@@ -3638,30 +3615,19 @@ function extractAndConfirmName(){
       var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
       if(engM&&engM[1]&&engM[1].trim().length>=3) return engM[1].trim();
 
-      /* PRIORITY 3: Arabic name patterns */
-      /* FIX: أضفنا و? (و الربط اختياري) في بداية patterns التغيير
-         ومعالجة "الاسم الى X" بحيث نتجاوز "الى" صراحةً في الـ pattern */
-      var AR_NAME='([\\u0600-\\u06FF]+(?:\\s+[\\u0600-\\u06FF]+){0,3})';
-      var TO_KW='(?:\\s*(?:ال[يى]|[إا]ل[يى]|ل[ـ]?|:)\\s*)'; /* الى / إلى / لـ / : */
+      /* PRIORITY 3: Arabic name patterns (with optional connector الى/الي before name) */
       var patterns=[
-        /* اسم الضيف / اسم المريض / اسم العميل */
-        new RegExp('(?:اسم\\s*(?:ال)?ضيف[ةه]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        new RegExp('(?:اسم\\s*(?:ال)?مريض[ةه]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        new RegExp('(?:اسم\\s*(?:ال)?عمي[لة]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* FIX: تغيير/تعديل/تبديل الاسم الى X - مع و? اختياري */
-        new RegExp('(?:و?(?:تغيير|تعديل|تبديل|تحويل|تحويله|تغيير|غير|تبديله?)\\s*(?:ال)?اسم\\s*)'+TO_KW+'?'+AR_NAME,'i'),
-        /* اكتب/يكتب اسم X */
-        new RegExp('(?:(?:يكتب|اكتب|اكتبي)\\s*(?:عليه|عليها)?\\s*اسم)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* كتابة اسم X */
-        new RegExp('(?:و?كتاب[ةه]\\s*اسم)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* باسم X */
-        new RegExp('(?:باسم)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* FIX: الاسم الى X - نتجاوز "الى" صراحةً في الـ pattern */
-        new RegExp('(?:(?:و|ب)?الاسم)\\s*'+TO_KW+AR_NAME,'i'),
-        /* للضيف/للمريض X */
-        new RegExp('(?:للضيف[ةه]?|للمريض[ةه]?)\\s*[:\\-]?\\s*'+AR_NAME,'i'),
-        /* اسم X (standalone) */
-        new RegExp('(?:^|[،,\\s])اسم\\s*[:\\-]?\\s*([\\u0600-\\u06FF]{3,}(?:\\s+[\\u0600-\\u06FF]+){0,3})','i')
+        /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل[ـ]?))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:(?:يكتب|اكتب|اكتبي)\s*(?:عليه|عليها)?\s*اسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:كتاب[ةه]\s*اسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:وكتاب[ةه]\s*اسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:باسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:الاسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:للضيف[ةه]?|للمريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:^|[،,\s])اسم\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]{3,}(?:\s+[\u0600-\u06FF]+){0,3})/i
       ];
 
       for(var p=0;p<patterns.length;p++){
@@ -3669,6 +3635,12 @@ function extractAndConfirmName(){
         if(m&&m[1]){
           var raw=m[1].trim();
           var firstWord=raw.split(/\s+/)[0];
+          /* Skip leading connector (الى/الي) captured in group */
+          if(isConnector(firstWord)){
+            raw=raw.split(/\s+/).slice(1).join(' ').trim();
+            if(!raw) continue;
+            firstWord=raw.split(/\s+/)[0];
+          }
           if(isGeneric(firstWord)){
             /* Check for name in parens right after */
             var afterIdx=s.indexOf(m[0])+m[0].length;
