@@ -134,30 +134,6 @@ javascript:(function(){
     '#' + PANEL_ID + '.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
   document.head.appendChild(styleEl);
   
-  // ─── الحساب الذكي للصفحات قبل بناء الواجهة ───
-  var initBodyText = document.body.innerText;
-  var initStatus = 'readypack';
-  var initLoc = window.location.href.toLowerCase();
-  if (initLoc.indexOf('new') !== -1) initStatus = 'new';
-  else if (initLoc.indexOf('packed') !== -1 && initLoc.indexOf('ready') === -1) initStatus = 'packed';
-  else if (initLoc.indexOf('delivered') !== -1) initStatus = 'delivered';
-
-  var initTotal = 0;
-  var initReg = initStatus === 'readypack' ? /ready[^0-9]*pack[^0-9]*(\d+)/i : new RegExp(initStatus + '[^0-9]*(\\d+)', 'i');
-  var initMatch = initBodyText.match(initReg);
-  
-  if (initMatch) {
-    initTotal = parseInt(initMatch[1]);
-  } else {
-    var activeTabs = document.querySelectorAll('.active');
-    for (var act = 0; act < activeTabs.length; act++) {
-      var m = activeTabs[act].innerText.match(/(\d+)/);
-      if (m) { initTotal = parseInt(m[1]); break; }
-    }
-  }
-  var defaultPages = initTotal > 0 ? Math.ceil(initTotal / 10) : 1;
-  // ────────────────────────────────────────────────
-
   // ═══════════════════════════════════════════
   // Panel
   // ═══════════════════════════════════════════
@@ -191,7 +167,7 @@ javascript:(function(){
             '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
             '<div style="display:flex;align-items:center;gap:6px">' +
               '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-              '<input type="number" id="p_lim" value="' + defaultPages + '" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
+              '<input type="number" id="p_lim" value="10" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
             '</div>' +
           '</div>' +
           '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
@@ -324,6 +300,7 @@ javascript:(function(){
       var tbody = targetTable.querySelector('tbody') || targetTable;
       var templateRow = tbody.querySelector('tr');
 
+      // دالة مساعدة لمعالجة البيانات وتجهيز واجهة المستخدم (DOM)
       function processDataChunk(data) {
         var orders = [];
         try { 
@@ -385,6 +362,7 @@ javascript:(function(){
         totalNoArgs += noArgsCount;
       }
 
+      // جلب الصفحة الأولى فقط أولاً لحساب إجمالي عدد الطلبات
       var res1 = await fetch(baseUrl + 'Home/getOrders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -393,24 +371,13 @@ javascript:(function(){
       
       var data1 = await res1.json();
 
-      // 🟢 التحديث الذكي للصفحات بعد الرد من السيرفر 🟢
-      var exactTotal = 0;
-      if (data1.total_orders) exactTotal = parseInt(data1.total_orders);
-      else if (data1.recordsTotal) exactTotal = parseInt(data1.recordsTotal);
-      
-      if (!exactTotal || isNaN(exactTotal) || exactTotal === 0) {
-         var bodyTxt = document.body.innerText;
-         var reg = new RegExp(currentStatus + '[^0-9]*(\\d+)', 'i');
-         if (currentStatus === 'readypack') reg = /ready[^0-9]*pack[^0-9]*(\d+)/i;
-         var matchSt = bodyTxt.match(reg);
-         if (matchSt) exactTotal = parseInt(matchSt[1]);
-      }
-      
-      if (exactTotal > 0) {
+      if (data1.total_orders) {
+        var exactTotal = parseInt(data1.total_orders) || 0;
+        if (exactTotal > 0) {
           maxPages = Math.ceil(exactTotal / 10);
-          document.getElementById('p_lim').value = maxPages;
+          document.getElementById('p_lim').value = maxPages; 
+        }
       }
-      // ---------------------------------------------------------
 
       processDataChunk(data1);
       updateStats();
@@ -422,6 +389,7 @@ javascript:(function(){
         setStatus('جلب بيانات ' + maxPages + ' صفحات في وقت واحد...', 'working');
       }
 
+      // إرسال بقية الطلبات في نفس الوقت (Concurrent Fetching) لسرعة الأداء
       var fetchPromises = [];
       for (var page = 2; page <= maxPages; page++) {
         fetchPromises.push(
@@ -487,6 +455,7 @@ javascript:(function(){
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
     
+    // استبدال المنطقة الديناميكية فقط (مع الإبقاء على خانة الصفحات وشريط التقدم)
     var dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML =
       '<div style="margin-bottom:10px">' +
@@ -690,7 +659,7 @@ javascript:(function(){
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
-      scanPage(true);
+      scanPage(true); // الاستدعاء بدون رقم لينفذ الحساب التلقائي مرة أخرى
     });
   }
   
