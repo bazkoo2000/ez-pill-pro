@@ -210,38 +210,31 @@ javascript:(function(){
         btn.style.background = 'linear-gradient(135deg,#1e40af,#3b82f6)';
         toast('تم التحديث ✔ — جاري تسجيل الخروج وإعادة الدخول...', 'success');
 
-        setTimeout(async function() {
-          // 1. مسح الـ storage المحلي
-          try { sessionStorage.clear(); } catch(e) {}
-          try { localStorage.clear();   } catch(e) {}
+        setTimeout(function() {
+          // ✅ الحل: نضغط زرار الـ Log out الموجود فعلاً في الصفحة
+          // السيرفر هيمسح الـ session من جهته (HttpOnly cookies مش قابلة للمسح بـ JS)
 
-          // 2. مسح الـ cookies
-          document.cookie.split(';').forEach(function(c) {
-            const key = c.trim().split('=')[0];
-            if (key) {
-              document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/';
-              document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/ez_pill_web/';
-            }
-          });
-
-          // 3. logout من السيرفر عشان يمسح الـ session من جهته
-          try {
-            await fetch(window.location.origin + '/ez_pill_web/Home/logout', {
-              method: 'POST',
-              credentials: 'include'
+          var logoutBtn =
+            document.querySelector('a[href*="logout" i]') ||
+            document.querySelector('button[onclick*="logout" i]') ||
+            document.querySelector('[id*="logout" i]') ||
+            document.querySelector('[class*="logout" i]') ||
+            Array.from(document.querySelectorAll('a,button')).find(function(el) {
+              return el.innerText && el.innerText.trim().toLowerCase().includes('log out');
+            }) ||
+            Array.from(document.querySelectorAll('a,button')).find(function(el) {
+              return el.innerText && (
+                el.innerText.includes('تسجيل الخروج') ||
+                el.innerText.includes('خروج')
+              );
             });
-          } catch(e) {
-            // لو الـ logout endpoint مختلف نجرب الـ GET
-            try {
-              await fetch(window.location.origin + '/ez_pill_web/logout', {
-                method: 'GET',
-                credentials: 'include'
-              });
-            } catch(e2) {}
-          }
 
-          // 4. توجيه لصفحة Login مباشرة بدل reload
-          window.location.href = window.location.origin + '/ez_pill_web/Home/login?_r=' + Date.now();
+          if (logoutBtn) {
+            logoutBtn.click();
+          } else {
+            // fallback لو مش لاقي الزرار
+            window.location.href = window.location.origin + '/ez_pill_web/Home/logout';
+          }
         }, 2000);
 
       } else {
