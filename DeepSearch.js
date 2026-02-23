@@ -134,6 +134,30 @@ javascript:(function(){
     '#' + PANEL_ID + '.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
   document.head.appendChild(styleEl);
   
+  // ─── الحساب الذكي للصفحات قبل بناء الواجهة ───
+  var initBodyText = document.body.innerText;
+  var initStatus = 'readypack';
+  var initLoc = window.location.href.toLowerCase();
+  if (initLoc.indexOf('new') !== -1) initStatus = 'new';
+  else if (initLoc.indexOf('packed') !== -1 && initLoc.indexOf('ready') === -1) initStatus = 'packed';
+  else if (initLoc.indexOf('delivered') !== -1) initStatus = 'delivered';
+
+  var initTotal = 0;
+  var initReg = initStatus === 'readypack' ? /ready[^0-9]*pack[^0-9]*(\d+)/i : new RegExp(initStatus + '[^0-9]*(\\d+)', 'i');
+  var initMatch = initBodyText.match(initReg);
+  
+  if (initMatch) {
+    initTotal = parseInt(initMatch[1]);
+  } else {
+    var activeTabs = document.querySelectorAll('.active');
+    for (var act = 0; act < activeTabs.length; act++) {
+      var m = activeTabs[act].innerText.match(/(\d+)/);
+      if (m) { initTotal = parseInt(m[1]); break; }
+    }
+  }
+  var defaultPages = initTotal > 0 ? Math.ceil(initTotal / 10) : 1;
+  // ────────────────────────────────────────────────
+
   // ═══════════════════════════════════════════
   // Panel
   // ═══════════════════════════════════════════
@@ -167,7 +191,7 @@ javascript:(function(){
             '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
             '<div style="display:flex;align-items:center;gap:6px">' +
               '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-              '<input type="number" id="p_lim" value="10" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
+              '<input type="number" id="p_lim" value="' + defaultPages + '" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
             '</div>' +
           '</div>' +
           '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
@@ -369,23 +393,11 @@ javascript:(function(){
       
       var data1 = await res1.json();
 
-      // 🟢 التحديث الذكي والصارم لحساب عدد الصفحات 🟢
+      // 🟢 التحديث الذكي للصفحات بعد الرد من السيرفر 🟢
       var exactTotal = 0;
-      
-      // 1. محاولة قراءة إجمالي الطلبات من الخادم
       if (data1.total_orders) exactTotal = parseInt(data1.total_orders);
       else if (data1.recordsTotal) exactTotal = parseInt(data1.recordsTotal);
       
-      // 2. قراءة العدد بذكاء من واجهة النظام إذا لم يرسله الخادم (مثل: Ready To Pack (11))
-      if (!exactTotal || isNaN(exactTotal) || exactTotal === 0) {
-         var activeTabs = document.querySelectorAll('.active');
-         for (var act = 0; act < activeTabs.length; act++) {
-             var m = activeTabs[act].innerText.match(/(\d+)/);
-             if (m) { exactTotal = parseInt(m[1]); break; }
-         }
-      }
-      
-      // 3. طريقة استخراج احتياطية من كامل الصفحة
       if (!exactTotal || isNaN(exactTotal) || exactTotal === 0) {
          var bodyTxt = document.body.innerText;
          var reg = new RegExp(currentStatus + '[^0-9]*(\\d+)', 'i');
@@ -394,18 +406,9 @@ javascript:(function(){
          if (matchSt) exactTotal = parseInt(matchSt[1]);
       }
       
-      // تطبيق معادلتك: تقسيم الطلبات على 10 وأي كسر يفتح صفحة جديدة
       if (exactTotal > 0) {
           maxPages = Math.ceil(exactTotal / 10);
           document.getElementById('p_lim').value = maxPages;
-      } else {
-          // إذا فشل العثور على العدد، نتحقق من الصفحة الأولى
-          var firstPageOrders = [];
-          try { firstPageOrders = typeof data1.orders_list === 'string' ? JSON.parse(data1.orders_list) : data1.orders_list; } catch(e) {}
-          if (firstPageOrders && firstPageOrders.length < 10) {
-              maxPages = 1;
-              document.getElementById('p_lim').value = 1;
-          }
       }
       // ---------------------------------------------------------
 
@@ -484,7 +487,6 @@ javascript:(function(){
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
     
-    // استبدال المنطقة الديناميكية فقط (مع الإبقاء على خانة الصفحات وشريط التقدم)
     var dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML =
       '<div style="margin-bottom:10px">' +
@@ -688,7 +690,7 @@ javascript:(function(){
       state.visitedSet.clear();
       state.savedRows = [];
       totalNoArgs = 0;
-      scanPage(true); // الاستدعاء بدون رقم لينفذ الحساب التلقائي مرة أخرى
+      scanPage(true);
     });
   }
   
