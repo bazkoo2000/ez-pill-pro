@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='137.0';
+var APP_VERSION='137.1';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -766,7 +766,10 @@ window.ezShowDoses=function(){
   function cleanN(txt){
     if(!txt)return'';
     var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
-    c=c.replace(/(.*?)أيام/,'').replace(/(.*?)days/i,'').replace(/^\s*-\s*/,'').trim();
+    var a=/(.*?)أيام/;var e=/(.*?)days/i;
+    if(a.test(c)) c=c.replace(a,'').replace(/^\s*-\s*/,'').trim();
+    else if(e.test(c)) c=c.replace(e,'').replace(/^\s*-\s*/,'').trim();
+    if(/^\s*[\da-zA-Z]/.test(c)&&/[\u0600-\u06FF]/.test(c)){var idx=c.search(/[\u0600-\u06FF]/);if(idx>0) c=c.substring(idx);}
     return c.replace(/\s+/g,' ').trim();
   }
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
@@ -1720,13 +1723,15 @@ var fireEvent=_ezFire;
 function cleanNote(txt){
   if(!txt) return '';
   var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
-  /* Remove duration patterns like "5 أيام" or "7 days" without destroying the rest */
-  c=c.replace(/\d+\s*(أيام|ايام|يوم)/g,'');
-  c=c.replace(/\d+\s*days?\b/gi,'');
-  c=c.replace(/لمد[ةه]?\s*\d+/g,'');
-  c=c.replace(/for\s*\d+/gi,'');
-  /* Clean up leftover separators */
-  c=c.replace(/^\s*[\-–—]\s*/,'').replace(/\s*[\-–—]\s*$/,'');
+  /* Step 1: Strip system-generated English prefix up to "أيام" or "days" boundary */
+  var a=/(.*?)أيام/;var e=/(.*?)days/i;
+  if(a.test(c)) c=c.replace(a,'').replace(/^\s*-\s*/,'').trim();
+  else if(e.test(c)) c=c.replace(e,'').replace(/^\s*-\s*/,'').trim();
+  /* Step 2: If still starts with English/digits and has Arabic text after, strip to first Arabic char */
+  if(/^\s*[\da-zA-Z]/.test(c)&&/[\u0600-\u06FF]/.test(c)){
+    var idx=c.search(/[\u0600-\u06FF]/);
+    if(idx>0) c=c.substring(idx);
+  }
   return c.replace(/\s+/g,' ').trim();
 }
 
@@ -2241,7 +2246,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
     }
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
-    if(autoDuration){durationInfo=extractDuration(fn_str);if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
+    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
     allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
     /* Detect dose=2 patterns AFTER push so rowIndex is correct */
