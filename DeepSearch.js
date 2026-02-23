@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
-// إدارة الطلبات v5.2 - (إصدار استعادة وظائف التفاصيل والمطابقة)
+// نظام إدارة الطلبات v5.2 - (إصدار البحث والتنفيذ الرسمي - Ready to pack)
+// المطور: علي الباز
 // ═══════════════════════════════════════════════════════════════════
 
 javascript:(function(){
@@ -20,13 +21,15 @@ javascript:(function(){
     visitedSet: new Set(),
     isProcessing: false,
     isSyncing: false,
-    htmlBuffer: ''
+    htmlBuffer: '',
+    openedCount: 0,
+    tbody: null
   };
 
   const bodyText = document.body.innerText;
-  const packedMatch = bodyText.match(/packed\s*\n*\s*(\d+)/i);
-  const totalPacked = packedMatch ? parseInt(packedMatch[1]) : 0;
-  const defaultPages = totalPacked > 0 ? Math.ceil(totalPacked / 10) : 1;
+  const packedMatch = bodyText.match(/Ready to pack\s*\n*\s*(\d+)/i);
+  const totalReady = packedMatch ? parseInt(packedMatch[1]) : 0;
+  const defaultPages = totalReady > 0 ? Math.ceil(totalReady / 10) : 1;
 
   function showToast(message, type = 'info') {
     let container = document.getElementById('ali-toast-container');
@@ -77,11 +80,11 @@ javascript:(function(){
     @keyframes aliPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
     @keyframes aliSpin{to{transform:rotate(360deg)}}
     @keyframes aliFadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}
+    @keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}
     #${PANEL_ID}{position:fixed;top:3%;right:2%;width:400px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(59,130,246,0.1);z-index:999999;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.4s;animation:aliSlideIn 0.4s}
     #${PANEL_ID}.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#1e40af,#3b82f6)!important;box-shadow:0 8px 30px rgba(59,130,246,0.4)!important;animation:aliPulse 2s infinite;overflow:hidden}
     #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
-    #${PANEL_ID}.ali-minimized::after{content:"⚡";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    #${PANEL_ID}.ali-minimized::after{content:"🔍";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
     .fast-row { border-bottom: 1px solid #e2e8f0; transition: background 0.2s; }
     .fast-row:hover { background: #f8fafc; }
   `;
@@ -98,17 +101,16 @@ javascript:(function(){
             <span id="ali_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer">−</span>
             <span id="ali_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>
           </div>
-          <h3 style="font-size:20px;font-weight:900;margin:0">محرك الأداء الأقصى</h3>
+          <h3 style="font-size:18px;font-weight:900;margin:0">محرك بحث وإنهاء الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v5.2 Interactive</span>
+          <span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v5.2 Official System</span>
         </div>
       </div>
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
-        <div id="ali_stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-          ${buildStatCard('📥','0','Received','#10b981','stat_rec','linear-gradient(90deg,#10b981,#34d399)')}
-          ${buildStatCard('📦','0','Packed','#f59e0b','stat_pack','linear-gradient(90deg,#f59e0b,#fbbf24)')}
-          ${buildStatCard('✅','0','المنجز','#3b82f6','stat_done','linear-gradient(90deg,#3b82f6,#60a5fa)')}
+        <div id="ali_stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
+          ${buildStatCard('📥','0','Accepted','#10b981','stat_rec','linear-gradient(90deg,#10b981,#34d399)')}
+          ${buildStatCard('🚀','0','تم فتحه','#3b82f6','stat_opened','linear-gradient(90deg,#3b82f6,#60a5fa)')}
           ${buildStatCard('📊','0','إجمالي','#8b5cf6','stat_total','linear-gradient(90deg,#8b5cf6,#a78bfa)')}
         </div>
         
@@ -123,12 +125,12 @@ javascript:(function(){
         </div>
         
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">
-          <span>✅</span><span>النظام جاهز للعمل</span>
+          <span>✅</span><span>النظام في وضع الاستعداد</span>
         </div>
         
         <div id="ali_dynamic_area">
           <button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);transition:all 0.3s">
-            ⚡ بدء الاستعلام الصاروخي
+            بدء عملية البحث والاستعلام
           </button>
         </div>
       </div>
@@ -149,32 +151,33 @@ javascript:(function(){
     el.innerHTML = `${iconHTML}<span>${text}</span>`;
   }
 
-  function updateStats() {
-    let rec=0,done=0,packed=0;
-    state.savedRows.forEach(r => {
-      if(r.st==='received')rec++;
-      if(r.st==='processed')done++;
-      if(r.st==='packed')packed++;
-    });
-    document.getElementById('stat_rec').innerText = rec;
-    document.getElementById('stat_pack').innerText = packed;
-    document.getElementById('stat_done').innerText = done;
+  function debounce(fn, delay) {
+    let timer;
+    return function() {
+      clearTimeout(timer);
+      timer = setTimeout(fn, delay);
+    };
+  }
+
+  function updateStats(matchCount) {
+    let acc=0;
+    state.savedRows.forEach(r => { if(r.st==='accepted') acc++; });
+    document.getElementById('stat_rec').innerText = matchCount !== undefined ? matchCount : acc;
     document.getElementById('stat_total').innerText = state.savedRows.length;
+    document.getElementById('stat_opened').innerText = state.openedCount;
   }
 
   panel.addEventListener('click',e=>{if(panel.classList.contains('ali-minimized')){panel.classList.remove('ali-minimized');e.stopPropagation()}});
   document.getElementById('ali_close').addEventListener('click',e=>{e.stopPropagation();panel.style.animation='aliSlideIn 0.3s reverse';setTimeout(()=>panel.remove(),280)});
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-  async function scanAllPages() {
+  async function scanAllPages(isSync) {
     state.isProcessing = true;
     const fill = document.getElementById('p-fill');
     const baseUrl = window.location.origin + "/ez_pill_web/";
-    const currentStatus = 'packed'; 
+    const currentStatus = 'accepted'; 
 
-    setStatus('جاري الاتصال السريع بالخادم...', 'working');
+    setStatus(isSync ? 'جاري مزامنة البيانات...' : 'جاري الاتصال بقاعدة البيانات...', 'working');
 
     let maxPages = parseInt(document.getElementById('p_lim').value) || 1;
     state.savedRows = [];
@@ -196,21 +199,20 @@ javascript:(function(){
 
           let st = 'other';
           let rawStatus = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+          if(rawStatus.includes('accepted')) st = 'accepted';
+          else if(rawStatus.includes('packed')) st = 'packed';
+
+          let bgColor = st === 'accepted' ? 'rgba(59,130,246,0.05)' : (st === 'packed' ? 'rgba(245,158,11,0.05)' : 'transparent');
+
+          const tr = document.createElement('tr');
+          tr.className = "fast-row";
+          tr.id = `row_${inv}`;
+          tr.style.background = bgColor;
           
-          if(rawStatus.includes('packed')) st = 'packed';
-          else if(rawStatus.includes('received')) st = 'received';
-          else {
-              let cleanStr = JSON.stringify(item).toLowerCase();
-              if(cleanStr.includes('"packed"')) st = 'packed';
-              else if(cleanStr.includes('"received"')) st = 'received';
-          }
-
-          let bgColor = st === 'received' ? 'rgba(16,185,129,0.05)' : (st === 'packed' ? 'rgba(245,158,11,0.05)' : 'transparent');
-
-          let rowHTML = `<tr class="fast-row" id="row_${inv}" style="background:${bgColor}">
+          tr.innerHTML = `
               <td style="padding:12px 8px">
                 <label style="color:blue;text-decoration:underline;font-weight:bold;cursor:pointer" 
-                       onclick="getDetails('${onl}','${inv}','${item.source || 'StorePaid'}','${item.head_id || ''}');">
+                       onclick="getDetails('${onl}','${inv}','${item.source || item.typee || 'StorePaid'}','${item.head_id || ''}');">
                     ${inv}
                 </label>
               </td>
@@ -219,12 +221,11 @@ javascript:(function(){
               <td style="padding:12px 8px">${item.guestMobile || item.mobile || ''}</td>
               <td style="padding:12px 8px">${item.payment_method || 'Cash'}</td>
               <td style="padding:12px 8px">${item.created_at || item.Created_Time || ''}</td>
+              <td style="padding:12px 8px">${item.delviery_time || item.delivery_time || ''}</td>
               <td id="st_${inv}" style="padding:12px 8px;">${st}</td>
-              <td style="padding:12px 8px">${item.source || 'StorePaid'}</td>
-          </tr>`;
+              <td style="padding:12px 8px">${item.source || 'StorePaid'}</td>`;
 
-          state.htmlBuffer += rowHTML;
-          state.savedRows.push({ id: inv, onl: onl, st: st, guestName: item.guestName||'', guestMobile: item.guestMobile||'' });
+          state.savedRows.push({ id: inv, onl: onl, st: st, node: tr, args: [onl, inv, (item.source || item.typee || 'StorePaid'), (item.head_id || '')] });
         }
       }
     }
@@ -232,12 +233,10 @@ javascript:(function(){
     try {
       let res1 = await fetch(baseUrl + 'Home/getOrders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' }) });
       let data1 = await res1.json();
-      
       if (data1.total_orders) {
         let exactTotal = parseInt(data1.total_orders) || 0;
         if (exactTotal > 0) { maxPages = Math.ceil(exactTotal / 10); document.getElementById('p_lim').value = maxPages; }
       }
-
       processData(data1);
       updateStats();
       if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
@@ -246,135 +245,118 @@ javascript:(function(){
       for (let i = 2; i <= maxPages; i++) {
           fetchPromises.push(
               fetch(baseUrl + 'Home/getOrders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: currentStatus, pageSelected: i, searchby: '' }) })
-              .then(r => r.json())
-              .then(data => {
-                  processData(data);
-                  updateStats();
-              })
+              .then(r => r.json()).then(data => { processData(data); updateStats(); })
           );
       }
-      
       await Promise.all(fetchPromises);
       if (fill) fill.style.width = '100%';
-
     } catch (err) { console.error(err); }
-    finishScan();
+    finishScan(isSync);
   }
 
-  function finishScan() {
+  function finishScan(isSync) {
     state.isProcessing = false;
     const tables = document.querySelectorAll('table');
     let target = tables[0];
-    if (target) {
-      for(const t of tables) if(t.innerText.length>target.innerText.length) target=t;
-      const tbody = target.querySelector('tbody') || target;
-      tbody.innerHTML = state.htmlBuffer;
-    }
+    for(const t of tables) if(t.innerText.length>target.innerText.length) target=t;
+    state.tbody = target.querySelector('tbody') || target;
     
-    let recCount = 0;
-    state.savedRows.forEach(r => { if(r.st==='received') recCount++; });
-    
-    setStatus(`اكتمل الفحص: ${state.savedRows.length} سجل`,'done');
-    showToast(`اكتملت العملية: ${state.savedRows.length} سجل`,'success');
+    state.tbody.innerHTML = '';
+    state.savedRows.forEach(r => state.tbody.appendChild(r.node));
+
+    setStatus(isSync ? `تمت المزامنة بنجاح: ${state.savedRows.length} سجل` : `اكتملت العملية بنجاح: ${state.savedRows.length} سجل`,'done');
+    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل`,'success');
 
     const dynArea = document.getElementById('ali_dynamic_area');
-    dynArea.innerHTML=`
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1d4ed8;font-weight:600;text-align:center">
-        تم تفعيل نقر رقم الفاتورة لفتح التفاصيل
+    dynArea.innerHTML = `
+      <div style="margin-bottom:10px">
+        <div style="position:relative">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;color:#94a3b8;z-index:1;pointer-events:none;font-family:monospace">0</span>
+          <input type="text" id="ali_sI" placeholder="رقم الفاتورة (بعد الـ 0)..." style="width:100%;padding:14px 16px 14px 34px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;font-weight:700;box-sizing:border-box">
+        </div>
       </div>
-      <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:14px;font-weight:700;color:#475569">الطلبات الجاهزة للتسليم:</span>
-        <input type="number" id="ali_open_count" value="${recCount}" style="width:64px;padding:8px;border:2px solid #dc2626;border-radius:10px;text-align:center;font-size:18px;font-weight:900;color:#991b1b;background:white;outline:none;font-family:'Tajawal',sans-serif" onfocus="this.value=''">
+      <div style="margin-bottom:10px">
+        <div style="position:relative">
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;z-index:1;pointer-events:none">🔗</span>
+          <input type="text" id="ali_sO" placeholder="بحث برقم الطلب (ERX)..." style="width:100%;padding:14px 42px 14px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;outline:none;background:#f8fafc;color:#1e293b;direction:rtl;font-weight:600;box-sizing:border-box">
+        </div>
       </div>
-      <button id="ali_btn_deliver_silent" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:0 4px 15px rgba(220,38,38,0.3);transition:all 0.3s;margin-bottom:8px">
-        🚀 تنفيذ التسليم (Received)
-      </button>
-      <button id="ali_btn_export" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;transition:all 0.3s;margin-bottom:8px">
-        📥 تصدير الطلبات (Packed)
+      <div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:2px 0 12px">
+        عرض ${state.savedRows.length} من ${state.savedRows.length} نتيجة
+      </div>
+      <button id="ali_btn_open" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 15px rgba(16,185,129,0.3);transition:all 0.3s;margin-bottom:8px">
+        ⚡ تنفيذ الفتح للمطابق
       </button>
       <button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:13px;font-family:'Tajawal',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">
-        🔄 إعادة الفحص السريع
-      </button>
-    `;
+        🔄 تحديث ومزامنة البيانات
+      </button>`;
 
-    document.getElementById('ali_btn_deliver_silent').addEventListener('click', async()=>{
-      const list = state.savedRows.filter(r => r.st === 'received');
-      const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
-      const toDeliver = list.slice(0, count);
-      if(!toDeliver.length){ showToast('لا توجد سجلات مطابقة.', 'warning'); return; }
+    const sI = document.getElementById('ali_sI');
+    const sO = document.getElementById('ali_sO');
+    const searchCount = document.getElementById('ali_search_count');
+    const openBtn = document.getElementById('ali_btn_open');
+    let currentMatches = [];
 
-      const res = await showDialog({
-        icon: '🚀', iconColor: 'red', title: 'تسليم الطلبات',
-        desc: 'سيتم إرسال أوامر التسليم للخادم بالخلفية.',
-        info: [ { label: 'عدد السجلات', value: toDeliver.length, color: '#ef4444' } ],
-        buttons: [
-          { text: 'إلغاء الأمر', value: 'cancel' },
-          { text: 'تأكيد التسليم', value: 'confirm', style: 'background:linear-gradient(135deg,#dc2626,#ef4444);color:white;' }
-        ]
+    function filterResults() {
+      const rawInvoice = sI.value.trim();
+      const invoiceSearch = rawInvoice !== '' ? '0' + rawInvoice : '';
+      const orderSearch = sO.value.trim().toLowerCase();
+      state.tbody.innerHTML = '';
+      let shown = 0;
+      currentMatches = [];
+      const hasFilter = invoiceSearch !== '' || orderSearch !== '';
+
+      state.savedRows.forEach(row => {
+        const matchInvoice = invoiceSearch !== '' && row.id.startsWith(invoiceSearch);
+        const matchOrder = orderSearch !== '' && row.onl.toLowerCase().includes(orderSearch);
+        const show = hasFilter ? (matchInvoice || matchOrder) : true;
+        if (show) { state.tbody.appendChild(row.node); shown++; if (hasFilter) currentMatches.push(row); }
       });
 
-      if(res.action !== 'confirm') return;
-      const btn = document.getElementById('ali_btn_deliver_silent');
-      btn.disabled = true;
-      let successCount = 0;
-      const deliverUrl = window.location.origin + '/ez_pill_web/getEZPill_Details/updatetoDeliver';
+      searchCount.innerText = `عرض ${shown} من ${state.savedRows.length} نتيجة`;
+      updateStats(shown);
+      openBtn.innerHTML = hasFilter ? `⚡ فتح المطابق (${currentMatches.length} طلب)` : '⚡ ابحث أولاً ثم افتح المطابق';
+      openBtn.style.opacity = (hasFilter && currentMatches.length > 0) ? '1' : '0.6';
+      
+      [sI, sO].forEach(el => {
+        if (el.value.length > 0) {
+          el.style.borderColor = shown === 0 ? '#ef4444' : '#10b981';
+          el.style.background = shown === 0 ? '#fef2f2' : '#f0fdf4';
+        } else { el.style.borderColor = '#e2e8f0'; el.style.background = '#f8fafc'; }
+      });
+    }
 
-      for(let i=0; i<toDeliver.length; i++) {
-        const item = toDeliver[i];
-        btn.innerHTML = `تحديث (${i+1}/${toDeliver.length})...`;
-        try {
-          var params = new URLSearchParams();
-          params.append('invoice_num', item.id);
-          params.append('patienName', item.guestName);
-          params.append('mobile', item.guestMobile);
-          const r = await fetch(deliverUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: params });
-          if(r.ok) {
-            successCount++;
-            item.st = 'processed';
-            let rowEl = document.getElementById('row_' + item.id);
-            if(rowEl) {
-                rowEl.style.background = 'rgba(226,232,240,0.5)';
-                rowEl.style.opacity = '0.5';
-                document.getElementById('st_${item.id}').innerHTML = `processed`;
-            }
-          }
-        } catch(e) {}
-        updateStats();
-        await sleep(150);
+    sI.addEventListener('input', debounce(filterResults, 150));
+    sO.addEventListener('input', debounce(filterResults, 150));
+
+    openBtn.addEventListener('click', async () => {
+      if (!currentMatches.length) { 
+        showToast('يرجى إدخال بيانات البحث أولاً!', 'warning'); 
+        sI.focus(); sI.style.animation = 'aliBlink 0.5s 3'; return; 
       }
-      showToast(`اكتمل تسليم ${successCount} سجل بنجاح`, 'success');
-      btn.innerHTML = 'اكتمل التسليم';
-      btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
-      btn.disabled = false;
+      openBtn.disabled = true;
+      for (let i = 0; i < currentMatches.length; i++) {
+        const item = currentMatches[i];
+        const url = `${window.location.origin}/ez_pill_web/getEZPill_Details?onlineNumber=${item.args[0]}&Invoice=${item.args[1]}&typee=${item.args[2]}&head_id=${item.args[3]}`;
+        const w = window.open(url, "_blank");
+        if (w) { state.openedCount++; window.focus(); }
+        openBtn.innerHTML = `🚀 جاري الفتح (${i + 1}/${currentMatches.length})...`;
+        updateStats(currentMatches.length);
+        if (i < currentMatches.length - 1) await new Promise(r => setTimeout(r, 1200));
+      }
+      showToast(`تم فتح ${currentMatches.length} طلب بنجاح`, 'success');
+      openBtn.disabled = false;
+      filterResults();
     });
 
-    document.getElementById('ali_btn_export').addEventListener('click', async()=>{
-      const packedRows=state.savedRows.filter(r=>r.st==='packed');
-      if(!packedRows.length){showToast('لا توجد سجلات.','warning');return}
-      const numFiles = Math.ceil(packedRows.length / MAX_PER_FILE);
-      for (let i = 0; i < numFiles; i++) {
-        const start = i * MAX_PER_FILE;
-        const end = Math.min(start + MAX_PER_FILE, packedRows.length);
-        const chunk = packedRows.slice(start, end);
-        const content = chunk.map(r => r.onl).join('\n');
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        setTimeout(() => {
-          const a = document.createElement('a');
-          a.href = url; a.download = 'Export_' + (i + 1) + '.txt';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-        }, i * 500);
-      }
-    });
-
-    document.getElementById('ali_btn_sync').addEventListener('click', ()=>{ scanAllPages(); });
+    document.getElementById('ali_btn_sync').addEventListener('click', () => { scanAllPages(true); });
   }
 
-  document.getElementById('ali_start').addEventListener('click',function(){
+  document.getElementById('ali_start').addEventListener('click', function(){
     if (state.isProcessing) return;
     this.disabled = true;
     this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري المعالجة...';
-    scanAllPages();
+    scanAllPages(false);
   });
 
 })();
