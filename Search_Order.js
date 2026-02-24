@@ -1,12 +1,7 @@
 javascript:(function(){
   'use strict';
-  // ═══════════════════════════════════════════════════════════════════
-  // EZ-PILL PRO v4.6 - (حساب تلقائي لعدد الصفحات من السيرفر)
-  // المطور الأصلي: علي الباز
-  // ═══════════════════════════════════════════════════════════════════
-  //
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.6';
+  const VERSION = '4.8';
   const VER_KEY = 'ezpill_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -23,6 +18,24 @@ javascript:(function(){
     tbody: null,
     noNewStreak: 0
   };
+
+  // ═══════════════════════════════════════════
+  // Neumorphic Color System
+  // ═══════════════════════════════════════════
+  const NEU = {
+    bg: '#e0e5ec',
+    shadowDark: 'rgba(163,177,198,0.6)',
+    shadowLight: 'rgba(255,255,255,0.8)',
+    insetDark: 'rgba(163,177,198,0.5)',
+    insetLight: 'rgba(255,255,255,0.7)',
+    text: '#2d3748',
+    textMuted: '#718096',
+    accent: '#7c3aed',
+    accentLight: '#a78bfa',
+    success: '#059669',
+    error: '#dc2626',
+    warning: '#d97706'
+  };
   
   // ═══════════════════════════════════════════
   // Toast Notifications
@@ -36,10 +49,10 @@ javascript:(function(){
       container.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center';
       document.body.appendChild(container);
     }
-    const colors = { success:'#059669', error:'#dc2626', warning:'#d97706', info:'#1e293b' };
+    const colors = { success:'#059669', error:'#dc2626', warning:'#d97706', info:'#475569' };
     const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
     const toast = document.createElement('div');
-    toast.style.cssText = 'background:' + colors[type] + ';color:white;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:600;font-family:Segoe UI,Roboto,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:flex;align-items:center;gap:8px;direction:rtl;animation:aliToastIn 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
+    toast.style.cssText = 'background:'+NEU.bg+';color:'+colors[type]+';padding:12px 24px;border-radius:16px;font-size:13px;font-weight:700;font-family:Segoe UI,Roboto,sans-serif;box-shadow:6px 6px 14px '+NEU.shadowDark+',-6px -6px 14px '+NEU.shadowLight+';display:flex;align-items:center;gap:8px;direction:rtl;animation:aliToastIn 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
     toast.innerHTML = '<span>' + icons[type] + '</span> ' + message;
     container.appendChild(toast);
     setTimeout(function() {
@@ -50,64 +63,81 @@ javascript:(function(){
     }, 3500);
   }
   
-  // ─── Update Check ───
   try{
     var lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
       localStorage.setItem(VER_KEY,VERSION);
-      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' (حساب الصفحات التلقائي) 🧠','success')},1000);
+      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' — Neumorphic Design 🎨','success')},1000);
     }
   }catch(e){}
   
   // ═══════════════════════════════════════════
-  // Dialog System
+  // Neumorphic Dialog System
   // ═══════════════════════════════════════════
   function showDialog(opts) {
     return new Promise(function(resolve) {
       var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
-      
-      var iconBg = {
-        blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',
-        green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',
-        amber:'linear-gradient(135deg,#fef3c7,#fde68a)',
-        red:'linear-gradient(135deg,#fee2e2,#fecaca)'
-      };
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(180,190,205,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
       
       var infoHTML = '';
       if (opts.info && opts.info.length) {
         for (var i = 0; i < opts.info.length; i++) {
           var r = opts.info[i];
-          infoHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px">' +
-            '<span style="color:#64748b;font-weight:600">' + r.label + '</span>' +
-            '<span style="font-weight:800;color:' + (r.color || '#1e293b') + ';font-size:12px">' + r.value + '</span></div>';
+          infoHTML +=
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:'+NEU.bg+';border-radius:14px;margin-bottom:8px;box-shadow:inset 3px 3px 6px '+NEU.insetDark+',inset -3px -3px 6px '+NEU.insetLight+'">' +
+              '<span style="font-size:13px;color:'+NEU.textMuted+';font-weight:700">' + r.label + '</span>' +
+              '<span style="font-weight:900;color:' + (r.color || NEU.accent) + ';font-size:14px;font-family:Segoe UI,monospace">' + r.value + '</span>' +
+            '</div>';
         }
+      }
+
+      var badgesHTML = '';
+      if (opts.badges && opts.badges.length) {
+        badgesHTML = '<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:4px 0 8px">';
+        for (var b = 0; b < opts.badges.length; b++) {
+          var badge = opts.badges[b];
+          var bStyle = badge.active
+            ? 'color:'+NEU.accent+';background:linear-gradient(135deg,#ede9fe,#e8e0fd)'
+            : 'color:'+NEU.textMuted+';background:'+NEU.bg;
+          badgesHTML +=
+            '<span style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;'+bStyle+';box-shadow:3px 3px 6px '+NEU.shadowDark+',-3px -3px 6px '+NEU.shadowLight+'">' +
+              badge.text +
+            '</span>';
+        }
+        badgesHTML += '</div>';
       }
       
       var buttonsHTML = '';
       if (opts.buttons && opts.buttons.length) {
         for (var j = 0; j < opts.buttons.length; j++) {
           var btn = opts.buttons[j];
-          buttonsHTML += '<button data-idx="' + j + '" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;' + (btn.style || 'background:#f1f5f9;color:#475569') + ';transition:all 0.2s">' + btn.text + '</button>';
+          var btnCSS = btn.primary
+            ? 'background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:white;box-shadow:4px 4px 12px rgba(124,58,237,0.35),-2px -2px 8px rgba(255,255,255,0.15)'
+            : 'background:'+NEU.bg+';color:'+NEU.textMuted+';box-shadow:4px 4px 10px '+NEU.shadowDark+',-4px -4px 10px '+NEU.shadowLight;
+          buttonsHTML +=
+            '<button data-idx="'+j+'" style="flex:1;padding:16px;border:none;border-radius:16px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;transition:all 0.25s;'+btnCSS+'">'+btn.text+'</button>';
         }
       }
       
       overlay.innerHTML =
-        '<div style="background:white;border-radius:24px;width:420px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">' +
-          '<div style="padding:24px 24px 0;text-align:center">' +
-            '<div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:' + (iconBg[opts.iconColor] || iconBg.blue) + '">' + opts.icon + '</div>' +
-            '<div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">' + opts.title + '</div>' +
-            '<div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">' + opts.desc + '</div>' +
+        '<div style="background:'+NEU.bg+';border-radius:28px;width:420px;max-width:92vw;overflow:hidden;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:'+NEU.text+';box-shadow:12px 12px 30px '+NEU.shadowDark+',-12px -12px 30px '+NEU.shadowLight+';animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">' +
+          '<div style="padding:32px 28px 0;text-align:center">' +
+            '<div style="width:80px;height:80px;border-radius:50%;background:'+NEU.bg+';box-shadow:6px 6px 14px '+NEU.shadowDark+',-6px -6px 14px '+NEU.shadowLight+',inset 2px 2px 4px '+NEU.insetLight+';display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 18px">'+opts.icon+'</div>' +
+            '<div style="font-size:21px;font-weight:900;color:'+NEU.text+';margin-bottom:6px">'+opts.title+'</div>' +
+            '<div style="font-size:13px;color:'+NEU.textMuted+';line-height:1.7;font-weight:500">'+opts.desc+'</div>' +
           '</div>' +
-          '<div style="padding:20px 24px">' + infoHTML + (opts.body || '') + '</div>' +
-          '<div style="padding:16px 24px 24px;display:flex;gap:10px">' + buttonsHTML + '</div>' +
+          badgesHTML +
+          '<div style="padding:20px 28px">' + infoHTML + (opts.body||'') + '</div>' +
+          '<div style="padding:8px 28px 28px;display:flex;gap:12px">' + buttonsHTML + '</div>' +
         '</div>';
-        
+
       overlay.addEventListener('click', function(e) {
         var btnEl = e.target.closest('[data-idx]');
         if (btnEl) {
           var idx = parseInt(btnEl.getAttribute('data-idx'));
-          overlay.remove();
+          overlay.style.transition = 'opacity 0.2s';
+          overlay.style.opacity = '0';
+          setTimeout(function() { overlay.remove(); }, 200);
           resolve(opts.buttons[idx].value);
         }
       });
@@ -116,7 +146,7 @@ javascript:(function(){
   }
   
   // ═══════════════════════════════════════════
-  // CSS
+  // CSS — Full Neumorphic
   // ═══════════════════════════════════════════
   var styleEl = document.createElement('style');
   styleEl.innerHTML =
@@ -128,14 +158,14 @@ javascript:(function(){
     '@keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}' +
     '@keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}' +
     '@keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}' +
-    '#' + PANEL_ID + '{position:fixed;top:3%;right:2%;width:380px;max-height:92vh;background:#ffffff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(59,130,246,0.1);z-index:9999999;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}' +
-    '#' + PANEL_ID + '.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#1e40af,#3b82f6)!important;box-shadow:0 8px 30px rgba(59,130,246,0.4)!important;animation:aliPulse 2s infinite;overflow:hidden}' +
-    '#' + PANEL_ID + '.ali-minimized .ali-inner{display:none!important}' +
-    '#' + PANEL_ID + '.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
+    '#'+PANEL_ID+'{position:fixed;top:3%;right:2%;width:380px;max-height:92vh;background:'+NEU.bg+';border-radius:24px;box-shadow:10px 10px 30px '+NEU.shadowDark+',-10px -10px 30px '+NEU.shadowLight+';z-index:9999999;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:'+NEU.text+';overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}' +
+    '#'+PANEL_ID+'.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#7c3aed,#a78bfa)!important;box-shadow:6px 6px 16px '+NEU.shadowDark+',-6px -6px 16px '+NEU.shadowLight+'!important;animation:aliPulse 2s infinite;overflow:hidden}' +
+    '#'+PANEL_ID+'.ali-minimized .ali-inner{display:none!important}' +
+    '#'+PANEL_ID+'.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
   document.head.appendChild(styleEl);
   
   // ═══════════════════════════════════════════
-  // استخراج عدد الصفحات من واجهة النظام
+  // استخراج عدد الصفحات
   // ═══════════════════════════════════════════
   var calculatedPages = 10;
   try {
@@ -144,7 +174,6 @@ javascript:(function(){
     if (loc.indexOf('new') !== -1) targetText = 'new orders';
     else if (loc.indexOf('packed') !== -1 && loc.indexOf('ready') === -1) targetText = 'packed';
     else if (loc.indexOf('delivered') !== -1) targetText = 'delivered orders';
-
     var elements = document.querySelectorAll('*');
     for (var i = 0; i < elements.length; i++) {
       var el = elements[i];
@@ -156,14 +185,8 @@ javascript:(function(){
             var nums = txt.match(/\d+/g);
             if (nums && nums.length > 0) {
               var maxN = 0;
-              for (var k = 0; k < nums.length; k++) {
-                var n = parseInt(nums[k]);
-                if (n > maxN) maxN = n;
-              }
-              if (maxN > 0) {
-                calculatedPages = Math.ceil(maxN / 10);
-                break;
-              }
+              for (var k = 0; k < nums.length; k++) { var n = parseInt(nums[k]); if (n > maxN) maxN = n; }
+              if (maxN > 0) { calculatedPages = Math.ceil(maxN / 10); break; }
             }
             parent = parent.parentElement;
           }
@@ -175,87 +198,100 @@ javascript:(function(){
   } catch (err) {}
 
   // ═══════════════════════════════════════════
-  // Panel
+  // Neumorphic Helpers
+  // ═══════════════════════════════════════════
+  var neuOutset = '6px 6px 14px '+NEU.shadowDark+',-6px -6px 14px '+NEU.shadowLight;
+  var neuInset = 'inset 3px 3px 6px '+NEU.insetDark+',inset -3px -3px 6px '+NEU.insetLight;
+  var neuBtnSm = '4px 4px 10px '+NEU.shadowDark+',-4px -4px 10px '+NEU.shadowLight;
+
+  function neuStatCard(icon, val, label, color, id) {
+    return '<div style="background:'+NEU.bg+';border-radius:16px;padding:14px 8px;text-align:center;box-shadow:'+neuOutset+'">' +
+      '<div style="font-size:20px;margin-bottom:6px">'+icon+'</div>' +
+      '<div id="'+id+'" style="font-size:24px;font-weight:900;color:'+color+';line-height:1;margin-bottom:4px">'+val+'</div>' +
+      '<div style="font-size:10px;color:'+NEU.textMuted+';font-weight:700;letter-spacing:0.5px">'+label+'</div>' +
+    '</div>';
+  }
+
+  // ═══════════════════════════════════════════
+  // Panel — Full Neumorphic Design
   // ═══════════════════════════════════════════
   var panel = document.createElement('div');
   panel.id = PANEL_ID;
   panel.innerHTML =
     '<div class="ali-inner">' +
-      '<div style="background:linear-gradient(135deg,#1e3a5f,#0f2744);padding:20px 22px 18px;color:white;position:relative;overflow:hidden">' +
-        '<div style="position:absolute;top:-50%;right:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,0.15),transparent 70%);border-radius:50%"></div>' +
+      // ─── Header (dark gradient kept for contrast) ───
+      '<div style="background:linear-gradient(135deg,#4a1d96,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden;border-radius:0 0 24px 24px;box-shadow:0 6px 20px rgba(109,40,217,0.25)">' +
+        '<div style="position:absolute;top:-50%;right:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">' +
           '<div style="display:flex;gap:6px">' +
-            '<span id="ali_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer;transition:0.2s">−</span>' +
-            '<span id="ali_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer;transition:0.2s">✕</span>' +
+            '<span id="ali_min" style="width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.15);cursor:pointer;transition:0.2s;backdrop-filter:blur(4px)">−</span>' +
+            '<span id="ali_close" style="width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.25);cursor:pointer;transition:0.2s;backdrop-filter:blur(4px)">✕</span>' +
           '</div>' +
           '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">EZ-PILL PRO</h3>' +
         '</div>' +
         '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.6 Auto-Page</span>' +
+          '<span style="display:inline-block;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:10px;padding:3px 10px;border-radius:8px;font-weight:700;backdrop-filter:blur(4px)">v'+VERSION+' Neumorphic</span>' +
         '</div>' +
       '</div>' +
+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">' +
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">' +
-          buildStatCard('📊', '0', 'إجمالي', '#8b5cf6', 'stat_total', 'linear-gradient(90deg,#8b5cf6,#a78bfa)') +
-          buildStatCard('🔍', '0', 'مطابق', '#10b981', 'stat_match', 'linear-gradient(90deg,#10b981,#34d399)') +
-          buildStatCard('🚀', '0', 'تم فتحه', '#3b82f6', 'stat_opened', 'linear-gradient(90deg,#3b82f6,#60a5fa)') +
+        // ─── Stats ───
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">' +
+          neuStatCard('📊', '0', 'إجمالي', '#8b5cf6', 'stat_total') +
+          neuStatCard('🔍', '0', 'مطابق', '#10b981', 'stat_match') +
+          neuStatCard('🚀', '0', 'تم فتحه', '#3b82f6', 'stat_opened') +
         '</div>' +
         
-        '<div id="ali_settings_box" style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-            '<span style="font-size:13px;font-weight:700;color:#475569">📄 عدد الصفحات</span>' +
+        // ─── Pages Setting ───
+        '<div id="ali_settings_box" style="background:'+NEU.bg+';border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:'+neuOutset+'">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+            '<span style="font-size:13px;font-weight:800;color:'+NEU.text+'">📄 عدد الصفحات</span>' +
             '<div style="display:flex;align-items:center;gap:6px">' +
-              '<span style="font-size:12px;color:#94a3b8;font-weight:600">صفحة</span>' +
-              '<input type="number" id="p_lim" value="' + calculatedPages + '" min="1" style="width:75px;padding:4px 6px;border:2px solid #e2e8f0;border-radius:8px;text-align:center;font-size:16px;font-weight:800;color:#3b82f6;background:white;outline:none;font-family:Segoe UI,Roboto,sans-serif">' +
+              '<span style="font-size:12px;color:'+NEU.textMuted+';font-weight:600">صفحة</span>' +
+              '<input type="number" id="p_lim" value="'+calculatedPages+'" min="1" style="width:70px;padding:8px 6px;border:none;border-radius:12px;text-align:center;font-size:16px;font-weight:900;color:'+NEU.accent+';background:'+NEU.bg+';outline:none;font-family:Segoe UI,Roboto,sans-serif;box-shadow:'+neuInset+'">' +
             '</div>' +
           '</div>' +
-          '<div id="p-bar" style="height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden">' +
-            '<div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd);border-radius:10px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1)"></div>' +
+          '<div id="p-bar" style="height:8px;background:'+NEU.bg+';border-radius:10px;overflow:hidden;box-shadow:'+neuInset+'">' +
+            '<div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1)"></div>' +
           '</div>' +
         '</div>' +
-        '<div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">' +
+
+        // ─── Status ───
+        '<div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:'+NEU.bg+';color:#059669;box-shadow:'+neuInset+'">' +
           '<span>✅</span><span>جاهز للبدء التلقائي</span>' +
         '</div>' +
         
+        // ─── Dynamic Area ───
         '<div id="ali_dynamic_area">' +
-          '<button id="ali_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.3s">' +
+          '<button id="ali_start" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:6px 6px 14px rgba(109,40,217,0.3),-4px -4px 10px '+NEU.shadowLight+';transition:all 0.3s">' +
             '🚀 بدء الفحص الذكي' +
           '</button>' +
         '</div>' +
         
-        '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>' +
+        '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:'+NEU.textMuted+';font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>' +
       '</div>' +
     '</div>';
   document.body.appendChild(panel);
   
   // ═══════════════════════════════════════════
-  // Helper Functions
+  // Core Helpers
   // ═══════════════════════════════════════════
-  function buildStatCard(icon, val, label, color, id, border) {
-    return '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden">' +
-      '<div style="position:absolute;top:0;right:0;left:0;height:3px;background:' + border + '"></div>' +
-      '<div style="font-size:18px;margin-bottom:4px">' + icon + '</div>' +
-      '<div id="' + id + '" style="font-size:22px;font-weight:900;color:' + color + ';line-height:1;margin-bottom:2px">' + val + '</div>' +
-      '<div style="font-size:10px;color:#94a3b8;font-weight:700">' + label + '</div>' +
-    '</div>';
-  }
-  
   function setStatus(text, type) {
     var el = document.getElementById('status-msg');
     if (!el) return;
     var configs = {
-      ready: { bg:'#f0fdf4', color:'#15803d', border:'#bbf7d0', icon:'✅' },
-      working: { bg:'#eff6ff', color:'#1d4ed8', border:'#bfdbfe', icon:'spinner' },
-      error: { bg:'#fef2f2', color:'#dc2626', border:'#fecaca', icon:'❌' },
-      done: { bg:'#f0fdf4', color:'#15803d', border:'#bbf7d0', icon:'🎉' },
-      sync: { bg:'#fefce8', color:'#a16207', border:'#fef08a', icon:'spinner' }
+      ready:   { color:'#059669', icon:'✅' },
+      working: { color:'#6d28d9', icon:'spinner' },
+      error:   { color:'#dc2626', icon:'❌' },
+      done:    { color:'#059669', icon:'🎉' },
+      sync:    { color:'#a16207', icon:'spinner' }
     };
     var c = configs[type] || configs.ready;
     var iconHTML = c.icon === 'spinner'
-      ? '<div style="width:16px;height:16px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite;flex-shrink:0"></div>'
-      : '<span>' + c.icon + '</span>';
-    el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.border + ';transition:all 0.3s';
-    el.innerHTML = iconHTML + '<span>' + text + '</span>';
+      ? '<div style="width:16px;height:16px;border:2.5px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.8s linear infinite;flex-shrink:0"></div>'
+      : '<span>'+c.icon+'</span>';
+    el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:'+NEU.bg+';color:'+c.color+';box-shadow:'+neuInset+';transition:all 0.3s';
+    el.innerHTML = iconHTML + '<span>'+text+'</span>';
   }
   
   function animNum(id, val) {
@@ -274,193 +310,139 @@ javascript:(function(){
     animNum('stat_opened', state.openedCount);
   }
   
-  function debounce(fn, delay) {
-    var timer;
-    return function() {
-      clearTimeout(timer);
-      timer = setTimeout(fn, delay);
-    };
+  function debounce(fn, delay) { var t; return function() { clearTimeout(t); t = setTimeout(fn, delay); }; }
+
+  function getCurrentStatus() {
+    var s = 'readypack';
+    var l = window.location.href.toLowerCase();
+    if (l.indexOf('new') !== -1) s = 'new';
+    else if (l.indexOf('packed') !== -1 && l.indexOf('ready') === -1) s = 'packed';
+    else if (l.indexOf('delivered') !== -1) s = 'delivered';
+    return s;
   }
   
   // ═══════════════════════════════════════════
   // Header Events
   // ═══════════════════════════════════════════
   panel.addEventListener('click', function(e) {
-    if (panel.classList.contains('ali-minimized')) {
-      panel.classList.remove('ali-minimized');
-      e.stopPropagation();
-    }
+    if (panel.classList.contains('ali-minimized')) { panel.classList.remove('ali-minimized'); e.stopPropagation(); }
   });
-  
   document.getElementById('ali_close').addEventListener('click', function(e) {
     e.stopPropagation();
     panel.style.animation = 'aliSlideIn 0.3s reverse';
     setTimeout(function() { panel.remove(); }, 280);
   });
-  
   document.getElementById('ali_min').addEventListener('click', function(e) {
     e.stopPropagation();
     panel.classList.add('ali-minimized');
   });
   
   // ═══════════════════════════════════════════
-  // ✅ دالة آمنة لإنشاء label بدون onclick string
+  // Safe Label
   // ═══════════════════════════════════════════
   function createSafeLabel(inv, args) {
     var label = document.createElement('label');
-    label.style.cssText = 'cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:bold';
-    label.textContent = inv; // ✅ textContent آمن — لا يفسر HTML
+    label.style.cssText = 'cursor:pointer;color:'+NEU.accent+';text-decoration:underline;font-weight:bold';
+    label.textContent = inv;
     if (args) {
-      label.addEventListener('click', function() {
-        // ✅ البيانات تتمرر كمتغيرات حقيقية مش كنص
-        getDetails(args[0], args[1], args[2], args[3]);
-      });
+      label.addEventListener('click', function() { getDetails(args[0], args[1], args[2], args[3]); });
     }
     return label;
   }
 
   // ═══════════════════════════════════════════
-  // API Page Scanner
+  // API Helpers
+  // ═══════════════════════════════════════════
+  async function fetchPageOrders(pageNum, currentStatus) {
+    var baseUrl = window.location.origin + "/ez_pill_web/";
+    var res = await fetch(baseUrl + 'Home/getOrders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
+    });
+    return await res.json();
+  }
+
+  function buildOrderRow(item, templateRow) {
+    var inv = item.Invoice || '';
+    var onl = item.onlineNumber || '';
+    var typee = item.typee !== undefined ? item.typee : '';
+    var head_id = item.head_id !== undefined ? item.head_id : '';
+    var args = null;
+    if (onl !== '' && inv !== '') args = [onl.replace(/ERX/gi, ''), inv, typee, head_id];
+
+    var clone;
+    if (templateRow) {
+      clone = templateRow.cloneNode(true);
+      var cells = clone.querySelectorAll('td');
+      if (cells.length > 3) {
+        cells[0].innerHTML = '';
+        cells[0].appendChild(createSafeLabel(inv, args));
+        cells[1].textContent = onl;
+        cells[2].textContent = item.guestName || '';
+        cells[3].textContent = item.guestMobile || item.mobile || '';
+      }
+    } else {
+      clone = document.createElement('tr');
+      var td0 = document.createElement('td'), td1 = document.createElement('td'), td2 = document.createElement('td'), td3 = document.createElement('td');
+      td0.appendChild(createSafeLabel(inv, args));
+      td1.textContent = onl;
+      td2.textContent = item.guestName || '';
+      td3.textContent = item.guestMobile || item.mobile || '';
+      clone.appendChild(td0); clone.appendChild(td1); clone.appendChild(td2); clone.appendChild(td3);
+    }
+    return { id: inv, onl: onl, node: clone, args: args, hasArgs: args !== null };
+  }
+
+  // ═══════════════════════════════════════════
+  // Scan Pages
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
   async function scanPage(isSync) {
     state.isProcessing = true;
     var fill = document.getElementById('p-fill');
-    var baseUrl = window.location.origin + "/ez_pill_web/";
-    
-    var currentStatus = 'readypack';
-    var loc = window.location.href.toLowerCase();
-    if (loc.indexOf('new') !== -1) currentStatus = 'new';
-    else if (loc.indexOf('packed') !== -1 && loc.indexOf('ready') === -1) currentStatus = 'packed';
-    else if (loc.indexOf('delivered') !== -1) currentStatus = 'delivered';
+    var currentStatus = getCurrentStatus();
 
     try {
-      if (isSync) {
-        setStatus('جاري المزامنة...', 'sync');
-      } else {
-        setStatus('جاري حساب الصفحات...', 'working');
-      }
-
+      setStatus(isSync ? 'جاري المزامنة...' : 'جاري حساب الصفحات...', isSync ? 'sync' : 'working');
       var maxPages = parseInt(document.getElementById('p_lim').value) || 1;
 
       var tables = document.querySelectorAll('table');
       var targetTable = tables[0];
-      for (var t = 0; t < tables.length; t++) {
-        if (tables[t].innerText.length > targetTable.innerText.length) {
-          targetTable = tables[t];
-        }
-      }
-      
+      for (var t = 0; t < tables.length; t++) { if (tables[t].innerText.length > targetTable.innerText.length) targetTable = tables[t]; }
       var tbody = targetTable.querySelector('tbody') || targetTable;
       var templateRow = tbody.querySelector('tr');
-
       var consecutiveEmpty = 0;
       
       for (var page = 1; page <= maxPages; page++) {
         if (fill) fill.style.width = ((page / maxPages) * 100) + '%';
-        
-        if (isSync) {
-          setStatus('مزامنة الصفحة ' + page + ' من ' + maxPages + '...', 'sync');
-        } else {
-          setStatus('تحليل الصفحة ' + page + ' من ' + maxPages + ' ...', 'working');
-        }
+        setStatus((isSync?'مزامنة':'تحليل')+' الصفحة '+page+' من '+maxPages+' ...', isSync?'sync':'working');
 
-        var res = await fetch(baseUrl + 'Home/getOrders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
-        });
-        
-        var data = await res.json();
-
-        // الحساب التلقائي لعدد الصفحات في أول صفحة
+        var data = await fetchPageOrders(page, currentStatus);
         if (page === 1 && data.total_orders) {
           var exactTotal = parseInt(data.total_orders) || 0;
-          if (exactTotal > 0) {
-            maxPages = Math.ceil(exactTotal / 10);
-            document.getElementById('p_lim').value = maxPages;
-          }
+          if (exactTotal > 0) { maxPages = Math.ceil(exactTotal / 10); document.getElementById('p_lim').value = maxPages; }
         }
 
         var orders = [];
-        try { 
-          orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; 
-        } catch(e) {}
-
-        if (!orders || orders.length === 0) {
-          consecutiveEmpty++;
-          if (consecutiveEmpty >= 2) break;
-          continue;
-        } else {
-          consecutiveEmpty = 0;
-        }
+        try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
+        if (!orders || orders.length === 0) { consecutiveEmpty++; if (consecutiveEmpty >= 2) break; continue; }
+        else consecutiveEmpty = 0;
 
         var noArgsCount = 0;
         for (var i = 0; i < orders.length; i++) {
-          var item = orders[i];
-          var inv = item.Invoice || '';
-          var onl = item.onlineNumber || '';
-          
+          var inv = orders[i].Invoice || '';
           if (inv.length > 3 && !state.visitedSet.has(inv)) {
             state.visitedSet.add(inv);
-
-            var typee = item.typee !== undefined ? item.typee : '';
-            var head_id = item.head_id !== undefined ? item.head_id : '';
-            
-            var args = null;
-            if (onl !== '' && inv !== '') {
-              args = [onl.replace(/ERX/gi, ''), inv, typee, head_id];
-            } else {
-              noArgsCount++;
-            }
-
-            var clone;
-            if (templateRow) {
-              clone = templateRow.cloneNode(true);
-              var cells = clone.querySelectorAll('td');
-              if (cells.length > 3) {
-                // ✅ التعديل الأمني: استبدال innerHTML بـ createSafeLabel
-                cells[0].innerHTML = '';
-                var safeLabel = createSafeLabel(inv, args);
-                cells[0].appendChild(safeLabel);
-
-                // ✅ textContent بدل innerText لمنع XSS
-                cells[1].textContent = onl;
-                cells[2].textContent = item.guestName || '';
-                cells[3].textContent = item.guestMobile || item.mobile || '';
-              }
-            } else {
-              clone = document.createElement('tr');
-              var td0 = document.createElement('td');
-              var td1 = document.createElement('td');
-              var td2 = document.createElement('td');
-              var td3 = document.createElement('td');
-
-              // ✅ إنشاء الـ label بالطريقة الآمنة
-              td0.appendChild(createSafeLabel(inv, args));
-              td1.textContent = onl;
-              td2.textContent = item.guestName || '';
-              td3.textContent = item.guestMobile || item.mobile || '';
-
-              clone.appendChild(td0);
-              clone.appendChild(td1);
-              clone.appendChild(td2);
-              clone.appendChild(td3);
-            }
-
-            state.savedRows.push({
-              id: inv,
-              onl: onl,
-              node: clone,
-              args: args
-            });
+            var rowData = buildOrderRow(orders[i], templateRow);
+            if (!rowData.hasArgs) noArgsCount++;
+            state.savedRows.push(rowData);
           }
         }
         totalNoArgs += noArgsCount;
         updateStats();
       }
       finishScan(isSync);
-      
     } catch (err) {
       console.error(err);
       setStatus('حدث خطأ في الاتصال بالخادم', 'error');
@@ -469,67 +451,193 @@ javascript:(function(){
       state.isSyncing = false;
     }
   }
+
+  // ═══════════════════════════════════════════
+  // ✅ Smart Sync
+  // ═══════════════════════════════════════════
+  async function smartSync() {
+    state.isSyncing = true;
+    state.isProcessing = true;
+    var fill = document.getElementById('p-fill');
+    var currentStatus = getCurrentStatus();
+
+    try {
+      setStatus('جاري جلب البيانات الحديثة...', 'sync');
+      var serverOrders = new Map();
+      var maxPages = parseInt(document.getElementById('p_lim').value) || 1;
+      var consecutiveEmpty = 0;
+
+      var firstData = await fetchPageOrders(1, currentStatus);
+      if (firstData.total_orders) {
+        var exactTotal = parseInt(firstData.total_orders) || 0;
+        if (exactTotal > 0) { maxPages = Math.ceil(exactTotal / 10); document.getElementById('p_lim').value = maxPages; }
+      }
+
+      var firstOrders = [];
+      try { firstOrders = typeof firstData.orders_list === 'string' ? JSON.parse(firstData.orders_list) : firstData.orders_list; } catch(e) {}
+      if (firstOrders && firstOrders.length > 0) {
+        for (var fi = 0; fi < firstOrders.length; fi++) {
+          var fInv = firstOrders[fi].Invoice || '';
+          if (fInv.length > 3) serverOrders.set(fInv, firstOrders[fi]);
+        }
+      }
+      if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
+
+      for (var page = 2; page <= maxPages; page++) {
+        if (fill) fill.style.width = ((page / maxPages) * 100) + '%';
+        setStatus('مزامنة الصفحة '+page+' من '+maxPages+'...', 'sync');
+        var data = await fetchPageOrders(page, currentStatus);
+        var orders = [];
+        try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
+        if (!orders || orders.length === 0) { consecutiveEmpty++; if (consecutiveEmpty >= 2) break; continue; }
+        else consecutiveEmpty = 0;
+        for (var oi = 0; oi < orders.length; oi++) {
+          var oInv = orders[oi].Invoice || '';
+          if (oInv.length > 3) serverOrders.set(oInv, orders[oi]);
+        }
+      }
+
+      setStatus('جاري مقارنة البيانات...', 'sync');
+      var oldIds = new Set(state.savedRows.map(function(r) { return r.id; }));
+      var removedIds = [];
+      var keptRows = [];
+      for (var ri = 0; ri < state.savedRows.length; ri++) {
+        if (serverOrders.has(state.savedRows[ri].id)) keptRows.push(state.savedRows[ri]);
+        else removedIds.push(state.savedRows[ri].id);
+      }
+
+      var tables = document.querySelectorAll('table');
+      var targetTable = tables[0];
+      for (var t = 0; t < tables.length; t++) { if (tables[t].innerText.length > targetTable.innerText.length) targetTable = tables[t]; }
+      var tbody = targetTable.querySelector('tbody') || targetTable;
+      var templateRow = tbody.querySelector('tr');
+
+      var newRows = [];
+      var noArgsNew = 0;
+      serverOrders.forEach(function(item, inv) {
+        if (!oldIds.has(inv)) {
+          var rowData = buildOrderRow(item, templateRow);
+          if (!rowData.hasArgs) noArgsNew++;
+          newRows.push(rowData);
+        }
+      });
+
+      state.savedRows = keptRows.concat(newRows);
+      state.visitedSet.clear();
+      for (var si = 0; si < state.savedRows.length; si++) state.visitedSet.add(state.savedRows[si].id);
+
+      state.tbody = tbody;
+      state.tbody.innerHTML = '';
+      for (var di = 0; di < state.savedRows.length; di++) {
+        state.savedRows[di].node.style.cursor = 'pointer';
+        state.tbody.appendChild(state.savedRows[di].node);
+      }
+      updateStats(state.savedRows.length);
+
+      var summaryParts = [];
+      if (removedIds.length > 0) summaryParts.push('🗑 '+removedIds.length+' تم إزالته');
+      if (newRows.length > 0) summaryParts.push('✨ '+newRows.length+' جديد');
+      if (removedIds.length === 0 && newRows.length === 0) summaryParts.push('لا تغييرات');
+      var summaryText = summaryParts.join(' | ') + ' — الإجمالي: '+state.savedRows.length;
+      setStatus('تمت المزامنة — '+summaryText, 'done');
+      if (noArgsNew > 0) showToast(noArgsNew+' طلب جديد بدون بيانات فتح', 'warning');
+
+      await showDialog({
+        icon: '✅',
+        title: 'تمت المزامنة بنجاح',
+        desc: 'تم تحديث القائمة بأحدث البيانات من الخادم',
+        badges: [
+          { text: '🗑 حُذف '+removedIds.length, active: removedIds.length > 0 },
+          { text: '✨ جديد '+newRows.length, active: newRows.length > 0 },
+          { text: '📦 إجمالي '+state.savedRows.length, active: true }
+        ],
+        info: [
+          { label: 'تم إزالته (مُغلق)', value: removedIds.length.toString(), color: removedIds.length > 0 ? '#dc2626' : '#94a3b8' },
+          { label: 'أوردرات جديدة', value: newRows.length.toString(), color: newRows.length > 0 ? '#059669' : '#94a3b8' },
+          { label: 'الإجمالي الحالي', value: state.savedRows.length.toString(), color: '#7c3aed' }
+        ],
+        buttons: [
+          { text: 'إلغاء', value: 'cancel', primary: false },
+          { text: '👍 تمام', value: 'ok', primary: true }
+        ]
+      });
+      showToast(summaryText, 'success');
+    } catch (err) {
+      console.error('Sync error:', err);
+      setStatus('خطأ في المزامنة — حاول تاني', 'error');
+      showToast('فشلت المزامنة: '+(err.message||'خطأ غير متوقع'), 'error');
+    } finally {
+      state.isSyncing = false;
+      state.isProcessing = false;
+      var syncBtn = document.getElementById('ali_btn_sync');
+      if (syncBtn) {
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = '🔄 مزامنة ذكية';
+        syncBtn.style.boxShadow = neuBtnSm;
+        syncBtn.style.color = NEU.textMuted;
+      }
+    }
+  }
   
   // ═══════════════════════════════════════════
-  // Finish Scan — Build Search UI
+  // Finish Scan
   // ═══════════════════════════════════════════
   function finishScan(isSync) {
     state.isProcessing = false;
     state.isSyncing = false;
-    
     var tables = document.querySelectorAll('table');
     var target = tables[0];
-    for (var t = 0; t < tables.length; t++) {
-      if (tables[t].innerText.length > target.innerText.length) target = tables[t];
-    }
-    
+    for (var t = 0; t < tables.length; t++) { if (tables[t].innerText.length > target.innerText.length) target = tables[t]; }
     state.tbody = target.querySelector('tbody') || target;
     state.tbody.innerHTML = '';
-    
     for (var i = 0; i < state.savedRows.length; i++) {
       state.savedRows[i].node.style.cursor = 'pointer';
       state.tbody.appendChild(state.savedRows[i].node);
     }
-    
     updateStats(state.savedRows.length);
-    
-    if (totalNoArgs > 0) {
-      showToast(totalNoArgs + ' طلب بدون بيانات فتح (لن يتم فتحها)', 'warning');
-    }
-    
+    if (totalNoArgs > 0) showToast(totalNoArgs+' طلب بدون بيانات فتح', 'warning');
     if (isSync) {
-      setStatus('تمت المزامنة — ' + state.savedRows.length + ' طلب', 'done');
-      showToast('تمت المزامنة: ' + state.savedRows.length + ' طلب', 'success');
+      setStatus('تمت المزامنة — '+state.savedRows.length+' طلب', 'done');
+      showToast('تمت المزامنة: '+state.savedRows.length+' طلب', 'success');
     } else {
-      setStatus('تم التجميع — ' + state.savedRows.length + ' طلب جاهز', 'done');
-      showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
+      setStatus('تم التجميع — '+state.savedRows.length+' طلب جاهز', 'done');
+      showToast('تم تجميع '+state.savedRows.length+' طلب بنجاح', 'success');
     }
-    
+    buildSearchUI();
+  }
+
+  // ═══════════════════════════════════════════
+  // Build Search UI — Neumorphic
+  // ═══════════════════════════════════════════
+  function buildSearchUI() {
     var dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML =
+      // ─── Invoice Search ───
       '<div style="margin-bottom:10px">' +
         '<div style="position:relative">' +
-          '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;color:#94a3b8;z-index:1;pointer-events:none;font-family:monospace">0</span>' +
-          '<input type="text" id="ali_sI" placeholder="أدخل الأرقام بعد الـ 0 (كود الصيدلية = أول 4 أرقام)..." style="width:100%;padding:14px 16px 14px 34px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;font-family:Segoe UI,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700;box-sizing:border-box">' +
+          '<span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;color:'+NEU.textMuted+';z-index:1;pointer-events:none;font-family:monospace">0</span>' +
+          '<input type="text" id="ali_sI" placeholder="أدخل الأرقام بعد الـ 0..." style="width:100%;padding:14px 16px 14px 34px;border:none;border-radius:14px;font-size:15px;font-family:Segoe UI,monospace;outline:none;background:'+NEU.bg+';color:'+NEU.text+';direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700;box-sizing:border-box;box-shadow:'+neuInset+'">' +
         '</div>' +
       '</div>' +
+      // ─── Order Search ───
       '<div style="margin-bottom:10px">' +
         '<div style="position:relative">' +
           '<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;z-index:1;pointer-events:none">🔗</span>' +
-          '<input type="text" id="ali_sO" placeholder="بحث برقم الطلب (ERX)..." style="width:100%;padding:14px 42px 14px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;font-family:Segoe UI,Roboto,sans-serif;outline:none;background:#f8fafc;color:#1e293b;direction:rtl;transition:all 0.25s;font-weight:600;box-sizing:border-box">' +
+          '<input type="text" id="ali_sO" placeholder="بحث برقم الطلب (ERX)..." style="width:100%;padding:14px 42px 14px 16px;border:none;border-radius:14px;font-size:14px;font-family:Segoe UI,Roboto,sans-serif;outline:none;background:'+NEU.bg+';color:'+NEU.text+';direction:rtl;transition:all 0.25s;font-weight:600;box-sizing:border-box;box-shadow:'+neuInset+'">' +
         '</div>' +
       '</div>' +
-      '<div id="ali_search_count" style="font-size:11px;color:#94a3b8;text-align:center;font-weight:600;padding:2px 0 12px">' +
-        'عرض ' + state.savedRows.length + ' من ' + state.savedRows.length + ' نتيجة' +
+      '<div id="ali_search_count" style="font-size:11px;color:'+NEU.textMuted+';text-align:center;font-weight:600;padding:2px 0 12px">' +
+        'عرض '+state.savedRows.length+' من '+state.savedRows.length+' نتيجة' +
       '</div>' +
-      '<button id="ali_btn_open" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 15px rgba(16,185,129,0.3);transition:all 0.3s;margin-bottom:8px">' +
+      // ─── Open Button ───
+      '<button id="ali_btn_open" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:6px 6px 14px rgba(5,150,105,0.3),-4px -4px 10px '+NEU.shadowLight+';transition:all 0.3s;margin-bottom:10px">' +
         '⚡ ابحث أولاً ثم افتح المطابق' +
       '</button>' +
-      '<button id="ali_btn_sync" style="width:100%;padding:12px 16px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:13px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:#f8fafc;border:2px solid #e2e8f0;color:#475569;transition:all 0.3s">' +
-        '🔄 مزامنة (تحديث + حذف المُغلق + إضافة الجديد)' +
+      // ─── Sync Button ───
+      '<button id="ali_btn_sync" style="width:100%;padding:14px 16px;border:none;border-radius:16px;cursor:pointer;font-weight:800;font-size:13px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:'+NEU.bg+';color:'+NEU.textMuted+';box-shadow:'+neuBtnSm+';transition:all 0.3s">' +
+        '🔄 مزامنة ذكية' +
       '</button>';
       
-    // ─── Search Logic ───
     var sI = document.getElementById('ali_sI');
     var sO = document.getElementById('ali_sO');
     var searchCount = document.getElementById('ali_search_count');
@@ -540,7 +648,6 @@ javascript:(function(){
       var rawInvoice = sI.value.trim();
       var invoiceSearch = rawInvoice !== '' ? '0' + rawInvoice : '';
       var orderSearch = sO.value.trim().toLowerCase();
-      
       state.tbody.innerHTML = '';
       var shown = 0;
       currentMatches = [];
@@ -551,53 +658,32 @@ javascript:(function(){
         var matchInvoice = invoiceSearch !== '' && row.id.startsWith(invoiceSearch);
         var matchOrder = orderSearch !== '' && row.onl.toLowerCase().indexOf(orderSearch) !== -1;
         var show = hasFilter ? (matchInvoice || matchOrder) : true;
-        
-        if (show) {
-          state.tbody.appendChild(row.node);
-          shown++;
-          if (hasFilter) currentMatches.push(row);
-        }
+        if (show) { state.tbody.appendChild(row.node); shown++; if (hasFilter) currentMatches.push(row); }
       }
       
-      searchCount.innerText = 'عرض ' + shown + ' من ' + state.savedRows.length + ' نتيجة';
+      searchCount.innerText = 'عرض '+shown+' من '+state.savedRows.length+' نتيجة';
       updateStats(shown);
       
       if (hasFilter && currentMatches.length > 0) {
         var openable = currentMatches.filter(function(r) { return r.args !== null; }).length;
-        openBtn.innerHTML = '⚡ فتح المطابق (' + openable + ' طلب)';
-        openBtn.style.opacity = '1';
-        openBtn.style.cursor = 'pointer';
+        openBtn.innerHTML = '⚡ فتح المطابق ('+openable+' طلب)';
+        openBtn.style.opacity = '1'; openBtn.style.cursor = 'pointer';
       } else if (hasFilter && currentMatches.length === 0) {
         openBtn.innerHTML = '⚡ لا توجد نتائج مطابقة';
-        openBtn.style.opacity = '0.5';
-        openBtn.style.cursor = 'not-allowed';
+        openBtn.style.opacity = '0.5'; openBtn.style.cursor = 'not-allowed';
       } else {
         openBtn.innerHTML = '⚡ ابحث أولاً ثم افتح المطابق';
-        openBtn.style.opacity = '0.7';
-        openBtn.style.cursor = 'not-allowed';
+        openBtn.style.opacity = '0.7'; openBtn.style.cursor = 'not-allowed';
       }
       
-      if (rawInvoice.length > 0 && shown === 0) {
-        sI.style.borderColor = '#ef4444';
-        sI.style.background = '#fef2f2';
-      } else if (rawInvoice.length > 0 && shown > 0) {
-        sI.style.borderColor = '#10b981';
-        sI.style.background = '#f0fdf4';
-      } else {
-        sI.style.borderColor = '#e2e8f0';
-        sI.style.background = '#f8fafc';
-      }
-      
-      if (orderSearch.length > 0 && shown === 0) {
-        sO.style.borderColor = '#ef4444';
-        sO.style.background = '#fef2f2';
-      } else if (orderSearch.length > 0 && shown > 0) {
-        sO.style.borderColor = '#10b981';
-        sO.style.background = '#f0fdf4';
-      } else {
-        sO.style.borderColor = '#e2e8f0';
-        sO.style.background = '#f8fafc';
-      }
+      // Input visual feedback
+      if (rawInvoice.length > 0 && shown === 0) { sI.style.boxShadow = 'inset 3px 3px 6px rgba(239,68,68,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'; }
+      else if (rawInvoice.length > 0 && shown > 0) { sI.style.boxShadow = 'inset 3px 3px 6px rgba(16,185,129,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'; }
+      else { sI.style.boxShadow = neuInset; }
+
+      if (orderSearch.length > 0 && shown === 0) { sO.style.boxShadow = 'inset 3px 3px 6px rgba(239,68,68,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'; }
+      else if (orderSearch.length > 0 && shown > 0) { sO.style.boxShadow = 'inset 3px 3px 6px rgba(16,185,129,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'; }
+      else { sO.style.boxShadow = neuInset; }
     }
     
     var debouncedFilter = debounce(filterResults, 150);
@@ -609,108 +695,76 @@ javascript:(function(){
       var rawInvoice = sI.value.trim();
       var orderSearch = sO.value.trim().toLowerCase();
       var hasFilter = rawInvoice !== '' || orderSearch !== '';
-      
       if (!hasFilter) {
         showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!', 'warning');
-        sI.focus();
-        sI.style.animation = 'aliBlink 0.5s 3';
+        sI.focus(); sI.style.animation = 'aliBlink 0.5s 3';
         setTimeout(function() { sI.style.animation = ''; }, 1500);
         return;
       }
-      
       var openable = currentMatches.filter(function(r) { return r.args !== null; });
       var skipped = currentMatches.length - openable.length;
-      
       if (openable.length === 0) {
-        showToast(skipped > 0 ? skipped + ' طلب مطابق لكن بدون بيانات فتح!' : 'لا توجد طلبات مطابقة!', skipped > 0 ? 'error' : 'warning');
+        showToast(skipped > 0 ? skipped+' طلب مطابق لكن بدون بيانات فتح!' : 'لا توجد طلبات مطابقة!', skipped > 0 ? 'error' : 'warning');
         return;
       }
+      if (skipped > 0) showToast('⚠️ تم تخطي '+skipped+' طلب بدون بيانات فتح', 'warning');
       
-      if (skipped > 0) showToast('⚠️ تم تخطي ' + skipped + ' طلب بدون بيانات فتح', 'warning');
-      
-      openBtn.disabled = true;
-      openBtn.style.opacity = '0.6';
-      openBtn.style.cursor = 'not-allowed';
-      
-      var opened = 0;
-      var failed = 0;
+      openBtn.disabled = true; openBtn.style.opacity = '0.6'; openBtn.style.cursor = 'not-allowed';
+      var opened = 0, failed = 0;
       var base = window.location.origin + "/ez_pill_web/getEZPill_Details";
       
       for (var idx = 0; idx < openable.length; idx++) {
         var item = openable[idx];
-        var url = base + "?onlineNumber=" + encodeURIComponent(item.args[0]) +
-          "&Invoice=" + encodeURIComponent(item.args[1]) +
-          "&typee=" + encodeURIComponent(item.args[2]) +
-          "&head_id=" + encodeURIComponent(item.args[3]);
-          
+        var url = base + "?onlineNumber="+encodeURIComponent(item.args[0])+"&Invoice="+encodeURIComponent(item.args[1])+"&typee="+encodeURIComponent(item.args[2])+"&head_id="+encodeURIComponent(item.args[3]);
         try {
           var w = window.open(url, "_blank");
-          if (w) {
-            opened++;
-            state.openedCount++;
-            window.focus();
-            try { w.blur(); } catch(e){}
-          } else {
-            failed++;
-          }
-        } catch (e) {
-          failed++;
-        }
-        
-        openBtn.innerHTML = '🚀 جاري الفتح (' + (idx + 1) + '/' + openable.length + ')';
-        setStatus('فتح ' + (idx + 1) + ' من ' + openable.length + ': ' + (item.onl || item.id), 'working');
+          if (w) { opened++; state.openedCount++; window.focus(); try{w.blur();}catch(e){} } else failed++;
+        } catch (e) { failed++; }
+        openBtn.innerHTML = '🚀 جاري الفتح ('+( idx+1)+'/'+openable.length+')';
+        setStatus('فتح '+(idx+1)+' من '+openable.length+': '+(item.onl||item.id), 'working');
         updateStats();
-        
-        if (idx < openable.length - 1) {
-          await new Promise(function(resolve) { setTimeout(resolve, 1200); });
-        }
+        if (idx < openable.length - 1) await new Promise(function(r) { setTimeout(r, 1200); });
       }
-      
-      showToast('تم فتح ' + opened + ' طلب (فشل ' + failed + ')', opened > 0 ? 'success' : 'error');
-      setStatus('تم فتح ' + opened + ' — الإجمالي: ' + state.openedCount, 'done');
+      showToast('تم فتح '+opened+' طلب (فشل '+failed+')', opened > 0 ? 'success' : 'error');
+      setStatus('تم فتح '+opened+' — الإجمالي: '+state.openedCount, 'done');
       openBtn.disabled = false;
-      openBtn.innerHTML = '⚡ فتح المطابق (' + openable.length + ' طلب)';
+      openBtn.innerHTML = '⚡ فتح المطابق ('+openable.length+' طلب)';
       filterResults();
     });
     
-    // ─── Sync Button ───
+    // ─── ✅ Sync Button ───
     document.getElementById('ali_btn_sync').addEventListener('click', async function() {
-      if (state.isSyncing || state.isProcessing) {
-        showToast('المزامنة شغالة بالفعل — انتظر!', 'warning');
-        return;
-      }
-      
+      if (state.isSyncing || state.isProcessing) { showToast('المزامنة شغالة بالفعل — انتظر!', 'warning'); return; }
       var syncBtn = this;
       var oldCount = state.savedRows.length;
       
       var result = await showDialog({
         icon: '🔄',
-        iconColor: 'blue',
         title: 'المزامنة الذكية',
-        desc: 'سيتم جلب البيانات الحديثة من الخادم وتحديث القائمة',
+        desc: 'هيتم مقارنة بياناتك مع الخادم — حذف المُغلق وإضافة الجديد',
+        badges: [
+          { text: 'حذف المُغلق', active: true },
+          { text: 'إضافة الجديد', active: true },
+          { text: 'تحديث البيانات', active: true }
+        ],
         info: [
-          { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
-          { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' }
+          { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#7c3aed' },
+          { label: 'العملية', value: 'مقارنة + تحديث ذكي', color: '#3b82f6' }
         ],
         buttons: [
-          { text: 'إلغاء', value: 'cancel' },
-          { text: '🔄 بدء المزامنة', value: 'confirm', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 12px rgba(59,130,246,0.3)' }
+          { text: 'إلغاء', value: 'cancel', primary: false },
+          { text: '🔄 بدء المزامنة', value: 'confirm', primary: true }
         ]
       });
       
       if (result !== 'confirm') return;
-      
-      state.isSyncing = true;
       syncBtn.disabled = true;
-      syncBtn.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة...';
-      syncBtn.style.borderColor = '#3b82f6';
-      syncBtn.style.color = '#1d4ed8';
-      showToast('جاري المزامنة عبر الخادم...', 'info');
+      syncBtn.innerHTML = '<div style="width:14px;height:14px;border:2.5px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة...';
+      syncBtn.style.boxShadow = neuInset;
+      syncBtn.style.color = NEU.accent;
       
-      state.visitedSet.clear();
-      state.savedRows = [];
-      totalNoArgs = 0;
-      scanPage(true);
+      await smartSync();
+      buildSearchUI();
     });
   }
   
@@ -720,10 +774,9 @@ javascript:(function(){
   document.getElementById('ali_start').addEventListener('click', function() {
     if (state.isProcessing) return;
     this.disabled = true;
-    this.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري الفحص...';
-    this.style.opacity = '0.7';
-    this.style.cursor = 'not-allowed';
-    
+    this.innerHTML = '<div style="width:16px;height:16px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري الفحص...';
+    this.style.opacity = '0.7'; this.style.cursor = 'not-allowed';
+    this.style.boxShadow = neuInset;
     totalNoArgs = 0;
     scanPage(false);
   });
