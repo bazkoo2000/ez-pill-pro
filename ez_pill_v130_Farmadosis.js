@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.4';
+var APP_VERSION='138.5';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -2011,7 +2011,7 @@ function checkEndDateConsistency(){
   for(var i=0;i<ths.length;i++){var ht=ths[i].textContent.toLowerCase();if(ht.includes('end')&&ht.includes('date'))ediIdx=i;if(ht.includes('code'))ciIdx=i;}
   if(ediIdx<0)return;
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);var dates={};var mostCommonDate='';var maxCount=0;
-  rows.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length>ediIdx){if(ciIdx>=0&&tds.length>ciIdx){var cInp=tds[ciIdx].querySelector('input');var cTxt=cInp?cInp.value:tds[ciIdx].textContent.trim();var cNum=(cTxt.match(/\d+/)||[''])[0];if(cNum&&fixedSizeCodes[cNum])return;}var inp=tds[ediIdx].querySelector('input');var date=inp?inp.value:tds[ediIdx].textContent.trim();if(date&&/\d{4}-\d{2}-\d{2}/.test(date)){dates[date]=(dates[date]||0)+1;if(dates[date]>maxCount){maxCount=dates[date];mostCommonDate=date;}}}});
+  rows.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length>ediIdx){if(ciIdx>=0&&tds.length>ciIdx){var cInp=tds[ciIdx].querySelector('input');var cTxt=cInp?cInp.value:tds[ciIdx].textContent.trim();var cNum=(cTxt.match(/\d+/)||[''])[0];if(cNum&&(fixedSizeCodes[cNum]||weeklyInjections.indexOf(cNum)>-1))return;}var inp=tds[ediIdx].querySelector('input');var date=inp?inp.value:tds[ediIdx].textContent.trim();if(date&&/\d{4}-\d{2}-\d{2}/.test(date)){dates[date]=(dates[date]||0)+1;if(dates[date]>maxCount){maxCount=dates[date];mostCommonDate=date;}}}});
   if(Object.keys(dates).length>1) showEndDateAlert(mostCommonDate,ediIdx);
 }
 
