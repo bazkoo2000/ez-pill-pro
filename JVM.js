@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='139.1';
+var APP_VERSION='139.3';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -395,6 +395,37 @@ var CODE_START_TIMES=(function(){var base={};var k;for(k in _defaultCodeStartTim
    RAMADAN MODE CONSTANTS & HELPERS
    ══════════════════════════════════════════ */
 var RAMADAN_TIMES=(function(){var base={};for(var k in _defaultRamadanTimes)base[k]=_defaultRamadanTimes[k];if(customConfig.ramadanTimes){for(var k in customConfig.ramadanTimes)base[k]=customConfig.ramadanTimes[k];}return base;})();
+
+/* ══════════════════════════════════════════
+   🌙 RAMADAN DATE AUTO-DETECTION
+   ══════════════════════════════════════════ */
+var RAMADAN_START=new Date(2026,1,18); /* 18 Feb 2026 - أول يوم صيام */
+var RAMADAN_DAYS=30;
+var RAMADAN_END=new Date(RAMADAN_START);RAMADAN_END.setDate(RAMADAN_END.getDate()+RAMADAN_DAYS-1); /* 19 Mar 2026 */
+
+function _ezRamadanDaysLeft(startDateStr){
+  var sd;
+  if(startDateStr&&/^\d{4}-\d{2}-\d{2}$/.test(startDateStr)){
+    var p=startDateStr.split('-');sd=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+  } else {
+    sd=new Date();sd.setDate(sd.getDate()+1);
+  }
+  sd.setHours(0,0,0,0);
+  var rs=new Date(RAMADAN_START);rs.setHours(0,0,0,0);
+  var re=new Date(RAMADAN_END);re.setHours(0,0,0,0);
+  if(sd<rs||sd>re) return 0;
+  var diff=re.getTime()-sd.getTime();
+  return Math.floor(diff/(1000*60*60*24))+1;
+}
+function _ezRamadanToday(){
+  var today=new Date();today.setHours(0,0,0,0);
+  var rs=new Date(RAMADAN_START);rs.setHours(0,0,0,0);
+  var re=new Date(RAMADAN_END);re.setHours(0,0,0,0);
+  if(today<rs||today>re) return {inRamadan:false,dayNum:0,daysLeft:0};
+  var dayNum=Math.floor((today.getTime()-rs.getTime())/(1000*60*60*24))+1;
+  var daysLeft=RAMADAN_DAYS-dayNum;
+  return {inRamadan:true,dayNum:dayNum,daysLeft:daysLeft};
+}
 
 /* Map normal meal words to Ramadan equivalents */
 function ramadanMapNote(note){
@@ -1193,8 +1224,14 @@ window.ezSubmit=function(){
     /* Read and save ramadan days remaining */
     if(ramadanMode){
       var rmDaysInp=document.getElementById('ez-rm-days-left');
-      var rmDaysVal=rmDaysInp?parseInt(rmDaysInp.value)||15:15;
-      if(rmDaysVal<1)rmDaysVal=1;if(rmDaysVal>30)rmDaysVal=30;
+      var rmDaysVal=rmDaysInp?parseInt(rmDaysInp.value):0;
+      if(!rmDaysVal||rmDaysVal<1){
+        /* Auto-detect if empty */
+        var _fsdSub=(document.querySelector('#fstartDate')||{}).value||'';
+        rmDaysVal=_ezRamadanDaysLeft(_fsdSub);
+        if(!rmDaysVal||rmDaysVal<1){window.ezShowToast('❌ ادخل عدد الأيام المتبقية في رمضان','error');return;}
+      }
+      if(rmDaysVal>30)rmDaysVal=30;
       window._rmDaysLeft=rmDaysVal;
       window._rmMVal=m; /* حفظ عدد الشهور للاستخدام عند إلغاء رمضان */
       window._rmTVal=t; /* حفظ أيام الشهر */
@@ -1413,10 +1450,14 @@ window.ezRamadanSplit=function(){
   /* نستخدم القيمة المحفوظة من الدايلوج الرئيسي مباشرة */
   var daysLeft=window._rmDaysLeft||null;
   if(!daysLeft||daysLeft<1||daysLeft>30){
-    var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
+    /* Auto-detect from fstartDate */
+    var _fsd2=(document.querySelector('#fstartDate')||{}).value||'';
+    var autoD=_ezRamadanDaysLeft(_fsd2);
+    if(autoD>0){daysLeft=autoD;window._rmDaysLeft=daysLeft;}
+    else{var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
     if(!v||v<1||v>30){window.ezShowToast('❌ رقم غير صحيح','error');return;}
     daysLeft=v;
-    window._rmDaysLeft=daysLeft;
+    window._rmDaysLeft=daysLeft;}
   }
   window._ezApplyRamadanSplit(daysLeft);
 };
@@ -1650,9 +1691,12 @@ window.ezRamadanToNormal=function(){
   /* الأيام الباقية في رمضان */
   var daysLeft=window._rmDaysLeft||null;
   if(!daysLeft||daysLeft<1||daysLeft>30){
-    var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
+    var _fsd3=(document.querySelector('#fstartDate')||{}).value||'';
+    var autoD2=_ezRamadanDaysLeft(_fsd3);
+    if(autoD2>0){daysLeft=autoD2;window._rmDaysLeft=daysLeft;}
+    else{var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
     if(!v||v<1||v>30){window.ezShowToast('❌ رقم غير صحيح','error');return;}
-    daysLeft=v; window._rmDaysLeft=daysLeft;
+    daysLeft=v; window._rmDaysLeft=daysLeft;}
   }
 
   /* إجمالي الأيام من الإعداد الأصلي */
@@ -3694,6 +3738,13 @@ d_box.className='ez-dialog-v2';
 d_box.setAttribute('data-m',String(savedSettings.m||1));
 d_box.setAttribute('data-t',String(savedSettings.t||30));
 var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!==false,_sw=savedSettings.showWarnings!==false,_dk=savedSettings.darkMode||false,_rm=savedSettings.ramadanMode||false;
+
+/* 🌙 Calculate Ramadan info for display */
+var _fsd=(document.querySelector('#fstartDate')||{}).value||'';
+var _rmAutoLeft=_ezRamadanDaysLeft(_fsd);
+var _rmToday=_ezRamadanToday();
+var _rmDayNum=_rmToday.dayNum;
+var _rmTodayLeft=_rmToday.daysLeft;
 d_box.innerHTML='\
 <div class="ez-header">\
   <div class="ez-logo-group">\
@@ -3752,10 +3803,13 @@ d_box.innerHTML='\
       <span class="rm-text">جرعات شهر رمضان</span>\
       <div class="ez-rm-sw"><div class="knob"></div></div>\
     </button>\
-    <div class="ez-rm-expand" id="ez-rm-expand" style="display:'+(_rm?'flex':'none')+'">\
-      <span class="rm-lbl">باقي</span>\
-      <input type="number" id="ez-rm-days-left" min="1" max="30" value="15" />\
-      <span class="rm-lbl">يوم</span>\
+    <div class="ez-rm-expand" id="ez-rm-expand" style="display:'+(_rm?'flex':'none')+';flex-wrap:wrap">\
+      <div style="display:flex;align-items:center;gap:6px;width:100%">\
+        <span class="rm-lbl">باقي</span>\
+        <input type="number" id="ez-rm-days-left" min="1" max="30" value="" placeholder="?" onclick="this.select()" style="text-align:center" />\
+        <span class="rm-lbl">يوم</span>\
+      </div>\
+      '+(_rmToday.inRamadan?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+(_rmAutoLeft||_rmTodayLeft)+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:6px;padding:6px 10px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:10px;font-size:11px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl;transition:all 0.2s" onmouseover="this.style.background=\'rgba(5,150,105,0.12)\'" onmouseout="this.style.background=\'rgba(5,150,105,0.06)\'">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+(_rmAutoLeft||_rmTodayLeft)+'</strong> يوم &nbsp;👆</div>':(!_rmToday.inRamadan?'<div style="width:100%;margin-top:6px;padding:5px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:10px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان انتهى أو لم يبدأ بعد</div>':''))+'\
     </div>\
   </div>\
   <div class="ez-actions">\
