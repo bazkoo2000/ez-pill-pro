@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.2';
+var APP_VERSION='138.3';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -843,7 +843,7 @@ window.ezPreviewAlerts=function(){
     var doseRec=smartDoseRecognizer(noteClean);
     var timeResult=getTimeFromWords(noteClean);
     var dur=extractDuration(noteRaw);
-    if(dur.hasDuration&&dur.days!==_t){alerts.push({icon:'📅',text:itemName+': مكتوب '+dur.days+' يوم (المحدد '+_t+')',detail:'اختلاف في مدة العلاج',level:'warning'});}
+    if(dur.hasDuration&&Math.abs(dur.days-_t)>3){alerts.push({icon:'📅',text:itemName+': مكتوب '+dur.days+' يوم (المحدد '+_t+')',detail:'اختلاف في مدة العلاج',level:'warning'});}
     var d2p=/^2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
     var d2p2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
     if(d2p.test(noteRaw.trim())||d2p2.test(noteRaw)){alerts.push({icon:'💊',text:itemName+': جرعة مزدوجة (2)',detail:'مكتوب حبتين في الجرعة',level:'warning'});}
@@ -2471,7 +2471,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
     }
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
-    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){if(!enableWarnings||durationInfo.days===t){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else{calculatedDays=t;calculatedSize=t;}}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
+    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){if(!enableWarnings||Math.abs(durationInfo.days-t)<=3){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else{calculatedDays=t;calculatedSize=t;}}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
     allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
     /* Detect dose=2 patterns AFTER push so rowIndex is correct */
@@ -2529,7 +2529,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       
       if(rd.durationInfo&&rd.durationInfo.hasDuration){
         var extracted=rd.durationInfo.days;
-        if(extracted!==t){
+        if(Math.abs(extracted-t)>3){
           warningQueue.push({
             level:'warning',
             message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',
