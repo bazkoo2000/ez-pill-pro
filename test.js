@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='139.2';
+var APP_VERSION='139.3';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -391,7 +391,7 @@ var RAMADAN_TIMES=(function(){var base={};for(var k in _defaultRamadanTimes)base
 /* ══════════════════════════════════════════
    🌙 RAMADAN DATE AUTO-DETECTION
    ══════════════════════════════════════════ */
-var RAMADAN_START=new Date(2026,1,17);
+var RAMADAN_START=new Date(2026,1,18); /* 18 Feb 2026 - أول يوم صيام */
 var RAMADAN_DAYS=30;
 var RAMADAN_END=new Date(RAMADAN_START);RAMADAN_END.setDate(RAMADAN_END.getDate()+RAMADAN_DAYS-1);
 
@@ -402,10 +402,21 @@ function _ezRamadanDaysLeft(startDateStr){
   } else {
     sd=new Date();sd.setDate(sd.getDate()+1);
   }
-  sd.setHours(0,0,0,0);RAMADAN_START.setHours(0,0,0,0);RAMADAN_END.setHours(0,0,0,0);
-  if(sd<RAMADAN_START||sd>RAMADAN_END) return 0;
-  var diff=RAMADAN_END.getTime()-sd.getTime();
+  sd.setHours(0,0,0,0);
+  var rs=new Date(RAMADAN_START);rs.setHours(0,0,0,0);
+  var re=new Date(RAMADAN_END);re.setHours(0,0,0,0);
+  if(sd<rs||sd>re) return 0;
+  var diff=re.getTime()-sd.getTime();
   return Math.floor(diff/(1000*60*60*24))+1;
+}
+function _ezRamadanToday(){
+  var today=new Date();today.setHours(0,0,0,0);
+  var rs=new Date(RAMADAN_START);rs.setHours(0,0,0,0);
+  var re=new Date(RAMADAN_END);re.setHours(0,0,0,0);
+  if(today<rs||today>re) return {inRamadan:false,dayNum:0,daysLeft:0};
+  var dayNum=Math.floor((today.getTime()-rs.getTime())/(1000*60*60*24))+1;
+  var daysLeft=RAMADAN_DAYS-dayNum;
+  return {inRamadan:true,dayNum:dayNum,daysLeft:daysLeft};
 }
 
 /* Map normal meal words to Ramadan equivalents */
@@ -3686,7 +3697,9 @@ var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!
 /* 🌙 Calculate Ramadan info for display */
 var _fsd=(document.querySelector('#fstartDate')||{}).value||'';
 var _rmAutoLeft=_ezRamadanDaysLeft(_fsd);
-var _rmDayNum=_rmAutoLeft>0?(RAMADAN_DAYS-_rmAutoLeft+1):0;
+var _rmToday=_ezRamadanToday();
+var _rmDayNum=_rmToday.dayNum;
+var _rmTodayLeft=_rmToday.daysLeft;
 d_box.innerHTML='\
 <div class="ez-header">\
   <div class="ez-logo-group">\
@@ -3751,7 +3764,7 @@ d_box.innerHTML='\
         <input type="number" id="ez-rm-days-left" min="1" max="30" value="" placeholder="?" onclick="this.select()" style="text-align:center" />\
         <span class="rm-lbl">يوم</span>\
       </div>\
-      '+(_rmAutoLeft>0?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+_rmAutoLeft+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:6px;padding:6px 10px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:10px;font-size:11px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl;transition:all 0.2s" onmouseover="this.style.background=\'rgba(5,150,105,0.12)\'" onmouseout="this.style.background=\'rgba(5,150,105,0.06)\'">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+_rmAutoLeft+'</strong> يوم &nbsp;👆</div>':(_rmAutoLeft===0?'<div style="width:100%;margin-top:6px;padding:5px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:10px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان انتهى أو لم يبدأ بعد</div>':''))+'\
+      '+(_rmToday.inRamadan?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+(_rmAutoLeft||_rmTodayLeft)+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:6px;padding:6px 10px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:10px;font-size:11px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl;transition:all 0.2s" onmouseover="this.style.background=\'rgba(5,150,105,0.12)\'" onmouseout="this.style.background=\'rgba(5,150,105,0.06)\'">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+(_rmAutoLeft||_rmTodayLeft)+'</strong> يوم &nbsp;👆</div>':(!_rmToday.inRamadan?'<div style="width:100%;margin-top:6px;padding:5px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:10px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان انتهى أو لم يبدأ بعد</div>':''))+'\
     </div>\
   </div>\
   <div class="ez-actions">\
