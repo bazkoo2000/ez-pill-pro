@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='137.5';
+var APP_VERSION='137.6';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -1798,6 +1798,9 @@ window.ezRamadanToNormal=function(){
   var sDateTopElem=document.querySelector('#fstartDate');
   if(sDateTopElem){sDateTopElem.value=normalStartDate;fire(sDateTopElem);}
 
+  /* ── إعادة ترتيب الصفوف بناءً على الوقت (بعد تحويل سحور → عشاء) ── */
+  _ezSortTableByTime(tb);
+
   window._ramadanSplitDone=true;
   window._ramadanSplitSnapshot=null;
   window.ezShowToast('✅ إلغاء رمضان: '+normalDays+' يوم عادي من '+normalStartDate+' ('+ramLeft+' يوم رمضان)','success');
@@ -1855,6 +1858,70 @@ window.closeEndDateAlert=function(){
    CORE UTILITY FUNCTIONS
    ══════════════════════════════════════════ */
 var fireEvent=_ezFire;
+
+/* ══════════════════════════════════════════
+   GLOBAL: Sort table rows by time column
+   ══════════════════════════════════════════ */
+function _ezSortTableByTime(tb){
+  if(!tb)return;
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var ti=_ezIdx(hs,'time'),ei=_ezIdx(hs,'every');if(ei<0)ei=_ezIdx(hs,'evry');
+  if(ti<0)return;
+  var rs=Array.from(tb.querySelectorAll('tr'));var he=rs.shift();
+  var rwt=[],rwot=[];
+  rs.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length<=ti){rwot.push(r);return;}var tv=_ezGet(tds[ti]);if(!tv||tv.trim()===''){rwot.push(r);return;}rwt.push({row:r,time:tv});});
+  rwt.sort(function(a,b){
+    var ta=a.time.split(':').map(Number),tb2=b.time.split(':').map(Number);
+    var tA=ta[0]*60+(ta[1]||0),tB=tb2[0]*60+(tb2[1]||0);
+    if(tA===tB&&ei>=0){var evA=parseInt(_ezGet(a.row.querySelectorAll('td')[ei]))||0;var evB=parseInt(_ezGet(b.row.querySelectorAll('td')[ei]))||0;return evB-evA;}
+    return tA-tB;
+  });
+  tb.innerHTML='';tb.appendChild(he);rwt.forEach(function(i){tb.appendChild(i.row);});rwot.forEach(function(r){tb.appendChild(r);});
+}
+
+/* ══════════════════════════════════════════
+   GLOBAL: Color duplicated rows' ⚡ by item
+   ══════════════════════════════════════════ */
+var _ezDupColors=['#6366f1','#ef4444','#10b981','#f59e0b','#ec4899','#06b6d4','#8b5cf6','#f97316','#14b8a6','#e11d48'];
+function _ezColorDupRows(tb){
+  if(!tb)return;
+  /* Remove old indicators first */
+  var old=tb.querySelectorAll('.ez-dup-dot');for(var o=0;o<old.length;o++)old[o].remove();
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var ni=_ezIdx(hs,'note'),ci=_ezIdx(hs,'code');
+  if(ni<0||ci<0)return;
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+  /* Group rows by code, only keep groups with ⚡ rows */
+  var groups={},order=[];
+  rows.forEach(function(r){
+    var tds=r.querySelectorAll('td');if(tds.length<=Math.max(ni,ci))return;
+    var noteVal=_ezGet(tds[ni]);
+    if(noteVal.indexOf('⚡')<0)return;
+    var code=_ezGet(tds[ci]).trim().replace(/\D/g,'');
+    if(!code)return;
+    if(!groups[code]){groups[code]=[];order.push(code);}
+    groups[code].push(r);
+  });
+  /* Only color if >1 different items are split */
+  if(order.length<2)return;
+  for(var g=0;g<order.length;g++){
+    var color=_ezDupColors[g%_ezDupColors.length];
+    var grpRows=groups[order[g]];
+    for(var r=0;r<grpRows.length;r++){
+      var tds=grpRows[r].querySelectorAll('td');
+      if(tds.length>ni){
+        /* Add colored dot indicator before the input */
+        var dot=document.createElement('span');
+        dot.className='ez-dup-dot';
+        dot.style.cssText='display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0;margin-left:4px;box-shadow:0 0 4px '+color+'40';
+        var td=tds[ni];
+        td.style.display='flex';td.style.alignItems='center';
+        var inp=td.querySelector('input,textarea');
+        if(inp){td.insertBefore(dot,inp);}else{td.insertBefore(dot,td.firstChild);}
+      }
+    }
+  }
+}
 
 function cleanNote(txt){
   if(!txt) return '';
@@ -2592,6 +2659,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
+    _ezColorDupRows(tb_main);
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='110px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='110px';}if(ti_main>=0&&tds_nodes[ti_main]){var tiInp2=tds_nodes[ti_main].querySelector('input');if(tiInp2)tiInp2.style.width='100px';}if(ei_main>=0&&tds_nodes[ei_main]){var eiInp2=tds_nodes[ei_main].querySelector('input,select');if(eiInp2)eiInp2.style.width='90px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);
     beautifyPage();
