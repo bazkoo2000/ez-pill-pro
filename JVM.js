@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='137.4';
+var APP_VERSION='137.6';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -823,7 +823,6 @@ window.ezPreviewAlerts=function(){
   if(ni<0){window.ezShowToast('عمود الملاحظات غير موجود','error');return;}
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
   var alerts=[];
-  var _m=parseInt(document.querySelector('.ez-dialog-v2')?.getAttribute('data-m'))||1;
   var _t=parseInt(document.querySelector('.ez-dialog-v2')?.getAttribute('data-t'))||30;
   var seenCodes={};
   for(var i=0;i<rows.length;i++){
@@ -834,30 +833,60 @@ window.ezPreviewAlerts=function(){
     var noteClean=cleanNote(noteRaw);
     var itemName=nmi>=0?_ezGet(tds[nmi]):'صنف '+(i+1);
     var itemCode=ci>=0?(_ezGet(tds[ci]).match(/\d+/)||[''])[0]:'';
-    /* Duplicate detection */
     if(itemCode){
       if(seenCodes[itemCode]){alerts.push({icon:'🔁',text:'صنف مكرر: '+itemName,detail:'موجود في أكتر من سطر',level:'danger'});
       }else seenCodes[itemCode]=true;
     }
     if(!noteClean||noteClean.length<2) continue;
-    /* Dose recognition */
     var doseRec=smartDoseRecognizer(noteClean);
     var timeResult=getTimeFromWords(noteClean);
     var dur=extractDuration(noteRaw);
-    /* Days mismatch */
     if(dur.hasDuration&&dur.days!==_t){alerts.push({icon:'📅',text:itemName+': مكتوب '+dur.days+' يوم (المحدد '+_t+')',detail:'اختلاف في مدة العلاج',level:'warning'});}
-    /* Dose 2 */
     var d2p=/^2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
     var d2p2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
     if(d2p.test(noteRaw.trim())||d2p2.test(noteRaw)){alerts.push({icon:'💊',text:itemName+': جرعة مزدوجة (2)',detail:'مكتوب حبتين في الجرعة',level:'warning'});}
-    /* Unrecognized */
     if(timeResult.isUnrecognized){alerts.push({icon:'❓',text:itemName+': جرعة غير مفهومة',detail:'النص: '+noteClean,level:'warning'});}
-    /* Duplicate note = split */
     var nl=noteClean.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
     if(shouldDuplicateRow(nl)){alerts.push({icon:'✂️',text:itemName+': سيتم تقسيم الجرعة',detail:'عدد الجرعات: '+doseRec.count,level:'info'});}
   }
-  /* Check for boxes request */
-  if(scanForBoxesRequest()){alerts.push({icon:'📦',text:'طلب ترتيب في بوكسات مكتشف',detail:'تم تفعيل خيارات إضافية تلقائياً',level:'info'});}
+  /* ── Scan Prescription Notes field for rich info ── */
+  var prescNote='';
+  var pnField=document.getElementById('epresNotes');
+  if(!pnField){var allFields=document.querySelectorAll('textarea,input[type="text"]');for(var fi=0;fi<allFields.length;fi++){var fv=(allFields[fi].value||'').trim();if(fv.length>20&&/[\u0600-\u06FF]/.test(fv)&&(/ضيف|اسم|توصيل|صيدل|بوكس|ترتيب/i.test(fv))){pnField=allFields[fi];break;}}}
+  if(pnField) prescNote=(pnField.value||'').trim();
+  if(prescNote){
+    /* Show the raw prescription note */
+    alerts.push({icon:'📝',text:'ملاحظات الروشتة',detail:prescNote,level:'info'});
+    /* Extract structured info */
+    var details=[];
+    /* طلبين / عدد الطلبات */
+    var ordersMatch=prescNote.match(/(\d+|طلبين|ثلاث|اربع)\s*(طلب|طلبات|طلبين)/i);
+    if(ordersMatch){var oNum=ordersMatch[1]==='طلبين'?2:/ثلاث/i.test(ordersMatch[1])?3:/اربع/i.test(ordersMatch[1])?4:parseInt(ordersMatch[1]);details.push('📋 عدد الطلبات: '+oNum);}
+    else if(/طلبين/i.test(prescNote)) details.push('📋 عدد الطلبات: 2');
+    /* بوكسات */
+    var boxMatch=prescNote.match(/(\d+)\s*(بوكس|بكس|box)/i);
+    if(boxMatch) details.push('📦 عدد البوكسات: '+boxMatch[1]);
+    /* أشهر */
+    var monthMatch=prescNote.match(/(\d+)\s*(اشهر|شهور|شهر)/i);
+    if(monthMatch) details.push('🗓️ عدد الأشهر: '+monthMatch[1]);
+    /* اسم الضيف */
+    var namePatterns=[
+      /(?:تغيير\s*(?:ال)?اسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:باسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?))\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:الاسم\s*(?:يكون|هو)?)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
+    ];
+    var extractedName=null;
+    for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
+    if(extractedName) details.push('👤 اسم الضيف: '+extractedName);
+    /* صيدلية التوصيل */
+    var pharmaMatch=prescNote.match(/(?:صيدلي[ةه]|لصيدلي[ةه]|فرع)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,2})/i);
+    if(pharmaMatch){var pName=pharmaMatch[1].replace(/\s*(وشكرا|شكرا|وتغيير|برجاء).*/i,'').trim();if(pName.length>=2) details.push('🏥 صيدلية التوصيل: '+pName);}
+    /* توصيل */
+    if(/توصيل|ايصال|إيصال|deliver/i.test(prescNote)&&!pharmaMatch) details.push('🚚 مطلوب توصيل');
+    if(details.length>0){
+      alerts.push({icon:'📌',text:'معلومات مستخلصة من الملاحظات',detail:details.join('\n'),level:'success'});
+    }
+  }
   /* Display */
   var html='<div style="width:460px;max-width:95vw;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.15);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif">';
   html+='<div style="padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(129,140,248,0.08);background:linear-gradient(180deg,rgba(245,158,11,0.04) 0%,transparent 100%)">';
@@ -869,12 +898,12 @@ window.ezPreviewAlerts=function(){
   if(alerts.length===0){
     html+='<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px;font-weight:700">✅ لا توجد تنبيهات - كل شيء سليم</div>';
   } else {
-    var colors={warning:{bg:'rgba(245,158,11,0.04)',bdr:'rgba(245,158,11,0.15)'},danger:{bg:'rgba(239,68,68,0.04)',bdr:'rgba(239,68,68,0.15)'},info:{bg:'rgba(99,102,241,0.04)',bdr:'rgba(99,102,241,0.12)'}};
+    var colors={warning:{bg:'rgba(245,158,11,0.04)',bdr:'rgba(245,158,11,0.15)'},danger:{bg:'rgba(239,68,68,0.04)',bdr:'rgba(239,68,68,0.15)'},info:{bg:'rgba(99,102,241,0.04)',bdr:'rgba(99,102,241,0.12)'},success:{bg:'rgba(16,185,129,0.04)',bdr:'rgba(16,185,129,0.15)'}};
     for(var a=0;a<alerts.length;a++){
       var al=alerts[a];var cl=colors[al.level]||colors.info;
       html+='<div style="background:'+cl.bg+';border:1px solid '+cl.bdr+';border-radius:10px;padding:10px 12px;margin-bottom:6px;direction:rtl">';
       html+='<div style="font-size:12px;font-weight:800;color:#1e1b4b">'+al.icon+' '+al.text+'</div>';
-      html+='<div style="font-size:10px;font-weight:700;color:#64748b;margin-top:2px">'+al.detail+'</div>';
+      html+='<div style="font-size:10px;font-weight:700;color:#64748b;margin-top:2px;white-space:pre-line;line-height:1.8">'+al.detail+'</div>';
       html+='</div>';
     }
   }
@@ -1772,6 +1801,9 @@ window.ezRamadanToNormal=function(){
   var sDateTopElem=document.querySelector('#fstartDate');
   if(sDateTopElem){sDateTopElem.value=normalStartDate;fire(sDateTopElem);}
 
+  /* ── إعادة ترتيب الصفوف بناءً على الوقت (بعد تحويل سحور → عشاء) ── */
+  _ezSortTableByTime(tb);
+
   window._ramadanSplitDone=true;
   window._ramadanSplitSnapshot=null;
   window.ezShowToast('✅ إلغاء رمضان: '+normalDays+' يوم عادي من '+normalStartDate+' ('+ramLeft+' يوم رمضان)','success');
@@ -1829,6 +1861,70 @@ window.closeEndDateAlert=function(){
    CORE UTILITY FUNCTIONS
    ══════════════════════════════════════════ */
 var fireEvent=_ezFire;
+
+/* ══════════════════════════════════════════
+   GLOBAL: Sort table rows by time column
+   ══════════════════════════════════════════ */
+function _ezSortTableByTime(tb){
+  if(!tb)return;
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var ti=_ezIdx(hs,'time'),ei=_ezIdx(hs,'every');if(ei<0)ei=_ezIdx(hs,'evry');
+  if(ti<0)return;
+  var rs=Array.from(tb.querySelectorAll('tr'));var he=rs.shift();
+  var rwt=[],rwot=[];
+  rs.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length<=ti){rwot.push(r);return;}var tv=_ezGet(tds[ti]);if(!tv||tv.trim()===''){rwot.push(r);return;}rwt.push({row:r,time:tv});});
+  rwt.sort(function(a,b){
+    var ta=a.time.split(':').map(Number),tb2=b.time.split(':').map(Number);
+    var tA=ta[0]*60+(ta[1]||0),tB=tb2[0]*60+(tb2[1]||0);
+    if(tA===tB&&ei>=0){var evA=parseInt(_ezGet(a.row.querySelectorAll('td')[ei]))||0;var evB=parseInt(_ezGet(b.row.querySelectorAll('td')[ei]))||0;return evB-evA;}
+    return tA-tB;
+  });
+  tb.innerHTML='';tb.appendChild(he);rwt.forEach(function(i){tb.appendChild(i.row);});rwot.forEach(function(r){tb.appendChild(r);});
+}
+
+/* ══════════════════════════════════════════
+   GLOBAL: Color duplicated rows' ⚡ by item
+   ══════════════════════════════════════════ */
+var _ezDupColors=['#6366f1','#ef4444','#10b981','#f59e0b','#ec4899','#06b6d4','#8b5cf6','#f97316','#14b8a6','#e11d48'];
+function _ezColorDupRows(tb){
+  if(!tb)return;
+  /* Remove old indicators first */
+  var old=tb.querySelectorAll('.ez-dup-dot');for(var o=0;o<old.length;o++)old[o].remove();
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var ni=_ezIdx(hs,'note'),ci=_ezIdx(hs,'code');
+  if(ni<0||ci<0)return;
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+  /* Group rows by code, only keep groups with ⚡ rows */
+  var groups={},order=[];
+  rows.forEach(function(r){
+    var tds=r.querySelectorAll('td');if(tds.length<=Math.max(ni,ci))return;
+    var noteVal=_ezGet(tds[ni]);
+    if(noteVal.indexOf('⚡')<0)return;
+    var code=_ezGet(tds[ci]).trim().replace(/\D/g,'');
+    if(!code)return;
+    if(!groups[code]){groups[code]=[];order.push(code);}
+    groups[code].push(r);
+  });
+  /* Only color if >1 different items are split */
+  if(order.length<2)return;
+  for(var g=0;g<order.length;g++){
+    var color=_ezDupColors[g%_ezDupColors.length];
+    var grpRows=groups[order[g]];
+    for(var r=0;r<grpRows.length;r++){
+      var tds=grpRows[r].querySelectorAll('td');
+      if(tds.length>ni){
+        /* Add colored dot indicator before the input */
+        var dot=document.createElement('span');
+        dot.className='ez-dup-dot';
+        dot.style.cssText='display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0;margin-left:4px;box-shadow:0 0 4px '+color+'40';
+        var td=tds[ni];
+        td.style.display='flex';td.style.alignItems='center';
+        var inp=td.querySelector('input,textarea');
+        if(inp){td.insertBefore(dot,inp);}else{td.insertBefore(dot,td.firstChild);}
+      }
+    }
+  }
+}
 
 function cleanNote(txt){
   if(!txt) return '';
@@ -2578,6 +2674,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     sortRowsByTime(tb_main,ti_main,ei_main);
+    _ezColorDupRows(tb_main);
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='110px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='110px';}if(ti_main>=0&&tds_nodes[ti_main]){var tiInp2=tds_nodes[ti_main].querySelector('input');if(tiInp2)tiInp2.style.width='100px';}if(ei_main>=0&&tds_nodes[ei_main]){var eiInp2=tds_nodes[ei_main].querySelector('input,select');if(eiInp2)eiInp2.style.width='90px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
     var uc=showUniqueItemsCount(tb_main,ci_main);
     beautifyPage();
@@ -3631,7 +3728,7 @@ d_box.innerHTML='\
   <div class="ez-actions">\
     <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
     <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
-    <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات" style="background:linear-gradient(145deg,#fbbf24,#f59e0b);color:#fff;box-shadow:0 3px 10px rgba(245,158,11,0.2)">⚠️</button>\
+    <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
     <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
   </div>\
 </div>\
