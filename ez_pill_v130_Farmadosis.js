@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.5';
+var APP_VERSION='138.6';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -363,7 +363,7 @@ var _defaultFixedSizeCodes={
   '102077738':10,
   '102371620':24,
   '102988654':48,
-  '103169239':21,
+  '103169239':20,
   '103243857':30,
   '103437918':30,
   '103683617':30
@@ -2685,6 +2685,11 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
     ezBeep('success');
 
+    /* Auto-trigger Ramadan split if ramadan mode is on */
+    if(window._ramadanMode&&!window._ramadanSplitDone){
+      setTimeout(function(){window.ezRamadanSplit();},2000);
+    }
+
     /* Feature 4: Order Summary - DISABLED */
     /* Summary popup has been removed as per user request */
     /* Show safety confirmation for dose2 changes */
@@ -2915,7 +2920,7 @@ s_style.textContent='\
 .ez-seg{flex:1;height:40px;border-radius:9px;border:none;cursor:pointer;font-family:Cairo,sans-serif;font-weight:900;font-size:17px;transition:all 0.2s;background:transparent;color:#64748b}\
 .ez-seg.active{background:#3b82f6;color:#fff}\
 .ez-total-badge{margin-top:14px;padding:8px 14px;background:#f0f4ff;border-radius:10px;font-size:12px;font-weight:800;color:#3b82f6;text-align:center}\
-.ez-tog-grid{background:#fff;border-radius:20px;padding:18px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;display:grid;grid-template-columns:1fr 1fr;gap:8px}\
+.ez-tog-grid{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;display:grid;grid-template-columns:1fr 1fr;gap:8px}\
 .ez-tog-btn{padding:12px 14px;border-radius:14px;border:none;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s;text-align:right;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.02);outline:2px solid transparent}\
 .ez-tog-btn.on{outline:2px solid var(--tc,#3b82f6)25}\
 .ez-tog-btn .ez-tog-icon{font-size:16px;flex-shrink:0}\
@@ -2942,7 +2947,7 @@ s_style.textContent='\
 .ez-btn-primary::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);animation:shimmer 4s ease-in-out infinite}\
 .ez-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(59,130,246,0.35)}\
 .ez-btn-primary:active{transform:translateY(0)}\
-.ez-btn-primary.ez-pulse{box-shadow:0 8px 28px #3b82f640,0 0 0 3px rgba(59,130,246,0.1)}\
+.ez-btn-primary.ez-pulse{box-shadow:0 8px 28px rgba(59,130,246,0.4),0 0 0 3px rgba(59,130,246,0.1)}\
 .ez-btn-doses{width:50px;height:50px;border-radius:16px;border:none;background:#fff;cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}\
 .ez-btn-doses:hover{background:#3b82f6;color:#fff;box-shadow:0 6px 20px rgba(59,130,246,0.25)}\
 .ez-btn-cancel{width:50px;height:50px;border-radius:16px;border:1.5px solid #fecaca;background:#fef2f2;color:#ef4444;cursor:pointer;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
