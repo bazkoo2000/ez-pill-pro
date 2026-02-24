@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.8';
+var APP_VERSION='138.9';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -2671,7 +2671,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
-    if(showPostDialog||(ramadanMode&&duplicatedCount>0))showPostProcessDialog();
+    if(showPostDialog||ramadanMode)showPostProcessDialog();
     /* Ramadan mode notification */
     if(ramadanMode){
       var rmBadge=document.createElement('div');
