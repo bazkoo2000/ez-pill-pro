@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.0';
+var APP_VERSION='138.1';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -2926,7 +2926,7 @@ s_style.textContent='\
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}\
 @keyframes spin{to{transform:rotate(360deg)}}\
 @keyframes meshFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}\
-.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:400px;max-width:96vw;z-index:99999;border-radius:28px;background:#f0f4ff;box-shadow:0 24px 64px rgba(59,130,246,0.08),0 0 0 1px rgba(59,130,246,0.06);overflow:hidden;animation:dialogEnter 0.8s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
+.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;max-width:96vw;z-index:99999;border-radius:28px;background:#f0f4ff;box-shadow:0 24px 64px rgba(59,130,246,0.08),0 0 0 1px rgba(59,130,246,0.06);overflow:hidden;animation:dialogEnter 0.8s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
 .ez-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;cursor:move}\
 .ez-logo-group{display:flex;align-items:center;gap:10px}\
 .ez-logo{width:40px;height:40px;border-radius:20px;background:#fff;border:2px solid rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(59,130,246,0.1)}\
