@@ -1,12 +1,12 @@
 javascript:(function(){
   'use strict';
   // ═══════════════════════════════════════════════════════════════════
-  // EZ-PILL PRO v4.6 - (حساب تلقائي لعدد الصفحات من السيرفر)
+  // EZ-PILL PRO v4.7 - Neumorphic Dialog + Fixed Sync
   // المطور الأصلي: علي الباز
   // ═══════════════════════════════════════════════════════════════════
   //
   const PANEL_ID = 'ali_sys_v4';
-  const VERSION = '4.6';
+  const VERSION = '4.7';
   const VER_KEY = 'ezpill_ver';
   
   if (document.getElementById(PANEL_ID)) {
@@ -55,59 +55,107 @@ javascript:(function(){
     var lv=localStorage.getItem(VER_KEY);
     if(lv!==VERSION){
       localStorage.setItem(VER_KEY,VERSION);
-      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' (حساب الصفحات التلقائي) 🧠','success')},1000);
+      if(lv)setTimeout(function(){showToast('تم التحديث لـ v'+VERSION+' (Neumorphic + Sync Fix) 🧠','success')},1000);
     }
   }catch(e){}
   
   // ═══════════════════════════════════════════
-  // Dialog System
+  // Neumorphic Dialog System
   // ═══════════════════════════════════════════
   function showDialog(opts) {
     return new Promise(function(resolve) {
       var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
-      
-      var iconBg = {
-        blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',
-        green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',
-        amber:'linear-gradient(135deg,#fef3c7,#fde68a)',
-        red:'linear-gradient(135deg,#fee2e2,#fecaca)'
-      };
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(200,205,215,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
       
       var infoHTML = '';
       if (opts.info && opts.info.length) {
         for (var i = 0; i < opts.info.length; i++) {
           var r = opts.info[i];
-          infoHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px">' +
-            '<span style="color:#64748b;font-weight:600">' + r.label + '</span>' +
-            '<span style="font-weight:800;color:' + (r.color || '#1e293b') + ';font-size:12px">' + r.value + '</span></div>';
+          infoHTML +=
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#f0f2f5;border-radius:16px;margin-bottom:8px;box-shadow:inset 3px 3px 8px rgba(0,0,0,0.06),inset -3px -3px 8px rgba(255,255,255,0.7)">' +
+              '<span style="font-size:13px;color:#64748b;font-weight:700">' + r.label + '</span>' +
+              '<span style="font-weight:900;color:' + (r.color || '#7c3aed') + ';font-size:14px;font-family:Segoe UI,monospace">' + r.value + '</span>' +
+            '</div>';
         }
+      }
+
+      var badgesHTML = '';
+      if (opts.badges && opts.badges.length) {
+        badgesHTML = '<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:0 0 8px">';
+        for (var b = 0; b < opts.badges.length; b++) {
+          var badge = opts.badges[b];
+          var badgeStyle = badge.active
+            ? 'color:#7c3aed;background:linear-gradient(135deg,#ede9fe,#f5f3ff)'
+            : 'color:#64748b;background:#f0f2f5';
+          badgesHTML +=
+            '<span style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;' + badgeStyle + ';box-shadow:3px 3px 8px rgba(0,0,0,0.06),-3px -3px 8px rgba(255,255,255,0.8)">' +
+              badge.text +
+            '</span>';
+        }
+        badgesHTML += '</div>';
       }
       
       var buttonsHTML = '';
       if (opts.buttons && opts.buttons.length) {
         for (var j = 0; j < opts.buttons.length; j++) {
           var btn = opts.buttons[j];
-          buttonsHTML += '<button data-idx="' + j + '" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;' + (btn.style || 'background:#f1f5f9;color:#475569') + ';transition:all 0.2s">' + btn.text + '</button>';
+          var btnStyle = btn.primary
+            ? 'background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:white;box-shadow:4px 4px 16px rgba(124,58,237,0.3),-2px -2px 8px rgba(255,255,255,0.1)'
+            : 'background:#f0f2f5;color:#64748b;box-shadow:4px 4px 12px rgba(0,0,0,0.07),-4px -4px 12px rgba(255,255,255,0.8)';
+          buttonsHTML +=
+            '<button data-idx="' + j + '" style="flex:1;padding:16px;border:none;border-radius:18px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;transition:all 0.25s;' + btnStyle + '">' +
+              btn.text +
+            '</button>';
         }
       }
       
       overlay.innerHTML =
-        '<div style="background:white;border-radius:24px;width:420px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">' +
-          '<div style="padding:24px 24px 0;text-align:center">' +
-            '<div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:' + (iconBg[opts.iconColor] || iconBg.blue) + '">' + opts.icon + '</div>' +
-            '<div style="font-size:20px;font-weight:900;color:#1e293b;margin-bottom:6px">' + opts.title + '</div>' +
-            '<div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">' + opts.desc + '</div>' +
+        '<div style="background:#f0f2f5;border-radius:32px;width:420px;max-width:92vw;overflow:hidden;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:#1e293b;box-shadow:12px 12px 40px rgba(0,0,0,0.08),-12px -12px 40px rgba(255,255,255,0.9),inset 0 0 0 1px rgba(255,255,255,0.6);animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">' +
+          '<div style="padding:32px 28px 0;text-align:center">' +
+            '<div style="width:80px;height:80px;border-radius:50%;background:#f0f2f5;box-shadow:6px 6px 16px rgba(0,0,0,0.1),-6px -6px 16px rgba(255,255,255,0.8),inset 2px 2px 6px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 18px">' + opts.icon + '</div>' +
+            '<div style="font-size:22px;font-weight:900;color:#1e293b;margin-bottom:6px">' + opts.title + '</div>' +
+            '<div style="font-size:13px;color:#64748b;line-height:1.7;font-weight:500">' + opts.desc + '</div>' +
           '</div>' +
-          '<div style="padding:20px 24px">' + infoHTML + (opts.body || '') + '</div>' +
-          '<div style="padding:16px 24px 24px;display:flex;gap:10px">' + buttonsHTML + '</div>' +
+          badgesHTML +
+          '<div style="padding:22px 28px">' + infoHTML + (opts.body || '') + '</div>' +
+          '<div style="padding:8px 28px 28px;display:flex;gap:12px">' + buttonsHTML + '</div>' +
         '</div>';
         
+      // Hover effects
+      overlay.addEventListener('mouseover', function(e) {
+        var btnEl = e.target.closest('[data-idx]');
+        if (btnEl) {
+          var idx = parseInt(btnEl.getAttribute('data-idx'));
+          if (opts.buttons[idx].primary) {
+            btnEl.style.transform = 'translateY(-2px)';
+            btnEl.style.boxShadow = '6px 6px 24px rgba(124,58,237,0.4)';
+          } else {
+            btnEl.style.color = '#1e293b';
+            btnEl.style.boxShadow = '4px 4px 16px rgba(0,0,0,0.1),-4px -4px 16px rgba(255,255,255,0.9)';
+          }
+        }
+      });
+      overlay.addEventListener('mouseout', function(e) {
+        var btnEl = e.target.closest('[data-idx]');
+        if (btnEl) {
+          var idx = parseInt(btnEl.getAttribute('data-idx'));
+          btnEl.style.transform = '';
+          if (opts.buttons[idx].primary) {
+            btnEl.style.boxShadow = '4px 4px 16px rgba(124,58,237,0.3),-2px -2px 8px rgba(255,255,255,0.1)';
+          } else {
+            btnEl.style.color = '#64748b';
+            btnEl.style.boxShadow = '4px 4px 12px rgba(0,0,0,0.07),-4px -4px 12px rgba(255,255,255,0.8)';
+          }
+        }
+      });
+
       overlay.addEventListener('click', function(e) {
         var btnEl = e.target.closest('[data-idx]');
         if (btnEl) {
           var idx = parseInt(btnEl.getAttribute('data-idx'));
-          overlay.remove();
+          overlay.style.transition = 'opacity 0.2s';
+          overlay.style.opacity = '0';
+          setTimeout(function() { overlay.remove(); }, 200);
           resolve(opts.buttons[idx].value);
         }
       });
@@ -191,7 +239,7 @@ javascript:(function(){
           '<h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">EZ-PILL PRO</h3>' +
         '</div>' +
         '<div style="text-align:right;margin-top:4px;position:relative;z-index:1">' +
-          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.6 Auto-Page</span>' +
+          '<span style="display:inline-block;background:rgba(59,130,246,0.2);color:#93c5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">v4.7 Neumorphic + Sync Fix</span>' +
         '</div>' +
       '</div>' +
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">' +
@@ -281,6 +329,15 @@ javascript:(function(){
       timer = setTimeout(fn, delay);
     };
   }
+
+  function getCurrentStatus() {
+    var currentStatus = 'readypack';
+    var loc = window.location.href.toLowerCase();
+    if (loc.indexOf('new') !== -1) currentStatus = 'new';
+    else if (loc.indexOf('packed') !== -1 && loc.indexOf('ready') === -1) currentStatus = 'packed';
+    else if (loc.indexOf('delivered') !== -1) currentStatus = 'delivered';
+    return currentStatus;
+  }
   
   // ═══════════════════════════════════════════
   // Header Events
@@ -309,10 +366,9 @@ javascript:(function(){
   function createSafeLabel(inv, args) {
     var label = document.createElement('label');
     label.style.cssText = 'cursor:pointer;color:#3b82f6;text-decoration:underline;font-weight:bold';
-    label.textContent = inv; // ✅ textContent آمن — لا يفسر HTML
+    label.textContent = inv;
     if (args) {
       label.addEventListener('click', function() {
-        // ✅ البيانات تتمرر كمتغيرات حقيقية مش كنص
         getDetails(args[0], args[1], args[2], args[3]);
       });
     }
@@ -320,19 +376,70 @@ javascript:(function(){
   }
 
   // ═══════════════════════════════════════════
-  // API Page Scanner
+  // دالة لجلب الأوردرات من صفحة معينة
+  // ═══════════════════════════════════════════
+  async function fetchPageOrders(pageNum, currentStatus) {
+    var baseUrl = window.location.origin + "/ez_pill_web/";
+    var res = await fetch(baseUrl + 'Home/getOrders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
+    });
+    return await res.json();
+  }
+
+  // ═══════════════════════════════════════════
+  // بناء صف الجدول من بيانات الأوردر
+  // ═══════════════════════════════════════════
+  function buildOrderRow(item, templateRow) {
+    var inv = item.Invoice || '';
+    var onl = item.onlineNumber || '';
+    var typee = item.typee !== undefined ? item.typee : '';
+    var head_id = item.head_id !== undefined ? item.head_id : '';
+    
+    var args = null;
+    if (onl !== '' && inv !== '') {
+      args = [onl.replace(/ERX/gi, ''), inv, typee, head_id];
+    }
+
+    var clone;
+    if (templateRow) {
+      clone = templateRow.cloneNode(true);
+      var cells = clone.querySelectorAll('td');
+      if (cells.length > 3) {
+        cells[0].innerHTML = '';
+        cells[0].appendChild(createSafeLabel(inv, args));
+        cells[1].textContent = onl;
+        cells[2].textContent = item.guestName || '';
+        cells[3].textContent = item.guestMobile || item.mobile || '';
+      }
+    } else {
+      clone = document.createElement('tr');
+      var td0 = document.createElement('td');
+      var td1 = document.createElement('td');
+      var td2 = document.createElement('td');
+      var td3 = document.createElement('td');
+      td0.appendChild(createSafeLabel(inv, args));
+      td1.textContent = onl;
+      td2.textContent = item.guestName || '';
+      td3.textContent = item.guestMobile || item.mobile || '';
+      clone.appendChild(td0);
+      clone.appendChild(td1);
+      clone.appendChild(td2);
+      clone.appendChild(td3);
+    }
+
+    return { id: inv, onl: onl, node: clone, args: args, hasArgs: args !== null };
+  }
+
+  // ═══════════════════════════════════════════
+  // API Page Scanner (First Scan)
   // ═══════════════════════════════════════════
   var totalNoArgs = 0;
   async function scanPage(isSync) {
     state.isProcessing = true;
     var fill = document.getElementById('p-fill');
-    var baseUrl = window.location.origin + "/ez_pill_web/";
-    
-    var currentStatus = 'readypack';
-    var loc = window.location.href.toLowerCase();
-    if (loc.indexOf('new') !== -1) currentStatus = 'new';
-    else if (loc.indexOf('packed') !== -1 && loc.indexOf('ready') === -1) currentStatus = 'packed';
-    else if (loc.indexOf('delivered') !== -1) currentStatus = 'delivered';
+    var currentStatus = getCurrentStatus();
 
     try {
       if (isSync) {
@@ -365,13 +472,7 @@ javascript:(function(){
           setStatus('تحليل الصفحة ' + page + ' من ' + maxPages + ' ...', 'working');
         }
 
-        var res = await fetch(baseUrl + 'Home/getOrders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: currentStatus, pageSelected: page, searchby: '' })
-        });
-        
-        var data = await res.json();
+        var data = await fetchPageOrders(page, currentStatus);
 
         // الحساب التلقائي لعدد الصفحات في أول صفحة
         if (page === 1 && data.total_orders) {
@@ -399,61 +500,12 @@ javascript:(function(){
         for (var i = 0; i < orders.length; i++) {
           var item = orders[i];
           var inv = item.Invoice || '';
-          var onl = item.onlineNumber || '';
           
           if (inv.length > 3 && !state.visitedSet.has(inv)) {
             state.visitedSet.add(inv);
-
-            var typee = item.typee !== undefined ? item.typee : '';
-            var head_id = item.head_id !== undefined ? item.head_id : '';
-            
-            var args = null;
-            if (onl !== '' && inv !== '') {
-              args = [onl.replace(/ERX/gi, ''), inv, typee, head_id];
-            } else {
-              noArgsCount++;
-            }
-
-            var clone;
-            if (templateRow) {
-              clone = templateRow.cloneNode(true);
-              var cells = clone.querySelectorAll('td');
-              if (cells.length > 3) {
-                // ✅ التعديل الأمني: استبدال innerHTML بـ createSafeLabel
-                cells[0].innerHTML = '';
-                var safeLabel = createSafeLabel(inv, args);
-                cells[0].appendChild(safeLabel);
-
-                // ✅ textContent بدل innerText لمنع XSS
-                cells[1].textContent = onl;
-                cells[2].textContent = item.guestName || '';
-                cells[3].textContent = item.guestMobile || item.mobile || '';
-              }
-            } else {
-              clone = document.createElement('tr');
-              var td0 = document.createElement('td');
-              var td1 = document.createElement('td');
-              var td2 = document.createElement('td');
-              var td3 = document.createElement('td');
-
-              // ✅ إنشاء الـ label بالطريقة الآمنة
-              td0.appendChild(createSafeLabel(inv, args));
-              td1.textContent = onl;
-              td2.textContent = item.guestName || '';
-              td3.textContent = item.guestMobile || item.mobile || '';
-
-              clone.appendChild(td0);
-              clone.appendChild(td1);
-              clone.appendChild(td2);
-              clone.appendChild(td3);
-            }
-
-            state.savedRows.push({
-              id: inv,
-              onl: onl,
-              node: clone,
-              args: args
-            });
+            var rowData = buildOrderRow(item, templateRow);
+            if (!rowData.hasArgs) noArgsCount++;
+            state.savedRows.push(rowData);
           }
         }
         totalNoArgs += noArgsCount;
@@ -467,6 +519,174 @@ javascript:(function(){
       showToast('مشكلة في سحب البيانات!', 'error');
       state.isProcessing = false;
       state.isSyncing = false;
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // ✅ Smart Sync — مزامنة ذكية حقيقية
+  // ═══════════════════════════════════════════
+  async function smartSync() {
+    state.isSyncing = true;
+    state.isProcessing = true;
+    var fill = document.getElementById('p-fill');
+    var currentStatus = getCurrentStatus();
+
+    try {
+      setStatus('جاري جلب البيانات الحديثة...', 'sync');
+
+      // ═══ 1. تجميع كل الأوردرات الموجودة حالياً على السيرفر ═══
+      var serverOrders = new Map(); // inv → order data
+      var maxPages = parseInt(document.getElementById('p_lim').value) || 1;
+      var consecutiveEmpty = 0;
+
+      // جلب أول صفحة لمعرفة العدد الحقيقي
+      var firstData = await fetchPageOrders(1, currentStatus);
+      if (firstData.total_orders) {
+        var exactTotal = parseInt(firstData.total_orders) || 0;
+        if (exactTotal > 0) {
+          maxPages = Math.ceil(exactTotal / 10);
+          document.getElementById('p_lim').value = maxPages;
+        }
+      }
+
+      // معالجة أول صفحة
+      var firstOrders = [];
+      try { firstOrders = typeof firstData.orders_list === 'string' ? JSON.parse(firstData.orders_list) : firstData.orders_list; } catch(e) {}
+      if (firstOrders && firstOrders.length > 0) {
+        for (var fi = 0; fi < firstOrders.length; fi++) {
+          var fInv = firstOrders[fi].Invoice || '';
+          if (fInv.length > 3) serverOrders.set(fInv, firstOrders[fi]);
+        }
+      }
+
+      if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
+
+      // جلب باقي الصفحات
+      for (var page = 2; page <= maxPages; page++) {
+        if (fill) fill.style.width = ((page / maxPages) * 100) + '%';
+        setStatus('مزامنة الصفحة ' + page + ' من ' + maxPages + '...', 'sync');
+
+        var data = await fetchPageOrders(page, currentStatus);
+        var orders = [];
+        try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
+
+        if (!orders || orders.length === 0) {
+          consecutiveEmpty++;
+          if (consecutiveEmpty >= 2) break;
+          continue;
+        } else {
+          consecutiveEmpty = 0;
+        }
+
+        for (var oi = 0; oi < orders.length; oi++) {
+          var oInv = orders[oi].Invoice || '';
+          if (oInv.length > 3) serverOrders.set(oInv, orders[oi]);
+        }
+      }
+
+      setStatus('جاري مقارنة البيانات...', 'sync');
+
+      // ═══ 2. إيجاد اللي اتشال (موجود عندنا بس مش على السيرفر) ═══
+      var oldIds = new Set(state.savedRows.map(function(r) { return r.id; }));
+      var removedIds = [];
+      var keptRows = [];
+
+      for (var ri = 0; ri < state.savedRows.length; ri++) {
+        if (serverOrders.has(state.savedRows[ri].id)) {
+          keptRows.push(state.savedRows[ri]);
+        } else {
+          removedIds.push(state.savedRows[ri].id);
+        }
+      }
+
+      // ═══ 3. إيجاد الجديد (على السيرفر بس مش عندنا) ═══
+      var tables = document.querySelectorAll('table');
+      var targetTable = tables[0];
+      for (var t = 0; t < tables.length; t++) {
+        if (tables[t].innerText.length > targetTable.innerText.length) targetTable = tables[t];
+      }
+      var tbody = targetTable.querySelector('tbody') || targetTable;
+      var templateRow = tbody.querySelector('tr');
+
+      var newRows = [];
+      var noArgsNew = 0;
+      serverOrders.forEach(function(item, inv) {
+        if (!oldIds.has(inv)) {
+          var rowData = buildOrderRow(item, templateRow);
+          if (!rowData.hasArgs) noArgsNew++;
+          newRows.push(rowData);
+        }
+      });
+
+      // ═══ 4. تحديث الـ state ═══
+      state.savedRows = keptRows.concat(newRows);
+      state.visitedSet.clear();
+      for (var si = 0; si < state.savedRows.length; si++) {
+        state.visitedSet.add(state.savedRows[si].id);
+      }
+
+      // ═══ 5. تحديث الجدول في الصفحة ═══
+      state.tbody = tbody;
+      state.tbody.innerHTML = '';
+      for (var di = 0; di < state.savedRows.length; di++) {
+        state.savedRows[di].node.style.cursor = 'pointer';
+        state.tbody.appendChild(state.savedRows[di].node);
+      }
+
+      updateStats(state.savedRows.length);
+
+      // ═══ 6. عرض النتائج ═══
+      var summaryParts = [];
+      if (removedIds.length > 0) summaryParts.push('🗑 ' + removedIds.length + ' تم إزالته');
+      if (newRows.length > 0) summaryParts.push('✨ ' + newRows.length + ' جديد');
+      if (removedIds.length === 0 && newRows.length === 0) summaryParts.push('لا تغييرات');
+      
+      var summaryText = summaryParts.join(' | ') + ' — الإجمالي: ' + state.savedRows.length;
+
+      setStatus('تمت المزامنة — ' + summaryText, 'done');
+
+      if (noArgsNew > 0) {
+        showToast(noArgsNew + ' طلب جديد بدون بيانات فتح', 'warning');
+      }
+
+      // دايلوج ملخص المزامنة
+      await showDialog({
+        icon: '✅',
+        iconColor: 'green',
+        title: 'تمت المزامنة بنجاح',
+        desc: 'تم تحديث القائمة بأحدث البيانات من الخادم',
+        badges: [
+          { text: '🗑 تم حذف ' + removedIds.length, active: removedIds.length > 0 },
+          { text: '✨ جديد ' + newRows.length, active: newRows.length > 0 },
+          { text: '📦 إجمالي ' + state.savedRows.length, active: true }
+        ],
+        info: [
+          { label: 'تم إزالته (مُغلق)', value: removedIds.length.toString(), color: removedIds.length > 0 ? '#dc2626' : '#94a3b8' },
+          { label: 'أوردرات جديدة', value: newRows.length.toString(), color: newRows.length > 0 ? '#059669' : '#94a3b8' },
+          { label: 'الإجمالي الحالي', value: state.savedRows.length.toString(), color: '#7c3aed' }
+        ],
+        buttons: [
+          { text: '👍 تمام', value: 'ok', primary: true }
+        ]
+      });
+
+      showToast(summaryText, 'success');
+
+    } catch (err) {
+      console.error('Sync error:', err);
+      setStatus('خطأ في المزامنة — حاول تاني', 'error');
+      showToast('فشلت المزامنة: ' + (err.message || 'خطأ غير متوقع'), 'error');
+    } finally {
+      state.isSyncing = false;
+      state.isProcessing = false;
+      // إعادة تفعيل زر المزامنة
+      var syncBtn = document.getElementById('ali_btn_sync');
+      if (syncBtn) {
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = '🔄 مزامنة (تحديث + حذف المُغلق + إضافة الجديد)';
+        syncBtn.style.borderColor = '#e2e8f0';
+        syncBtn.style.color = '#475569';
+      }
     }
   }
   
@@ -505,6 +725,13 @@ javascript:(function(){
       showToast('تم تجميع ' + state.savedRows.length + ' طلب بنجاح', 'success');
     }
     
+    buildSearchUI();
+  }
+
+  // ═══════════════════════════════════════════
+  // Build Search UI — منفصلة عشان تتنده من أكتر من مكان
+  // ═══════════════════════════════════════════
+  function buildSearchUI() {
     var dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML =
       '<div style="margin-bottom:10px">' +
@@ -673,7 +900,7 @@ javascript:(function(){
       filterResults();
     });
     
-    // ─── Sync Button ───
+    // ─── ✅ Sync Button — مزامنة ذكية حقيقية ───
     document.getElementById('ali_btn_sync').addEventListener('click', async function() {
       if (state.isSyncing || state.isProcessing) {
         showToast('المزامنة شغالة بالفعل — انتظر!', 'warning');
@@ -687,30 +914,33 @@ javascript:(function(){
         icon: '🔄',
         iconColor: 'blue',
         title: 'المزامنة الذكية',
-        desc: 'سيتم جلب البيانات الحديثة من الخادم وتحديث القائمة',
+        desc: 'هيتم مقارنة بياناتك الحالية مع الخادم وتحديث التغييرات',
+        badges: [
+          { text: 'حذف المُغلق', active: true },
+          { text: 'إضافة الجديد', active: true },
+          { text: 'تحديث البيانات', active: true }
+        ],
         info: [
-          { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#8b5cf6' },
-          { label: 'العملية', value: 'حذف المُغلق + إضافة الجديد', color: '#3b82f6' }
+          { label: 'الطلبات الحالية', value: oldCount.toString(), color: '#7c3aed' },
+          { label: 'العملية', value: 'مقارنة + تحديث ذكي', color: '#3b82f6' }
         ],
         buttons: [
-          { text: 'إلغاء', value: 'cancel' },
-          { text: '🔄 بدء المزامنة', value: 'confirm', style: 'background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;box-shadow:0 4px 12px rgba(59,130,246,0.3)' }
+          { text: 'إلغاء', value: 'cancel', primary: false },
+          { text: '🔄 بدء المزامنة', value: 'confirm', primary: true }
         ]
       });
       
       if (result !== 'confirm') return;
       
-      state.isSyncing = true;
       syncBtn.disabled = true;
-      syncBtn.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة...';
-      syncBtn.style.borderColor = '#3b82f6';
-      syncBtn.style.color = '#1d4ed8';
-      showToast('جاري المزامنة عبر الخادم...', 'info');
+      syncBtn.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة الذكية...';
+      syncBtn.style.borderColor = '#7c3aed';
+      syncBtn.style.color = '#7c3aed';
       
-      state.visitedSet.clear();
-      state.savedRows = [];
-      totalNoArgs = 0;
-      scanPage(true);
+      await smartSync();
+
+      // إعادة بناء واجهة البحث مع الحفاظ على البيانات
+      buildSearchUI();
     });
   }
   
