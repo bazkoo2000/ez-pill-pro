@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.3';
+var APP_VERSION='138.4';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -1975,8 +1975,8 @@ function extractDuration(note){
   var result={hasDuration:false,days:null,isPRN:false,isUntilFinish:false,original:note};
   if(/عند الحاجه|عند اللزوم|prn|as\s*needed|when\s*needed|sos|عند الضرورة|if\s*needed|p\.r\.n/i.test(s)){result.isPRN=true;return result;}
   if(/حتى (نفاد|انتهاء|انهاء|الشفاء)|until\s*(finish|complete|symptom|gone|resolved)|till\s*finish/i.test(s)){result.isUntilFinish=true;return result;}
-  var dayPatterns=[{r:/لمده?\s*(\d+)\s*(يوم|ايام)/i,g:1},{r:/مده?\s*(\d+)\s*(يوم|ايام)/i,g:1},{r:/(\d+)\s*(يوم|ايام)\s*فقط/i,g:1},{r:/(\d+)\s*(يوم|ايام)/i,g:1},{r:/(\d+)\s*days?/i,g:1},{r:/for\s*(\d+)\s*days?/i,g:1},{r:/x\s*(\d+)\s*days?/i,g:1},{r:/duration[:\s]*(\d+)\s*days?/i,g:1}];
-  for(var i=0;i<dayPatterns.length;i++){var m=s.match(dayPatterns[i].r);if(m){result.hasDuration=true;result.days=parseInt(m[dayPatterns[i].g]);return result;}}
+  var dayPatterns=[{r:/لمده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/مده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/(\d+)\s*(يوم(?!ي)|ايام)\s*فقط/i,g:1},{r:/(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/(\d+)\s*days?(?!\s*supply)/i,g:1},{r:/for\s*(\d+)\s*days?/i,g:1},{r:/x\s*(\d+)\s*days?/i,g:1},{r:/duration[:\s]*(\d+)\s*days?/i,g:1}];
+  for(var i=0;i<dayPatterns.length;i++){var m=s.match(dayPatterns[i].r);if(m){var _dd=parseInt(m[dayPatterns[i].g]);if(_dd<=1)continue;result.hasDuration=true;result.days=_dd;return result;}}
   var weekPatterns=[{r:/اسبوع واحد|واحد اسبوع|1\s*اسبوع|one\s*week|1\s*week/i,d:7},{r:/اسبوعين|2\s*اسبوع|two\s*weeks?|2\s*weeks?/i,d:14},{r:/ثلاث(ه)?\s*اسابيع|3\s*اسابيع|three\s*weeks?|3\s*weeks?/i,d:21},{r:/اربع(ه)?\s*اسابيع|4\s*اسابيع|four\s*weeks?|4\s*weeks?/i,d:28},{r:/شهر واحد|واحد شهر|1\s*شهر|one\s*month|1\s*month/i,d:30},{r:/شهرين|2\s*شهر|two\s*months?|2\s*months?/i,d:60},{r:/ثلاث(ه)?\s*اشهر|3\s*اشهر|three\s*months?|3\s*months?/i,d:90}];
   for(var i=0;i<weekPatterns.length;i++){if(weekPatterns[i].r.test(s)){result.hasDuration=true;result.days=weekPatterns[i].d;return result;}}
   return result;
@@ -2010,11 +2010,11 @@ function moveColumnAfter(table,colToMove,colAfter){
 
 function checkEndDateConsistency(){
   var tb=_ezFindTable();if(!tb)return;
-  var ths=tb.querySelectorAll('th');var ediIdx=-1;
-  for(var i=0;i<ths.length;i++){if(ths[i].textContent.toLowerCase().includes('end')&&ths[i].textContent.toLowerCase().includes('date')){ediIdx=i;break;}}
+  var ths=tb.querySelectorAll('th');var ediIdx=-1;var ciIdx=-1;
+  for(var i=0;i<ths.length;i++){var ht=ths[i].textContent.toLowerCase();if(ht.includes('end')&&ht.includes('date'))ediIdx=i;if(ht.includes('code'))ciIdx=i;}
   if(ediIdx<0)return;
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);var dates={};var mostCommonDate='';var maxCount=0;
-  rows.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length>ediIdx){var inp=tds[ediIdx].querySelector('input');var date=inp?inp.value:tds[ediIdx].textContent.trim();if(date&&/\d{4}-\d{2}-\d{2}/.test(date)){dates[date]=(dates[date]||0)+1;if(dates[date]>maxCount){maxCount=dates[date];mostCommonDate=date;}}}});
+  rows.forEach(function(r){var tds=r.querySelectorAll('td');if(tds.length>ediIdx){if(ciIdx>=0&&tds.length>ciIdx){var cInp=tds[ciIdx].querySelector('input');var cTxt=cInp?cInp.value:tds[ciIdx].textContent.trim();var cNum=(cTxt.match(/\d+/)||[''])[0];if(cNum&&fixedSizeCodes[cNum])return;}var inp=tds[ediIdx].querySelector('input');var date=inp?inp.value:tds[ediIdx].textContent.trim();if(date&&/\d{4}-\d{2}-\d{2}/.test(date)){dates[date]=(dates[date]||0)+1;if(dates[date]>maxCount){maxCount=dates[date];mostCommonDate=date;}}}});
   if(Object.keys(dates).length>1) showEndDateAlert(mostCommonDate,ediIdx);
 }
 
