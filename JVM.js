@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.9';
+var APP_VERSION='139.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -3022,13 +3022,13 @@ body.ez-dark-mode *:not(.ez-dialog-v2):not(.ez-dialog-v2 *):not([id^="ez-"]):not
 body.ez-dark-mode input,body.ez-dark-mode textarea,body.ez-dark-mode select{background:#16162a!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.2)!important}\
 body.ez-dark-mode .form-control{background:#16162a!important;color:#e2e8f0!important}\
 body.ez-dark-mode a{color:#818cf8!important}\
-body.ez-dark-mode button:not(.ez-pill):not(.ez-btn-primary):not(.ez-btn-cancel):not(.ez-btn-doses):not(.ez-btn-icon):not([onclick*="ez"]){background:#1e1e3a!important;color:#c7d2fe!important;border-color:rgba(129,140,248,0.2)!important}\
+body.ez-dark-mode button:not(.ez-seg):not(.ez-btn-primary):not(.ez-btn-cancel):not(.ez-btn-doses):not(.ez-btn-icon):not([onclick*="ez"]){background:#1e1e3a!important;color:#c7d2fe!important;border-color:rgba(129,140,248,0.2)!important}\
 body.ez-dark-mode .ez-dialog-v2{background:rgba(20,20,45,0.95)!important;box-shadow:0 30px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(129,140,248,0.1),inset 0 1px 0 rgba(255,255,255,0.03)!important}\
 body.ez-dark-mode .ez-title{color:#e2e8f0!important}\
 body.ez-dark-mode .ez-subtitle{color:#64748b!important}\
 body.ez-dark-mode .ez-section-label span:last-child{color:#94a3b8!important}\
-body.ez-dark-mode .ez-pill:not(.active){color:#94a3b8!important;border-color:rgba(129,140,248,0.12)!important}\
-body.ez-dark-mode .ez-pill:hover:not(.active){background:rgba(129,140,248,0.08)!important;color:#c7d2fe!important}\
+body.ez-dark-mode .ez-seg:not(.active){color:#94a3b8!important;border-color:rgba(129,140,248,0.12)!important}\
+body.ez-dark-mode .ez-seg:hover:not(.active){background:rgba(129,140,248,0.08)!important;color:#c7d2fe!important}\
 body.ez-dark-mode .ez-toggle-text{color:#94a3b8!important}\
 body.ez-dark-mode .ez-tog-on .ez-toggle-text{color:#e2e8f0!important}\
 body.ez-dark-mode .ez-toggle-row{border-color:rgba(129,140,248,0.06)!important}\
