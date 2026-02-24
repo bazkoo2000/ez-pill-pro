@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='139.0';
+var APP_VERSION='139.1';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -829,6 +829,7 @@ window.ezPreviewAlerts=function(){
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
   var alerts=[];
   var _t=parseInt(document.querySelector('.ez-dialog-v2')?.getAttribute('data-t'))||30;
+  var _m=parseInt(document.querySelector('.ez-dialog-v2')?.getAttribute('data-m'))||1;
   var seenCodes={};
   for(var i=0;i<rows.length;i++){
     var tds=rows[i].querySelectorAll('td');
@@ -846,7 +847,7 @@ window.ezPreviewAlerts=function(){
     var doseRec=smartDoseRecognizer(noteClean);
     var timeResult=getTimeFromWords(noteClean);
     var dur=extractDuration(noteRaw);
-    if(dur.hasDuration&&Math.abs(dur.days-_t)>3){alerts.push({icon:'📅',text:itemName+': مكتوب '+dur.days+' يوم (المحدد '+_t+')',detail:'اختلاف في مدة العلاج',level:'warning'});}
+    if(dur.hasDuration&&!_ezDurMatchesSelection(dur.days,_m,_t)){alerts.push({icon:'📅',text:itemName+': مكتوب '+dur.days+' يوم (الإجمالي '+(_m*_t)+')',detail:'اختلاف في مدة العلاج',level:'warning'});}
     var d2p=/^2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
     var d2p2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
     if(d2p.test(noteRaw.trim())||d2p2.test(noteRaw)){alerts.push({icon:'💊',text:itemName+': جرعة مزدوجة (2)',detail:'مكتوب حبتين في الجرعة',level:'warning'});}
@@ -2223,6 +2224,21 @@ function scanForBoxesRequest(){
 /* ══════════════════════════════════════════
    ★ MAIN PROCESSING ENGINE ★
    ══════════════════════════════════════════ */
+/* Smart duration check: does extracted match the selection? */
+function _ezDurMatchesSelection(extracted,m,t){
+  var total=m*t;
+  /* Direct match with total ±5 */
+  if(Math.abs(extracted-total)<=5) return true;
+  /* Match with alternative month lengths (28,30) */
+  if(m>1){
+    if(Math.abs(extracted-m*28)<=3) return true;
+    if(Math.abs(extracted-m*30)<=3) return true;
+  }
+  /* Single month match ±3 */
+  if(Math.abs(extracted-t)<=3) return true;
+  return false;
+}
+
 function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode){
   window._ezLastTVal=t; window._ezLastMVal=m;
   if(ramadanMode){ var _snapTb=_ezFindTable(); if(_snapTb) window._ramadanPreProcessSnapshot=_snapTb.innerHTML; }
@@ -2487,7 +2503,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
     }
     var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
-    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){if(!enableWarnings||Math.abs(durationInfo.days-t)<=3){calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}else{calculatedDays=t;calculatedSize=t;}}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
+    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){if(!enableWarnings||_ezDurMatchesSelection(durationInfo.days,m,t)){calculatedDays=t;calculatedSize=t;}else{calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
     allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
     /* Detect dose=2 patterns AFTER push so rowIndex is correct */
@@ -2545,10 +2561,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       
       if(rd.durationInfo&&rd.durationInfo.hasDuration){
         var extracted=rd.durationInfo.days;
-        if(Math.abs(extracted-t)>3){
+        if(!_ezDurMatchesSelection(extracted,m,t)){
           warningQueue.push({
             level:'warning',
-            message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن المحدد '+t+' يوم',
+            message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن الإجمالي '+(m*t)+' يوم ('+m+'×'+t+')',
             editable:true,
             editLabel:'عدد الأيام',
             currentValue:extracted,
