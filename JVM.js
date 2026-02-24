@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='137.6';
+var APP_VERSION='138.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -739,12 +739,17 @@ window.ezMinimize=function(){
 
 window.ezSelect=function(el,type,val){
   var p=el.parentNode;
-  var pills=p.querySelectorAll('.ez-pill');
-  for(var i=0;i<pills.length;i++) pills[i].classList.remove('active');
+  var segs=p.querySelectorAll('.ez-seg');
+  for(var i=0;i<segs.length;i++) segs[i].classList.remove('active');
   el.classList.add('active');
   var d=document.getElementById('ez-dialog-box');
   if(type==='m') d.setAttribute('data-m',val);
   else d.setAttribute('data-t',val);
+  /* Update total badge */
+  var m2=parseInt(d.getAttribute('data-m'))||1;
+  var t2=parseInt(d.getAttribute('data-t'))||30;
+  var badge=document.getElementById('ez-total-badge');
+  if(badge) badge.textContent='إجمالي: '+(m2*t2)+' يوم ('+m2+' × '+t2+')';
 };
 
 /* ══════════════════════════════════════════
@@ -2921,63 +2926,65 @@ s_style.textContent='\
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}\
 @keyframes spin{to{transform:rotate(360deg)}}\
 @keyframes meshFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}\
-.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:480px;max-width:96vw;z-index:99999;border-radius:28px;background:rgba(255,255,255,0.97);backdrop-filter:blur(40px);box-shadow:0 30px 80px rgba(99,102,241,0.12),0 8px 24px rgba(0,0,0,0.04),0 0 0 1px rgba(129,140,248,0.08),inset 0 1px 0 rgba(255,255,255,0.8);overflow:hidden;animation:dialogEnter 0.8s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
-.ez-dialog-v2::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#a78bfa,#818cf8,#6366f1);background-size:300% 100%;animation:barShift 4s ease infinite;z-index:1}\
-.ez-header{padding:20px 24px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.08);cursor:move}\
-.ez-logo-group{display:flex;align-items:center;gap:14px}\
-.ez-logo{width:52px;height:52px;border-radius:16px;background:linear-gradient(145deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 24px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2);position:relative;overflow:hidden}\
-.ez-logo::after{content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);animation:shimmer 3s ease infinite}\
-.ez-title-block{display:flex;flex-direction:column;gap:2px}\
-.ez-title{font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.5px;line-height:1.2;display:flex;align-items:center;gap:8px}\
-.ez-title .ez-brand{font-size:13px;font-weight:800;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:0.5px}\
-.ez-subtitle{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.3px}\
-.ez-header-actions{display:flex;align-items:center;gap:6px}\
-.ez-version{font-size:9px;font-weight:800;color:#818cf8;background:rgba(129,140,248,0.08);padding:3px 10px;border-radius:8px;letter-spacing:0.5px}\
-.ez-btn-icon{width:34px;height:34px;border-radius:10px;border:1px solid rgba(129,140,248,0.1);background:rgba(129,140,248,0.04);color:#94a3b8;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
-.ez-btn-icon:hover{background:rgba(129,140,248,0.1);color:#6366f1}\
-.ez-content{padding:20px 24px 24px}\
-.ez-section-label{display:flex;align-items:center;gap:8px;direction:rtl;margin-bottom:10px}\
-.ez-section-label .dot{font-size:14px}\
-.ez-section-label span:last-child{font-size:11px;font-weight:800;color:#64748b;letter-spacing:0.3px}\
-.ez-section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(129,140,248,0.08),transparent)}\
-.ez-pill-group{display:flex;gap:8px;margin-bottom:20px}\
-.ez-pill{flex:1;height:52px;border-radius:14px;border:1.5px solid rgba(129,140,248,0.1);background:transparent;font-size:18px;font-weight:900;color:#94a3b8;cursor:pointer;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}\
-.ez-pill .ez-pill-sub{font-size:8px;font-weight:700;opacity:0.5;letter-spacing:0.5px}\
-.ez-pill:hover:not(.active){color:#6366f1;border-color:rgba(99,102,241,0.15);background:rgba(99,102,241,0.02)}\
-.ez-pill.active{color:#fff;background:linear-gradient(145deg,#6366f1,#818cf8);border-color:#6366f1;box-shadow:0 6px 20px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2);transform:scale(1.02)}\
-.ez-pill.active .ez-pill-sub{opacity:0.9}\
-.ez-sep{height:1px;margin:16px 0;background:linear-gradient(90deg,transparent,rgba(129,140,248,0.12),transparent)}\
-.ez-toggle-row{display:flex;align-items:center;padding:10px 14px;gap:12px;direction:rtl;cursor:pointer;border-radius:12px;border:1px solid transparent;transition:all 0.3s;margin-bottom:4px}\
-.ez-toggle-row:hover{background:rgba(99,102,241,0.02);border-color:rgba(129,140,248,0.06)}\
-.ez-toggle-row.ez-tog-on{background:rgba(99,102,241,0.02);border-color:rgba(129,140,248,0.06)}\
-.ez-switch{position:relative;width:42px;height:24px;flex-shrink:0}\
-.ez-switch input{display:none}\
-.ez-switch-track{position:absolute;inset:0;background:rgba(148,163,184,0.3);border-radius:12px;transition:all 0.3s cubic-bezier(0.16,1,0.3,1)}\
-.ez-switch input:checked+.ez-switch-track{background:linear-gradient(145deg,#6366f1,#818cf8);box-shadow:0 2px 8px rgba(99,102,241,0.3)}\
-.ez-switch-knob{position:absolute;top:3px;right:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);box-shadow:0 1px 4px rgba(0,0,0,0.15);pointer-events:none}\
-.ez-switch input:checked~.ez-switch-knob{right:21px}\
-.ez-toggle-text{font-size:12px;font-weight:700;color:#64748b;flex:1;transition:color 0.3s}\
-.ez-tog-on .ez-toggle-text{color:#1e1b4b}\
-.ez-toggle-text .auto-tag{font-size:8px;font-weight:800;color:#fff;background:linear-gradient(135deg,#10b981,#059669);padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:middle}\
-.ez-toggle-icon{font-size:14px;opacity:0.4;transition:all 0.3s}\
-.ez-tog-on .ez-toggle-icon{opacity:1}\
-.ez-ramadan-toggle.ez-tog-on{background:linear-gradient(135deg,rgba(30,27,75,0.06),rgba(251,191,36,0.06))!important;border-color:rgba(251,191,36,0.2)!important}\
-.ez-ramadan-toggle.ez-tog-on .ez-switch-track{background:linear-gradient(145deg,#1e1b4b,#312e81)!important;box-shadow:0 2px 8px rgba(30,27,75,0.4)!important}\
-.ez-ramadan-toggle.ez-tog-on .ez-toggle-text{color:#1e1b4b!important;font-weight:800!important}\
-.ez-actions{display:flex;gap:8px;margin-top:20px}\
-.ez-btn-primary{flex:1;height:52px;border:none;border-radius:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 6px 24px rgba(99,102,241,0.25),inset 0 1px 0 rgba(255,255,255,0.15);transition:all 0.4s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden;letter-spacing:0.3px}\
+.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:400px;max-width:96vw;z-index:99999;border-radius:28px;background:#f0f4ff;box-shadow:0 24px 64px rgba(59,130,246,0.08),0 0 0 1px rgba(59,130,246,0.06);overflow:hidden;animation:dialogEnter 0.8s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif}\
+.ez-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;cursor:move}\
+.ez-logo-group{display:flex;align-items:center;gap:10px}\
+.ez-logo{width:40px;height:40px;border-radius:20px;background:#fff;border:2px solid rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(59,130,246,0.1)}\
+.ez-title-block{display:flex;flex-direction:column}\
+.ez-title{font-size:15px;font-weight:900;color:#1e3a5f;line-height:1.2;display:flex;align-items:center;gap:4px}\
+.ez-title .ez-brand{font-size:15px;font-weight:900;color:#3b82f6;-webkit-text-fill-color:#3b82f6}\
+.ez-subtitle{font-size:9px;font-weight:600;color:#94a3b8;margin-top:-1px}\
+.ez-header-actions{display:flex;align-items:center;gap:3px}\
+.ez-version{display:none}\
+.ez-btn-icon{width:30px;height:30px;border-radius:15px;border:none;background:rgba(255,255,255,0.8);color:#94a3b8;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
+.ez-btn-icon:hover{background:rgba(59,130,246,0.1);color:#3b82f6}\
+.ez-content{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px}\
+.ez-float-card{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl}\
+.ez-dur-row{display:flex;gap:20px;align-items:flex-start}\
+.ez-dur-col{flex:1}\
+.ez-dur-col.wide{flex:1.2}\
+.ez-dur-divider{width:1px;height:46px;background:#e2e8f0;align-self:center;flex-shrink:0}\
+.ez-dur-label{font-size:9px;font-weight:800;color:#94a3b8;margin-bottom:6px;letter-spacing:0.3px}\
+.ez-seg-group{display:flex;gap:3px;background:#f0f4ff;border-radius:10px;padding:2px;border:1px solid rgba(59,130,246,0.06)}\
+.ez-seg{flex:1;height:34px;border-radius:8px;border:none;cursor:pointer;font-family:Cairo,sans-serif;font-weight:900;font-size:15px;transition:all 0.2s;background:transparent;color:#64748b}\
+.ez-seg.active{background:#3b82f6;color:#fff}\
+.ez-total-badge{margin-top:12px;padding:6px 12px;background:#f0f4ff;border-radius:10px;font-size:11px;font-weight:800;color:#3b82f6;text-align:center}\
+.ez-tog-grid{background:#fff;border-radius:20px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;display:grid;grid-template-columns:1fr 1fr;gap:6px}\
+.ez-tog-btn{padding:10px 12px;border-radius:12px;border:none;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s;text-align:right;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.02);outline:2px solid transparent}\
+.ez-tog-btn.on{outline:2px solid var(--tc,#3b82f6)25}\
+.ez-tog-btn .ez-tog-icon{font-size:14px;flex-shrink:0}\
+.ez-tog-btn .ez-tog-lbl{font-size:10px;font-weight:800;color:#94a3b8;flex:1;transition:color 0.2s}\
+.ez-tog-btn.on .ez-tog-lbl{color:var(--tc,#3b82f6)}\
+.ez-tog-btn .ez-tog-dot{width:8px;height:8px;border-radius:4px;flex-shrink:0;transition:all 0.2s;background:#d1d5db}\
+.ez-tog-btn.on .ez-tog-dot{background:var(--tc,#3b82f6)}\
+.auto-tag{font-size:8px;font-weight:800;color:var(--tc,#6366f1);background:rgba(99,102,241,0.08);padding:1px 5px;border-radius:4px;margin-right:4px}\
+.ez-rm-card{border-radius:20px;padding:14px 16px;direction:rtl;transition:all 0.3s;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.02);border:1.5px solid transparent}\
+.ez-rm-card.on{background:linear-gradient(135deg,#fffbeb,#fef3c7);box-shadow:0 2px 12px rgba(245,158,11,0.08);border-color:rgba(251,191,36,0.18)}\
+.ez-rm-toggle{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;cursor:pointer;font-family:Cairo,sans-serif;padding:0}\
+.ez-rm-toggle .rm-icon{font-size:20px}\
+.ez-rm-toggle .rm-text{font-size:12px;font-weight:800;color:#64748b;flex:1;text-align:right;transition:color 0.3s}\
+.ez-rm-card.on .rm-text{color:#92400e}\
+.ez-rm-sw{width:36px;height:20px;border-radius:10px;position:relative;transition:all 0.3s;background:#cbd5e1;flex-shrink:0}\
+.ez-rm-card.on .ez-rm-sw{background:#f59e0b}\
+.ez-rm-sw .knob{width:16px;height:16px;border-radius:8px;background:#fff;position:absolute;top:2px;right:18px;transition:all 0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.1)}\
+.ez-rm-card.on .ez-rm-sw .knob{right:2px}\
+.ez-rm-expand{margin-top:10px;display:flex;align-items:center;gap:8px}\
+.ez-rm-expand .rm-lbl{font-size:10px;font-weight:700;color:#92400e;white-space:nowrap}\
+.ez-rm-expand input{flex:1;padding:6px 8px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:18px;font-weight:900;text-align:center;font-family:Cairo,sans-serif;outline:none;background:rgba(255,255,255,0.7);color:#92400e;box-sizing:border-box}\
+.ez-actions{display:flex;gap:6px;margin-top:2px}\
+.ez-btn-primary{flex:1;height:46px;border:none;border-radius:16px;font-size:13px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:#3b82f6;box-shadow:0 6px 20px rgba(59,130,246,0.25);transition:all 0.3s;position:relative;overflow:hidden}\
 .ez-btn-primary::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);animation:shimmer 4s ease-in-out infinite}\
-.ez-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,0.35),inset 0 1px 0 rgba(255,255,255,0.15)}\
+.ez-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(59,130,246,0.35)}\
 .ez-btn-primary:active{transform:translateY(0)}\
-.ez-btn-primary.ez-pulse{box-shadow:0 8px 30px rgba(99,102,241,0.4),0 0 0 3px rgba(99,102,241,0.1)}\
-.ez-btn-doses{width:52px;height:52px;border-radius:14px;border:1.5px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.04);color:#818cf8;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}\
-.ez-btn-doses:hover{background:linear-gradient(145deg,#6366f1,#818cf8);color:#fff;border-color:#6366f1;box-shadow:0 6px 20px rgba(99,102,241,0.25)}\
-.ez-btn-cancel{width:52px;height:52px;border-radius:14px;border:1.5px solid rgba(239,68,68,0.1);background:rgba(239,68,68,0.03);color:#ef4444;cursor:pointer;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
-.ez-btn-cancel:hover{background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.2)}\
-.ez-footer{padding:10px 24px;text-align:center;font-size:9px;font-weight:800;letter-spacing:2px;border-top:1px solid rgba(129,140,248,0.06);background:rgba(129,140,248,0.02)}\
-.ez-footer span{color:#c7d2fe}\
+.ez-btn-primary.ez-pulse{box-shadow:0 8px 28px rgba(59,130,246,0.4),0 0 0 3px rgba(59,130,246,0.1)}\
+.ez-btn-doses{width:46px;height:46px;border-radius:16px;border:none;background:#fff;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}\
+.ez-btn-doses:hover{background:#3b82f6;color:#fff;box-shadow:0 6px 20px rgba(59,130,246,0.25)}\
+.ez-btn-cancel{width:46px;height:46px;border-radius:16px;border:1.5px solid #fecaca;background:#fef2f2;color:#ef4444;cursor:pointer;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
+.ez-btn-cancel:hover{background:#fee2e2;border-color:#fca5a5}\
+.ez-footer{padding:7px;text-align:center;font-size:8px;font-weight:700;letter-spacing:1.2px}\
+.ez-footer span{color:#94a3b8}\
 .ez-content>*{animation:fadeSlideUp 0.4s ease backwards}\
-.ez-content>*:nth-child(1){animation-delay:0.05s}.ez-content>*:nth-child(2){animation-delay:0.1s}.ez-content>*:nth-child(3){animation-delay:0.15s}.ez-content>*:nth-child(4){animation-delay:0.2s}.ez-content>*:nth-child(5){animation-delay:0.25s}.ez-content>*:nth-child(6){animation-delay:0.3s}.ez-content>*:nth-child(7){animation-delay:0.35s}.ez-content>*:nth-child(8){animation-delay:0.4s}.ez-content>*:nth-child(9){animation-delay:0.45s}\
+.ez-content>*:nth-child(1){animation-delay:0.05s}.ez-content>*:nth-child(2){animation-delay:0.1s}.ez-content>*:nth-child(3){animation-delay:0.15s}.ez-content>*:nth-child(4){animation-delay:0.2s}.ez-content>*:nth-child(5){animation-delay:0.25s}\
 .ez-doses-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;z-index:100000;border-radius:20px;background:#fff;box-shadow:0 20px 60px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.2);overflow:hidden;font-family:Cairo,sans-serif}\
 .ez-doses-dialog::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a78bfa,#8b5cf6,#6366f1,#8b5cf6,#a78bfa);background-size:200% 100%;animation:barShift 4s ease infinite;z-index:1}\
 .ez-doses-header{padding:14px 22px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(167,139,250,0.03) 0%,transparent 100%)}\
@@ -3676,54 +3683,64 @@ d_box.innerHTML='\
   <div class="ez-logo-group">\
     <div class="ez-logo">💊</div>\
     <div class="ez-title-block">\
-      <div class="ez-title">EZ_Pill <span class="ez-brand">Farmadosis</span></div>\
-      <div class="ez-subtitle">معالج الجرعات الذكي</div>\
+      <div class="ez-title">EZ_Pill <span class="ez-brand">JVM</span></div>\
+      <div class="ez-subtitle">معالج الجرعات الذكي · v'+APP_VERSION+'</div>\
     </div>\
   </div>\
   <div class="ez-header-actions">\
-    <div class="ez-version">v'+APP_VERSION+'</div>\
-    <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة" style="font-size:14px">⚙️</button>\
-    <button class="ez-btn-icon" onclick="window.ezToggleDark()" title="الوضع الليلي" style="font-size:14px">'+(_dk?'☀️':'🌙')+'</button>\
-    <button class="ez-btn-icon ez-btn-icon-min" onclick="window.ezMinimize()">−</button>\
+    <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
+    <button class="ez-btn-icon" onclick="window.ezToggleDark()" title="الوضع الليلي">'+(_dk?'☀️':'🌙')+'</button>\
+    <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
 <div class="ez-content">\
-  <div class="ez-section-label"><span class="dot">📅</span><span>عدد الأشهر</span></div>\
-  <div class="ez-pill-group">\
-    <button class="ez-pill '+(_m===1?'active':'')+'" onclick="window.ezSelect(this,\'m\',1)"><span>1</span><span class="ez-pill-sub">شهر</span></button>\
-    <button class="ez-pill '+(_m===2?'active':'')+'" onclick="window.ezSelect(this,\'m\',2)"><span>2</span><span class="ez-pill-sub">شهرين</span></button>\
-    <button class="ez-pill '+(_m===3?'active':'')+'" onclick="window.ezSelect(this,\'m\',3)"><span>3</span><span class="ez-pill-sub">٣ شهور</span></button>\
+  <div class="ez-float-card">\
+    <div class="ez-dur-row">\
+      <div class="ez-dur-col wide">\
+        <div class="ez-dur-label">الأشهر</div>\
+        <div class="ez-seg-group">\
+          <button class="ez-seg '+(_m===1?'active':'')+'" onclick="window.ezSelect(this,\'m\',1)">1</button>\
+          <button class="ez-seg '+(_m===2?'active':'')+'" onclick="window.ezSelect(this,\'m\',2)">2</button>\
+          <button class="ez-seg '+(_m===3?'active':'')+'" onclick="window.ezSelect(this,\'m\',3)">3</button>\
+        </div>\
+      </div>\
+      <div class="ez-dur-divider"></div>\
+      <div class="ez-dur-col">\
+        <div class="ez-dur-label">الأيام</div>\
+        <div class="ez-seg-group">\
+          <button class="ez-seg '+(_t===28?'active':'')+'" onclick="window.ezSelect(this,\'t\',28)">28</button>\
+          <button class="ez-seg '+(_t===30?'active':'')+'" onclick="window.ezSelect(this,\'t\',30)">30</button>\
+        </div>\
+      </div>\
+    </div>\
+    <div class="ez-total-badge" id="ez-total-badge">إجمالي: '+(_m*_t)+' يوم ('+_m+' × '+_t+')</div>\
   </div>\
-  <div class="ez-section-label"><span class="dot">🗓️</span><span>أيام الشهر</span></div>\
-  <div class="ez-pill-group">\
-    <button class="ez-pill '+(_t===28?'active':'')+'" onclick="window.ezSelect(this,\'t\',28)"><span>28</span><span class="ez-pill-sub">يوم</span></button>\
-    <button class="ez-pill '+(_t===30?'active':'')+'" onclick="window.ezSelect(this,\'t\',30)"><span>30</span><span class="ez-pill-sub">يوم</span></button>\
+  <div class="ez-tog-grid">\
+    <button class="ez-tog-btn '+(_ad?'on':'')+'" style="--tc:#3b82f6" onclick="var cb=document.getElementById(\'auto-duration\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
+      <input type="checkbox" id="auto-duration" '+(_ad?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">✨</span><span class="ez-tog-lbl">استخراج تلقائي</span><span class="ez-tog-dot"></span>\
+    </button>\
+    <button class="ez-tog-btn '+(_sw?'on':'')+'" style="--tc:#f59e0b" onclick="var cb=document.getElementById(\'show-warnings\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
+      <input type="checkbox" id="show-warnings" '+(_sw?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">⚠️</span><span class="ez-tog-lbl">تحذيرات</span><span class="ez-tog-dot"></span>\
+    </button>\
+    <button class="ez-tog-btn '+(hasDuplicateNotes?'on':'')+'" style="--tc:#6366f1;grid-column:1/-1" onclick="var cb=document.getElementById(\'show-post-dialog\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
+      <input type="checkbox" id="show-post-dialog" '+(hasDuplicateNotes?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">⚙️</span><span class="ez-tog-lbl">خيارات إضافية'+(hasDuplicateNotes?' <span class="auto-tag">تقسيم مكتشف</span>':'')+'</span><span class="ez-tog-dot"></span>\
+    </button>\
   </div>\
-  <div class="ez-sep"></div>\
-  <label class="ez-toggle-row '+(_ad?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){t.classList.toggle(\'ez-tog-on\',t.querySelector(\'input\').checked)},10)">\
-    <div class="ez-switch"><input type="checkbox" id="auto-duration" '+(_ad?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
-    <span class="ez-toggle-text">استخراج المدة تلقائياً</span>\
-    <span class="ez-toggle-icon">✨</span>\
-  </label>\
-  <label class="ez-toggle-row '+(_sw?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){t.classList.toggle(\'ez-tog-on\',t.querySelector(\'input\').checked)},10)">\
-    <div class="ez-switch"><input type="checkbox" id="show-warnings" '+(_sw?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
-    <span class="ez-toggle-text">عرض التحذيرات</span>\
-    <span class="ez-toggle-icon">⚠️</span>\
-  </label>\
-  <label class="ez-toggle-row '+(hasDuplicateNotes?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){t.classList.toggle(\'ez-tog-on\',t.querySelector(\'input\').checked)},10)">\
-    <div class="ez-switch"><input type="checkbox" id="show-post-dialog" '+(hasDuplicateNotes?'checked':'')+'><div class="ez-switch-track"></div><div class="ez-switch-knob"></div></div>\
-    <span class="ez-toggle-text">خيارات إضافية'+(hasDuplicateNotes?' <span class="auto-tag">تقسيم مكتشف</span>':'')+'</span>\
-    <span class="ez-toggle-icon">⚙️</span>\
-  </label>\
-  <label class="ez-toggle-row ez-ramadan-toggle '+(_rm?'ez-tog-on':'')+'" onclick="var t=this;setTimeout(function(){var ch=t.querySelector(\'input\').checked;t.classList.toggle(\'ez-tog-on\',ch);var badge=document.getElementById(\'ez-ramadan-badge\');if(badge)badge.style.display=ch?\'flex\':\'none\';var rmBox=document.getElementById(\'ez-rm-days-box\');if(rmBox)rmBox.style.display=ch?\'block\':\'none\';},10)">\
-    <div class="ez-switch"><input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+'><div class="ez-switch-track ez-ramadan-track"></div><div class="ez-switch-knob"></div></div>\
-    <span class="ez-toggle-text">جرعات شهر رمضان</span>\
-    <span class="ez-toggle-icon">🌙</span>\
-  </label>\
-  <div id="ez-rm-days-box" style="display:'+(_rm?"block":"none")+';background:rgba(167,139,250,0.07);border:1.5px solid rgba(167,139,250,0.2);border-radius:12px;padding:12px 14px;margin:4px 0 2px">\
-    <div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:7px;direction:rtl">&#x1F319; &#x628;&#x627;&#x642;&#x64A; &#x643;&#x627;&#x645; &#x64A;&#x648;&#x645; &#x641;&#x64A; &#x631;&#x645;&#x636;&#x627;&#x646;&#x61F;</div>\
-    <input type="number" id="ez-rm-days-left" min="1" max="30" value="15" style="width:100%;padding:8px 12px;border:2px solid rgba(167,139,250,0.3);border-radius:9px;font-size:18px;font-weight:900;color:#1e1b4b;font-family:Cairo,sans-serif;outline:none;text-align:center;box-sizing:border-box" />\
-    <div id="ez-rm-days-preview" style="font-size:10px;font-weight:700;color:#6d28d9;margin-top:5px;text-align:center;direction:rtl">&#x2705; 15 &#x64A;&#x648;&#x645; &#x641;&#x627;&#x62A; + 15 &#x64A;&#x648;&#x645; &#x628;&#x627;&#x642;&#x64A; = 30 &#x64A;&#x648;&#x645;</div>\
+  <div class="ez-rm-card '+(_rm?'on':'')+'" id="ez-rm-card">\
+    <button class="ez-rm-toggle" onclick="var cb=document.getElementById(\'ramadan-mode\');cb.checked=!cb.checked;var card=document.getElementById(\'ez-rm-card\');card.classList.toggle(\'on\',cb.checked);var exp=document.getElementById(\'ez-rm-expand\');if(exp)exp.style.display=cb.checked?\'flex\':\'none\';var badge=document.getElementById(\'ez-ramadan-badge\');if(badge)badge.style.display=cb.checked?\'flex\':\'none\'">\
+      <input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+' style="display:none">\
+      <span class="rm-icon">🌙</span>\
+      <span class="rm-text">جرعات شهر رمضان</span>\
+      <div class="ez-rm-sw"><div class="knob"></div></div>\
+    </button>\
+    <div class="ez-rm-expand" id="ez-rm-expand" style="display:'+(_rm?'flex':'none')+'">\
+      <span class="rm-lbl">باقي</span>\
+      <input type="number" id="ez-rm-days-left" min="1" max="30" value="15" />\
+      <span class="rm-lbl">يوم</span>\
+    </div>\
   </div>\
   <div class="ez-actions">\
     <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
