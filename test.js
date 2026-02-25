@@ -563,7 +563,7 @@ function _estimateTPD(noteText){
 }
 
 function _scanPackSizeWarnings(dialogM,dialogT){
-  var totalDays=dialogM*dialogT;
+  /* Compare pack size vs DAYS only — months = number of boxes, irrelevant */
   var tb=_ezFindTable();
   if(!tb) return {items:[],warnings:[]};
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
@@ -576,7 +576,6 @@ function _scanPackSizeWarnings(dialogM,dialogT){
     var cb=rows[i].querySelector('input[type="checkbox"]');
     if(cb&&!cb.checked) continue;
     var itemCode=ci>=0?(_ezGet(tds[ci]).match(/\d+/)||[''])[0]:'';
-    /* Skip fixed-size and weekly */
     if(itemCode&&fixedSizeCodes&&fixedSizeCodes[itemCode]) continue;
     if(itemCode&&weeklyInjections.indexOf(itemCode)>-1) continue;
     var itemName=nmi>=0?_ezGet(tds[nmi]):'';
@@ -593,36 +592,25 @@ function _scanPackSizeWarnings(dialogM,dialogT){
   if(items.length===0) return {items:[],warnings:[]};
 
   var warnings=[];
-  var has28or56=false,has30or60=false;
+  var has28=false,has30=false;
   for(var j=0;j<items.length;j++){
     var ed=items[j].effDays;
-    if(ed===28||ed===56||ed===84) has28or56=true;
-    if(ed===30||ed===60||ed===90) has30or60=true;
+    if(ed===28||ed===56||ed===84) has28=true;
+    if(ed===30||ed===60||ed===90) has30=true;
   }
 
   /* Case 1: Mixed 28 and 30 → must equalize to 28 */
-  if(has28or56&&has30or60){
+  if(has28&&has30){
     warnings.push({icon:'⚖️',text:'يوجد أصناف 28 يوم مع أصناف 30 يوم — لازم التساوي على 28',level:'danger'});
     if(dialogT!==28) warnings.push({icon:'⚠️',text:'غيّر الأيام من '+dialogT+' إلى 28',level:'danger',fix:28});
   }
-  /* Case 2: All items are 28-based but dialog is 30 */
-  else if(has28or56&&!has30or60&&dialogT===30){
-    warnings.push({icon:'📦',text:'كل الأصناف 28 يوم — لازم تختار 28 مش 30',level:'danger',fix:28});
+  /* Case 2: All 28-based but dialog≠28 */
+  else if(has28&&!has30&&dialogT!==28){
+    warnings.push({icon:'📦',text:'كل الأصناف 28 يوم — لازم تختار 28 مش '+dialogT,level:'danger',fix:28});
   }
-  /* Case 3: All items are 30-based but dialog is 28 */
-  else if(has30or60&&!has28or56&&dialogT===28){
-    warnings.push({icon:'📦',text:'كل الأصناف 30 يوم — لازم تختار 30 مش 28',level:'danger',fix:30});
-  }
-
-  /* Per-item mismatch warnings */
-  for(var k=0;k<items.length;k++){
-    var it=items[k];
-    if(it.effDays!==totalDays&&it.effDays!==(dialogM*28)&&it.effDays!==(dialogM*30)){
-      /* Only warn if truly mismatched (not just 28 vs 30 which is covered above) */
-      if(!(it.effDays===28&&dialogT===30)&&!(it.effDays===30&&dialogT===28)){
-        warnings.push({icon:'📦',text:it.name.substring(0,35)+': عبوة '+it.packSize+(it.tpd>1?' ('+it.tpd+'×يوم) = '+it.effDays+' يوم':' حبة')+' ≠ '+totalDays+' المحدد',level:'warning'});
-      }
-    }
+  /* Case 3: All 30-based but dialog≠30 */
+  else if(has30&&!has28&&dialogT!==30){
+    warnings.push({icon:'📦',text:'كل الأصناف 30 يوم — لازم تختار 30 مش '+dialogT,level:'danger',fix:30});
   }
 
   return {items:items,warnings:warnings,has28:has28or56,has30:has30or60};
