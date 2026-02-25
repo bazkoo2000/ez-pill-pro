@@ -563,12 +563,12 @@ function _estimateTPD(noteText){
 }
 
 function _scanPackSizeWarnings(dialogM,dialogT){
-  /* Compare pack size vs DAYS only — months = number of boxes, irrelevant */
   var tb=_ezFindTable();
-  if(!tb) return {items:[],warnings:[]};
+  if(!tb){console.warn('PACK: no table');return {items:[],warnings:[]};}
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
   var nmi=_ezIdx(hs,'name'),ci=_ezIdx(hs,'code'),ni=_ezIdx(hs,'note');
   if(nmi<0) nmi=_ezIdx(hs,'item');
+  console.log('PACK IDX: name='+nmi+' code='+ci+' note='+ni);
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
   var items=[];
   for(var i=0;i<rows.length;i++){
@@ -584,6 +584,7 @@ function _scanPackSizeWarnings(dialogM,dialogT){
     var noteText='';
     if(ni>=0){var inp=tds[ni].querySelector('input,textarea');noteText=inp?inp.value:tds[ni].textContent;}
     var pack=_extractPackFromName(itemName);
+    console.log('PACK ROW '+i+': "'+itemName+'" → pack='+pack);
     if(!pack) continue;
     var tpd=_estimateTPD(noteText);
     var effDays=Math.floor(pack/tpd);
@@ -623,6 +624,8 @@ function _renderPackWarningBanner(){
   var _m=parseInt(dlg?.getAttribute('data-m'))||1;
   var _t=parseInt(dlg?.getAttribute('data-t'))||30;
   var scan=_scanPackSizeWarnings(_m,_t);
+  console.log('PACK: items='+scan.items.length+' warnings='+scan.warnings.length+' t='+_t);
+  if(scan.items.length>0)scan.items.forEach(function(it){console.log('PACK: '+it.name+' → '+it.packSize+' ('+it.effDays+'d)');});
   if(!scan.warnings.length){el.style.display='none';el.innerHTML='';return;}
   el.style.display='block';
   var html='<div style="font-size:11px;font-weight:900;color:#dc2626;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="font-size:16px">🔴</span> تنبيه حجم العبوة</div>';
@@ -917,7 +920,7 @@ window.ezSelect=function(el,type,val){
   var badge=document.getElementById('ez-total-badge');
   if(badge) badge.textContent='إجمالي: '+(m2*t2)+' يوم ('+m2+' × '+t2+')';
   /* Update pack size warnings */
-  try{_renderPackWarningBanner();}catch(e){}
+  try{_renderPackWarningBanner();}catch(e){console.error("PACK ERR:",e);}
 };
 
 /* ══════════════════════════════════════════
@@ -3934,7 +3937,7 @@ d_box.innerHTML='\
 document.body.appendChild(d_box);
 if(_dk) document.body.classList.add('ez-dark-mode');
 /* 📦 Scan pack sizes and show warning */
-try{_renderPackWarningBanner();}catch(e){console.warn('Pack scan:',e);}
+try{_renderPackWarningBanner();}catch(e){console.error('PACK ERROR:',e);alert('Pack error: '+e.message);}
 /* Pulse effect on primary button */
 setInterval(function(){var btn=document.querySelector('.ez-btn-primary');if(btn){btn.classList.toggle('ez-pulse');}},2000);
 
