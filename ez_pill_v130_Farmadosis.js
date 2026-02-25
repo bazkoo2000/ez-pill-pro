@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='139.4';
+var APP_VERSION='138.5';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '138.5':{
+    title:'💊 تنبيه علب 14 حبة — علبة واحدة أو علبتين؟ ✅',
+    features:[
+      {icon:'🔍',text:'اكتشاف أصناف 14 حبة تلقائياً من اسم الدواء'},
+      {icon:'💡',text:'تنبيه داخل الدايلوج: كم علبة في الطلب علبة واحدة = 14 يوم — علبتين = 28 يوم'},
+      {icon:'✅',text:'لو اخترت علبتين يتعامل معها كـ 28 يوم تلقائياً'},
+      {icon:'🚫',text:'يمنع بدء المعالجة إذا لم تختر لكل صنف 14 حبة'}
+    ]
+  },
   '136.10':{
     title:'3 إصلاحات: التراويح + ترتيب الدمج + تنبيه البوكسات ✅',
     features:[
@@ -530,7 +539,8 @@ function isNonTabletItem(itemName){
 /* ══════════════════════════════════════
    PACK SIZE EXTRACTION FROM DRUG NAME
    ══════════════════════════════════════ */
-var _PACK_SIZES=[28,30,56,60,84,90,100,120];
+var _PACK_SIZES=[14,28,30,42,56,60,84,90,100,120];
+window._ez14Choices=window._ez14Choices||{};
 /* Regex to match strength patterns - these get REMOVED from name before scanning */
 var _STRENGTH_STRIP=/\d+\.?\d*\s*(?:mg|mcg|µg|مجم|ملجم|ملغم|ملغ|مج|ml|g\b|iu|units?|وحد[ةه]?|u\/ml|mg\/ml|mcg\/hr|مايكرو)/gi;
 
@@ -564,13 +574,13 @@ function _estimateTPD(noteText){
 
 function _scanPackSizeWarnings(dialogM,dialogT){
   var tb=_ezFindTable();
-  if(!tb){console.warn('PACK: no table');return {items:[],warnings:[]};}
+  if(!tb){console.warn('PACK: no table');return {items:[],items14:[],warnings:[]};}
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
   var nmi=_ezIdx(hs,'name'),ci=_ezIdx(hs,'code'),ni=_ezIdx(hs,'note');
   if(nmi<0) nmi=_ezIdx(hs,'item');
   console.log('PACK IDX: name='+nmi+' code='+ci+' note='+ni);
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
-  var items=[];
+  var items=[],items14=[];
   for(var i=0;i<rows.length;i++){
     var tds=rows[i].querySelectorAll('td');
     var cb=rows[i].querySelector('input[type="checkbox"]');
@@ -584,72 +594,116 @@ function _scanPackSizeWarnings(dialogM,dialogT){
     var noteText='';
     if(ni>=0){var inp=tds[ni].querySelector('input,textarea');noteText=inp?inp.value:tds[ni].textContent;}
     var pack=_extractPackFromName(itemName);
-    console.log('PACK ROW '+i+': "'+itemName+'" → pack='+pack);
+    console.log('PACK ROW '+i+': "'+itemName+'" pack='+pack);
     if(!pack) continue;
+    if(pack===14||pack===42){
+      var key14=(itemName.substring(0,40)).replace(/\s+/g,'_');
+      var choice=window._ez14Choices[key14]||'?';
+      var effDays14=choice==='2'?28:14;
+      items14.push({name:itemName,packSize:pack,key:key14,choice:choice,effDays:effDays14,tpd:1});
+      continue;
+    }
     var tpd=_estimateTPD(noteText);
     var effDays=Math.floor(pack/tpd);
     items.push({name:itemName,packSize:pack,tpd:tpd,effDays:effDays});
   }
-  if(items.length===0) return {items:[],warnings:[]};
-
+  var allItems=items.concat(items14);
+  if(allItems.length===0) return {items:[],items14:[],warnings:[]};
   var warnings=[];
   var has28=false,has30=false;
-  for(var j=0;j<items.length;j++){
-    var ed=items[j].effDays;
+  for(var j=0;j<allItems.length;j++){
+    var ed=allItems[j].effDays;
     if(ed===28||ed===56||ed===84) has28=true;
     if(ed===30||ed===60||ed===90) has30=true;
   }
-
-  /* Case 1: Mixed 28 and 30 → must equalize to 28 */
   if(has28&&has30){
     warnings.push({icon:'⚖️',text:'يوجد أصناف 28 يوم مع أصناف 30 يوم — لازم التساوي على 28',level:'danger'});
     if(dialogT!==28) warnings.push({icon:'⚠️',text:'غيّر الأيام من '+dialogT+' إلى 28',level:'danger',fix:28});
   }
-  /* Case 2: All 28-based but dialog≠28 */
   else if(has28&&!has30&&dialogT!==28){
     warnings.push({icon:'📦',text:'كل الأصناف 28 يوم — لازم تختار 28 مش '+dialogT,level:'danger',fix:28});
   }
-  /* Case 3: All 30-based but dialog≠30 */
   else if(has30&&!has28&&dialogT!==30){
     warnings.push({icon:'📦',text:'كل الأصناف 30 يوم — لازم تختار 30 مش '+dialogT,level:'danger',fix:30});
   }
-
-  return {items:items,warnings:warnings,has28:has28,has30:has30};
+  return {items:items,items14:items14,warnings:warnings,has28:has28,has30:has30};
 }
 
 function _renderPackWarningBanner(){
   var el=document.getElementById('ez-pack-warning');
-  if(!el) return;
+  if(!el){console.warn('PACK: ez-pack-warning not found');return;}
   var dlg=document.querySelector('.ez-dialog-v2');
-  var _m=parseInt(dlg?.getAttribute('data-m'))||1;
-  var _t=parseInt(dlg?.getAttribute('data-t'))||30;
+  var _m=parseInt(dlg&&dlg.getAttribute('data-m'))||1;
+  var _t=parseInt(dlg&&dlg.getAttribute('data-t'))||30;
   var scan=_scanPackSizeWarnings(_m,_t);
-  console.log('PACK: items='+scan.items.length+' warnings='+scan.warnings.length+' t='+_t);
-  if(scan.items.length>0)scan.items.forEach(function(it){console.log('PACK: '+it.name+' → '+it.packSize+' ('+it.effDays+'d)');});
-  if(!scan.warnings.length){el.style.display='none';el.innerHTML='';return;}
+  console.log('PACK: items='+scan.items.length+' items14='+scan.items14.length+' warnings='+scan.warnings.length);
+  if(scan.items.length>0)scan.items.forEach(function(it){console.log('PACK ITEM: '+it.name+' pack='+it.packSize+' eff='+it.effDays);});
+  var has14=scan.items14&&scan.items14.length>0;
+  var hasWarnings=scan.warnings.length>0;
+  if(!hasWarnings&&!has14){el.style.display='none';el.innerHTML='';return;}
   el.style.display='block';
-  var html='<div style="font-size:11px;font-weight:900;color:#dc2626;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="font-size:16px">🔴</span> تنبيه حجم العبوة</div>';
-  for(var i=0;i<scan.warnings.length;i++){
-    var w=scan.warnings[i];
-    html+='<div style="font-size:10px;font-weight:700;color:'+(w.level==='danger'?'#b91c1c':'#92400e')+';padding:3px 0;direction:rtl">'+w.icon+' '+w.text+'</div>';
-  }
-  /* Show item details */
-  if(scan.items.length>0){
-    html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
-    for(var j=0;j<scan.items.length;j++){
-      var it=scan.items[j];
-      html+='<div>'+it.name.substring(0,30)+' → <b>'+it.packSize+'</b> حبة'+(it.tpd>1?' (×'+it.tpd+')':'')+' = <b>'+it.effDays+'</b> يوم</div>';
+  var html='';
+
+  /* === 14-PILL SECTION === */
+  if(has14){
+    var allAnswered=scan.items14.every(function(it){return it.choice!=='?';});
+    html+='<div style="border:2px solid #f59e0b;border-radius:12px;padding:8px 10px;margin-bottom:8px;background:linear-gradient(135deg,#fffbeb,#fef3c7)">';
+    html+='<div style="font-size:11px;font-weight:900;color:#92400e;margin-bottom:6px;display:flex;align-items:center;gap:5px">';
+    html+='📋 تنبيه علبة 14 حبة';
+    if(!allAnswered) html+='<span style="background:#f59e0b;color:#fff;border-radius:20px;padding:1px 7px;font-size:9px;font-weight:900;margin-right:auto">يحتاج إجابة</span>';
+    else html+='<span style="background:#10b981;color:#fff;border-radius:20px;padding:1px 7px;font-size:9px;font-weight:900;margin-right:auto">✅ مكتمل</span>';
+    html+='</div>';
+    for(var i=0;i<scan.items14.length;i++){
+      var it=scan.items14[i];
+      var is2=(it.choice==='2');
+      var is1=(it.choice==='1');
+      var shortName=it.name.length>32?it.name.substring(0,32)+'...':it.name;
+      html+='<div style="background:rgba(255,255,255,0.7);border-radius:9px;padding:6px 8px;margin-bottom:5px;direction:rtl">';
+      html+='<div style="font-size:10px;font-weight:800;color:#78350f;margin-bottom:5px">💊 '+shortName+'</div>';
+      html+='<div style="font-size:9px;color:#92400e;margin-bottom:5px">العبوة 14 حبة — كم علبة في الطلب؟</div>';
+      html+='<div style="display:flex;gap:6px">';
+      html+='<button onclick="window._ez14SetChoice(\''+it.key+'\',\'1\')" style="flex:1;padding:6px 4px;border:2px solid '+(is1?'#ef4444':'#d1d5db')+';background:'+(is1?'#fef2f2':'#fff')+';color:'+(is1?'#dc2626':'#6b7280')+';border-radius:8px;font-size:10px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif">'+(is1?'✓ ':'')+'علبة واحدة<br><span style="font-size:8px;font-weight:700">= 14 يوم</span></button>';
+      html+='<button onclick="window._ez14SetChoice(\''+it.key+'\',\'2\')" style="flex:1;padding:6px 4px;border:2px solid '+(is2?'#10b981':'#d1d5db')+';background:'+(is2?'#d1fae5':'#fff')+';color:'+(is2?'#065f46':'#6b7280')+';border-radius:8px;font-size:10px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif">'+(is2?'✓ ':'')+'علبتين<br><span style="font-size:8px;font-weight:700">= 28 يوم</span></button>';
+      html+='</div>';
+      if(is2) html+='<div style="font-size:9px;color:#065f46;font-weight:800;margin-top:4px;text-align:center">✅ سيُعامَل كـ 28 يوم (علبتين × 14)</div>';
+      html+='</div>';
     }
     html+='</div>';
   }
-  /* Fix buttons */
+
+  /* === STANDARD WARNINGS === */
+  if(hasWarnings){
+    html+='<div style="font-size:11px;font-weight:900;color:#dc2626;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="font-size:16px">🔴</span> تنبيه حجم العبوة</div>';
+    for(var w=0;w<scan.warnings.length;w++){
+      var ww=scan.warnings[w];
+      html+='<div style="font-size:10px;font-weight:700;color:'+(ww.level==='danger'?'#b91c1c':'#92400e')+';padding:3px 0;direction:rtl">'+ww.icon+' '+ww.text+'</div>';
+    }
+  }
+
+  /* Show item details */
+  if(scan.items.length>0){
+    html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
+    for(var k=0;k<scan.items.length;k++){
+      var si=scan.items[k];
+      html+='<div>'+si.name.substring(0,30)+' → <b>'+si.packSize+'</b> حبة'+(si.tpd>1?' (×'+si.tpd+')':'')+' = <b>'+si.effDays+'</b> يوم</div>';
+    }
+    html+='</div>';
+  }
+
   var fixVal=null;
   for(var f=0;f<scan.warnings.length;f++){if(scan.warnings[f].fix){fixVal=scan.warnings[f].fix;break;}}
   if(fixVal){
-    html+='<button onclick="window._ezFixPack('+fixVal+')" style="margin-top:6px;width:100%;padding:8px;border:2px solid #dc2626;background:#fef2f2;color:#dc2626;border-radius:12px;font-size:11px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s" onmouseover="this.style.background=\'#dc2626\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'#fef2f2\';this.style.color=\'#dc2626\'">⚡ تصحيح إلى '+fixVal+' يوم</button>';
+    html+='<button onclick="window._ezFixPack('+fixVal+')" style="margin-top:6px;width:100%;padding:8px;border:2px solid #dc2626;background:#fef2f2;color:#dc2626;border-radius:12px;font-size:11px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif" onmouseover="this.style.background=\'#dc2626\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'#fef2f2\';this.style.color=\'#dc2626\'">⚡ تصحيح إلى '+fixVal+' يوم</button>';
   }
   el.innerHTML=html;
 }
+
+window._ez14SetChoice=function(key,choice){
+  if(!window._ez14Choices) window._ez14Choices={};
+  window._ez14Choices[key]=choice;
+  console.log('EZ14: key='+key+' choice='+choice);
+  _renderPackWarningBanner();
+};
 
 window._ezFixPack=function(days){
   var dlg=document.querySelector('.ez-dialog-v2');
@@ -1395,6 +1449,17 @@ window.ezSubmit=function(){
     }
     /* Save settings for next time */
     saveSettings({m:m,t:t,autoDuration:autoDuration,showWarnings:showWarningsFlag,ramadanMode:ramadanMode});
+
+    /* ── 14-pill check: block if any unanswered ── */
+    var _scan14=_scanPackSizeWarnings(m,t);
+    if(_scan14.items14&&_scan14.items14.length>0){
+      var _u14=_scan14.items14.filter(function(it){return it.choice==='?';});
+      if(_u14.length>0){
+        window.ezShowToast('⚠️ يوجد '+_u14.length+' صنف(أصناف) علبة 14 — اختر علبة واحدة أو علبتين أولاً','error');
+        return;
+      }
+    }
+
     d.remove();
     var loader=document.createElement('div');
     loader.id='ez-loader';
