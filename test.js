@@ -708,85 +708,6 @@ function _renderPackWarningBanner(){
   }
   el.innerHTML=html;
 
-  /* ══ WARNING ALERT SYSTEM: frame + badge + scroll indicator + auto-scroll ══ */
-  _updateWarningAlerts();
-}
-
-function _hasActiveWarnings(){
-  var el=document.getElementById('ez-pack-warning');
-  if(!el||el.style.display==='none'||!el.innerHTML) return false;
-  var dlg=document.querySelector('.ez-dialog-v2');
-  var _m2=parseInt(dlg&&dlg.getAttribute('data-m'))||1;
-  var _t2=parseInt(dlg&&dlg.getAttribute('data-t'))||30;
-  var scan2=_scanPackSizeWarnings(_m2,_t2);
-  var unanswered14=scan2.items14&&scan2.items14.filter(function(it){return it.choice==='?';}).length>0;
-  var hasPackWarn=scan2.warnings.length>0;
-  return unanswered14||hasPackWarn;
-}
-
-function _updateWarningAlerts(){
-  var dlg=document.querySelector('.ez-dialog-v2');
-  if(!dlg) return;
-  var active=_hasActiveWarnings();
-  var el=document.getElementById('ez-pack-warning');
-
-  /* 1) Red frame around dialog */
-  if(active){
-    dlg.classList.add('ez-warn-frame');
-  } else {
-    dlg.classList.remove('ez-warn-frame');
-  }
-
-  /* 2) Red badge on submit button */
-  var btn=dlg.querySelector('.ez-btn-primary');
-  if(btn){
-    var badge=btn.querySelector('.ez-warn-badge');
-    if(active&&!badge){
-      var b=document.createElement('span');
-      b.className='ez-warn-badge';
-      b.style.cssText='position:absolute;top:-5px;right:-5px;width:14px;height:14px;background:#ef4444;border-radius:50%;border:2px solid #fff;animation:ezPulseRed 1.2s ease infinite';
-      btn.style.position='relative';
-      btn.appendChild(b);
-    } else if(!active&&badge){
-      badge.remove();
-    }
-  }
-
-  /* 3) Floating scroll indicator */
-  var content=dlg.querySelector('.ez-content');
-  var existing=document.getElementById('ez-scroll-hint');
-  if(active&&el&&content){
-    if(!existing){
-      var hint=document.createElement('div');
-      hint.id='ez-scroll-hint';
-      hint.style.cssText='position:absolute;bottom:0;left:16px;right:16px;height:32px;background:linear-gradient(0deg,rgba(239,68,68,0.12) 0%,transparent 100%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;z-index:2;transition:opacity 0.3s;border-radius:0 0 8px 8px';
-      hint.innerHTML='<span style="font-size:10px;font-weight:900;color:#dc2626;padding-bottom:4px;pointer-events:auto;cursor:pointer;animation:ezBounceDown 1s ease infinite" onclick="var pw=document.getElementById(\'ez-pack-warning\');if(pw)pw.scrollIntoView({behavior:\'smooth\',block:\'center\'})">⚠️ تنبيهات تحت ⬇️</span>';
-      content.style.position='relative';
-      content.appendChild(hint);
-      content.addEventListener('scroll',_checkScrollHint);
-      _checkScrollHint();
-    }
-  } else if(existing){
-    existing.remove();
-  }
-
-  /* 4) Auto-scroll to warning on first appearance */
-  if(active&&el&&el.style.display!=='none'&&!el._autoScrolled){
-    el._autoScrolled=true;
-    setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'center'});},300);
-  }
-  if(!active&&el) el._autoScrolled=false;
-}
-
-function _checkScrollHint(){
-  var hint=document.getElementById('ez-scroll-hint');
-  var el=document.getElementById('ez-pack-warning');
-  var content=document.querySelector('.ez-dialog-v2 .ez-content');
-  if(!hint||!el||!content) return;
-  var cRect=content.getBoundingClientRect();
-  var eRect=el.getBoundingClientRect();
-  var visible=eRect.top<cRect.bottom-20;
-  hint.style.opacity=visible?'0':'1';
 }
 
 window._ez14SetChoice=function(key,choice){
@@ -808,8 +729,6 @@ window._ezFixPack=function(days){
     }
   });
   var m=parseInt(dlg.getAttribute('data-m'))||1;
-  var badge=document.getElementById('ez-total-badge');
-  if(badge) badge.innerHTML='إجمالي: '+(m*days)+' يوم ('+m+' × '+days+')';
   _renderPackWarningBanner();
   window.ezShowToast('✅ تم التصحيح إلى '+days+' يوم','success');
 };
@@ -1068,7 +987,6 @@ window.ezSelect=function(el,type,val){
   /* Update total badge */
   var m2=parseInt(d.getAttribute('data-m'))||1;
   var t2=parseInt(d.getAttribute('data-t'))||30;
-  var badge=document.getElementById('ez-total-badge');
   if(badge) badge.textContent='إجمالي: '+(m2*t2)+' يوم ('+m2+' × '+t2+')';
   /* Update pack size warnings */
   try{_renderPackWarningBanner();}catch(e){console.error("PACK ERR:",e);}
@@ -3341,9 +3259,6 @@ s_style.textContent='\
 @keyframes barShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}\
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}\
 @keyframes dialogEnter{from{opacity:0;transform:translate(-50%,-46%) scale(0.95)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}\
-@keyframes ezPulseRed{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.3)}}\
-@keyframes ezBounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}\
-.ez-warn-frame{box-shadow:0 0 0 3px #ef4444,0 0 25px rgba(239,68,68,0.3),0 24px 64px rgba(59,130,246,0.08)!important}\
 @keyframes shimmer{0%,70%{left:-100%}100%{left:200%}}\
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}\
 @keyframes spin{to{transform:rotate(360deg)}}\
@@ -3374,7 +3289,6 @@ s_style.textContent='\
 .ez-seg-group{display:flex;gap:4px;background:#f0f4ff;border-radius:12px;padding:3px;border:1px solid rgba(59,130,246,0.06)}\
 .ez-seg{flex:1;height:40px;border-radius:9px;border:none;cursor:pointer;font-family:Cairo,sans-serif;font-weight:900;font-size:17px;transition:all 0.2s;background:transparent;color:#64748b}\
 .ez-seg.active{background:#3b82f6;color:#fff}\
-.ez-total-badge{margin-top:14px;padding:8px 14px;background:#f0f4ff;border-radius:10px;font-size:12px;font-weight:800;color:#3b82f6;text-align:center}\
 .ez-tog-grid{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;display:grid;grid-template-columns:1fr 1fr;gap:8px}\
 .ez-tog-btn{padding:12px 14px;border-radius:14px;border:none;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s;text-align:right;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.02);outline:2px solid transparent}\
 .ez-tog-btn.on{outline:2px solid var(--tc,#3b82f6)25}\
@@ -4145,7 +4059,6 @@ d_box.innerHTML='\
         </div>\
       </div>\
     </div>\
-    <div class="ez-total-badge" id="ez-total-badge">إجمالي: '+(_m*_t)+' يوم ('+_m+' × '+_t+')</div>\
   </div>\
 <div class="ez-content">\
   <div class="ez-tog-grid">\
@@ -4157,26 +4070,22 @@ d_box.innerHTML='\
       <input type="checkbox" id="show-warnings" '+(_sw?'checked':'')+' style="display:none">\
       <span class="ez-tog-icon">⚠️</span><span class="ez-tog-lbl">تحذيرات</span><span class="ez-tog-dot"></span>\
     </button>\
-    <button class="ez-tog-btn '+(hasDuplicateNotes?'on':'')+'" style="--tc:#6366f1;grid-column:1/-1" onclick="var cb=document.getElementById(\'show-post-dialog\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
+    <button class="ez-tog-btn '+(_rm?'on':'')+'" style="--tc:#10b981" onclick="var cb=document.getElementById(\'ramadan-mode\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked);var card=document.getElementById(\'ez-rm-card\');if(card)card.style.display=cb.checked?\'block\':\'none\'">\
+      <input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">🌙</span><span class="ez-tog-lbl">رمضان</span><span class="ez-tog-dot"></span>\
+    </button>\
+    <button class="ez-tog-btn '+(hasDuplicateNotes?'on':'')+'" style="--tc:#6366f1" onclick="var cb=document.getElementById(\'show-post-dialog\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
       <input type="checkbox" id="show-post-dialog" '+(hasDuplicateNotes?'checked':'')+' style="display:none">\
-      <span class="ez-tog-icon">⚙️</span><span class="ez-tog-lbl">خيارات إضافية'+(hasDuplicateNotes?' <span class="auto-tag">تقسيم مكتشف</span>':'')+'</span><span class="ez-tog-dot"></span>\
+      <span class="ez-tog-icon">⚙️</span><span class="ez-tog-lbl">خيارات'+(hasDuplicateNotes?' <span class=\"auto-tag\">تقسيم</span>':'')+'</span><span class="ez-tog-dot"></span>\
     </button>\
   </div>\
-  <div class="ez-rm-card '+(_rm?'on':'')+'" id="ez-rm-card">\
-    <button class="ez-rm-toggle" onclick="var cb=document.getElementById(\'ramadan-mode\');cb.checked=!cb.checked;var card=document.getElementById(\'ez-rm-card\');card.classList.toggle(\'on\',cb.checked);var exp=document.getElementById(\'ez-rm-expand\');if(exp)exp.style.display=cb.checked?\'flex\':\'none\';var badge=document.getElementById(\'ez-ramadan-badge\');if(badge)badge.style.display=cb.checked?\'flex\':\'none\'">\
-      <input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+' style="display:none">\
-      <span class="rm-icon">🌙</span>\
-      <span class="rm-text">جرعات شهر رمضان</span>\
-      <div class="ez-rm-sw"><div class="knob"></div></div>\
-    </button>\
-    <div class="ez-rm-expand" id="ez-rm-expand" style="display:'+(_rm?'flex':'none')+';flex-wrap:wrap">\
-      <div style="display:flex;align-items:center;gap:6px;width:100%">\
-        <span class="rm-lbl">باقي</span>\
-        <input type="number" id="ez-rm-days-left" min="1" max="30" value="" placeholder="?" onclick="this.select()" style="text-align:center" />\
-        <span class="rm-lbl">يوم</span>\
-      </div>\
-      '+(_rmToday.inRamadan?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+(_rmAutoLeft||_rmTodayLeft)+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:6px;padding:6px 10px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:10px;font-size:11px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl;transition:all 0.2s" onmouseover="this.style.background=\'rgba(5,150,105,0.12)\'" onmouseout="this.style.background=\'rgba(5,150,105,0.06)\'">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+(_rmAutoLeft||_rmTodayLeft)+'</strong> يوم &nbsp;👆</div>':(!_rmToday.inRamadan?'<div style="width:100%;margin-top:6px;padding:5px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:10px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان انتهى أو لم يبدأ بعد</div>':''))+'\
+  <div id="ez-rm-card" style="display:'+(_rm?'block':'none')+';background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:14px;padding:10px 14px;direction:rtl;border:1.5px solid rgba(251,191,36,0.18)">\
+    <div style="display:flex;align-items:center;gap:6px;width:100%">\
+      <span style="font-size:11px;font-weight:800;color:#92400e">باقي</span>\
+      <input type="number" id="ez-rm-days-left" min="1" max="30" value="" placeholder="?" onclick="this.select()" style="flex:1;text-align:center;padding:6px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:16px;font-weight:900;font-family:Cairo,sans-serif;color:#92400e;background:rgba(255,255,255,0.7)" />\
+      <span style="font-size:11px;font-weight:800;color:#92400e">يوم</span>\
     </div>\
+    '+(_rmToday.inRamadan?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+(_rmAutoLeft||_rmTodayLeft)+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:8px;font-size:10px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+(_rmAutoLeft||_rmTodayLeft)+'</strong> يوم 👆</div>':(!_rmToday.inRamadan?'<div style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:9px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان لم يبدأ بعد</div>':''))+'\
   </div>\
   <div id="ez-pack-warning" style="display:none;padding:10px 14px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border:1.5px solid #fca5a5;border-radius:16px;direction:rtl;transition:all 0.3s"></div>\
 </div>\
