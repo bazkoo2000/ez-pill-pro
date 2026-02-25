@@ -613,7 +613,7 @@ function _scanPackSizeWarnings(dialogM,dialogT){
     warnings.push({icon:'📦',text:'كل الأصناف 30 يوم — لازم تختار 30 مش '+dialogT,level:'danger',fix:30});
   }
 
-  return {items:items,warnings:warnings,has28:has28or56,has30:has30or60};
+  return {items:items,warnings:warnings,has28:has28,has30:has30};
 }
 
 function _renderPackWarningBanner(){
