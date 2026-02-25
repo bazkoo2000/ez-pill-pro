@@ -1039,14 +1039,17 @@ window.ezMinimize=function(){
     var content=d.querySelector('.ez-content');
     var foot=d.querySelector('.ez-footer');
     var actions=d.querySelector('.ez-actions');
+    var floatCard=d.querySelector('.ez-float-card');
     var minBtn=d.querySelector('.ez-btn-icon-min');
     if(content.style.display==='none'){
       content.style.display='';
+      if(floatCard) floatCard.style.display='';
       if(actions) actions.style.display='';
       if(foot) foot.style.display='';
       minBtn.innerHTML='−';
     } else {
       content.style.display='none';
+      if(floatCard) floatCard.style.display='none';
       if(actions) actions.style.display='none';
       if(foot) foot.style.display='none';
       minBtn.innerHTML='+';
@@ -3362,7 +3365,7 @@ s_style.textContent='\
 .ez-content::-webkit-scrollbar-track{background:transparent}\
 .ez-content::-webkit-scrollbar-thumb{background:rgba(129,140,248,0.2);border-radius:10px}\
 .ez-content::-webkit-scrollbar-thumb:hover{background:rgba(129,140,248,0.4)}\
-.ez-float-card{background:#fff;border-radius:20px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl}\
+.ez-float-card{background:#fff;border-radius:20px;padding:14px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;flex-shrink:0;margin:0 16px;border-bottom:1px solid rgba(99,102,241,0.06)}\
 .ez-dur-row{display:flex;gap:22px;align-items:flex-start}\
 .ez-dur-col{flex:1}\
 .ez-dur-col.wide{flex:1.2}\
@@ -4123,8 +4126,7 @@ d_box.innerHTML='\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
-<div class="ez-content">\
-  <div class="ez-float-card">\
+<div class="ez-float-card">\
     <div class="ez-dur-row">\
       <div class="ez-dur-col wide">\
         <div class="ez-dur-label">الأشهر</div>\
@@ -4145,6 +4147,7 @@ d_box.innerHTML='\
     </div>\
     <div class="ez-total-badge" id="ez-total-badge">إجمالي: '+(_m*_t)+' يوم ('+_m+' × '+_t+')</div>\
   </div>\
+<div class="ez-content">\
   <div class="ez-tog-grid">\
     <button class="ez-tog-btn '+(_ad?'on':'')+'" style="--tc:#3b82f6" onclick="var cb=document.getElementById(\'auto-duration\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
       <input type="checkbox" id="auto-duration" '+(_ad?'checked':'')+' style="display:none">\
