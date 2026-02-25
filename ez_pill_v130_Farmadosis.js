@@ -875,11 +875,13 @@ window.ezPreviewAlerts=function(){
     var doseRec=smartDoseRecognizer(noteClean);
     var timeResult=getTimeFromWords(noteClean);
     var dur=extractDuration(noteRaw);
-    if(dur.hasDuration&&!_ezDurMatchesSelection(dur.days,_m,_t)){alerts.push({icon:'📅',text:itemName+': مكتوب '+dur.days+' يوم (الإجمالي '+(_m*_t)+')',detail:'اختلاف في مدة العلاج',level:'warning'});}
+    var _isFixedPrev=itemCode&&fixedSizeCodes&&fixedSizeCodes[itemCode];
+    var _isWeeklyPrev=itemCode&&weeklyInjections.indexOf(itemCode)>-1;
+    if(dur.hasDuration&&!_ezDurMatchesSelection(dur.days,_m,_t)&&!_isFixedPrev&&!_isWeeklyPrev){alerts.push({icon:'📅',text:itemName+': مكتوب '+dur.days+' يوم (الإجمالي '+(_m*_t)+')',detail:'اختلاف في مدة العلاج',level:'warning'});}
     var d2p=/^2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
     var d2p2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
     if(d2p.test(noteRaw.trim())||d2p2.test(noteRaw)){alerts.push({icon:'💊',text:itemName+': جرعة مزدوجة (2)',detail:'مكتوب حبتين في الجرعة',level:'warning'});}
-    if(timeResult.isUnrecognized){alerts.push({icon:'❓',text:itemName+': جرعة غير مفهومة',detail:'النص: '+noteClean,level:'warning'});}
+    if(timeResult.isUnrecognized&&!_isFixedPrev&&!_isWeeklyPrev){alerts.push({icon:'❓',text:itemName+': جرعة غير مفهومة',detail:'النص: '+noteClean,level:'warning'});}
     var nl=noteClean.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
     if(shouldDuplicateRow(nl)){alerts.push({icon:'✂️',text:itemName+': سيتم تقسيم الجرعة',detail:'عدد الجرعات: '+doseRec.count,level:'info'});}
   }
@@ -2550,8 +2552,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];
       
-      /* Check for unrecognized time patterns */
-      if(rd.note&&rd.note.trim().length>=3){
+      /* Check for unrecognized time patterns - skip fixed/weekly (handled separately) */
+      if(rd.note&&rd.note.trim().length>=3&&!rd.hasFixedSize&&!rd.isWeekly){
         var timeResult=getTimeFromWords(rd.note);
         if(timeResult.isUnrecognized){
           var curEvery=rd.hourlyInfo&&rd.hourlyInfo.hasInterval?rd.hourlyInfo.hours:24;
@@ -2576,7 +2578,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         }
       }
       
-      if(rd.durationInfo&&rd.durationInfo.hasDuration){
+      if(rd.durationInfo&&rd.durationInfo.hasDuration&&!rd.hasFixedSize&&!rd.isWeekly){
         var extracted=rd.durationInfo.days;
         if(!_ezDurMatchesSelection(extracted,m,t)){
           warningQueue.push({
