@@ -4113,7 +4113,7 @@ d_box.innerHTML='\
   <div class="ez-logo-group">\
     <div class="ez-logo">💊</div>\
     <div class="ez-title-block">\
-      <div class="ez-title">EZ_Pill <span class="ez-brand">JVM</span></div>\
+      <div class="ez-title">EZ_Pill <span class="ez-brand">Farmadosis</span></div>\
       <div class="ez-subtitle">معالج الجرعات الذكي · v'+APP_VERSION+'</div>\
     </div>\
   </div>\
