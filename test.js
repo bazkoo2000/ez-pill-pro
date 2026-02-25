@@ -530,48 +530,33 @@ function isNonTabletItem(itemName){
 /* ══════════════════════════════════════
    PACK SIZE EXTRACTION FROM DRUG NAME
    ══════════════════════════════════════ */
-var _KNOWN_CHRONIC_PACKS=[28,30,56,60,84,90,100,120];
-var _PACK_UNIT_RE=/(\d+)\s*(?:capsule|capsules|caps?|tablet|tablets|tabs?|pcs|pieces?|pills?|sachets?|كبسول[ةه]?|حب[ةه]|حبوب|قرص|أقراص|اقراص|قطع[ةه]?|كيس|اكياس|أكياس|ساشيه?)/i;
-var _STRENGTH_RE=/\d+\s*(?:mg|mcg|µg|مجم|ملجم|ملغم|مل?غ|ml|g\b|iu|unit|وحد|u\/ml|mg\/ml|mcg\/hr|مج)/i;
+var _PACK_SIZES=[28,30,56,60,84,90,100,120];
+/* Regex to match strength patterns - these get REMOVED from name before scanning */
+var _STRENGTH_STRIP=/\d+\.?\d*\s*(?:mg|mcg|µg|مجم|ملجم|ملغم|ملغ|مج|ml|g\b|iu|units?|وحد[ةه]?|u\/ml|mg\/ml|mcg\/hr|مايكرو)/gi;
 
 function _extractPackFromName(name){
   if(!name||name.length<3) return null;
-  var m1=name.match(_PACK_UNIT_RE);
-  if(m1){
-    var n1=parseInt(m1[1]);
-    var before=name.substring(0,name.indexOf(m1[0]));
-    if(!/mg|mcg|مجم/i.test(before.slice(-6))){
-      if(_KNOWN_CHRONIC_PACKS.indexOf(n1)>-1) return {size:n1,confidence:'high',source:m1[0].trim()};
-      if(n1>=5&&n1<=200) return {size:n1,confidence:'medium',source:m1[0].trim()};
-    }
+  /* Step 1: Remove strength (numbers near mg/mcg/مجم etc) */
+  var clean=name.replace(_STRENGTH_STRIP,'~');
+  /* Step 2: Find ALL remaining numbers */
+  var nums=[];
+  var re=/(\d+)/g;var m;
+  while((m=re.exec(clean))!==null){
+    var v=parseInt(m[1]);
+    /* Only care about known pack sizes */
+    if(_PACK_SIZES.indexOf(v)>-1) nums.push(v);
   }
-  var allNums=[];
-  var numRe=/\b(\d+)\b/g;var nm;
-  while((nm=numRe.exec(name))!==null){
-    var idx=nm.index;var val=parseInt(nm[1]);
-    var ctx=name.substring(Math.max(0,idx-8),Math.min(name.length,idx+nm[1].length+8));
-    if(_STRENGTH_RE.test(ctx)) continue;
-    if(_KNOWN_CHRONIC_PACKS.indexOf(val)>-1){
-      allNums.push({val:val,idx:idx,ctx:ctx});
-    }
-  }
-  if(allNums.length===1) return {size:allNums[0].val,confidence:'medium',source:allNums[0].val+' (من الاسم)'};
-  if(allNums.length>1){
-    var last=allNums[allNums.length-1];
-    return {size:last.val,confidence:'low',source:last.val+' (تخمين)'};
-  }
-  return null;
-}
-
-function _packEffectiveDays(packSize,timesPerDay){
-  if(!timesPerDay||timesPerDay<=0) timesPerDay=1;
-  return Math.floor(packSize/timesPerDay);
+  if(nums.length===0) return null;
+  /* Step 3: If multiple matches, prefer 28/56 (the ones that cause issues) */
+  if(nums.length===1) return nums[0];
+  /* If has both 28 and 30, something is wrong, take the last one (usually pack size at end) */
+  return nums[nums.length-1];
 }
 
 function _estimateTPD(noteText){
   if(!noteText) return 1;
-  var n=noteText.toLowerCase().replace(/[أإآ]/g,'ا');
-  if(/مرتين|twice|bid|b\.?i\.?d|مره مره|صباح.*مسا|مسا.*صباح|morning.*evening|evening.*morning|12\s*h/i.test(n)) return 2;
+  var n=(noteText+'').toLowerCase().replace(/[أإآ]/g,'ا');
+  if(/مرتين|twice|bid|b\.?i\.?d|صباح.*مسا|مسا.*صباح|morning.*evening|12\s*h/i.test(n)) return 2;
   if(/ثلاث|three|tid|t\.?i\.?d|8\s*h/i.test(n)) return 3;
   if(/اربع|four|qid|q\.?i\.?d|6\s*h/i.test(n)) return 4;
   return 1;
@@ -580,16 +565,18 @@ function _estimateTPD(noteText){
 function _scanPackSizeWarnings(dialogM,dialogT){
   var totalDays=dialogM*dialogT;
   var tb=_ezFindTable();
-  if(!tb) return {items:[],minDays:null,warnings:[]};
+  if(!tb) return {items:[],warnings:[]};
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
-  var nmi=_ezIdx(hs,'name'),ci=_ezIdx(hs,'code'),ni=_ezIdx(hs,'note'),si=_ezIdx(hs,'size'),di=_ezIdx(hs,'dose');
+  var nmi=_ezIdx(hs,'name'),ci=_ezIdx(hs,'code'),ni=_ezIdx(hs,'note');
+  if(nmi<0) nmi=_ezIdx(hs,'item');
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
-  var items=[];var warnings=[];
+  var items=[];
   for(var i=0;i<rows.length;i++){
     var tds=rows[i].querySelectorAll('td');
     var cb=rows[i].querySelector('input[type="checkbox"]');
     if(cb&&!cb.checked) continue;
     var itemCode=ci>=0?(_ezGet(tds[ci]).match(/\d+/)||[''])[0]:'';
+    /* Skip fixed-size and weekly */
     if(itemCode&&fixedSizeCodes&&fixedSizeCodes[itemCode]) continue;
     if(itemCode&&weeklyInjections.indexOf(itemCode)>-1) continue;
     var itemName=nmi>=0?_ezGet(tds[nmi]):'';
@@ -600,31 +587,45 @@ function _scanPackSizeWarnings(dialogM,dialogT){
     var pack=_extractPackFromName(itemName);
     if(!pack) continue;
     var tpd=_estimateTPD(noteText);
-    var effDays=_packEffectiveDays(pack.size,tpd);
-    items.push({name:itemName,code:itemCode,packSize:pack.size,tpd:tpd,effDays:effDays,confidence:pack.confidence,source:pack.source});
+    var effDays=Math.floor(pack/tpd);
+    items.push({name:itemName,packSize:pack,tpd:tpd,effDays:effDays});
   }
-  if(items.length===0) return {items:[],minDays:null,warnings:[]};
-  var minDays=Infinity;
+  if(items.length===0) return {items:[],warnings:[]};
+
+  var warnings=[];
+  var has28or56=false,has30or60=false;
   for(var j=0;j<items.length;j++){
-    if(items[j].effDays<minDays) minDays=items[j].effDays;
+    var ed=items[j].effDays;
+    if(ed===28||ed===56||ed===84) has28or56=true;
+    if(ed===30||ed===60||ed===90) has30or60=true;
   }
+
+  /* Case 1: Mixed 28 and 30 → must equalize to 28 */
+  if(has28or56&&has30or60){
+    warnings.push({icon:'⚖️',text:'يوجد أصناف 28 يوم مع أصناف 30 يوم — لازم التساوي على 28',level:'danger'});
+    if(dialogT!==28) warnings.push({icon:'⚠️',text:'غيّر الأيام من '+dialogT+' إلى 28',level:'danger',fix:28});
+  }
+  /* Case 2: All items are 28-based but dialog is 30 */
+  else if(has28or56&&!has30or60&&dialogT===30){
+    warnings.push({icon:'📦',text:'كل الأصناف 28 يوم — لازم تختار 28 مش 30',level:'danger',fix:28});
+  }
+  /* Case 3: All items are 30-based but dialog is 28 */
+  else if(has30or60&&!has28or56&&dialogT===28){
+    warnings.push({icon:'📦',text:'كل الأصناف 30 يوم — لازم تختار 30 مش 28',level:'danger',fix:30});
+  }
+
+  /* Per-item mismatch warnings */
   for(var k=0;k<items.length;k++){
-    if(items[k].effDays<totalDays){
-      warnings.push({icon:'📦',text:items[k].name+': العبوة '+items[k].packSize+(items[k].tpd>1?' ('+items[k].tpd+'×يوم)':'')+' = '+items[k].effDays+' يوم ≠ '+totalDays+' المحدد',level:'danger',item:items[k]});
+    var it=items[k];
+    if(it.effDays!==totalDays&&it.effDays!==(dialogM*28)&&it.effDays!==(dialogM*30)){
+      /* Only warn if truly mismatched (not just 28 vs 30 which is covered above) */
+      if(!(it.effDays===28&&dialogT===30)&&!(it.effDays===30&&dialogT===28)){
+        warnings.push({icon:'📦',text:it.name.substring(0,35)+': عبوة '+it.packSize+(it.tpd>1?' ('+it.tpd+'×يوم) = '+it.effDays+' يوم':' حبة')+' ≠ '+totalDays+' المحدد',level:'warning'});
+      }
     }
   }
-  var has28=false,has30=false;
-  for(var l=0;l<items.length;l++){
-    if(items[l].effDays===28||items[l].effDays===84) has28=true;
-    if(items[l].effDays===30||items[l].effDays===90) has30=true;
-  }
-  if(has28&&has30){
-    warnings.push({icon:'⚖️',text:'يوجد أصناف 28 يوم وأصناف 30 يوم — يجب التساوي على 28',level:'danger'});
-  }
-  if(has28&&totalDays!==28&&totalDays!==56&&totalDays!==84){
-    warnings.push({icon:'⚠️',text:'يوجد صنف 28 يوم — المفروض الإجمالي '+dialogM+' × 28 = '+(dialogM*28)+' مش '+(dialogM*dialogT),level:'danger',suggestion:{t:28}});
-  }
-  return {items:items,minDays:minDays===Infinity?null:minDays,warnings:warnings,has28:has28,has30:has30};
+
+  return {items:items,warnings:warnings,has28:has28or56,has30:has30or60};
 }
 
 function _renderPackWarningBanner(){
@@ -641,30 +642,41 @@ function _renderPackWarningBanner(){
     var w=scan.warnings[i];
     html+='<div style="font-size:10px;font-weight:700;color:'+(w.level==='danger'?'#b91c1c':'#92400e')+';padding:3px 0;direction:rtl">'+w.icon+' '+w.text+'</div>';
   }
-  if(scan.warnings.length>0&&scan.has28){
-    html+='<button onclick="window._ezFixTo28()" style="margin-top:6px;width:100%;padding:8px;border:2px solid #dc2626;background:#fef2f2;color:#dc2626;border-radius:12px;font-size:11px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s" onmouseover="this.style.background=\'#dc2626\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'#fef2f2\';this.style.color=\'#dc2626\'">⚡ تصحيح إلى 28 يوم</button>';
+  /* Show item details */
+  if(scan.items.length>0){
+    html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
+    for(var j=0;j<scan.items.length;j++){
+      var it=scan.items[j];
+      html+='<div>'+it.name.substring(0,30)+' → <b>'+it.packSize+'</b> حبة'+(it.tpd>1?' (×'+it.tpd+')':'')+' = <b>'+it.effDays+'</b> يوم</div>';
+    }
+    html+='</div>';
+  }
+  /* Fix buttons */
+  var fixVal=null;
+  for(var f=0;f<scan.warnings.length;f++){if(scan.warnings[f].fix){fixVal=scan.warnings[f].fix;break;}}
+  if(fixVal){
+    html+='<button onclick="window._ezFixPack('+fixVal+')" style="margin-top:6px;width:100%;padding:8px;border:2px solid #dc2626;background:#fef2f2;color:#dc2626;border-radius:12px;font-size:11px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s" onmouseover="this.style.background=\'#dc2626\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'#fef2f2\';this.style.color=\'#dc2626\'">⚡ تصحيح إلى '+fixVal+' يوم</button>';
   }
   el.innerHTML=html;
 }
 
-window._ezFixTo28=function(){
+window._ezFixPack=function(days){
   var dlg=document.querySelector('.ez-dialog-v2');
   if(!dlg) return;
-  dlg.setAttribute('data-t','28');
+  dlg.setAttribute('data-t',String(days));
   var segs=dlg.querySelectorAll('.ez-seg');
   segs.forEach(function(s){
     var oc=s.getAttribute('onclick')||'';
     if(oc.indexOf("'t'")>-1){
-      s.classList.toggle('active',oc.indexOf(',28)')>-1);
+      s.classList.toggle('active',oc.indexOf(','+days+')')>-1);
     }
   });
   var m=parseInt(dlg.getAttribute('data-m'))||1;
   var badge=document.getElementById('ez-total-badge');
-  if(badge) badge.innerHTML='إجمالي: '+(m*28)+' يوم ('+m+' × 28)';
+  if(badge) badge.innerHTML='إجمالي: '+(m*days)+' يوم ('+m+' × '+days+')';
   _renderPackWarningBanner();
-  window.ezShowToast('✅ تم التصحيح إلى 28 يوم','success');
+  window.ezShowToast('✅ تم التصحيح إلى '+days+' يوم','success');
 };
-
 var warningQueue=[];
 var _EZ_WARNING_CONFIG={
   ramadan_unclear:{enabled:true,label:'جرعة غير واضحة في رمضان'},
