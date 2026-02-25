@@ -2,7 +2,7 @@ javascript:(function(){
 var old=document.getElementById('nahdi_baz_panel');if(old)old.remove();
 var oldStyle=document.getElementById('nahdi_baz_styles');if(oldStyle)oldStyle.remove();
 
-var d=document,db=[],editOn=false,dragOn=false,selI=null,dragEl=null,dragOX=0,dragOY=0,panelCollapsed=false;
+var d=document,db=[],editOn=false,dragOn=false,selI=null,selImg=null,dragEl=null,dragOX=0,dragOY=0,panelCollapsed=false;
 
 var css=d.createElement('style');
 css.id='nahdi_baz_styles';
@@ -38,6 +38,11 @@ css.textContent=`
 .nbp-btn-qr{background:linear-gradient(135deg,#fff1f2,#ffe4e6);color:#e11d48;border:1px solid rgba(225,29,72,.1);}
 .nbp-btn-csv{background:linear-gradient(135deg,#f0fdf4,#dcfce7);color:#16a34a;border:1px solid rgba(22,163,74,.1);}
 .nbp-btn-csv.loaded{border-color:rgba(22,163,74,.25);box-shadow:0 0 0 2px rgba(22,163,74,.08);}
+.nbp-btn-img{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);color:#0284c7;border:1px solid rgba(2,132,199,.12);display:none;}
+.nbp-btn-img.loaded{background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-color:rgba(2,132,199,.3);box-shadow:0 0 0 2px rgba(2,132,199,.08);}
+.nbp-btn-img .nbp-btn-icon{background:rgba(2,132,199,.08);}
+.nbp-img-preview{display:none;margin-top:7px;text-align:center;background:#f8fafc;border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:8px;}
+.nbp-img-preview img{width:70px;height:70px;object-fit:contain;border-radius:6px;border:1px solid rgba(0,0,0,.06);}
 .nbp-btn-inject{background:linear-gradient(135deg,#fffbeb,#fef3c7);color:#d97706;border:1px solid rgba(217,119,6,.12);display:none;}
 .nbp-btn-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
 .nbp-btn-edit .nbp-btn-icon{background:rgba(59,130,246,.08);}
@@ -94,7 +99,7 @@ function findT(){
 var ui=d.createElement('div');ui.id='nahdi_baz_panel';ui.className='nbp-glass';
 ui.innerHTML=
 '<div class="nbp-header" id="nbp_header">'+
-  '<div class="nbp-logo"><div class="nbp-logo-icon">⚡</div><div><div class="nbp-title">Nahdi Editor Pro</div><div class="nbp-ver">v2.1 — Light</div></div></div>'+
+  '<div class="nbp-logo"><div class="nbp-logo-icon">⚡</div><div><div class="nbp-title">Nahdi Editor Pro</div><div class="nbp-ver">v2.2 — Light</div></div></div>'+
   '<div class="nbp-actions"><div class="nbp-act-btn" id="nbp_min" title="تصغير">—</div><div class="nbp-act-btn" id="nbp_cls" title="إغلاق">✕</div></div>'+
 '</div>'+
 '<div class="nbp-fab" id="nbp_fab">⚡</div>'+
@@ -115,6 +120,10 @@ ui.innerHTML=
     '<input type="text" class="nbp-search" id="nbp_search" placeholder="🔍 بحث بالاسم أو الكود...">'+
     '<div class="nbp-results" id="nbp_results"></div>'+
     '<div style="height:5px"></div>'+
+    '<label class="nbp-btn nbp-btn-img" id="nbp_img_label" for="nbp_img"><span class="nbp-btn-icon">🖼️</span><span>رفع صورة الصنف (اختياري)</span></label>'+
+    '<input type="file" id="nbp_img" accept="image/*" style="display:none">'+
+    '<div class="nbp-img-preview" id="nbp_img_preview"><img id="nbp_img_thumb" src="" alt="preview"></div>'+
+    '<div style="height:5px"></div>'+
     '<button class="nbp-btn nbp-btn-inject" id="nbp_inject"><span class="nbp-btn-icon">✅</span><span>حقن الصنف في الجدول</span></button>'+
   '</div>'+
   '<div class="nbp-divider"></div>'+
@@ -134,7 +143,6 @@ function panAnimate(){
   if(!panDrag){panRAF=null;return}
   var dx=panCurX-panSX;var dy=panCurY-panSY;
   panX+=dx;panY+=dy;
-  /* keep in viewport */
   panX=Math.max(0,Math.min(window.innerWidth-60,panX));
   panY=Math.max(0,Math.min(window.innerHeight-40,panY));
   ui.style.left=panX+'px';ui.style.top=panY+'px';
@@ -274,10 +282,38 @@ d.getElementById('nbp_search').oninput=function(){
   m.forEach(function(i){
     var v=d.createElement('div');v.className='nbp-result-item';
     v.innerHTML='<b>'+i.name+'</b><small>Code: '+i.code+'</small>';
-    v.onclick=function(){selI=i;d.getElementById('nbp_search').value=i.name;res.style.display='none';d.getElementById('nbp_inject').style.display='flex'};
+    v.onclick=function(){
+      selI=i;
+      d.getElementById('nbp_search').value=i.name;
+      res.style.display='none';
+      d.getElementById('nbp_inject').style.display='flex';
+      /* إظهار زر رفع الصورة */
+      d.getElementById('nbp_img_label').style.display='flex';
+    };
     res.appendChild(v);
   });
   res.style.display=m.length?'block':'none';
+};
+
+/* ===== IMAGE UPLOAD ===== */
+d.getElementById('nbp_img').onchange=function(e){
+  var file=e.target.files[0];
+  if(!file)return;
+  var r=new FileReader();
+  r.onload=function(){
+    selImg=this.result;
+    /* تحديث زر الرفع */
+    var label=d.getElementById('nbp_img_label');
+    label.querySelector('span:last-child').textContent='✅ تم رفع الصورة';
+    label.classList.add('loaded');
+    /* عرض preview */
+    var preview=d.getElementById('nbp_img_preview');
+    var thumb=d.getElementById('nbp_img_thumb');
+    thumb.src=selImg;
+    preview.style.display='block';
+    toast('تم رفع الصورة بنجاح','success');
+  };
+  r.readAsDataURL(file);
 };
 
 /* ===== INJECT ===== */
@@ -288,14 +324,35 @@ d.getElementById('nbp_inject').onclick=function(){
   var lr=rows[rows.length-1],nr=lr.cloneNode(true),tds=nr.querySelectorAll('td');
   if(tds.length>=2){
     var im=tds[0].querySelector('img');
-    if(im)im.src='https://rtlapps.nahdi.sa/images/items/'+selI.code+'.png';
-    else tds[0].innerText=selI.code;
+    if(im){
+      if(selImg){
+        im.src=selImg;       /* الصورة المرفوعة من الجهاز */
+        im.style.width='70px';
+      } else {
+        im.removeAttribute('src'); /* بدون صورة لو ما رفعش */
+        im.style.width='70px';
+        im.alt='—';
+      }
+    } else {
+      tds[0].innerText=selI.code;
+    }
     tds[1].innerText=selI.name;
     for(var i=2;i<tds.length;i++)tds[i].innerText='-';
   }
   b.appendChild(nr);nr.style.animation='nbpSlideIn .25s ease';
-  d.getElementById('nbp_search').value='';d.getElementById('nbp_inject').style.display='none';selI=null;
-  toast('تم حقن الصنف بنجاح','success');
+
+  /* ===== RESET ===== */
+  d.getElementById('nbp_search').value='';
+  d.getElementById('nbp_inject').style.display='none';
+  d.getElementById('nbp_img_label').style.display='none';
+  d.getElementById('nbp_img_label').classList.remove('loaded');
+  d.getElementById('nbp_img_label').querySelector('span:last-child').textContent='رفع صورة الصنف (اختياري)';
+  d.getElementById('nbp_img_preview').style.display='none';
+  d.getElementById('nbp_img_thumb').src='';
+  d.getElementById('nbp_img').value='';
+  selI=null;selImg=null;
+
+  toast(selImg?'تم حقن الصنف مع الصورة ✅':'تم حقن الصنف بنجاح','success');
 };
 
 })();
