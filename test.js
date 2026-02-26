@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='140.1';
+var APP_VERSION='140.2';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,13 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '140.2':{
+    title:'🔄 تنبيه حجم العبوة ديناميكي — بيرجع تلقائياً',
+    features:[
+      {icon:'🔄',text:'التنبيه دلوقتي reactive — لو صححت لـ 28 وبعدين رجعت 30 التنبيه بيرجع تلقائياً'},
+      {icon:'👁️',text:'MutationObserver بيراقب تغيير الأيام في أي وقت ويعيد رسم التنبيه'}
+    ]
+  },
   '140.1':{
     title:'🍽️ دعم الغذاء/الغذا كبديل للغداء',
     features:[
@@ -2491,14 +2498,23 @@ function getCodeAwareTime(timeResult,itemCode){
 /* ── Helper: استخرج الأوقات الفعلية من الـ note بناءً على الكلمات ── */
 function getMealTimesFromNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
-  var isBefore=/قبل/i.test(s);
-  var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
-  var hasL=/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/i.test(s);
-  var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
+  var meals=[
+    {re:/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/gi,before:8,after:9},
+    {re:/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/gi,before:13,after:14},
+    {re:/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/gi,before:20,after:21}
+  ];
   var times=[];
-  if(hasB) times.push(isBefore?8:9);
-  if(hasL) times.push(isBefore?13:14);
-  if(hasD) times.push(isBefore?20:21);
+  meals.forEach(function(m){
+    m.re.lastIndex=0;
+    var match=m.re.exec(s);
+    if(!match) return;
+    var idx=match.index;
+    var bp=s.lastIndexOf('قبل',idx);
+    var ap=s.lastIndexOf('بعد',idx);
+    /* أقرب كلمة قبل الوجبة تحدد هل before أو after */
+    var isBefore=(bp>ap);
+    times.push(isBefore?m.before:m.after);
+  });
   times.sort(function(a,b){return a-b;});
   return times;
 }
@@ -4157,6 +4173,8 @@ document.body.appendChild(d_box);
 if(_dk) document.body.classList.add('ez-dark-mode');
 /* 📦 Scan pack sizes and show warning */
 try{_renderPackWarningBanner();}catch(e){console.error('PACK ERROR:',e);alert('Pack error: '+e.message);}
+/* Observer: راقب data-t و data-m وأعد رسم التنبيه تلقائياً */
+(function(){var _dlgBox=document.getElementById('ez-dialog-box');if(!_dlgBox)return;var _packObs=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){if(muts[i].attributeName==='data-t'||muts[i].attributeName==='data-m'){try{_renderPackWarningBanner();}catch(e){}break;}}});_packObs.observe(_dlgBox,{attributes:true,attributeFilter:['data-t','data-m']});})();
 /* Pulse effect on primary button */
 setInterval(function(){var btn=document.querySelector('.ez-btn-primary');if(btn){btn.classList.toggle('ez-pulse');}},2000);
 
