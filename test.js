@@ -1728,9 +1728,10 @@ window._ezApplyRamadanSplit=function(daysLeft){
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
   var si=_ezIdx(hs,'size'),ei=_ezIdx(hs,'end date'),ti=_ezIdx(hs,'time');
   var evi=_ezIdx(hs,'every');if(evi<0)evi=_ezIdx(hs,'evry');
-  var ni=_ezIdx(hs,'note'),qi=_ezIdx(hs,'qty');
+  var ni=_ezIdx(hs,'note'),qi=_ezIdx(hs,'qty'),ci=_ezIdx(hs,'code');
   var sdi=_ezIdx(hs,'start date');
   var fire=_ezFire,get=_ezGet;
+  function _gcCode(td){var t=get(td);var m=t.match(/\d+/);return m?m[0]:'';}
 
   /* حساب الأيام: daysLeft = الأيام الباقية في رمضان
      إجمالي الأيام = أيام الشهر × عدد الشهور (مش أيام الشهر بس) */
@@ -1861,9 +1862,17 @@ window._ezApplyRamadanSplit=function(daysLeft){
       if(ti>=0&&ntds[ti]){var tInp=ntds[ti].querySelector('input[type=\'time\']');if(tInp){tInp.value=newTime;fire(tInp);}}
       if(evi>=0&&ntds[evi]){var evInp=ntds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
       /* حساب الـ size الصح نسبياً */
+      var _rowCode=ci>=0&&tds[ci]?_gcCode(tds[ci]):'';
+      var _fixedSz=_rowCode&&fixedSizeCodes&&fixedSizeCodes[_rowCode]?fixedSizeCodes[_rowCode]:0;
       var _curSizeVal=parseInt(rd.sizeVal)||0;
       var _normalSizeVal,_ramSizeVal;
-      if(_curSizeVal>0&&totalDays>0){
+      if(_fixedSz>0){
+        /* كود مخصص: الحجم الثابت لا يتغير في رمضان */
+        _ramSizeVal=_fixedSz;
+        /* إلغاء رمضان لاحقاً: نحسب المتبقي بعد رمضان */
+        var _remaining=_fixedSz-ramLeft;
+        _normalSizeVal=_remaining>0?_remaining:0;
+      } else if(_curSizeVal>0&&totalDays>0){
         if(_curSizeVal===totalDays){_normalSizeVal=normalDays;_ramSizeVal=ramLeft;}
         else{_normalSizeVal=Math.round(_curSizeVal*normalDays/totalDays);if(_normalSizeVal<1&&normalDays>0)_normalSizeVal=1;_ramSizeVal=_curSizeVal-_normalSizeVal;if(_ramSizeVal<1)_ramSizeVal=1;}
       } else {_normalSizeVal=normalDays;_ramSizeVal=ramLeft;}
@@ -1878,8 +1887,10 @@ window._ezApplyRamadanSplit=function(daysLeft){
 
       normalRowsToInsert.push({afterRow:rd.row,newRow:normalRow});
     } else {
-      /* صف عادي (مش رمضان): نحدث فقط */
-      if(si>=0&&tds[si]){var sInp2=tds[si].querySelector('input,textarea');if(sInp2){sInp2.value=totalDays;fire(sInp2);}}
+      /* صف عادي (مش رمضان): نحدث فقط - لو كود مخصص يفضل بحجمه */
+      var _rCode2=ci>=0&&tds[ci]?_gcCode(tds[ci]):'';
+      var _fSz2=_rCode2&&fixedSizeCodes&&fixedSizeCodes[_rCode2]?fixedSizeCodes[_rCode2]:0;
+      if(si>=0&&tds[si]){var sInp2=tds[si].querySelector('input,textarea');if(sInp2){sInp2.value=_fSz2>0?_fSz2:totalDays;fire(sInp2);}}
     }
   });
 
@@ -1948,6 +1959,31 @@ window.ezRamadanToNormal=function(){
     return y+'-'+mo+'-'+dd;
   }
 
+  /* ── فحص الأكواد المخصصة: لو الكمية مش كافية بعد رمضان → امنع الإلغاء ── */
+  var _skipTb=_ezFindTable();
+  if(_skipTb&&fixedSizeCodes){
+    var _skipH=_skipTb.querySelector('tr'),_skipHs=_skipH.querySelectorAll('th,td');
+    var _skipCi=_ezIdx(_skipHs,'code'),_skipSi=_ezIdx(_skipHs,'size');
+    var _skipGet=_ezGet;
+    var _skipRows=Array.from(_skipTb.querySelectorAll('tr')).slice(1);
+    var _noQtyItems=[];
+    _skipRows.forEach(function(r){
+      var tds=r.querySelectorAll('td');
+      var code=_skipCi>=0&&tds[_skipCi]?(function(td){var t=_skipGet(td);var m=t.match(/\d+/);return m?m[0]:'';})( tds[_skipCi]):'';
+      var fSz=code&&fixedSizeCodes[code]?fixedSizeCodes[code]:0;
+      if(fSz>0&&fSz<=ramLeft){
+        /* الكمية لا تكفي حتى نهاية رمضان */
+        var nm=_ezIdx(_skipHs,'name');
+        var itemName=nm>=0&&tds[nm]?_skipGet(tds[nm]):'كود '+code;
+        _noQtyItems.push(itemName+' (علبة '+fSz+' / رمضان '+ramLeft+' يوم)');
+      }
+    });
+    if(_noQtyItems.length>0){
+      window.ezShowToast('❌ الكمية لا تسمح بإلغاء رمضان:\n'+_noQtyItems.join('\n'),'error');
+      return;
+    }
+  }
+
   var _normalStart=addDays(startDateStr,ramLeft);
   _ezRamadanConfirm({ramLeft:ramLeft,normalDays:normalDays,totalDays:totalDays,t:_t,m:_m,startDate:startDateStr,normalStart:_normalStart},
   function(){
@@ -2000,8 +2036,22 @@ window.ezRamadanToNormal=function(){
       if(evi>=0&&tds[evi]){var evInp=tds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
     }
 
-    /* ── size: في إلغاء رمضان الكل يأخذ normalDays (حتى الأكواد المخصصة) ── */
-    if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=normalDays;fire(sInp);}}
+    /* ── size: حساب الـ size حسب نوع الكود ── */
+    if(si>=0&&tds[si]){
+      var _rCode3=ci>=0&&tds[ci]?(function(td){var t=get(td);var m=t.match(/\d+/);return m?m[0]:'';})( tds[ci]):'';
+      var _fSz3=_rCode3&&fixedSizeCodes&&fixedSizeCodes[_rCode3]?fixedSizeCodes[_rCode3]:0;
+      var _sizeToSet;
+      if(_fSz3>0){
+        /* كود مخصص: المتبقي = حجم العلبة - أيام رمضان */
+        var _rem3=_fSz3-ramLeft;
+        _sizeToSet=_rem3>0?_rem3:0;
+      } else {
+        _sizeToSet=normalDays;
+      }
+      if(_sizeToSet>0){
+        var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=_sizeToSet;fire(sInp);}
+      }
+    }
     /* ── تواريخ ── */
     if(sdi>=0&&tds[sdi]){var sdInp=tds[sdi].querySelector("input[type='date']");if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
     if(ei>=0&&tds[ei]){var eInp=tds[ei].querySelector('input');if(eInp){eInp.value=normalEndDate;fire(eInp);}}
