@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.6';
+var APP_VERSION='140.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,16 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '140.0':{
+    title:'🧠 تكرار ذكي بمبدأ الأوقات — مش حالات مخصصة',
+    features:[
+      {icon:'🧠',text:'مبدأ جديد: التكرار يتقرر بناءً على انتظام الفروق بين الأوقات الفعلية'},
+      {icon:'✅',text:'مرتين: لو الـ gap مش 12h بالظبط → تكرار (مثال: بعد الفطار والغدا = 9,14 → gap=5h → تكرار)'},
+      {icon:'✅',text:'مرتين بالانتظام: فطار+عشا=9,21 (gap=12h) أو قبل فطار+عشا=8,20 (gap=12h) → مفيش تكرار'},
+      {icon:'✅',text:'3 مرات: لو أي فرق بين الأوقات مختلف → تكرار (بعد الفطار+الغدا+العشا = 9,14,21 → gaps 5h,7h → تكرار)'},
+      {icon:'🔧',text:'إصلاح: قبل الغدا والعشا / بعد الغدا والعشا / قبل الفطار والغدا كانت بتتجاهل التكرار'}
+    ]
+  },
   '138.6':{
     title:'📦 كسر قاعدة الأكواد المخصصة + علبة 14 = 14 يوم + إصلاح نوتات رمضان',
     features:[
@@ -2470,17 +2480,54 @@ function getCodeAwareTime(timeResult,itemCode){
   return timeResult;
 }
 
+/* ── Helper: استخرج الأوقات الفعلية من الـ note بناءً على الكلمات ── */
+function getMealTimesFromNote(note){
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+  var isBefore=/قبل/i.test(s);
+  var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
+  var hasL=/غدا|غداء|الغدا|الغداء|lunch/i.test(s);
+  var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
+  var times=[];
+  if(hasB) times.push(isBefore?8:9);
+  if(hasL) times.push(isBefore?13:14);
+  if(hasD) times.push(isBefore?20:21);
+  times.sort(function(a,b){return a-b;});
+  return times;
+}
+
+/* ── المبدأ الجديد: هل الأوقات غير منتظمة؟ ──
+   - مرتين: منتظم فقط لو الـ gap = 12h بالظبط (فطار+عشا=9,21 أو قبل فطار+عشا=8,20)
+   - 3 مرات: منتظم فقط لو كل الفروق متساوية
+   لو غير منتظم → لازم تكرار ──*/
+function needsDuplicateByTime(times){
+  if(times.length<2) return false;
+  var gaps=[];
+  for(var i=1;i<times.length;i++) gaps.push(times[i]-times[i-1]);
+  if(times.length===2) return Math.abs(gaps[0]-12)>0.5;
+  var minG=Math.min.apply(null,gaps);var maxG=Math.max.apply(null,gaps);
+  return (maxG-minG)>0.5;
+}
+
 function shouldDuplicateRow(note){
   var d=smartDoseRecognizer(note);
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
   var isEvery8=/كل\s*8|every\s*8|q8h/i.test(s);
   if(isEvery8||d.count===3)return{type:'three',doseInfo:d,isBefore:d.isBefore};
-  var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
-  if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
-  var isRegularTwice=((d.hasB||d.hasM)&&(d.hasD||d.hasE))||/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
-  if(d.count===2&&!isRegularTwice)return{type:'two',doseInfo:d,isBefore:d.isBefore};
   var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
   if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
+
+  /* ── المبدأ الجديد: احسب الأوقات الفعلية وشوف لو منتظمة ── */
+  var mealTimes=getMealTimesFromNote(note);
+  if(mealTimes.length>=2&&needsDuplicateByTime(mealTimes)){
+    var dupType=mealTimes.length>=3?'three':'two';
+    return{type:dupType,doseInfo:d,isBefore:d.isBefore};
+  }
+
+  /* ── الحالات القديمة للكلمات غير الوجبات (صباح/ظهر/عصر/مساء) ── */
+  var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
+  if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  var isRegularTwice=/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
+  if(d.count===2&&!isRegularTwice)return{type:'two',doseInfo:d,isBefore:d.isBefore};
   return null;
 }
 
