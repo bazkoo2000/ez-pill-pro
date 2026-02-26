@@ -2526,8 +2526,9 @@ function shouldDuplicateRow(note){
   /* ── الحالات القديمة للكلمات غير الوجبات (صباح/ظهر/عصر/مساء) ── */
   var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
   if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  /* count===2 فقط لو مفيش أوقات وجبات واضحة (اللي اتحسبت فوق بالمبدأ الجديد) */
   var isRegularTwice=/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
-  if(d.count===2&&!isRegularTwice)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  if(d.count===2&&!isRegularTwice&&mealTimes.length===0)return{type:'two',doseInfo:d,isBefore:d.isBefore};
   return null;
 }
 
