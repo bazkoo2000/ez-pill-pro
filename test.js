@@ -2618,6 +2618,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var on=get(r.querySelectorAll('td')[niIdx]);var isEn=/[a-z]/i.test(on)||ni.doseInfo.language==='english';
     var p=ni.isBefore?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد ');
     var bf=isEn?'Breakfast':'الفطار';var ln=isEn?'Lunch':'الغداء';var dn=isEn?'Dinner':'العشاء';
+    /* ── كشف قبل/بعد لكل وجبة بشكل مستقل من النوت الأصلية ── */
+    var _onN=(on||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+    function _mp(mRe,bfTm,afTm){mRe.lastIndex=0;var _m=mRe.exec(_onN);if(!_m)return{pre:isEn?'After ':'بعد ',t:afTm};var ix=_m.index;var bp=_onN.lastIndexOf('قبل',ix);var ap=_onN.lastIndexOf('بعد',ix);var ib=(bp>ap);return{pre:ib?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد '),t:ib?bfTm:afTm};}
+    var mB=_mp(/فطر|فطار|فطور|افطار|breakfast|fatur|ftor/gi,'08:00','09:00');
+    var mL=_mp(/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/gi,'13:00','14:00');
+    var mD=_mp(/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/gi,'20:00','21:00');
     var m_lbl=isEn?'Morning':'صباحا';var n_lbl=isEn?'Noon':'ظهرا';var a_lbl=isEn?'Afternoon':'عصرا';var e_lbl=isEn?'Evening':'مساءا';
     var calcQ=1;if(qi>=0){var cur=parseInt(get(tds[qi]))||1;calcQ=cur;}
     var dupRows=[];var meals=[];
@@ -2632,9 +2638,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1='12:00';n2=e_lbl;t2='21:30';meals=['الظهر','المساء'];}
       else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';meals=['الصباح','العصر'];}
       else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1='15:00';n2=e_lbl;t2='21:30';meals=['العصر','المساء'];}
-      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
-      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1='13:00';n2=p+dn;t2='20:00';}else{n1=p+ln;t1='14:00';n2=p+dn;t2='21:00';}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){n1=mB.pre+bf;t1=mB.t;n2=mL.pre+ln;t2=mL.t;meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
+      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){n1=mL.pre+ln;t1=mL.t;n2=mD.pre+dn;t2=mD.t;meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
+      else{n1=mB.pre+bf;t1=mB.t;n2=mD.pre+dn;t2=mD.t;meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
     } else if(ni.type==='three'){
@@ -2646,7 +2652,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
       var n1='',t1='',n2='',t2='',n3='',t3='';
       if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';n3=e_lbl;t3='21:30';meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
+      else{n1=mB.pre+bf;t1=mB.t;n2=mL.pre+ln;t2=mL.t;n3=mD.pre+dn;t3=mD.t;meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
     } else if(ni.type==='q6h'){
