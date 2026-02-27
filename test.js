@@ -1799,13 +1799,15 @@ window._ezApplyRamadanSplit=function(daysLeft){
     var evryVal=evi>=0&&tds[evi]?get(tds[evi]):'24';
     var sizeVal=si>=0&&tds[si]?get(tds[si]):'0';
     var qtyVal=qi>=0&&tds[qi]?get(tds[qi]):'1';
+    var codeVal=ci>=0&&tds[ci]?(function(td){var t=get(td);var m=t.match(/\d+/);return m?m[0]:'';})( tds[ci]):'';
+    var fixedSz=codeVal&&fixedSizeCodes&&fixedSizeCodes[codeVal]?fixedSizeCodes[codeVal]:0;
     /* هل صف رمضان؟ (فطار أو سحور) */
     var isRam=noteVal.indexOf('الفطار')>-1||noteVal.indexOf('السحور')>-1
               ||noteVal.indexOf('Iftar')>-1||noteVal.indexOf('Suhoor')>-1
               ||noteVal.indexOf('After Iftar')>-1||noteVal.indexOf('Before Suhoor')>-1
               ||noteVal.indexOf('التراويح')>-1||noteVal.indexOf('Tarawih')>-1;
     rowsData.push({row:r,timeVal:timeVal,noteVal:noteVal,evryVal:evryVal,
-                   sizeVal:sizeVal,qtyVal:qtyVal,isRam:isRam});
+                   sizeVal:sizeVal,qtyVal:qtyVal,isRam:isRam,codeVal:codeVal,fixedSz:fixedSz});
   });
 
   /* لكل صف رمضان: نضبط الـ size = ramLeft والـ end date = ramEndDate */
@@ -1862,8 +1864,7 @@ window._ezApplyRamadanSplit=function(daysLeft){
       if(ti>=0&&ntds[ti]){var tInp=ntds[ti].querySelector('input[type=\'time\']');if(tInp){tInp.value=newTime;fire(tInp);}}
       if(evi>=0&&ntds[evi]){var evInp=ntds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
       /* حساب الـ size الصح نسبياً */
-      var _rowCode=ci>=0&&tds[ci]?_gcCode(tds[ci]):'';
-      var _fixedSz=_rowCode&&fixedSizeCodes&&fixedSizeCodes[_rowCode]?fixedSizeCodes[_rowCode]:0;
+      var _fixedSz=rd.fixedSz||0;
       var _curSizeVal=parseInt(rd.sizeVal)||0;
       var _normalSizeVal,_ramSizeVal;
       if(_fixedSz>0){
@@ -1881,16 +1882,16 @@ window._ezApplyRamadanSplit=function(daysLeft){
       /* size نسخة عادية */
       if(si>=0&&ntds[si]){var snInp=ntds[si].querySelector('input,textarea');if(snInp){snInp.value=_normalSizeVal;fire(snInp);}}
       /* start date = normalStartDate */
-      if(sdi>=0&&ntds[sdi]){var sdInp=ntds[sdi].querySelector('input[type=\'date\']');if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
+      if(sdi>=0&&ntds[sdi]){var sdInp=ntds[sdi].querySelector('input[type='+'\'date\''+']');if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
       /* end date = normalEndDate */
       if(ei>=0&&ntds[ei]){var enInp=ntds[ei].querySelector('input');if(enInp){enInp.value=normalEndDate;fire(enInp);}}
 
       normalRowsToInsert.push({afterRow:rd.row,newRow:normalRow});
     } else {
-      /* صف عادي (مش رمضان): نحدث فقط - لو كود مخصص يفضل بحجمه */
-      var _rCode2=ci>=0&&tds[ci]?_gcCode(tds[ci]):'';
-      var _fSz2=_rCode2&&fixedSizeCodes&&fixedSizeCodes[_rCode2]?fixedSizeCodes[_rCode2]:0;
-      if(si>=0&&tds[si]){var sInp2=tds[si].querySelector('input,textarea');if(sInp2){sInp2.value=_fSz2>0?_fSz2:totalDays;fire(sInp2);}}
+      /* صف عادي (مش رمضان): لو كود مخصص لا نلمس الـ size (محسوب صح من processTable) */
+      if(!rd.fixedSz){
+        if(si>=0&&tds[si]){var sInp2=tds[si].querySelector('input,textarea');if(sInp2){sInp2.value=totalDays;fire(sInp2);}}
+      }
     }
   });
 
@@ -3096,9 +3097,16 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}
           continue;
         }
-        /* Single dose Ramadan: apply Ramadan time, size = rmDaysLeft (even for fixed codes) */
+        /* Single dose Ramadan: apply Ramadan time
+           - كود مخصص: يأخذ حجمه الثابت دائماً بغض النظر عن أيام رمضان
+           - عادي: size = rmDaysLeft */
         var rmEvery=rd.ramadanOverrideEvery||24;
-        var _rmDays=window._rmDaysLeft&&window._rmDaysLeft>0?window._rmDaysLeft:rd.calculatedSize;
+        var _rmDays;
+        if(rd.hasFixedSize){
+          _rmDays=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode]||rd.calculatedSize;
+        } else {
+          _rmDays=window._rmDaysLeft&&window._rmDaysLeft>0?window._rmDaysLeft:rd.calculatedSize;
+        }
         setEvry(tds_nodes[ei_main],String(rmEvery));
         setSize(tds_nodes[si_main],_rmDays);
         setTime(r_node,rd.ramadanInfo.time);
