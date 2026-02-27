@@ -728,10 +728,15 @@ function _renderPackWarningBanner(){
   /* Show item details — ONLY items causing mismatch (28/56 based) */
   var _mismatchItems=scan.items.filter(function(si){return si.effDays===28||si.effDays===56||si.effDays===84||si.packSize===28||si.packSize===56;});
   if(_mismatchItems.length>0){
-    html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
+    html+='<div style="margin-top:6px;padding:8px 10px;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.2);border-radius:10px;direction:rtl">';
     for(var k=0;k<_mismatchItems.length;k++){
       var si=_mismatchItems[k];
-      html+='<div>'+si.name.substring(0,30)+' → <b>'+si.packSize+'</b> حبة'+(si.tpd>1?' (×'+si.tpd+')':'')+' = <b>'+si.effDays+'</b> يوم</div>';
+      html+='<div style="font-size:12px;font-weight:800;color:#991b1b;padding:4px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+      html+='<span style="font-size:13px">💊</span>';
+      html+='<span style="color:#1e1b4b">'+si.name.substring(0,40)+'</span>';
+      html+='<span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:900">'+si.packSize+' حبة = '+si.effDays+' يوم</span>';
+      if(si.tpd>1) html+='<span style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px;font-weight:800">×'+si.tpd+' يومياً</span>';
+      html+='</div>';
     }
     html+='</div>';
   }
