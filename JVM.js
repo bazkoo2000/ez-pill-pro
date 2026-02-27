@@ -13,9 +13,10 @@ var CHANGELOG={
     features:[
       {icon:'🧠',text:'الكود يفهم: 30=شهر(qty1) / 60=شهرين(qty2) / 90=ثلاثة(qty3) ويقترح التعديل'},
       {icon:'📦',text:'تعديل Qty تلقائي مع Size حسب الأيام المختارة (28 أو 30)'},
-      {icon:'🔢',text:'خانة رقم من فوق + زر "تطبيق على الكل" لتوحيد كل الأعداد'},
+      {icon:'🔢',text:'زر "تطبيق على الكل" ذكي — كل صنف ياخد الـ Qty الصح بتاعه'},
       {icon:'✅',text:'زر "تطبيق التعديلات" بدل "تم المراجعة" — كل حاجة بتأكيدك'},
-      {icon:'⚡',text:'الأعداد الغريبة (7/14/45/...) تظهر مع خانة تعديل يدوي'}
+      {icon:'💾',text:'حفظ ولصق النوتات بين التابات — احفظ من القديم والصق في الجديد'},
+      {icon:'🔴',text:'الصنف المختلف في الأيام يتعلّم بإطار أحمر ويطلع فوق'}
     ]
   },
   '140.2':{
@@ -401,7 +402,6 @@ var _defaultFixedSizeCodes={
   '100013167':20,
   '100013423':10,
   '100013431':15,
-  '100013562':20,
   '100014565':6,
   '100015947':24,
   '100015955':24,
@@ -672,7 +672,10 @@ function _scanPackSizeWarnings(dialogM,dialogT){
   var has28=false,has30=false;
   for(var j=0;j<allItems.length;j++){
     var ed=allItems[j].effDays;
-    if(ed===28||ed===56||ed===84) has28=true;
+    /* Only flag as 28-based if effDays actually falls short of 30
+       e.g. 56 pack ÷ 1/day = 56 days → covers 30, no problem
+            56 pack ÷ 2/day = 28 days → less than 30, flag it */
+    if(ed===28||ed===14) has28=true;
     if(ed===30||ed===60||ed===90) has30=true;
   }
 
@@ -751,12 +754,17 @@ function _renderPackWarningBanner(){
   }
 
   /* Show item details — ONLY items causing mismatch (28/56 based) */
-  var _mismatchItems=scan.items.filter(function(si){return si.effDays===28||si.effDays===56||si.effDays===84||si.packSize===28||si.packSize===56;});
+  var _mismatchItems=scan.items.filter(function(si){return si.effDays===28||si.effDays===14;});
   if(_mismatchItems.length>0){
-    html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
+    html+='<div style="margin-top:6px;padding:8px 10px;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.2);border-radius:10px;direction:rtl">';
     for(var k=0;k<_mismatchItems.length;k++){
       var si=_mismatchItems[k];
-      html+='<div>'+si.name.substring(0,30)+' → <b>'+si.packSize+'</b> حبة'+(si.tpd>1?' (×'+si.tpd+')':'')+' = <b>'+si.effDays+'</b> يوم</div>';
+      html+='<div style="font-size:12px;font-weight:800;color:#991b1b;padding:4px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+      html+='<span style="font-size:13px">💊</span>';
+      html+='<span style="color:#1e1b4b">'+si.name.substring(0,40)+'</span>';
+      html+='<span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:900">'+si.packSize+' حبة = '+si.effDays+' يوم</span>';
+      if(si.tpd>1) html+='<span style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px;font-weight:800">×'+si.tpd+' يومياً</span>';
+      html+='</div>';
     }
     html+='</div>';
   }
@@ -1240,6 +1248,138 @@ window.ezPreviewAlerts=function(){
   document.body.appendChild(overlay);
 };
 
+/* ══════════════════════════════════════════
+   SAVE / PASTE NOTES (Cross-tab note transfer)
+   ══════════════════════════════════════════ */
+window.ezSaveNotes=function(){
+  var tb=_ezFindTable();
+  if(!tb){window.ezShowToast('لم يتم العثور على الجدول','error');return;}
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var ni=_ezIdx(hs,'note'),ci=_ezIdx(hs,'code'),nmi=_ezIdx(hs,'name');
+  if(ni<0||ci<0){window.ezShowToast('أعمدة Note أو Code مش موجودة','error');return;}
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+  var saved={};var count=0;
+  for(var i=0;i<rows.length;i++){
+    var tds=rows[i].querySelectorAll('td');
+    if(tds.length<=Math.max(ni,ci)) continue;
+    var code=(_ezGet(tds[ci]).match(/\d+/)||[''])[0];
+    if(!code) continue;
+    var inp=tds[ni].querySelector('input,textarea');
+    var note=inp?inp.value:(tds[ni].innerText||tds[ni].textContent).trim();
+    if(!note||note.length<2) continue;
+    var name=nmi>=0?_ezGet(tds[nmi]):'';
+    saved[code]={note:note,name:name};
+    count++;
+  }
+  if(count===0){window.ezShowToast('مفيش نوتات لحفظها','info');return;}
+  try{
+    localStorage.setItem('ez_pill_saved_notes',JSON.stringify(saved));
+    localStorage.setItem('ez_pill_saved_notes_time',new Date().toLocaleString('ar-EG'));
+    window.ezShowToast('💾 تم حفظ '+count+' نوتة — جاهزة للصق في تاب جديد','success');
+    ezBeep('success');
+  }catch(e){window.ezShowToast('❌ خطأ في الحفظ: '+e.message,'error');}
+};
+
+window.ezPasteNotes=function(){
+  var raw=localStorage.getItem('ez_pill_saved_notes');
+  if(!raw){window.ezShowToast('مفيش نوتات محفوظة — احفظ الأول من التاب القديم 💾','info');return;}
+  var saved;
+  try{saved=JSON.parse(raw);}catch(e){window.ezShowToast('❌ بيانات محفوظة تالفة','error');return;}
+  var savedTime=localStorage.getItem('ez_pill_saved_notes_time')||'';
+  var savedCodes=Object.keys(saved);
+  if(savedCodes.length===0){window.ezShowToast('مفيش نوتات محفوظة','info');return;}
+
+  var tb=_ezFindTable();
+  if(!tb){window.ezShowToast('لم يتم العثور على الجدول','error');return;}
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var ni=_ezIdx(hs,'note'),ci=_ezIdx(hs,'code'),nmi=_ezIdx(hs,'name');
+  if(ni<0||ci<0){window.ezShowToast('أعمدة Note أو Code مش موجودة','error');return;}
+  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
+
+  /* Build preview: match codes */
+  var matches=[];var unmatched=[];
+  for(var i=0;i<rows.length;i++){
+    var tds=rows[i].querySelectorAll('td');
+    if(tds.length<=Math.max(ni,ci)) continue;
+    var code=(_ezGet(tds[ci]).match(/\d+/)||[''])[0];
+    if(!code) continue;
+    var name=nmi>=0?_ezGet(tds[nmi]):'صنف '+(i+1);
+    var curInp=tds[ni].querySelector('input,textarea');
+    var curNote=curInp?curInp.value:(tds[ni].innerText||'').trim();
+    if(saved[code]){
+      matches.push({rowIdx:i,code:code,name:name,oldNote:curNote,newNote:saved[code].note,row:rows[i],tds:tds});
+    }
+  }
+
+  if(matches.length===0){window.ezShowToast('لم يتم العثور على أكواد متطابقة','info');return;}
+
+  /* Show confirmation dialog */
+  var html='<div style="width:480px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.15);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif">';
+  html+='<div style="height:3px;background:linear-gradient(90deg,#10b981,#06b6d4,#10b981);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
+  html+='<div style="padding:14px 20px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(129,140,248,0.08)">';
+  html+='<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(145deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(16,185,129,0.25)">📥</div>';
+  html+='<div><div style="font-size:15px;font-weight:900;color:#1e1b4b">لصق النوتات المحفوظة</div>';
+  html+='<div style="font-size:10px;font-weight:700;color:#64748b">محفوظ: '+savedTime+' · '+savedCodes.length+' صنف → تطابق: <b style="color:#059669">'+matches.length+'</b></div></div></div>';
+  html+='<div style="padding:10px 16px;max-height:350px;overflow-y:auto">';
+  for(var m=0;m<matches.length;m++){
+    var mt=matches[m];
+    var shortName=mt.name.length>35?mt.name.substring(0,35)+'…':mt.name;
+    var notePreview=mt.newNote.length>50?mt.newNote.substring(0,50)+'…':mt.newNote;
+    html+='<div style="background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 10px;margin-bottom:6px;direction:rtl">';
+    html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">';
+    html+='<input type="checkbox" id="ez-paste-chk-'+m+'" checked style="accent-color:#10b981;width:16px;height:16px" />';
+    html+='<span style="font-size:12px;font-weight:800;color:#1e1b4b;flex:1">'+shortName+'</span>';
+    html+='<span style="font-size:9px;font-weight:700;color:#64748b;background:rgba(0,0,0,0.04);padding:2px 6px;border-radius:4px">'+mt.code+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:11px;font-weight:700;color:#059669;background:rgba(16,185,129,0.06);padding:4px 8px;border-radius:6px">📝 '+notePreview+'</div>';
+    if(mt.oldNote&&mt.oldNote.length>1){html+='<div style="font-size:9px;font-weight:700;color:#94a3b8;margin-top:3px">الحالي: '+mt.oldNote.substring(0,40)+'</div>';}
+    html+='</div>';
+  }
+  html+='</div>';
+  html+='<div style="padding:10px 16px 14px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
+  html+='<button onclick="window._ezDoPasteNotes()" style="flex:1;height:40px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s">✅ لصق المحدد</button>';
+  html+='<button onclick="document.getElementById(\'ez-paste-overlay\').remove()" style="height:40px;padding:0 16px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.15);transition:all 0.3s">إلغاء</button>';
+  html+='</div></div>';
+
+  var overlay=document.createElement('div');
+  overlay.id='ez-paste-overlay';
+  overlay.innerHTML=html;
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,15,35,0.5);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center';
+  document.body.appendChild(overlay);
+
+  /* Store matches for _ezDoPasteNotes */
+  window._ezPasteMatches=matches;
+};
+
+window._ezDoPasteNotes=function(){
+  var matches=window._ezPasteMatches;
+  if(!matches){return;}
+  var pasted=0;
+  for(var m=0;m<matches.length;m++){
+    var chk=document.getElementById('ez-paste-chk-'+m);
+    if(chk&&!chk.checked) continue;
+    var mt=matches[m];
+    var inp=mt.tds[_ezIdx(mt.row.closest('table').querySelector('tr').querySelectorAll('th,td'),'note')];
+    /* Safer: find note cell directly */
+    var tb2=mt.row.closest('table');
+    var h2=tb2.querySelector('tr');var hs2=h2.querySelectorAll('th,td');
+    var ni2=_ezIdx(hs2,'note');
+    if(ni2<0) continue;
+    var noteCell=mt.tds[ni2];
+    if(!noteCell) continue;
+    var noteInp=noteCell.querySelector('input,textarea');
+    if(noteInp){noteInp.value=mt.newNote;_ezFire(noteInp);}
+    else{noteCell.textContent=mt.newNote;}
+    pasted++;
+  }
+  var overlay=document.getElementById('ez-paste-overlay');
+  if(overlay) overlay.remove();
+  window.ezShowToast('✅ تم لصق '+pasted+' نوتة بنجاح','success');
+  ezBeep('success');
+  /* Refresh pack warnings if dialog is open */
+  try{_renderPackWarningBanner();}catch(e){}
+};
+
 window.showWarnings=function(warnings,callback){
   if(!warnings||warnings.length===0){callback();return;}
   var html='<div style="width:500px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif;animation:dialogEnter 0.5s cubic-bezier(0.16,1,0.3,1)">';
@@ -1253,12 +1393,8 @@ window.showWarnings=function(warnings,callback){
   for(var _dw=0;_dw<warnings.length;_dw++){if(warnings[_dw].type==='days')_hasDaysWarnings=true;}
   if(_hasDaysWarnings){
     html+='<div style="padding:10px 18px;background:rgba(99,102,241,0.04);border-bottom:1px solid rgba(129,140,248,0.08);direction:rtl">';
-    html+='<div style="font-size:11px;font-weight:800;color:#3730a3;margin-bottom:6px">⚡ تطبيق على كل تحذيرات الأيام دفعة واحدة:</div>';
-    html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
-    html+='<div style="flex:1;min-width:70px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:2px">Qty</label>';
-    html+='<input type="number" id="ez-global-qty" value="1" min="1" max="12" style="width:100%;padding:6px 8px;border:1.5px solid rgba(99,102,241,0.2);border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
-    html+='<div style="flex:1;min-width:70px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:2px">Size (أيام)</label>';
-    html+='<input type="number" id="ez-global-size" value="'+((warnings[0]&&warnings[0]._selectedT)||30)+'" min="1" max="365" style="width:100%;padding:6px 8px;border:1.5px solid rgba(99,102,241,0.2);border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
+    html+='<div style="display:flex;gap:8px;align-items:center">';
+    html+='<div style="flex:1;font-size:11px;font-weight:800;color:#3730a3">⚡ تطبيق الاقتراحات الذكية على كل الأصناف<br><span style="font-size:9px;font-weight:700;color:#6366f1">30→qty1 · 60→qty2 · 90→qty3 — كل صنف حسب عدده</span></div>';
     html+='<button onclick="window.ezApplyAllDays()" style="height:36px;padding:0 16px;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 3px 10px rgba(99,102,241,0.2);transition:all 0.3s;white-space:nowrap">⚡ تطبيق على الكل</button>';
     html+='</div></div>';
   }
@@ -1542,19 +1678,24 @@ window.skipAllWarnings=function(){
 
 /* ── Apply All Days Warnings at once from global inputs ── */
 window.ezApplyAllDays=function(){
-  var gQty=parseInt(document.getElementById('ez-global-qty').value)||1;
-  var gSize=parseInt(document.getElementById('ez-global-size').value)||30;
   var appliedCount=0;
+  var _selT=window._ezLastTVal||30;
   for(var i=0;i<warningQueue.length;i++){
     var w=warningQueue[i];
     if(w.type!=='days'||w._skipped) continue;
-    /* Update the per-row inputs to match */
+    var ext=w._extractedDays||0;
+    /* Smart: calculate qty per item based on its own extracted days */
+    var smartQty=1;var smartSize=_selT;
+    if(ext===30||ext===28){smartQty=1;}
+    else if(ext===60||ext===56){smartQty=2;}
+    else if(ext===90||ext===84){smartQty=3;}
+    else{smartQty=Math.max(1,Math.round(ext/_selT));}
+    /* Update the per-row inputs */
     var qInp=document.getElementById('edit-qty-'+i);
     var sInp=document.getElementById('edit-size-'+i);
-    if(qInp) qInp.value=gQty;
-    if(sInp) sInp.value=gSize;
-    /* Apply via onEdit */
-    if(w.onEdit) w.onEdit(gQty,gSize);
+    if(qInp) qInp.value=smartQty;
+    if(sInp) sInp.value=smartSize;
+    if(w.onEdit) w.onEdit(smartQty,smartSize);
     /* Mark card as applied */
     var card=document.getElementById('warn-card-'+i);
     if(card){
@@ -1563,12 +1704,12 @@ window.ezApplyAllDays=function(){
       for(var b=0;b<btns.length;b++) btns[b].remove();
       var badge=document.createElement('div');
       badge.style.cssText='text-align:center;font-size:13px;font-weight:800;color:#059669;padding:6px;background:rgba(16,185,129,0.06);border-radius:8px;margin-top:6px';
-      badge.textContent='✅ تم التطبيق (Qty='+gQty+' Size='+gSize+')';
+      badge.textContent='✅ تم (Qty='+smartQty+' Size='+smartSize+')';
       card.appendChild(badge);
     }
     appliedCount++;
   }
-  window.ezShowToast('✅ تم تطبيق Qty='+gQty+' Size='+gSize+' على '+appliedCount+' صنف','success');
+  window.ezShowToast('✅ تم تطبيق الاقتراحات الذكية على '+appliedCount+' صنف','success');
 };
 
 /* ── Apply All Warnings (bottom button) ── */
@@ -3159,10 +3300,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         if(_it14.choice==='2') _nonFixedDays.push(28);
         /* choice=1 → 14, but 14 does NOT trigger fixed code breaking */
       }
-      /* Check if any non-fixed item has exactly 28 days */
+      /* Check if any non-fixed item has effDays < 30 (28-based) */
       var _has28NonFixed=false;
       for(var _pi3=0;_pi3<_nonFixedDays.length;_pi3++){
-        if(_nonFixedDays[_pi3]===28||_nonFixedDays[_pi3]===56||_nonFixedDays[_pi3]===84){_has28NonFixed=true;break;}
+        if(_nonFixedDays[_pi3]===28||_nonFixedDays[_pi3]===14){_has28NonFixed=true;break;}
       }
       console.log('PACK PROCESS: nonFixedDays='+JSON.stringify(_nonFixedDays)+' has28NonFixed='+_has28NonFixed);
 
@@ -4371,6 +4512,8 @@ d_box.innerHTML='\
     <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
     <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
+    <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
+    <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
     <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
   </div>\
 <div class="ez-footer"><span>EZ_PILL JVM · V'+APP_VERSION+' · علي الباز</span></div>';
