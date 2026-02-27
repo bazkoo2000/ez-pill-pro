@@ -3126,9 +3126,16 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}
           continue;
         }
-        /* Single dose Ramadan: apply Ramadan time, size = rmDaysLeft (even for fixed codes) */
+        /* Single dose Ramadan: apply Ramadan time
+           - كود مخصص: يأخذ حجمه الثابت دائماً بغض النظر عن أيام رمضان
+           - عادي: size = rmDaysLeft */
         var rmEvery=rd.ramadanOverrideEvery||24;
-        var _rmDays=window._rmDaysLeft&&window._rmDaysLeft>0?window._rmDaysLeft:rd.calculatedSize;
+        var _rmDays;
+        if(rd.hasFixedSize){
+          _rmDays=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode]||rd.calculatedSize;
+        } else {
+          _rmDays=window._rmDaysLeft&&window._rmDaysLeft>0?window._rmDaysLeft:rd.calculatedSize;
+        }
         setEvry(tds_nodes[ei_main],String(rmEvery));
         setSize(tds_nodes[si_main],_rmDays);
         setTime(r_node,rd.ramadanInfo.time);
