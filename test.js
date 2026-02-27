@@ -393,7 +393,6 @@ var _defaultFixedSizeCodes={
   '100013167':20,
   '100013423':10,
   '100013431':15,
-  '100013562':20,
   '100014565':6,
   '100015947':24,
   '100015955':24,
@@ -1225,12 +1224,8 @@ window.showWarnings=function(warnings,callback){
   for(var _dw=0;_dw<warnings.length;_dw++){if(warnings[_dw].type==='days')_hasDaysWarnings=true;}
   if(_hasDaysWarnings){
     html+='<div style="padding:10px 18px;background:rgba(99,102,241,0.04);border-bottom:1px solid rgba(129,140,248,0.08);direction:rtl">';
-    html+='<div style="font-size:11px;font-weight:800;color:#3730a3;margin-bottom:6px">⚡ تطبيق على كل تحذيرات الأيام دفعة واحدة:</div>';
-    html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
-    html+='<div style="flex:1;min-width:70px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:2px">Qty</label>';
-    html+='<input type="number" id="ez-global-qty" value="1" min="1" max="12" style="width:100%;padding:6px 8px;border:1.5px solid rgba(99,102,241,0.2);border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
-    html+='<div style="flex:1;min-width:70px"><label style="display:block;font-size:9px;font-weight:800;color:#6366f1;margin-bottom:2px">Size (أيام)</label>';
-    html+='<input type="number" id="ez-global-size" value="'+((warnings[0]&&warnings[0]._selectedT)||30)+'" min="1" max="365" style="width:100%;padding:6px 8px;border:1.5px solid rgba(99,102,241,0.2);border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
+    html+='<div style="display:flex;gap:8px;align-items:center">';
+    html+='<div style="flex:1;font-size:11px;font-weight:800;color:#3730a3">⚡ تطبيق الاقتراحات الذكية على كل الأصناف<br><span style="font-size:9px;font-weight:700;color:#6366f1">30→qty1 · 60→qty2 · 90→qty3 — كل صنف حسب عدده</span></div>';
     html+='<button onclick="window.ezApplyAllDays()" style="height:36px;padding:0 16px;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);box-shadow:0 3px 10px rgba(99,102,241,0.2);transition:all 0.3s;white-space:nowrap">⚡ تطبيق على الكل</button>';
     html+='</div></div>';
   }
@@ -1505,17 +1500,22 @@ window.skipAllWarnings=function(){
 };
 
 window.ezApplyAllDays=function(){
-  var gQty=parseInt(document.getElementById('ez-global-qty').value)||1;
-  var gSize=parseInt(document.getElementById('ez-global-size').value)||30;
   var appliedCount=0;
+  var _selT=window._ezLastTVal||30;
   for(var i=0;i<warningQueue.length;i++){
     var w=warningQueue[i];
     if(w.type!=='days'||w._skipped) continue;
+    var ext=w._extractedDays||0;
+    var smartQty=1;var smartSize=_selT;
+    if(ext===30||ext===28){smartQty=1;}
+    else if(ext===60||ext===56){smartQty=2;}
+    else if(ext===90||ext===84){smartQty=3;}
+    else{smartQty=Math.max(1,Math.round(ext/_selT));}
     var qInp=document.getElementById('edit-qty-'+i);
     var sInp=document.getElementById('edit-size-'+i);
-    if(qInp) qInp.value=gQty;
-    if(sInp) sInp.value=gSize;
-    if(w.onEdit) w.onEdit(gQty,gSize);
+    if(qInp) qInp.value=smartQty;
+    if(sInp) sInp.value=smartSize;
+    if(w.onEdit) w.onEdit(smartQty,smartSize);
     var card=document.getElementById('warn-card-'+i);
     if(card){
       card.style.cssText='background:rgba(16,185,129,0.06)!important;border:1.5px solid rgba(16,185,129,0.25)!important;border-radius:14px;padding:14px 16px;margin-bottom:10px';
@@ -1523,12 +1523,12 @@ window.ezApplyAllDays=function(){
       for(var b=0;b<btns.length;b++) btns[b].remove();
       var badge=document.createElement('div');
       badge.style.cssText='text-align:center;font-size:13px;font-weight:800;color:#059669;padding:6px;background:rgba(16,185,129,0.06);border-radius:8px;margin-top:6px';
-      badge.textContent='✅ تم التطبيق (Qty='+gQty+' Size='+gSize+')';
+      badge.textContent='✅ تم (Qty='+smartQty+' Size='+smartSize+')';
       card.appendChild(badge);
     }
     appliedCount++;
   }
-  window.ezShowToast('✅ تم تطبيق Qty='+gQty+' Size='+gSize+' على '+appliedCount+' صنف','success');
+  window.ezShowToast('✅ تم تطبيق الاقتراحات الذكية على '+appliedCount+' صنف','success');
 };
 
 window.ezApplyAllWarnings=function(){
