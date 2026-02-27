@@ -522,9 +522,9 @@ function ramadanMapNote(note){
   if(/قبل.*فطار|قبل.*فطور|قبل.*افطار|before.*iftar/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد الفطار / after iftar */
   if(/بعد.*فطار|بعد.*فطور|بعد.*افطار|after.*iftar/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
-  /* after/before breakfast تفضل كما هي - لا تتغير */
-  if(/before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Breakfast',time:RAMADAN_TIMES.beforeSuhoor};
-  if(/after.*breakfast/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Breakfast',time:RAMADAN_TIMES.afterSuhoor};
+  /* after/before breakfast: النوت تفضل كما هي بدون تغيير المسمى */
+  if(/before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Breakfast',time:RAMADAN_TIMES.beforeIftar};
+  if(/after.*breakfast/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Breakfast',time:RAMADAN_TIMES.afterIftar};
 
   /* ── Map dinner → Suhoor (NOT Iftar) ── */
   /* قبل العشاء / before dinner → قبل السحور */
