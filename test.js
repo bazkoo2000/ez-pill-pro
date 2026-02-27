@@ -726,11 +726,12 @@ function _renderPackWarningBanner(){
     }
   }
 
-  /* Show item details */
-  if(scan.items.length>0){
+  /* Show item details — ONLY items causing mismatch (28/56 based) */
+  var _mismatchItems=scan.items.filter(function(si){return si.effDays===28||si.effDays===56||si.effDays===84||si.packSize===28||si.packSize===56;});
+  if(_mismatchItems.length>0){
     html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
-    for(var k=0;k<scan.items.length;k++){
-      var si=scan.items[k];
+    for(var k=0;k<_mismatchItems.length;k++){
+      var si=_mismatchItems[k];
       html+='<div>'+si.name.substring(0,30)+' → <b>'+si.packSize+'</b> حبة'+(si.tpd>1?' (×'+si.tpd+')':'')+' = <b>'+si.effDays+'</b> يوم</div>';
     }
     html+='</div>';
@@ -1235,8 +1236,32 @@ window.showWarnings=function(warnings,callback){
   }
   html+='<div style="padding:14px 18px;max-height:420px;overflow-y:auto">';
 
-  for(var i=0;i<warnings.length;i++){
+  /* ── Detect outlier days warnings: find the "odd one out" ── */
+  var _daysCounts={};var _daysWarningIdxs=[];
+  for(var _di=0;_di<warnings.length;_di++){
+    if(warnings[_di].type==='days'&&warnings[_di]._extractedDays){
+      var _ed=warnings[_di]._extractedDays;
+      _daysCounts[_ed]=(_daysCounts[_ed]||0)+1;
+      _daysWarningIdxs.push(_di);
+    }
+  }
+  var _majorityDays=0;var _majorityCount=0;
+  for(var _dk in _daysCounts){if(_daysCounts[_dk]>_majorityCount){_majorityCount=_daysCounts[_dk];_majorityDays=parseInt(_dk);}}
+  var _outlierIdxs={};
+  if(_daysWarningIdxs.length>1){
+    for(var _oi=0;_oi<_daysWarningIdxs.length;_oi++){
+      var _wi=_daysWarningIdxs[_oi];
+      if(warnings[_wi]._extractedDays!==_majorityDays){_outlierIdxs[_wi]=true;}
+    }
+  }
+  var _renderOrder=[];
+  for(var _ro=0;_ro<warnings.length;_ro++){if(_outlierIdxs[_ro])_renderOrder.push(_ro);}
+  for(var _ro2=0;_ro2<warnings.length;_ro2++){if(!_outlierIdxs[_ro2])_renderOrder.push(_ro2);}
+
+  for(var _ri=0;_ri<_renderOrder.length;_ri++){
+    var i=_renderOrder[_ri];
     var w=warnings[i];
+    var _isOutlier=!!_outlierIdxs[i];
     var levelConfig={
       warning:{bg:'rgba(245,158,11,0.04)',bdr:'rgba(245,158,11,0.15)',icon:'⚠️',iconBg:'linear-gradient(145deg,#fbbf24,#f59e0b)',labelColor:'#92400e',labelBg:'rgba(245,158,11,0.08)',label:'تحذير'},
       danger:{bg:'rgba(239,68,68,0.04)',bdr:'rgba(239,68,68,0.15)',icon:'🚨',iconBg:'linear-gradient(145deg,#f87171,#ef4444)',labelColor:'#991b1b',labelBg:'rgba(239,68,68,0.08)',label:'هام'},
@@ -1290,7 +1315,8 @@ window.showWarnings=function(warnings,callback){
       actionLabel='تطبيق';
     }
 
-    html+='<div id="warn-card-'+i+'" style="background:'+lc.bg+';border:1.5px solid '+lc.bdr+';border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;transition:all 0.3s">';
+    html+='<div id="warn-card-'+i+'" style="background:'+(_isOutlier?'rgba(239,68,68,0.06)':lc.bg)+';border:'+(_isOutlier?'2.5px solid #ef4444':'1.5px solid '+lc.bdr)+';border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;transition:all 0.3s">';
+    if(_isOutlier){html+='<div style="position:absolute;top:-8px;right:12px;background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 10px;border-radius:10px;font-family:Cairo,sans-serif">⚠️ مختلف عن الباقي</div>';}
     html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
     html+='<div style="width:30px;height:30px;border-radius:9px;background:'+lc.iconBg+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.1);flex-shrink:0">'+lc.icon+'</div>';
     if(itemName) html+='<div style="flex:1;font-size:13px;font-weight:800;color:#1e1b4b;direction:rtl">'+itemName+'</div>';
