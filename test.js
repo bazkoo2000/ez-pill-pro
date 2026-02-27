@@ -2686,10 +2686,8 @@ function _ezDurMatchesSelection(extracted,m,t){
     if(Math.abs(extracted-m*30)<=3) return true;
   }
   if(Math.abs(extracted-t)<=3) return true;
-  /* multiples of t → handled via multiMonthQty, treat as match */
+  /* multiples of t فقط (مش multiples of 28 أو 30 بشكل عام) */
   if(extracted>t&&extracted%t===0) return true;
-  if(extracted>28&&extracted%28===0) return true;
-  if(extracted>30&&extracted%30===0) return true;
   return false;
 }
 
