@@ -659,7 +659,7 @@ function _scanPackSizeWarnings(dialogM,dialogT){
   var has28=false,has30=false;
   for(var j=0;j<allItems.length;j++){
     var ed=allItems[j].effDays;
-    if(ed===28||ed===56||ed===84) has28=true;
+    if(ed===28||ed===14) has28=true;
     if(ed===30||ed===60||ed===90) has30=true;
   }
   if(has28&&has30){
@@ -727,7 +727,7 @@ function _renderPackWarningBanner(){
   }
 
   /* Show item details — ONLY items causing mismatch (28/56 based) */
-  var _mismatchItems=scan.items.filter(function(si){return si.effDays===28||si.effDays===56||si.effDays===84||si.packSize===28||si.packSize===56;});
+  var _mismatchItems=scan.items.filter(function(si){return si.effDays===28||si.effDays===14;});
   if(_mismatchItems.length>0){
     html+='<div style="margin-top:6px;padding:8px 10px;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.2);border-radius:10px;direction:rtl">';
     for(var k=0;k<_mismatchItems.length;k++){
@@ -3228,7 +3228,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       /* Check if any non-fixed item has exactly 28 days */
       var _has28NonFixed=false;
       for(var _pi3=0;_pi3<_nonFixedDays.length;_pi3++){
-        if(_nonFixedDays[_pi3]===28||_nonFixedDays[_pi3]===56||_nonFixedDays[_pi3]===84){_has28NonFixed=true;break;}
+        if(_nonFixedDays[_pi3]===28||_nonFixedDays[_pi3]===14){_has28NonFixed=true;break;}
       }
       console.log('PACK PROCESS: nonFixedDays='+JSON.stringify(_nonFixedDays)+' has28NonFixed='+_has28NonFixed);
 
