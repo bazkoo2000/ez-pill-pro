@@ -1238,11 +1238,13 @@ window.showWarnings=function(warnings,callback){
       detail='الطبيب كتب جرعة 2 - يعني حبتين في الجرعة الواحدة. لو ضغطت تطبيق: الجرعة هتتغير لـ 2 والكمية هتتضاعف.';
       actionLabel='تغيير الجرعة لـ 2 وتضاعف الكمية';
     } else if(w.type==='days'){
-      var dayMatch=w.message.match(/"(\d+)\s*يوم"/);
-      var selectedMatch=w.message.match(/المحدد\s*(\d+)/);
       reason='📅 اختلاف في مدة العلاج';
-      detail='المكتوب في الملاحظات '+(dayMatch?dayMatch[1]:'')+' يوم، لكن المحدد '+(selectedMatch?selectedMatch[1]:'')+' يوم. لو ضغطت تطبيق: هيتعدل حسب القيمة اللي تحددها.';
-      actionLabel='تطبيق عدد الأيام';
+      var _wExt=w.extractedValue||w.currentValue;
+      var _wAdj=w.adjustedValue||w.currentValue;
+      var _wK=w.kMonths||1;
+      var _wT=w.tVal||30;
+      detail='مكتوب في الروشتة: '+_wExt+' يوم\n'+'الصح بناءً على اختيارك ('+_wT+' يوم): '+_wK+' × '+_wT+' = '+_wAdj+' يوم\nلو ضغطت تطبيق: هيتعدل إلى '+_wAdj+' يوم.';
+      actionLabel='تطبيق '+_wAdj+' يوم';
     } else if(w.type==='smallsplit'){
       reason='📏 كمية صغيرة بعد التقسيم';
       detail='بعد تقسيم الصنف لجرعات متعددة كل جرعة هتكون كمية قليلة. للعلم فقط.';
@@ -1329,6 +1331,7 @@ window.showWarnings=function(warnings,callback){
   html+='</div>';
   html+='<div style="padding:10px 18px 14px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px">';
   html+='<button onclick="window.closeWarnings()" style="flex:1;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#818cf8,#6366f1);box-shadow:0 4px 14px rgba(99,102,241,0.2);transition:all 0.3s">✅ تم المراجعة - متابعة</button>';
+  html+='<button onclick="window.applyAllWarnings()" style="height:42px;padding:0 16px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s">✅ تطبيق الكل</button>';
   html+='<button onclick="window.skipAllWarnings()" style="height:42px;padding:0 16px;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#ef4444;background:rgba(239,68,68,0.06);border:1.5px solid rgba(239,68,68,0.2);transition:all 0.3s">⏭️ تجاهل الكل</button>';
   html+='</div></div>';
 
@@ -1434,6 +1437,37 @@ window.skipAllWarnings=function(){
   }
   var overlay=document.getElementById('warning-overlay');
   if(overlay) overlay.remove();
+  if(window.warningCallback) window.warningCallback();
+};
+
+window.applyAllWarnings=function(){
+  /* تطبيق كل التحذيرات القابلة للتعديل دفعة واحدة بالقيم الافتراضية */
+  for(var i=0;i<warningQueue.length;i++){
+    var w=warningQueue[i];
+    if(w._skipped) continue;
+    if(w.type==='dose2'){
+      var rd2=window._ezRows?window._ezRows[w.rowIndex]:null;
+      if(rd2) rd2.forceDose2=true;
+    } else if(w.type==='days'&&w.onEdit){
+      /* تطبيق القيمة الافتراضية المكتوبة في الـ input */
+      var editInput=document.getElementById('edit-'+i);
+      var val=editInput?parseInt(editInput.value):w.currentValue;
+      w.onEdit(val);
+    } else if(w.type==='ramadan_unclear'&&w.onEdit){
+      var evSel=document.getElementById('edit-every-'+i);
+      var tInp=document.getElementById('edit-time-'+i);
+      if(evSel&&tInp) w.onEdit(parseInt(evSel.value),tInp.value);
+    } else if(w.type==='unrecognized_dose'&&w.onEdit){
+      var evSel2=document.getElementById('edit-every-'+i);
+      var tInp2=document.getElementById('edit-time-'+i);
+      var sInp2=document.getElementById('edit-size-'+i);
+      if(evSel2&&tInp2) w.onEdit(parseInt(evSel2.value),tInp2.value,sInp2?parseInt(sInp2.value):0);
+    }
+    w._skipped=true;
+  }
+  var overlay=document.getElementById('warning-overlay');
+  if(overlay) overlay.remove();
+  window.ezShowToast('✅ تم تطبيق كل التحذيرات','success');
   if(window.warningCallback) window.warningCallback();
 };
 
@@ -2652,6 +2686,10 @@ function _ezDurMatchesSelection(extracted,m,t){
     if(Math.abs(extracted-m*30)<=3) return true;
   }
   if(Math.abs(extracted-t)<=3) return true;
+  /* multiples of t → handled via multiMonthQty, treat as match */
+  if(extracted>t&&extracted%t===0) return true;
+  if(extracted>28&&extracted%28===0) return true;
+  if(extracted>30&&extracted%30===0) return true;
   return false;
 }
 
@@ -2921,10 +2959,24 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         }
       }
     }
-    var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;
-    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){if(!enableWarnings||_ezDurMatchesSelection(durationInfo.days,m,t)){calculatedDays=t;calculatedSize=t;}else{calculatedDays=durationInfo.days;calculatedSize=durationInfo.days;}}else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
+    var durationInfo=null;var hourlyInfo=null;var calculatedDays=t;var calculatedSize=t;var multiMonthQty=null;
+    if(autoDuration){durationInfo=extractDuration(fn_str);if(!durationInfo.hasDuration&&!durationInfo.isPRN&&!durationInfo.isUntilFinish){durationInfo=extractDuration(original_note);}if(durationInfo.hasDuration){
+      var _ex=durationInfo.days;
+      /* detect multiMonthQty: extracted = k×t (or k×28/k×30) */
+      var _kExact=(_ex>t&&_ex%t===0)?(_ex/t):null;
+      var _kAlt=null;
+      if(!_kExact&&_ex>28&&_ex%28===0&&t<=28) _kAlt=_ex/28;
+      if(!_kExact&&!_kAlt&&_ex>30&&_ex%30===0&&t>=30) _kAlt=_ex/30;
+      var _k=_kExact||_kAlt;
+      if(_k&&_k>=2&&_k<=12){
+        /* multi-month: set qty = k, size = t (per month), no warning */
+        multiMonthQty=_k;
+        calculatedDays=t;calculatedSize=t;
+      } else if(!enableWarnings||_ezDurMatchesSelection(_ex,m,t)){calculatedDays=t;calculatedSize=t;}
+      else{calculatedDays=_ex;calculatedSize=_ex;}
+    }else if(durationInfo.isPRN){calculatedDays=t;calculatedSize=Math.ceil(t/2);}else if(durationInfo.isUntilFinish){calculatedDays=t;calculatedSize=t;}}
     hourlyInfo=extractHourlyInterval(fn_str);var timesPerDay=1;if(hourlyInfo.hasInterval)timesPerDay=hourlyInfo.timesPerDay;
-    allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null});
+    allRowsData.push({row:r_node,tds:tds_nodes,itemCode:itemCode,itemName:itemName,note:fn_str,dui:dui_obj,hasFixedSize:hasFixedSize,isWeekly:h_s,durationInfo:durationInfo,hourlyInfo:hourlyInfo,calculatedDays:calculatedDays,calculatedSize:calculatedSize,timesPerDay:timesPerDay,extractedPillCount:null,warningOverride:false,ramadanInfo:ramadanInfo,ramadanOverrideEvery:null,multiMonthQty:multiMonthQty});
     /* Detect dose=2 patterns AFTER push so rowIndex is correct */
     var dose2pattern=/^2\s+(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/i;
     var dose2pattern2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
@@ -2981,12 +3033,19 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(rd.durationInfo&&rd.durationInfo.hasDuration&&!rd.hasFixedSize&&!rd.isWeekly){
         var extracted=rd.durationInfo.days;
         if(!_ezDurMatchesSelection(extracted,m,t)){
+          /* حساب القيمة المقترحة: أقرب مضاعف لـ t */
+          var _k=Math.max(1,Math.round(extracted/t));
+          var _adjustedVal=_k*t;
           warningQueue.push({
             level:'warning',
             message:'📅 الصنف: '+rd.itemName+' - مكتوب "'+extracted+' يوم" لكن الإجمالي '+(m*t)+' يوم ('+m+'×'+t+')',
             editable:true,
             editLabel:'عدد الأيام',
-            currentValue:extracted,
+            currentValue:_adjustedVal,
+            extractedValue:extracted,
+            adjustedValue:_adjustedVal,
+            kMonths:_k,
+            tVal:t,
             minValue:1,
             maxValue:365,
             rowIndex:i,
@@ -3136,10 +3195,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
 
       /* ── NORMAL MODE (original logic) ── */
-      if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
+      if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;var _qm=rd.multiMonthQty||m;setSize(qc,cv*_qm);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
       if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
-      if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;setSize(qc2,cv2*m);}
+      if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;var _qm2=rd.multiMonthQty||m;setSize(qc2,cv2*_qm2);}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
       /* Apply unrecognized_dose warning overrides if user set them */
       if(rd.unrecognizedTime){tm2_obj={time:rd.unrecognizedTime,isUnrecognized:false};}
