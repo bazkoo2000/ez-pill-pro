@@ -522,9 +522,12 @@ function ramadanMapNote(note){
 
   /* ── Check Iftar (Breakfast in Ramadan) ── */
   /* قبل الفطار / before iftar */
-  if(/قبل.*فطار|قبل.*فطور|قبل.*افطار|before.*iftar|before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  if(/قبل.*فطار|قبل.*فطور|قبل.*افطار|before.*iftar/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد الفطار / after iftar */
-  if(/بعد.*فطار|بعد.*فطور|بعد.*افطار|after.*iftar|after.*breakfast/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  if(/بعد.*فطار|بعد.*فطور|بعد.*افطار|after.*iftar/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  /* after/before breakfast: النوت تفضل كما هي بدون تغيير المسمى */
+  if(/before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Breakfast',time:RAMADAN_TIMES.beforeIftar};
+  if(/after.*breakfast/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Breakfast',time:RAMADAN_TIMES.afterIftar};
 
   /* ── Map dinner → Suhoor (NOT Iftar) ── */
   /* قبل العشاء / before dinner → قبل السحور */
@@ -740,14 +743,18 @@ function _renderPackWarningBanner(){
     }
   }
 
-  /* Show item details for standard items */
+  /* Show item details - بس الأصناف اللي عندها 28 يوم */
   if(scan.items.length>0){
-    html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
-    for(var k=0;k<scan.items.length;k++){
-      var si=scan.items[k];
-      html+='<div>'+si.name.substring(0,30)+' → <b>'+si.packSize+'</b> حبة'+(si.tpd>1?' (×'+si.tpd+')':'')+' = <b>'+si.effDays+'</b> يوم</div>';
+    var items28=scan.items.filter(function(si){return si.effDays===28||si.effDays===56||si.effDays===84;});
+    if(items28.length>0){
+      html+='<div style="margin-top:5px;padding:6px 8px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:9px;color:#64748b;direction:rtl">';
+      for(var k=0;k<items28.length;k++){
+        var si=items28[k];
+        html+='<div>'+si.name.substring(0,30)+' → <b>'+si.packSize+'</b> حبة'+(si.tpd>1?' (×'+si.tpd+')':'')+' = <b>'+si.effDays+'</b> يوم</div>';
+      }
+      html+='</div>';
     }
-    html+='</div>';
+    /* لو كلهم 30 يوم - لا نعرض قائمة الأصناف */
   }
 
   /* Fix button */
