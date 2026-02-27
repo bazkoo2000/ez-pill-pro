@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='138.6';
+var APP_VERSION='140.2';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,31 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '140.2':{
+    title:'🔄 تنبيه حجم العبوة ديناميكي — بيرجع تلقائياً',
+    features:[
+      {icon:'🔄',text:'التنبيه دلوقتي reactive — لو صححت لـ 28 وبعدين رجعت 30 التنبيه بيرجع تلقائياً'},
+      {icon:'👁️',text:'MutationObserver بيراقب تغيير الأيام في أي وقت ويعيد رسم التنبيه'}
+    ]
+  },
+  '140.1':{
+    title:'🍽️ دعم الغذاء/الغذا كبديل للغداء',
+    features:[
+      {icon:'🍽️',text:'إضافة: الغذاء / الغذا / الغذاء = نفس الغداء في كل الأماكن'},
+      {icon:'✅',text:'بعد الغذاء → 14:00 | قبل الغذاء → 13:00'},
+      {icon:'✅',text:'بعد الغذا والعشا → تكرار صح زي بعد الغدا والعشا'}
+    ]
+  },
+  '140.0':{
+    title:'🧠 تكرار ذكي بمبدأ الأوقات — مش حالات مخصصة',
+    features:[
+      {icon:'🧠',text:'مبدأ جديد: التكرار يتقرر بناءً على انتظام الفروق بين الأوقات الفعلية'},
+      {icon:'✅',text:'مرتين: لو الـ gap مش 12h بالظبط → تكرار (مثال: بعد الفطار والغدا = 9,14 → gap=5h → تكرار)'},
+      {icon:'✅',text:'مرتين بالانتظام: فطار+عشا=9,21 (gap=12h) أو قبل فطار+عشا=8,20 (gap=12h) → مفيش تكرار'},
+      {icon:'✅',text:'3 مرات: لو أي فرق بين الأوقات مختلف → تكرار (بعد الفطار+الغدا+العشا = 9,14,21 → gaps 5h,7h → تكرار)'},
+      {icon:'🔧',text:'إصلاح: قبل الغدا والعشا / بعد الغدا والعشا / قبل الفطار والغدا كانت بتتجاهل التكرار'}
+    ]
+  },
   '138.6':{
     title:'📦 كسر قاعدة الأكواد المخصصة + علبة 14 = 14 يوم + إصلاح نوتات رمضان',
     features:[
@@ -445,7 +470,7 @@ function ramadanMapNote(note){
 
   /* ── PRIORITY: بعد الغداء / after lunch → بعد التراويح - يجب التحقق أولاً قبل أي قواعد مخصصة ── */
   /* هذا الـ check لازم يكون قبل customTimeRules لأنها بتلتقط "الغداء" وتحوله لـ 14:00 وبيضيع */
-  if(/بعد.*غدا|بعد.*غداء|after.*lun|after.*lunch/i.test(note))
+  if(/بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء|after.*lun|after.*lunch/i.test(note))
     return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
 
   /* ── Check custom Ramadan keywords FIRST ── */
@@ -513,9 +538,9 @@ function ramadanMapNote(note){
   /* Evening / مساء / bed / نوم → بعد السحور (مثل بعد العشاء) */
   if(/مساء|مسا|evening|eve|bed|sleep|نوم|النوم|hs\b/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   /* بعد الغداء / after lunch → بعد التراويح 23:00 */
-  if(/بعد.*غدا|بعد.*غداء|after.*lun|after.*lunch/i.test(note)) return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
+  if(/بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء|after.*lun|after.*lunch/i.test(note)) return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
   /* Noon / ظهر / قبل الغداء → قبل الفطار */
-  if(/ظهر|الظهر|noon|midday|غدا|غداء|الغدا|الغداء|lunch|lun/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  if(/ظهر|الظهر|noon|midday|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch|lun/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* عصر / afternoon → قبل الفطار */
   if(/عصر|العصر|asr|afternoon/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* على الريق / empty stomach → قبل السحور */
@@ -1703,9 +1728,10 @@ window._ezApplyRamadanSplit=function(daysLeft){
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
   var si=_ezIdx(hs,'size'),ei=_ezIdx(hs,'end date'),ti=_ezIdx(hs,'time');
   var evi=_ezIdx(hs,'every');if(evi<0)evi=_ezIdx(hs,'evry');
-  var ni=_ezIdx(hs,'note'),qi=_ezIdx(hs,'qty');
+  var ni=_ezIdx(hs,'note'),qi=_ezIdx(hs,'qty'),ci=_ezIdx(hs,'code');
   var sdi=_ezIdx(hs,'start date');
   var fire=_ezFire,get=_ezGet;
+  function _gcCode(td){var t=get(td);var m=t.match(/\d+/);return m?m[0]:'';}
 
   /* حساب الأيام: daysLeft = الأيام الباقية في رمضان
      إجمالي الأيام = أيام الشهر × عدد الشهور (مش أيام الشهر بس) */
@@ -1773,13 +1799,15 @@ window._ezApplyRamadanSplit=function(daysLeft){
     var evryVal=evi>=0&&tds[evi]?get(tds[evi]):'24';
     var sizeVal=si>=0&&tds[si]?get(tds[si]):'0';
     var qtyVal=qi>=0&&tds[qi]?get(tds[qi]):'1';
+    var codeVal=ci>=0&&tds[ci]?(function(td){var t=get(td);var m=t.match(/\d+/);return m?m[0]:'';})( tds[ci]):'';
+    var fixedSz=codeVal&&fixedSizeCodes&&fixedSizeCodes[codeVal]?fixedSizeCodes[codeVal]:0;
     /* هل صف رمضان؟ (فطار أو سحور) */
     var isRam=noteVal.indexOf('الفطار')>-1||noteVal.indexOf('السحور')>-1
               ||noteVal.indexOf('Iftar')>-1||noteVal.indexOf('Suhoor')>-1
               ||noteVal.indexOf('After Iftar')>-1||noteVal.indexOf('Before Suhoor')>-1
               ||noteVal.indexOf('التراويح')>-1||noteVal.indexOf('Tarawih')>-1;
     rowsData.push({row:r,timeVal:timeVal,noteVal:noteVal,evryVal:evryVal,
-                   sizeVal:sizeVal,qtyVal:qtyVal,isRam:isRam});
+                   sizeVal:sizeVal,qtyVal:qtyVal,isRam:isRam,codeVal:codeVal,fixedSz:fixedSz});
   });
 
   /* لكل صف رمضان: نضبط الـ size = ramLeft والـ end date = ramEndDate */
@@ -1836,9 +1864,16 @@ window._ezApplyRamadanSplit=function(daysLeft){
       if(ti>=0&&ntds[ti]){var tInp=ntds[ti].querySelector('input[type=\'time\']');if(tInp){tInp.value=newTime;fire(tInp);}}
       if(evi>=0&&ntds[evi]){var evInp=ntds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
       /* حساب الـ size الصح نسبياً */
+      var _fixedSz=rd.fixedSz||0;
       var _curSizeVal=parseInt(rd.sizeVal)||0;
       var _normalSizeVal,_ramSizeVal;
-      if(_curSizeVal>0&&totalDays>0){
+      if(_fixedSz>0){
+        /* كود مخصص: الحجم الثابت لا يتغير في رمضان */
+        _ramSizeVal=_fixedSz;
+        /* إلغاء رمضان لاحقاً: نحسب المتبقي بعد رمضان */
+        var _remaining=_fixedSz-ramLeft;
+        _normalSizeVal=_remaining>0?_remaining:0;
+      } else if(_curSizeVal>0&&totalDays>0){
         if(_curSizeVal===totalDays){_normalSizeVal=normalDays;_ramSizeVal=ramLeft;}
         else{_normalSizeVal=Math.round(_curSizeVal*normalDays/totalDays);if(_normalSizeVal<1&&normalDays>0)_normalSizeVal=1;_ramSizeVal=_curSizeVal-_normalSizeVal;if(_ramSizeVal<1)_ramSizeVal=1;}
       } else {_normalSizeVal=normalDays;_ramSizeVal=ramLeft;}
@@ -1847,14 +1882,16 @@ window._ezApplyRamadanSplit=function(daysLeft){
       /* size نسخة عادية */
       if(si>=0&&ntds[si]){var snInp=ntds[si].querySelector('input,textarea');if(snInp){snInp.value=_normalSizeVal;fire(snInp);}}
       /* start date = normalStartDate */
-      if(sdi>=0&&ntds[sdi]){var sdInp=ntds[sdi].querySelector('input[type=\'date\']');if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
+      if(sdi>=0&&ntds[sdi]){var sdInp=ntds[sdi].querySelector('input[type='+'\'date\''+']');if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
       /* end date = normalEndDate */
       if(ei>=0&&ntds[ei]){var enInp=ntds[ei].querySelector('input');if(enInp){enInp.value=normalEndDate;fire(enInp);}}
 
       normalRowsToInsert.push({afterRow:rd.row,newRow:normalRow});
     } else {
-      /* صف عادي (مش رمضان): نحدث فقط */
-      if(si>=0&&tds[si]){var sInp2=tds[si].querySelector('input,textarea');if(sInp2){sInp2.value=totalDays;fire(sInp2);}}
+      /* صف عادي (مش رمضان): لو كود مخصص لا نلمس الـ size (محسوب صح من processTable) */
+      if(!rd.fixedSz){
+        if(si>=0&&tds[si]){var sInp2=tds[si].querySelector('input,textarea');if(sInp2){sInp2.value=totalDays;fire(sInp2);}}
+      }
     }
   });
 
@@ -1923,6 +1960,31 @@ window.ezRamadanToNormal=function(){
     return y+'-'+mo+'-'+dd;
   }
 
+  /* ── فحص الأكواد المخصصة: لو الكمية مش كافية بعد رمضان → امنع الإلغاء ── */
+  var _skipTb=_ezFindTable();
+  if(_skipTb&&fixedSizeCodes){
+    var _skipH=_skipTb.querySelector('tr'),_skipHs=_skipH.querySelectorAll('th,td');
+    var _skipCi=_ezIdx(_skipHs,'code'),_skipSi=_ezIdx(_skipHs,'size');
+    var _skipGet=_ezGet;
+    var _skipRows=Array.from(_skipTb.querySelectorAll('tr')).slice(1);
+    var _noQtyItems=[];
+    _skipRows.forEach(function(r){
+      var tds=r.querySelectorAll('td');
+      var code=_skipCi>=0&&tds[_skipCi]?(function(td){var t=_skipGet(td);var m=t.match(/\d+/);return m?m[0]:'';})( tds[_skipCi]):'';
+      var fSz=code&&fixedSizeCodes[code]?fixedSizeCodes[code]:0;
+      if(fSz>0&&fSz<=ramLeft){
+        /* الكمية لا تكفي حتى نهاية رمضان */
+        var nm=_ezIdx(_skipHs,'name');
+        var itemName=nm>=0&&tds[nm]?_skipGet(tds[nm]):'كود '+code;
+        _noQtyItems.push(itemName+' (علبة '+fSz+' / رمضان '+ramLeft+' يوم)');
+      }
+    });
+    if(_noQtyItems.length>0){
+      window.ezShowToast('❌ الكمية لا تسمح بإلغاء رمضان:\n'+_noQtyItems.join('\n'),'error');
+      return;
+    }
+  }
+
   var _normalStart=addDays(startDateStr,ramLeft);
   _ezRamadanConfirm({ramLeft:ramLeft,normalDays:normalDays,totalDays:totalDays,t:_t,m:_m,startDate:startDateStr,normalStart:_normalStart},
   function(){
@@ -1975,8 +2037,22 @@ window.ezRamadanToNormal=function(){
       if(evi>=0&&tds[evi]){var evInp=tds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
     }
 
-    /* ── size: في إلغاء رمضان الكل يأخذ normalDays (حتى الأكواد المخصصة) ── */
-    if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=normalDays;fire(sInp);}}
+    /* ── size: حساب الـ size حسب نوع الكود ── */
+    if(si>=0&&tds[si]){
+      var _rCode3=ci>=0&&tds[ci]?(function(td){var t=get(td);var m=t.match(/\d+/);return m?m[0]:'';})( tds[ci]):'';
+      var _fSz3=_rCode3&&fixedSizeCodes&&fixedSizeCodes[_rCode3]?fixedSizeCodes[_rCode3]:0;
+      var _sizeToSet;
+      if(_fSz3>0){
+        /* كود مخصص: المتبقي = حجم العلبة - أيام رمضان */
+        var _rem3=_fSz3-ramLeft;
+        _sizeToSet=_rem3>0?_rem3:0;
+      } else {
+        _sizeToSet=normalDays;
+      }
+      if(_sizeToSet>0){
+        var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=_sizeToSet;fire(sInp);}
+      }
+    }
     /* ── تواريخ ── */
     if(sdi>=0&&tds[sdi]){var sdInp=tds[sdi].querySelector("input[type='date']");if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
     if(ei>=0&&tds[ei]){var eInp=tds[ei].querySelector('input');if(eInp){eInp.value=normalEndDate;fire(eInp);}}
@@ -2376,7 +2452,7 @@ function smartDoseRecognizer(note){
   /* ── Step 1: Detect meal/time keywords ── */
   /* In non-Ramadan mode: سحور = عشاء (dinner), فطار/افطار = فطار (breakfast) */
   res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار/i.test(s);
-  res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء/i.test(s);
+  res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء/i.test(s);
   res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|سحور|السحور|سحر/i.test(s);
   res.hasM=/\b(morning|am|morn|a\.m)\b|صباح|الصباح|صبح/i.test(s);
   res.hasN=/\b(noon|midday)\b|ظهر|الظهر/i.test(s);
@@ -2451,7 +2527,7 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'}];
+  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -2470,17 +2546,64 @@ function getCodeAwareTime(timeResult,itemCode){
   return timeResult;
 }
 
+/* ── Helper: استخرج الأوقات الفعلية من الـ note بناءً على الكلمات ── */
+function getMealTimesFromNote(note){
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+  var meals=[
+    {re:/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/gi,before:8,after:9},
+    {re:/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/gi,before:13,after:14},
+    {re:/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/gi,before:20,after:21}
+  ];
+  var times=[];
+  meals.forEach(function(m){
+    m.re.lastIndex=0;
+    var match=m.re.exec(s);
+    if(!match) return;
+    var idx=match.index;
+    var bp=s.lastIndexOf('قبل',idx);
+    var ap=s.lastIndexOf('بعد',idx);
+    /* أقرب كلمة قبل الوجبة تحدد هل before أو after */
+    var isBefore=(bp>ap);
+    times.push(isBefore?m.before:m.after);
+  });
+  times.sort(function(a,b){return a-b;});
+  return times;
+}
+
+/* ── المبدأ الجديد: هل الأوقات غير منتظمة؟ ──
+   - مرتين: منتظم فقط لو الـ gap = 12h بالظبط (فطار+عشا=9,21 أو قبل فطار+عشا=8,20)
+   - 3 مرات: منتظم فقط لو كل الفروق متساوية
+   لو غير منتظم → لازم تكرار ──*/
+function needsDuplicateByTime(times){
+  if(times.length<2) return false;
+  var gaps=[];
+  for(var i=1;i<times.length;i++) gaps.push(times[i]-times[i-1]);
+  if(times.length===2) return Math.abs(gaps[0]-12)>0.5;
+  var minG=Math.min.apply(null,gaps);var maxG=Math.max.apply(null,gaps);
+  return (maxG-minG)>0.5;
+}
+
 function shouldDuplicateRow(note){
   var d=smartDoseRecognizer(note);
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
   var isEvery8=/كل\s*8|every\s*8|q8h/i.test(s);
   if(isEvery8||d.count===3)return{type:'three',doseInfo:d,isBefore:d.isBefore};
-  var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
-  if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
-  var isRegularTwice=((d.hasB||d.hasM)&&(d.hasD||d.hasE))||/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
-  if(d.count===2&&!isRegularTwice)return{type:'two',doseInfo:d,isBefore:d.isBefore};
   var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
   if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
+
+  /* ── المبدأ الجديد: احسب الأوقات الفعلية وشوف لو منتظمة ── */
+  var mealTimes=getMealTimesFromNote(note);
+  if(mealTimes.length>=2&&needsDuplicateByTime(mealTimes)){
+    var dupType=mealTimes.length>=3?'three':'two';
+    return{type:dupType,doseInfo:d,isBefore:d.isBefore};
+  }
+
+  /* ── الحالات القديمة للكلمات غير الوجبات (صباح/ظهر/عصر/مساء) ── */
+  var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
+  if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  /* count===2 فقط لو مفيش أوقات وجبات واضحة (اللي اتحسبت فوق بالمبدأ الجديد) */
+  var isRegularTwice=/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
+  if(d.count===2&&!isRegularTwice&&mealTimes.length===0)return{type:'two',doseInfo:d,isBefore:d.isBefore};
   return null;
 }
 
@@ -2546,6 +2669,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var on=get(r.querySelectorAll('td')[niIdx]);var isEn=/[a-z]/i.test(on)||ni.doseInfo.language==='english';
     var p=ni.isBefore?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد ');
     var bf=isEn?'Breakfast':'الفطار';var ln=isEn?'Lunch':'الغداء';var dn=isEn?'Dinner':'العشاء';
+    /* ── كشف قبل/بعد لكل وجبة بشكل مستقل من النوت الأصلية ── */
+    var _onN=(on||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+    function _mp(mRe,bfTm,afTm){mRe.lastIndex=0;var _m=mRe.exec(_onN);if(!_m)return{pre:isEn?'After ':'بعد ',t:afTm};var ix=_m.index;var bp=_onN.lastIndexOf('قبل',ix);var ap=_onN.lastIndexOf('بعد',ix);var ib=(bp>ap);return{pre:ib?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد '),t:ib?bfTm:afTm};}
+    var mB=_mp(/فطر|فطار|فطور|افطار|breakfast|fatur|ftor/gi,'08:00','09:00');
+    var mL=_mp(/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/gi,'13:00','14:00');
+    var mD=_mp(/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/gi,'20:00','21:00');
     var m_lbl=isEn?'Morning':'صباحا';var n_lbl=isEn?'Noon':'ظهرا';var a_lbl=isEn?'Afternoon':'عصرا';var e_lbl=isEn?'Evening':'مساءا';
     var calcQ=1;if(qi>=0){var cur=parseInt(get(tds[qi]))||1;calcQ=cur;}
     var dupRows=[];var meals=[];
@@ -2560,9 +2689,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1='12:00';n2=e_lbl;t2='21:30';meals=['الظهر','المساء'];}
       else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';meals=['الصباح','العصر'];}
       else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1='15:00';n2=e_lbl;t2='21:30';meals=['العصر','المساء'];}
-      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
-      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1='13:00';n2=p+dn;t2='20:00';}else{n1=p+ln;t1='14:00';n2=p+dn;t2='21:00';}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){n1=mB.pre+bf;t1=mB.t;n2=mL.pre+ln;t2=mL.t;meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
+      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){n1=mL.pre+ln;t1=mL.t;n2=mD.pre+dn;t2=mD.t;meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
+      else{n1=mB.pre+bf;t1=mB.t;n2=mD.pre+dn;t2=mD.t;meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
     } else if(ni.type==='three'){
@@ -2574,7 +2703,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
       var n1='',t1='',n2='',t2='',n3='',t3='';
       if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';n3=e_lbl;t3='21:30';meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
+      else{n1=mB.pre+bf;t1=mB.t;n2=mL.pre+ln;t2=mL.t;n3=mD.pre+dn;t3=mD.t;meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
     } else if(ni.type==='q6h'){
@@ -4101,6 +4230,8 @@ document.body.appendChild(d_box);
 if(_dk) document.body.classList.add('ez-dark-mode');
 /* 📦 Scan pack sizes and show warning */
 try{_renderPackWarningBanner();}catch(e){console.error('PACK ERROR:',e);alert('Pack error: '+e.message);}
+/* Observer: راقب data-t و data-m وأعد رسم التنبيه تلقائياً */
+(function(){var _dlgBox=document.getElementById('ez-dialog-box');if(!_dlgBox)return;var _packObs=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){if(muts[i].attributeName==='data-t'||muts[i].attributeName==='data-m'){try{_renderPackWarningBanner();}catch(e){}break;}}});_packObs.observe(_dlgBox,{attributes:true,attributeFilter:['data-t','data-m']});})();
 /* Pulse effect on primary button */
 setInterval(function(){var btn=document.querySelector('.ez-btn-primary');if(btn){btn.classList.toggle('ez-pulse');}},2000);
 
