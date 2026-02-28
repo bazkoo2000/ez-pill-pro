@@ -1,661 +1,654 @@
-/**
- * ============================================================
- *  رادار علي الباز — V11
- *  أداة بحث سريع لنظام EZ Pill الخاص بصيدليات النهدي
- * ============================================================
- *
- *  التغييرات في V11:
- *  - إرسال قيمة البحث مباشرةً للسيرفر عبر حقل searchby
- *  - لا تصفح للصفحات — طلب واحد فقط لكل حالة
- *  - سرعة فائقة مقارنة بالنسخة السابقة
- *  - إضافة زر إلغاء البحث
- *  - حماية XSS عبر دالة esc()
- *
- *  Base URL: https://rtlapps.nahdi.sa/ez_pill_web/
- * ============================================================
- */
-
 javascript: (function () {
 
   // ============================================================
-  //  CONSTANTS
+  //  رادار علي الباز — V12  |  Dark Dashboard + Cards
   // ============================================================
 
   const BASE_URL = 'https://rtlapps.nahdi.sa/ez_pill_web/';
 
   const STATUSES = {
-    readypack: { label: 'Ready to Pack', badge: 'badge-ready'     },
-    new:       { label: 'New Orders',    badge: 'badge-new'       },
-    packed:    { label: 'Packed',        badge: 'badge-packed'    },
-    delivered: { label: 'Delivered',     badge: 'badge-delivered' },
+    readypack: { label: 'Ready to Pack', color: '#00e5a0', dot: '#00e5a0' },
+    new:       { label: 'New',           color: '#fbbf24', dot: '#fbbf24' },
+    packed:    { label: 'Packed',        color: '#60a5fa', dot: '#60a5fa' },
+    delivered: { label: 'Delivered',     color: '#c084fc', dot: '#c084fc' },
   };
-
-  const TH = {
-    bg:              '#f0f4ff',
-    card:            '#ffffff',
-    border:          '#d0e2ff',
-    header:          'linear-gradient(135deg, #1a73e8, #4facfe)',
-    headerText:      '#ffffff',
-    accent:          '#1a73e8',
-    accentLight:     '#e8f0fe',
-    btnPrimary:      'linear-gradient(135deg, #34a853, #00c853)',
-    btnAll:          'linear-gradient(135deg, #1a73e8, #4facfe)',
-    btnOpen:         'linear-gradient(135deg, #ff6d00, #ffab40)',
-    btnCancel:       'linear-gradient(135deg, #e53935, #ff5252)',
-    text:            '#333333',
-    subtext:         '#666666',
-    rowHover:        '#f8fbff',
-    shadow:          '0 8px 60px rgba(26, 115, 232, 0.18)',
-    inputBg:         '#f8fbff',
-    statusReady:     { bg: '#e6f4ea', color: '#34a853' },
-    statusNew:       { bg: '#fff8e1', color: '#f9a825' },
-    statusPacked:    { bg: '#e8f0fe', color: '#1a73e8' },
-    statusDelivered: { bg: '#f3e8ff', color: '#7b1fa2' },
-  };
-
-
-  // ============================================================
-  //  STATE
-  // ============================================================
 
   const d          = document;
   let links        = [];
   let openedLinks  = new Set();
   let isDragging   = false;
-  let dragX        = 0;
-  let dragY        = 0;
+  let dragX        = 0, dragY = 0;
   let isMinimized  = false;
   let cancelSearch = false;
-
-
-  // ============================================================
-  //  CLEANUP
-  // ============================================================
 
   d.getElementById('baz-ui')    && d.getElementById('baz-ui').remove();
   d.getElementById('baz-style') && d.getElementById('baz-style').remove();
 
-
-  // ============================================================
-  //  XSS PROTECTION
-  // ============================================================
-
-  const esc = (s) =>
-    (s || '')
-      .toString()
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-
+  const esc = (s) => (s||'').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
   // ============================================================
   //  STYLES
   // ============================================================
+  const style = d.createElement('style');
+  style.id = 'baz-style';
+  style.innerHTML = `
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap');
 
-  const buildStyles = () => {
-    const s    = d.createElement('style');
-    s.id       = 'baz-style';
-    s.innerHTML = `
+    #baz-ui, #baz-ui * { box-sizing: border-box; margin: 0; padding: 0; }
 
-      #baz-ui, #baz-ui * { box-sizing: border-box; }
+    #baz-ui {
+      position: fixed;
+      width: 480px;
+      max-width: 96vw;
+      background: #0d1117;
+      z-index: 999999;
+      border-radius: 16px;
+      direction: rtl;
+      font-family: 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #21262d;
+      box-shadow: 0 0 0 1px #30363d, 0 24px 64px rgba(0,0,0,0.7);
+      overflow: hidden;
+    }
 
-      #baz-ui {
-        position:        fixed;
-        width:           96%;
-        max-width:       1020px;
-        background:      ${TH.bg};
-        z-index:         999999;
-        padding:         0;
-        border-radius:   24px;
-        direction:       rtl;
-        font-family:     'Segoe UI', Tahoma, sans-serif;
-        max-height:      90vh;
-        overflow:        hidden;
-        display:         flex;
-        flex-direction:  column;
-        border:          1.5px solid ${TH.border};
-        box-shadow:      ${TH.shadow};
-        transition:      box-shadow 0.3s;
-      }
+    #baz-ui.minimized #baz-body   { display: none; }
+    #baz-ui.minimized              { max-height: unset; }
+    #baz-ui.minimized #baz-header  { border-radius: 16px; }
 
-      #baz-ui.minimized            { max-height: unset; }
-      #baz-ui.minimized #baz-body  { display: none; }
-      #baz-ui.minimized #baz-header{ border-radius: 20px; }
+    /* HEADER */
+    #baz-ui #baz-header {
+      background: #161b22;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #21262d;
+      cursor: grab;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    #baz-ui #baz-header:active { cursor: grabbing; }
 
-      #baz-ui #baz-header {
-        background:      ${TH.header};
-        padding:         14px 20px;
-        display:         flex;
-        justify-content: space-between;
-        align-items:     center;
-        border-radius:   24px 24px 0 0;
-        flex-shrink:     0;
-        cursor:          grab;
-        user-select:     none;
-      }
-      #baz-ui #baz-header:active { cursor: grabbing; }
+    #baz-ui .hdr-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-      #baz-ui #baz-header h2 {
-        margin:      0;
-        color:       ${TH.headerText};
-        font-size:   16px;
-        letter-spacing: 0.5px;
-        display:     flex;
-        align-items: center;
-        gap:         8px;
-      }
+    #baz-ui .hdr-logo {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #00e5a0, #00b4d8);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
 
-      #baz-ui .hdr-btns {
-        display:     flex;
-        gap:         8px;
-        align-items: center;
-      }
+    #baz-ui .hdr-title {
+      color: #e6edf3;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    #baz-ui .hdr-ver {
+      color: #00e5a0;
+      font-size: 10px;
+      font-weight: 500;
+      background: rgba(0,229,160,0.1);
+      padding: 2px 7px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,229,160,0.2);
+    }
 
-      #baz-ui .hdr-btn {
-        background:      rgba(255,255,255,0.2);
-        border:          none;
-        color:           #fff;
-        width:           30px;
-        height:          30px;
-        border-radius:   50%;
-        cursor:          pointer;
-        font-size:       14px;
-        font-weight:     bold;
-        display:         flex;
-        align-items:     center;
-        justify-content: center;
-        transition:      background 0.2s;
-        flex-shrink:     0;
-      }
-      #baz-ui .hdr-btn:hover { background: rgba(255,255,255,0.4); }
+    #baz-ui .hdr-btns {
+      display: flex;
+      gap: 6px;
+    }
+    #baz-ui .hdr-btn {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    #baz-ui .hdr-btn:hover { background: #21262d; color: #e6edf3; border-color: #8b949e; }
 
-      #baz-ui #baz-body {
-        padding:    18px 22px;
-        overflow-y: auto;
-        flex:       1;
-      }
+    /* BODY */
+    #baz-ui #baz-body {
+      padding: 14px;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: #30363d transparent;
+    }
+    #baz-ui #baz-body::-webkit-scrollbar { width: 4px; }
+    #baz-ui #baz-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
 
-      #baz-ui .search-box {
-        background:    ${TH.card};
-        padding:       16px;
-        border-radius: 16px;
-        border:        1.5px solid ${TH.border};
-        margin-bottom: 14px;
-        box-shadow:    0 2px 12px rgba(0,0,0,0.06);
-      }
+    /* SEARCH SECTION */
+    #baz-ui .search-section {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
 
-      #baz-ui .search-grid {
-        display:               grid;
-        grid-template-columns: 1fr 1fr;
-        gap:                   11px;
-        margin-bottom:         13px;
-      }
+    #baz-ui .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
 
-      #baz-ui .field-wrap {
-        display:        flex;
-        flex-direction: column;
-        gap:            5px;
-      }
+    #baz-ui .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    #baz-ui .field-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #baz-ui .field-row {
+      display: flex;
+      align-items: center;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    #baz-ui .field-row:focus-within { border-color: #00e5a0; }
 
-      #baz-ui .field-label {
-        font-size:   12px;
-        font-weight: 700;
-        color:       ${TH.accent};
-      }
+    #baz-ui .field-prefix {
+      padding: 0 8px;
+      color: #00e5a0;
+      font-size: 11px;
+      font-weight: 700;
+      border-left: 1px solid #30363d;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      background: rgba(0,229,160,0.06);
+    }
+    #baz-ui .baz-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e6edf3;
+      font-size: 12px;
+      padding: 8px 10px;
+      font-family: inherit;
+    }
+    #baz-ui .baz-input::placeholder { color: #484f58; }
 
-      #baz-ui .field-inner {
-        display:     flex;
-        gap:         6px;
-        align-items: center;
-      }
+    /* BUTTONS */
+    #baz-ui .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    #baz-ui .btn-grid.has-cancel { grid-template-columns: 1fr 1fr 1fr; }
 
-      #baz-ui .prefix {
-        background:    ${TH.accentLight};
-        color:         ${TH.accent};
-        padding:       7px 10px;
-        border-radius: 8px;
-        font-weight:   bold;
-        font-size:     13px;
-        white-space:   nowrap;
-      }
+    #baz-ui .baz-btn {
+      padding: 9px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    #baz-ui .baz-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+    #baz-ui .baz-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.1); }
 
-      #baz-ui .baz-input {
-        flex:          1;
-        padding:       8px 11px;
-        border:        1.5px solid ${TH.border};
-        border-radius: 8px;
-        font-size:     14px;
-        outline:       none;
-        transition:    border 0.2s;
-        background:    ${TH.inputBg};
-        color:         ${TH.text};
-      }
-      #baz-ui .baz-input:focus {
-        border-color: ${TH.accent};
-        background:   ${TH.card};
-      }
+    #baz-ui .btn-ready  { background: linear-gradient(135deg,#00e5a0,#00b4d8); color: #0d1117; }
+    #baz-ui .btn-all    { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+    #baz-ui .btn-all:not(:disabled):hover { background: #30363d !important; }
+    #baz-ui .btn-cancel { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid rgba(248,81,73,0.3); display: none; }
 
-      #baz-ui .btn-row {
-        display:               grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap:                   10px;
-      }
+    /* STATUS BAR */
+    #baz-ui #baz-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      min-height: 32px;
+    }
+    #baz-ui #baz-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #21262d;
+      border-top-color: #00e5a0;
+      border-radius: 50%;
+      animation: baz-spin 0.6s linear infinite;
+      display: none;
+      flex-shrink: 0;
+    }
+    @keyframes baz-spin { to { transform: rotate(360deg); } }
+    #baz-ui #baz-st {
+      font-size: 12px;
+      color: #8b949e;
+      flex: 1;
+    }
+    #baz-ui #baz-st b { color: #00e5a0; }
+    #baz-ui #baz-st .err { color: #f85149; }
 
-      #baz-ui .btn {
-        padding:         10px;
-        border:          none;
-        border-radius:   10px;
-        cursor:          pointer;
-        font-weight:     bold;
-        font-size:       13px;
-        transition:      all 0.2s;
-        display:         flex;
-        align-items:     center;
-        justify-content: center;
-        gap:             6px;
-        color:           #fff;
-      }
-      #baz-ui .btn:hover { transform: translateY(-1px); filter: brightness(1.07); }
-      #baz-ui .btn:disabled {
-        opacity: 0.5;
-        cursor:  not-allowed;
-        transform: none;
-        filter: none;
-      }
+    /* OPEN PANEL */
+    #baz-ui #baz-open-panel {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    #baz-ui .open-stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+    #baz-ui .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    #baz-ui .stat-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+    #baz-ui .stat-val.green  { color: #00e5a0; }
+    #baz-ui .stat-val.orange { color: #fbbf24; }
+    #baz-ui .stat-lbl {
+      font-size: 10px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #baz-ui .open-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #baz-ui .open-count-input {
+      width: 56px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 7px;
+      color: #e6edf3;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      padding: 7px;
+      outline: none;
+      font-family: inherit;
+    }
+    #baz-ui .open-count-input:focus { border-color: #00e5a0; }
+    #baz-ui .btn-open {
+      background: linear-gradient(135deg,#f97316,#f59e0b);
+      color: #0d1117;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 7px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    #baz-ui .btn-open:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-      #baz-ui .btn-primary { background: ${TH.btnPrimary}; box-shadow: 0 3px 12px rgba(52,168,83,0.25); }
-      #baz-ui .btn-all     { background: ${TH.btnAll};     box-shadow: 0 3px 12px rgba(26,115,232,0.25); }
-      #baz-ui .btn-cancel  { background: ${TH.btnCancel};  box-shadow: 0 3px 12px rgba(229,57,53,0.25); display:none; }
+    /* CARDS */
+    #baz-ui #baz-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-      /* ── Status Bar ── */
-      #baz-ui #baz-status-bar {
-        display:       flex;
-        align-items:   center;
-        gap:           10px;
-        margin:        8px 0;
-        min-height:    28px;
-      }
+    #baz-ui .result-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 12px 14px;
+      transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    #baz-ui .result-card::before {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 0 10px 10px 0;
+      background: var(--card-color, #00e5a0);
+    }
+    #baz-ui .result-card:hover {
+      border-color: #30363d;
+      background: #1c2128;
+      transform: translateX(-2px);
+    }
+    #baz-ui .result-card.opened {
+      opacity: 0.35;
+    }
 
-      #baz-ui #baz-spinner {
-        width:         20px;
-        height:        20px;
-        border:        3px solid ${TH.accentLight};
-        border-top:    3px solid ${TH.accent};
-        border-radius: 50%;
-        animation:     baz-spin 0.7s linear infinite;
-        flex-shrink:   0;
-        display:       none;
-      }
-      @keyframes baz-spin { to { transform: rotate(360deg); } }
+    #baz-ui .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    #baz-ui .card-order {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e6edf3;
+      letter-spacing: 0.3px;
+    }
+    #baz-ui .card-status {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      color: var(--card-color, #00e5a0);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
 
-      #baz-ui #baz-st {
-        font-weight: bold;
-        color:       ${TH.accent};
-        font-size:   13px;
-        flex:        1;
-      }
+    #baz-ui .card-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    #baz-ui .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    #baz-ui .info-lbl {
+      font-size: 10px;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    #baz-ui .info-val {
+      font-size: 12px;
+      color: #adbac7;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-      /* ── Open Panel ── */
-      #baz-ui #baz-open-panel {
-        background:    ${TH.card};
-        border:        1.5px solid ${TH.border};
-        border-radius: 14px;
-        padding:       14px 16px;
-        margin-bottom: 12px;
-        display:       none;
-      }
+    #baz-ui .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #baz-ui .card-invoice {
+      font-size: 11px;
+      color: #484f58;
+      font-family: monospace;
+    }
+    #baz-ui .card-open-btn {
+      text-decoration: none;
+      background: rgba(0,229,160,0.1);
+      color: #00e5a0;
+      border: 1px solid rgba(0,229,160,0.2);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    #baz-ui .card-open-btn:hover {
+      background: #00e5a0;
+      color: #0d1117;
+      border-color: #00e5a0;
+    }
+    #baz-ui .card-opened-lbl {
+      font-size: 11px;
+      color: #484f58;
+    }
 
-      #baz-ui .open-panel-title {
-        font-weight:   700;
-        color:         ${TH.accent};
-        margin-bottom: 10px;
-        font-size:     14px;
-      }
-
-      #baz-ui .open-panel-body {
-        display:     flex;
-        gap:         10px;
-        align-items: center;
-        flex-wrap:   wrap;
-      }
-
-      #baz-ui .open-count-input {
-        width:         70px;
-        padding:       7px;
-        border:        1.5px solid ${TH.border};
-        border-radius: 8px;
-        font-size:     15px;
-        text-align:    center;
-        background:    ${TH.inputBg};
-        color:         ${TH.text};
-        outline:       none;
-      }
-      #baz-ui .open-count-input:focus { border-color: ${TH.accent}; }
-
-      #baz-ui .btn-do-open {
-        background:    ${TH.btnOpen};
-        color:         #fff;
-        padding:       8px 18px;
-        border:        none;
-        border-radius: 9px;
-        font-weight:   bold;
-        cursor:        pointer;
-        font-size:     13px;
-        transition:    all 0.2s;
-      }
-      #baz-ui .btn-do-open:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-      #baz-ui .open-info {
-        font-size:  12px;
-        color:      ${TH.subtext};
-        flex:       1;
-        min-width:  150px;
-      }
-
-      /* ── Results Table ── */
-      #baz-ui #baz-table-wrap {
-        overflow-x:    auto;
-        border-radius: 12px;
-        box-shadow:    0 2px 10px rgba(0,0,0,0.08);
-      }
-
-      #baz-ui #baz-table {
-        width:           100%;
-        border-collapse: collapse;
-        background:      ${TH.card};
-        border-radius:   12px;
-        overflow:        hidden;
-      }
-
-      #baz-ui #baz-table th {
-        background:    ${TH.accentLight};
-        color:         ${TH.accent};
-        padding:       11px 9px;
-        font-size:     12px;
-        border-bottom: 2px solid ${TH.border};
-        position:      sticky;
-        top:           0;
-      }
-
-      #baz-ui #baz-table td {
-        padding:       9px;
-        border-bottom: 1px solid ${TH.border};
-        text-align:    center;
-        font-size:     13px;
-        color:         ${TH.text};
-      }
-
-      #baz-ui #baz-table tr:hover td { background: ${TH.rowHover}; }
-
-      #baz-ui .status-badge {
-        display:       inline-block;
-        padding:       3px 9px;
-        border-radius: 20px;
-        font-size:     11px;
-        font-weight:   bold;
-      }
-
-      #baz-ui .badge-ready     { background: ${TH.statusReady.bg};     color: ${TH.statusReady.color};     }
-      #baz-ui .badge-new       { background: ${TH.statusNew.bg};       color: ${TH.statusNew.color};       }
-      #baz-ui .badge-packed    { background: ${TH.statusPacked.bg};    color: ${TH.statusPacked.color};    }
-      #baz-ui .badge-delivered { background: ${TH.statusDelivered.bg}; color: ${TH.statusDelivered.color}; }
-
-      #baz-ui .open-link {
-        color:           ${TH.accent};
-        font-weight:     bold;
-        text-decoration: none;
-        padding:         3px 9px;
-        background:      ${TH.accentLight};
-        border-radius:   6px;
-        transition:      all 0.2s;
-        font-size:       12px;
-      }
-      #baz-ui .open-link:hover { background: ${TH.accent}; color: #fff; }
-
-      #baz-ui .opened-row td   { opacity: 0.4; }
-      #baz-ui .opened-mark     { color: #aaa; font-size: 11px; }
-
-      /* ── Search mode hint ── */
-      #baz-ui .search-hint {
-        font-size:     11px;
-        color:         ${TH.subtext};
-        margin-bottom: 10px;
-        padding:       7px 12px;
-        background:    ${TH.accentLight};
-        border-radius: 8px;
-        border-right:  3px solid ${TH.accent};
-      }
-    `;
-    d.head.appendChild(s);
-  };
-
+    /* EMPTY STATE */
+    #baz-ui .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      color: #484f58;
+    }
+    #baz-ui .empty-icon { font-size: 32px; margin-bottom: 8px; }
+    #baz-ui .empty-text { font-size: 13px; }
+  `;
+  d.head.appendChild(style);
 
   // ============================================================
   //  HTML
   // ============================================================
+  const ui = d.createElement('div');
+  ui.id = 'baz-ui';
+  ui.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%);';
 
-  const buildUI = () => {
-    const ui      = d.createElement('div');
-    ui.id         = 'baz-ui';
-    ui.style.cssText = 'top:50%; left:50%; transform:translate(-50%,-50%);';
+  ui.innerHTML = `
+    <div id="baz-header">
+      <div class="hdr-left">
+        <div class="hdr-logo">⚡</div>
+        <span class="hdr-title">رادار النهدي</span>
+        <span class="hdr-ver">V12</span>
+      </div>
+      <div class="hdr-btns">
+        <button class="hdr-btn" id="baz-min" title="تصغير">−</button>
+        <button class="hdr-btn" id="baz-close" title="إغلاق">✕</button>
+      </div>
+    </div>
 
-    ui.innerHTML = `
+    <div id="baz-body">
 
-      <div id="baz-header">
-        <h2>⚡ رادار النهدي <span style="opacity:0.6; font-size:13px">V11 — بحث سريع</span></h2>
-        <div class="hdr-btns">
-          <button class="hdr-btn" id="baz-min"   title="تصغير">﹣</button>
-          <button class="hdr-btn" id="baz-close" title="إغلاق">✕</button>
+      <div class="search-section">
+        <div class="fields-grid">
+
+          <div class="field-group">
+            <span class="field-label">رقم الفاتورة</span>
+            <div class="field-row">
+              <input class="baz-input" id="f-invoice" placeholder="INV-12345">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">رقم الطلب</span>
+            <div class="field-row">
+              <span class="field-prefix">ERX</span>
+              <input class="baz-input" id="f-order" placeholder="أرقام فقط">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">اسم الضيف</span>
+            <div class="field-row">
+              <input class="baz-input" id="f-name" placeholder="اسم العميل">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">موبايل الضيف</span>
+            <div class="field-row">
+              <input class="baz-input" id="f-mobile" placeholder="05xxxxxxxx">
+            </div>
+          </div>
+
+        </div>
+
+        <div class="btn-grid" id="baz-btn-grid">
+          <button id="baz-run-ready" class="baz-btn btn-ready">📦 Ready to Pack</button>
+          <button id="baz-run-all"   class="baz-btn btn-all">🌐 بحث في الكل</button>
+          <button id="baz-cancel"    class="baz-btn btn-cancel">⛔ إلغاء</button>
         </div>
       </div>
 
-      <div id="baz-body">
-
-        <div class="search-box">
-
-          <div class="search-hint">
-            💡 <b>بحث سريع:</b> أدخل قيمة واحدة فقط — رقم الموبايل أو رقم الطلب أو رقم الفاتورة أو اسم الضيف، وسيُرسَل مباشرةً للسيرفر بدون تصفح صفحات
-          </div>
-
-          <div class="search-grid">
-
-            <div class="field-wrap">
-              <span class="field-label">📋 رقم الفاتورة</span>
-              <div class="field-inner">
-                <input class="baz-input" id="f-invoice" placeholder="INV-12345" aria-label="رقم الفاتورة">
-              </div>
-            </div>
-
-            <div class="field-wrap">
-              <span class="field-label">🔢 رقم الطلب</span>
-              <div class="field-inner">
-                <span class="prefix">ERX</span>
-                <input class="baz-input" id="f-order" placeholder="أرقام فقط..." aria-label="رقم الطلب">
-              </div>
-            </div>
-
-            <div class="field-wrap">
-              <span class="field-label">👤 اسم الضيف</span>
-              <div class="field-inner">
-                <input class="baz-input" id="f-name" placeholder="اسم العميل..." aria-label="اسم الضيف">
-              </div>
-            </div>
-
-            <div class="field-wrap">
-              <span class="field-label">📱 موبايل الضيف</span>
-              <div class="field-inner">
-                <input class="baz-input" id="f-mobile" placeholder="05xxxxxxxx" aria-label="موبايل الضيف">
-              </div>
-            </div>
-
-          </div>
-
-          <div class="btn-row">
-            <button id="baz-run-ready" class="btn btn-primary">📦 Ready to Pack</button>
-            <button id="baz-run-all"   class="btn btn-all">🌐 بحث في الكل</button>
-            <button id="baz-cancel"    class="btn btn-cancel">⛔ إلغاء</button>
-          </div>
-        </div>
-
-        <div id="baz-status-bar">
-          <div id="baz-spinner"></div>
-          <div id="baz-st"></div>
-        </div>
-
-        <div id="baz-open-panel">
-          <div class="open-panel-title">🔓 فتح النتائج</div>
-          <div class="open-panel-body">
-            <div class="open-info" id="baz-open-info">جاهز للفتح</div>
-            <input class="open-count-input" id="baz-open-count" type="number" min="1" value="10">
-            <button class="btn-do-open" id="baz-do-open">فتح ▶</button>
-          </div>
-        </div>
-
-        <div id="baz-res"></div>
-
+      <div id="baz-status-bar">
+        <div id="baz-spinner"></div>
+        <div id="baz-st"></div>
       </div>
-    `;
 
-    d.body.appendChild(ui);
-    return ui;
-  };
+      <div id="baz-open-panel">
+        <div class="open-stats">
+          <div class="stat-item">
+            <span class="stat-val" id="stat-total">0</span>
+            <span class="stat-lbl">إجمالي</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val green" id="stat-opened">0</span>
+            <span class="stat-lbl">مفتوحة</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val orange" id="stat-remain">0</span>
+            <span class="stat-lbl">متبقية</span>
+          </div>
+        </div>
+        <div class="open-row">
+          <input class="open-count-input" id="baz-open-count" type="number" min="1" value="10">
+          <button class="btn-open" id="baz-do-open">فتح ▶</button>
+        </div>
+      </div>
 
+      <div id="baz-cards"></div>
+
+    </div>
+  `;
+  d.body.appendChild(ui);
 
   // ============================================================
   //  DRAG
   // ============================================================
-
-  const initDrag = (ui) => {
-    const hdr = d.getElementById('baz-header');
-
-    hdr.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.hdr-btn')) return;
-      isDragging = true;
-      const rect = ui.getBoundingClientRect();
-      dragX = e.clientX - rect.left;
-      dragY = e.clientY - rect.top;
-      ui.style.transform = 'none';
-      ui.style.transition = 'none';
-    });
-
-    d.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      let x = e.clientX - dragX;
-      let y = e.clientY - dragY;
-      x = Math.max(0, Math.min(window.innerWidth  - ui.offsetWidth,  x));
-      y = Math.max(0, Math.min(window.innerHeight - ui.offsetHeight, y));
-      ui.style.left = x + 'px';
-      ui.style.top  = y + 'px';
-    });
-
-    d.addEventListener('mouseup', () => { isDragging = false; });
-  };
-
+  const hdr = d.getElementById('baz-header');
+  hdr.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.hdr-btn')) return;
+    isDragging = true;
+    const rect = ui.getBoundingClientRect();
+    dragX = e.clientX - rect.left;
+    dragY = e.clientY - rect.top;
+    ui.style.transform = 'none';
+  });
+  d.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    let x = Math.max(0, Math.min(window.innerWidth  - ui.offsetWidth,  e.clientX - dragX));
+    let y = Math.max(0, Math.min(window.innerHeight - ui.offsetHeight, e.clientY - dragY));
+    ui.style.left = x + 'px';
+    ui.style.top  = y + 'px';
+  });
+  d.addEventListener('mouseup', () => { isDragging = false; });
 
   // ============================================================
   //  HELPERS
   // ============================================================
-
   const getQuery = () => ({
     inv:  d.getElementById('f-invoice').value.trim(),
     ord:  d.getElementById('f-order').value.trim(),
     name: d.getElementById('f-name').value.trim(),
     mob:  d.getElementById('f-mobile').value.trim(),
   });
-
-  // أولوية قيمة البحث المرسلة للسيرفر
   const getSearchValue = (q) => q.mob || q.inv || q.ord || q.name || '';
 
   const setLoading = (on) => {
-    d.getElementById('baz-spinner').style.display      = on ? 'block' : 'none';
-    d.getElementById('baz-run-ready').disabled         = on;
-    d.getElementById('baz-run-all').disabled           = on;
-    d.getElementById('baz-cancel').style.display       = on ? 'flex'  : 'none';
-  };
-
-  const buildTableIfNeeded = (rs) => {
-    if (d.getElementById('baz-table')) return;
-    rs.innerHTML = `
-      <div id="baz-table-wrap">
-        <table id="baz-table">
-          <thead>
-            <tr>
-              <th>رقم الطلب</th>
-              <th>اسم الضيف</th>
-              <th>موبايل</th>
-              <th>الفاتورة</th>
-              <th>الحالة</th>
-              <th>فتح</th>
-            </tr>
-          </thead>
-          <tbody id="baz-tb"></tbody>
-        </table>
-      </div>
-    `;
-  };
-
-  const addResultRow = (item, info, count) => {
-    const url = BASE_URL
-      + `getEZPill_Details?onlineNumber=${encodeURIComponent((item.onlineNumber || '').replace(/ERX/gi, ''))}`
-      + `&Invoice=${encodeURIComponent(item.Invoice || '')}`
-      + `&typee=${encodeURIComponent(item.typee || '')}`
-      + `&head_id=${encodeURIComponent(item.head_id || '')}`;
-
-    links.push({ url, key: (item.Invoice || '') + ':' + (item.onlineNumber || '') });
-
-    const row    = d.getElementById('baz-tb').insertRow(-1);
-    row.id       = 'baz-row-' + count;
-    row.innerHTML = `
-      <td><b>${esc(item.onlineNumber)}</b></td>
-      <td>${esc(item.guestName)}</td>
-      <td>${esc(item.guestMobile || item.mobile || '—')}</td>
-      <td>${esc(item.Invoice)}</td>
-      <td><span class="status-badge ${info.badge}">${esc(info.label)}</span></td>
-      <td><a href="${esc(url)}" target="_blank" class="open-link">فتح ✅</a></td>
-    `;
+    d.getElementById('baz-spinner').style.display    = on ? 'block' : 'none';
+    d.getElementById('baz-run-ready').disabled       = on;
+    d.getElementById('baz-run-all').disabled         = on;
+    const cancelBtn = d.getElementById('baz-cancel');
+    cancelBtn.style.display = on ? 'flex' : 'none';
+    const grid = d.getElementById('baz-btn-grid');
+    grid.className = on ? 'btn-grid has-cancel' : 'btn-grid';
   };
 
   const updateOpenPanel = () => {
     const remaining = links.filter(l => !openedLinks.has(l.key));
-    const infoEl    = d.getElementById('baz-open-info');
-    const countEl   = d.getElementById('baz-open-count');
-    if (infoEl) {
-      infoEl.innerHTML =
-        `إجمالي: <b>${links.length}</b> &nbsp;|&nbsp; `
-        + `مفتوحة: <b style="color:#34a853">${openedLinks.size}</b> &nbsp;|&nbsp; `
-        + `متبقية: <b style="color:#ff6d00">${remaining.length}</b>`;
-    }
-    if (countEl) {
-      countEl.max   = remaining.length;
-      countEl.value = Math.min(parseInt(countEl.value) || 10, remaining.length || 1);
-    }
+    d.getElementById('stat-total').textContent  = links.length;
+    d.getElementById('stat-opened').textContent = openedLinks.size;
+    d.getElementById('stat-remain').textContent = remaining.length;
+    const countEl = d.getElementById('baz-open-count');
+    countEl.max   = remaining.length;
+    countEl.value = Math.min(parseInt(countEl.value) || 10, remaining.length || 1);
   };
 
+  const addCard = (item, info) => {
+    const url = BASE_URL
+      + `getEZPill_Details?onlineNumber=${encodeURIComponent((item.onlineNumber||'').replace(/ERX/gi,''))}`
+      + `&Invoice=${encodeURIComponent(item.Invoice||'')}`
+      + `&typee=${encodeURIComponent(item.typee||'')}`
+      + `&head_id=${encodeURIComponent(item.head_id||'')}`;
+
+    links.push({ url, key: (item.Invoice||'') + ':' + (item.onlineNumber||'') });
+
+    const card = d.createElement('div');
+    card.className = 'result-card';
+    card.id = 'card-' + links.length;
+    card.style.setProperty('--card-color', info.color);
+
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-order">${esc(item.onlineNumber || '—')}</span>
+        <span class="card-status">${esc(info.label)}</span>
+      </div>
+      <div class="card-info">
+        <div class="info-item">
+          <span class="info-lbl">الضيف</span>
+          <span class="info-val">${esc(item.guestName || '—')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-lbl">الموبايل</span>
+          <span class="info-val">${esc(item.guestMobile || item.mobile || '—')}</span>
+        </div>
+      </div>
+      <div class="card-bottom">
+        <span class="card-invoice">${esc(item.Invoice || '')}</span>
+        <a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a>
+      </div>
+    `;
+    d.getElementById('baz-cards').appendChild(card);
+  };
 
   // ============================================================
-  //  MAIN SEARCH — بحث سريع بدون تصفح صفحات
+  //  SEARCH
   // ============================================================
-
   const runSearch = async (statusKeys) => {
     const q           = getQuery();
     const searchValue = getSearchValue(q);
+    const st          = d.getElementById('baz-st');
+    const cards       = d.getElementById('baz-cards');
+    const panel       = d.getElementById('baz-open-panel');
 
     if (!searchValue) {
-      d.getElementById('baz-st').innerHTML = '⚠️ أدخل قيمة بحث أولاً';
+      st.innerHTML = '<span class="err">⚠️ أدخل قيمة بحث أولاً</span>';
       return;
     }
 
-    const st    = d.getElementById('baz-st');
-    const rs    = d.getElementById('baz-res');
-    const panel = d.getElementById('baz-open-panel');
-
-    // Reset
-    rs.innerHTML        = '';
-    panel.style.display = 'none';
-    links               = [];
-    openedLinks         = new Set();
-    cancelSearch        = false;
+    cards.innerHTML        = '';
+    panel.style.display    = 'none';
+    links                  = [];
+    openedLinks            = new Set();
+    cancelSearch           = false;
 
     setLoading(true);
 
@@ -663,44 +656,35 @@ javascript: (function () {
     let seen  = new Set();
 
     for (const status of statusKeys) {
-
       if (cancelSearch) break;
-
       const info = STATUSES[status];
-      st.innerHTML = `📡 يبحث في "${info.label}"...`;
+      st.innerHTML = `جاري البحث في <b>${info.label}</b>...`;
 
       try {
         const res  = await fetch(BASE_URL + 'Home/getOrders', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({
-            status,
-            pageSelected: 1,
-            searchby: searchValue,     // ← إرسال قيمة البحث مباشرةً للسيرفر
-          }),
+          body:    JSON.stringify({ status, pageSelected: 1, searchby: searchValue }),
         });
-
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const data = await res.json();
-
         let orders;
         try        { orders = JSON.parse(data.orders_list); }
-        catch (_e) { orders = data.orders_list; }
+        catch (_)  { orders = data.orders_list; }
 
         if (!Array.isArray(orders) || orders.length === 0) continue;
 
         orders.forEach(item => {
-          const key = (item.Invoice || '') + ':' + (item.onlineNumber || '');
+          const key = (item.Invoice||'') + ':' + (item.onlineNumber||'');
           if (seen.has(key)) return;
           seen.add(key);
           count++;
-          buildTableIfNeeded(rs);
-          addResultRow(item, info, count);
+          addCard(item, info);
         });
 
       } catch (err) {
-        st.innerHTML = `❌ خطأ في الاتصال بـ "${info.label}": ${esc(err.message)}`;
+        st.innerHTML = `<span class="err">❌ خطأ في "${esc(info.label)}"</span>`;
         console.error('[BazRadar]', err);
       }
     }
@@ -708,80 +692,72 @@ javascript: (function () {
     setLoading(false);
 
     if (cancelSearch) {
-      st.innerHTML = `⛔ تم إلغاء البحث — ${count} نتيجة حتى الآن`;
+      st.innerHTML = `<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`;
     } else if (count > 0) {
-      st.innerHTML        = `✅ اكتمل البحث — <b>${count}</b> نتيجة`;
+      st.innerHTML        = `✅ اكتمل — <b>${count}</b> نتيجة`;
       panel.style.display = 'block';
       updateOpenPanel();
     } else {
-      st.innerHTML = `❌ لم نجد نتائج لـ "<b>${esc(searchValue)}</b>"`;
+      cards.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-text">لم نجد نتائج لـ "${esc(searchValue)}"</div>
+        </div>`;
+      st.innerHTML = '';
     }
   };
-
 
   // ============================================================
   //  OPEN RESULTS
   // ============================================================
-
   const openResults = async () => {
     const n         = parseInt(d.getElementById('baz-open-count').value) || 10;
     const remaining = links.filter(l => !openedLinks.has(l.key));
     const st        = d.getElementById('baz-st');
 
-    if (remaining.length === 0) {
-      st.innerHTML = '✅ كل النتائج تم فتحها';
-      return;
-    }
+    if (remaining.length === 0) { st.innerHTML = '✅ كل النتائج تم فتحها'; return; }
 
     const toOpen = remaining.slice(0, n);
 
     for (let i = 0; i < toOpen.length; i++) {
-      st.innerHTML = `🚀 فتح (${i + 1} من ${toOpen.length})...`;
+      st.innerHTML = `🚀 فتح <b>${i + 1}</b> من <b>${toOpen.length}</b>...`;
       window.open(toOpen[i].url, '_blank');
       openedLinks.add(toOpen[i].key);
 
-      d.querySelectorAll('#baz-tb tr').forEach(row => {
-        const link = row.querySelector('.open-link');
-        if (link && link.getAttribute('href') === toOpen[i].url) {
-          row.classList.add('opened-row');
-          row.querySelector('td:last-child').innerHTML = '<span class="opened-mark">✓ تم الفتح</span>';
+      // تحديث الكارد
+      d.querySelectorAll('.result-card').forEach(card => {
+        const btn = card.querySelector('.card-open-btn');
+        if (btn && btn.getAttribute('href') === toOpen[i].url) {
+          card.classList.add('opened');
+          const bottom = card.querySelector('.card-bottom');
+          bottom.querySelector('.card-open-btn').outerHTML = `<span class="card-opened-lbl">✓ تم الفتح</span>`;
         }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(r => setTimeout(r, 800));
     }
 
     updateOpenPanel();
-    const leftCount = links.filter(l => !openedLinks.has(l.key)).length;
-    st.innerHTML = `✅ تم فتح ${toOpen.length} صفحة — متبقي: ${leftCount}`;
+    const left = links.filter(l => !openedLinks.has(l.key)).length;
+    st.innerHTML = `✅ فُتح <b>${toOpen.length}</b> — متبقي: <b>${left}</b>`;
   };
 
-
   // ============================================================
-  //  INIT
+  //  EVENTS
   // ============================================================
-
-  buildStyles();
-  const ui = buildUI();
-  initDrag(ui);
-
   d.getElementById('baz-min').onclick = () => {
     isMinimized = !isMinimized;
     ui.classList.toggle('minimized', isMinimized);
-    d.getElementById('baz-min').innerHTML = isMinimized ? '▲' : '﹣';
-    d.getElementById('baz-min').title     = isMinimized ? 'توسيع' : 'تصغير';
+    d.getElementById('baz-min').innerHTML = isMinimized ? '+' : '−';
   };
-
   d.getElementById('baz-close').onclick = () => {
     ui.remove();
     d.getElementById('baz-style') && d.getElementById('baz-style').remove();
   };
-
   d.getElementById('baz-run-ready').onclick = () => runSearch(['readypack']);
-  d.getElementById('baz-run-all').onclick   = () => runSearch(['readypack', 'new', 'packed', 'delivered']);
+  d.getElementById('baz-run-all').onclick   = () => runSearch(['readypack','new','packed','delivered']);
   d.getElementById('baz-cancel').onclick    = () => { cancelSearch = true; };
   d.getElementById('baz-do-open').onclick   = openResults;
-
   d.querySelectorAll('.baz-input').forEach(el => {
     el.onkeypress = (e) => { if (e.key === 'Enter') runSearch(['readypack']); };
   });
