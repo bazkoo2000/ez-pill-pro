@@ -1156,6 +1156,62 @@ window._ezDoAddDrug=function(){
   ezBeep('success');
 };
 
+/* ══════════════════════════════════════════
+   JSON DOWNLOAD INTERCEPTOR — تعديل external_id
+   ══════════════════════════════════════════ */
+(function(){
+  var _origCreateObjectURL=URL.createObjectURL;
+  var _downloadCounter=0;
+  URL.createObjectURL=function(blob){
+    if(blob&&blob.type&&blob.type.indexOf('json')>-1&&window._ezInterceptDownload){
+      try{
+        var reader=new FileReader();
+        reader.onload=function(){
+          try{
+            var json=JSON.parse(reader.result);
+            if(json.patients&&json.patients.length>0){
+              _downloadCounter++;
+              var suffix=String(_downloadCounter).padStart(2,'0');
+              for(var p=0;p<json.patients.length;p++){
+                if(json.patients[p].external_id){
+                  var origId=json.patients[p].external_id;
+                  json.patients[p].external_id=origId+'_'+suffix;
+                  console.log('EZ_PILL: external_id changed: '+origId+' → '+json.patients[p].external_id);
+                }
+              }
+              var newBlob=new Blob([JSON.stringify(json)],{type:'application/json'});
+              var url=_origCreateObjectURL.call(URL,newBlob);
+              var a=document.createElement('a');
+              a.href=url;
+              a.download='order_'+_downloadCounter+'.json';
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+              window.ezShowToast('✅ تم تعديل رقم الفاتورة (+_'+suffix+') — ملف #'+_downloadCounter,'success');
+            }
+          }catch(e){console.error('EZ JSON intercept parse error:',e);}
+        };
+        reader.readAsText(blob);
+        return _origCreateObjectURL.call(URL,new Blob([''],{type:'text/plain'}));
+      }catch(e){return _origCreateObjectURL.call(URL,blob);}
+    }
+    return _origCreateObjectURL.call(URL,blob);
+  };
+})();
+window._ezInterceptDownload=false;
+window._ezDownloadCounter=0;
+window.ezToggleDownloadIntercept=function(){
+  window._ezInterceptDownload=!window._ezInterceptDownload;
+  var btn=document.getElementById('ez-dl-intercept-btn');
+  if(btn){
+    btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'rgba(148,163,184,0.08)';
+    btn.style.color=window._ezInterceptDownload?'#fff':'#64748b';
+    btn.style.border=window._ezInterceptDownload?'none':'1px solid rgba(148,163,184,0.15)';
+    btn.title=window._ezInterceptDownload?'تعديل رقم الفاتورة: مُفعّل':'تعديل رقم الفاتورة: مُعطّل';
+  }
+  window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هيكون برقم مختلف':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
+};
+
 window.ezSelect=function(el,type,val){
   var p=el.parentNode;
   var segs=p.querySelectorAll('.ez-seg');
@@ -4561,6 +4617,7 @@ d_box.innerHTML='\
     <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
     <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
     <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
+    <button id="ez-dl-intercept-btn" class="ez-btn-doses" onclick="window.ezToggleDownloadIntercept()" title="تعديل رقم الفاتورة: مُعطّل" style="opacity:0.6">🔄</button>\
     <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
   </div>\
 <div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
