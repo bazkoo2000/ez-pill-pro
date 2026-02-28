@@ -2,7 +2,7 @@
 'use strict';
 
 /* ══════════════════════════════════════════
-   EZ TOOLS v1.0
+   EZ TOOLS v1.1
    ══════════════════════════════════════════ */
 
 /* ─── Helpers ─── */
@@ -19,8 +19,7 @@ function findT(){
   return document.querySelector('table.styled-table.table-bordered');
 }
 function colIdx(ths,name){name=nl(name);for(var i=0;i<ths.length;i++){var t=nl(ths[i].textContent);if(t===name||t.indexOf(name)>-1)return i}return-1}
-function getCellInput(td){if(!td)return null;return td.querySelector('input,textarea,select')}
-function setCell(td,val){if(!td)return;var inp=getCellInput(td);if(inp){inp.value=String(val);fire(inp)}else{td.textContent=String(val)}}
+function setCell(td,val){if(!td)return;var inp=td.querySelector('input,textarea,select');if(inp){inp.value=String(val);fire(inp)}else{td.textContent=String(val)}}
 function clearRow(row){
   if(!row)return;row.removeAttribute('style');
   if(row.dataset){delete row.dataset.spDupAuto;delete row.dataset.spAutoChild;delete row.dataset.spSkipDup;delete row.dataset.originalDuplicate}
@@ -64,70 +63,159 @@ function safeDownload(){
 var PID='ez-tools-main';
 var old=document.getElementById(PID);if(old){old.remove();return}
 
-if(!document.getElementById('ez-tools-css')){var css=document.createElement('style');css.id='ez-tools-css';css.textContent='@keyframes ezIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}#'+PID+' .eztb{width:100%;padding:14px 16px;border:1px solid #edf0f7;border-radius:14px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#334155;display:flex;align-items:center;gap:12px;transition:all 0.2s;text-align:right;direction:rtl}#'+PID+' .eztb:hover{border-color:#c7d2fe;background:#f8f9ff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,0.08)}#'+PID+' .ezic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}#'+PID+' .ezsub{display:none;margin-top:10px;padding:14px;border-radius:14px;border:1px solid #edf0f7;background:#fafbff;animation:ezIn 0.25s ease}';document.head.appendChild(css)}
+if(!document.getElementById('ez-tools-css')){
+  var css=document.createElement('style');css.id='ez-tools-css';
+  css.textContent=
+    '@keyframes ezIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}'+
+    '#'+PID+' .eztb{width:100%;padding:14px 16px;border:1px solid #edf0f7;border-radius:14px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#334155;display:flex;align-items:center;gap:12px;transition:all 0.2s;text-align:right;direction:rtl}'+
+    '#'+PID+' .eztb:hover{border-color:#c7d2fe;background:#f8f9ff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,0.08)}'+
+    '#'+PID+' .ezic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}'+
+    '#'+PID+' .ezsub{display:none;margin-top:10px;padding:14px;border-radius:14px;border:1px solid #edf0f7;background:#fafbff;animation:ezIn 0.25s ease}'+
+    '#'+PID+' .ez-sep{height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);margin:6px 0}';
+  document.head.appendChild(css);
+}
 
 var p=document.createElement('div');p.id=PID;
 p.style.cssText='position:fixed;top:14px;right:14px;z-index:999999;width:350px;background:#fff;border-radius:20px;overflow:visible;box-shadow:0 12px 40px rgba(15,23,42,0.08),0 0 0 1px rgba(99,102,241,0.06);font-family:Segoe UI,Cairo,Tahoma,sans-serif;animation:ezIn 0.35s ease;direction:rtl';
 
 p.innerHTML=
-'<div style="background:linear-gradient(135deg,#fafbff,#eef2ff);padding:18px 20px 14px;border-bottom:1px solid #edf0f7">'+
+/* ─── Header ─── */
+'<div style="background:linear-gradient(135deg,#fafbff,#eef2ff);padding:18px 20px 14px;border-bottom:1px solid #edf0f7;border-radius:20px 20px 0 0">'+
   '<div style="display:flex;align-items:center;justify-content:space-between">'+
-    '<div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#a5b4fc,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;box-shadow:0 4px 14px rgba(129,140,248,0.25)">EZ</div><div><div style="font-size:16px;font-weight:900;color:#312e81">EZ Tools</div><div style="font-size:10px;color:#a5b4fc;font-weight:600">أدوات مساعدة</div></div></div>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+      '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#a5b4fc,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;box-shadow:0 4px 14px rgba(129,140,248,0.25)">EZ</div>'+
+      '<div><div style="font-size:16px;font-weight:900;color:#312e81">EZ Tools</div>'+
+      '<div style="font-size:10px;color:#a5b4fc;font-weight:600">v1.1 — أدوات مساعدة</div></div>'+
+    '</div>'+
     '<button id="ez-t-close" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#94a3b8;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#94a3b8\'">×</button>'+
   '</div>'+
 '</div>'+
-'<div style="padding:14px 16px 6px;display:flex;flex-direction:column;gap:8px">'+
 
-  '<button class="eztb" id="ez-t-add"><div class="ezic" style="background:#eff6ff;color:#60a5fa">➕</div><div style="flex:1"><div style="font-weight:800;color:#1e293b">إضافة صنف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">إضافة دواء من ملف Excel/CSV</div></div><span style="color:#d1d5db">◂</span></button>'+
+/* ─── Tools Body ─── */
+'<div id="ez-tools-body" style="padding:14px 16px 6px;display:flex;flex-direction:column;gap:8px">'+
+
+  /* ═══ TOOL 1: Add Drug ═══ */
+  '<button class="eztb" id="ez-t-add">'+
+    '<div class="ezic" style="background:#eff6ff;color:#60a5fa">➕</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">إضافة صنف</div>'+
+    '<div style="font-size:10px;color:#94a3b8;margin-top:1px">إضافة دواء من ملف Excel/CSV</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
   '<div class="ezsub" id="ez-s-add">'+
-    '<div style="margin-bottom:10px"><div style="font-weight:700;color:#64748b;margin-bottom:5px;font-size:11px">📁 ملف الأصناف</div><input id="ez-f-file" type="file" accept=".xlsx,.xls,.csv" style="width:100%;padding:8px;border:2px dashed #dde3ee;border-radius:8px;background:#f8fafc;font-size:11px;box-sizing:border-box;cursor:pointer"></div>'+
-    '<div style="margin-bottom:10px;position:relative"><div style="font-weight:700;color:#64748b;margin-bottom:5px;font-size:11px">🔍 بحث</div><input id="ez-f-q" type="text" placeholder="اسم أو كود..." style="width:100%;padding:10px 12px;border:1px solid #dde3ee;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit;direction:rtl"><div id="ez-f-sug" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e8ecf4;border-radius:8px;max-height:160px;overflow-y:auto;display:none;z-index:1000000;box-shadow:0 6px 20px rgba(0,0,0,0.06);margin-top:3px"></div></div>'+
+    '<div style="margin-bottom:10px"><div style="font-weight:700;color:#64748b;margin-bottom:5px;font-size:11px">📁 ملف الأصناف</div>'+
+    '<input id="ez-f-file" type="file" accept=".xlsx,.xls,.csv" style="width:100%;padding:8px;border:2px dashed #dde3ee;border-radius:8px;background:#f8fafc;font-size:11px;box-sizing:border-box;cursor:pointer"></div>'+
+    '<div style="margin-bottom:10px;position:relative"><div style="font-weight:700;color:#64748b;margin-bottom:5px;font-size:11px">🔍 بحث</div>'+
+    '<input id="ez-f-q" type="text" placeholder="اسم أو كود..." style="width:100%;padding:10px 12px;border:1px solid #dde3ee;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit;direction:rtl">'+
+    '<div id="ez-f-sug" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e8ecf4;border-radius:8px;max-height:160px;overflow-y:auto;display:none;z-index:1000000;box-shadow:0 6px 20px rgba(0,0,0,0.06);margin-top:3px"></div></div>'+
     '<button id="ez-f-go" style="width:100%;padding:10px;border-radius:8px;border:none;background:linear-gradient(145deg,#a5b4fc,#818cf8);color:#fff;cursor:pointer;font-weight:800;font-size:13px;font-family:inherit;transition:all 0.2s" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'\'">➕ إضافة</button>'+
     '<div id="ez-f-st" style="margin-top:8px;padding:6px;border-radius:6px;background:#f1f5f9;font-size:10px;color:#64748b;text-align:center;font-weight:600"></div>'+
   '</div>'+
 
-  '<button class="eztb" id="ez-t-dl"><div class="ezic" style="background:#ecfdf5;color:#34d399">📥</div><div style="flex:1"><div style="font-weight:800;color:#1e293b">تحميل الملف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">بدون مسح البيانات</div></div><span style="color:#d1d5db">◂</span></button>'+
+  /* ═══ FUTURE TOOLS GO HERE (before separator) ═══ */
 
-  '<button class="eztb" id="ez-t-pr"><div class="ezic" style="background:#f0f9ff;color:#38bdf8">🖨️</div><div style="flex:1"><div style="font-weight:800;color:#1e293b">طباعة الملخص</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Print Summary</div></div><span style="color:#d1d5db">◂</span></button>'+
+  /* ─── Separator ─── */
+  '<div class="ez-sep"></div>'+
+
+  /* ═══ DOWNLOAD — always second to last ═══ */
+  '<button class="eztb" id="ez-t-dl">'+
+    '<div class="ezic" style="background:#ecfdf5;color:#34d399">📥</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">تحميل الملف</div>'+
+    '<div style="font-size:10px;color:#94a3b8;margin-top:1px">بدون مسح البيانات</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
+
+  /* ═══ PRINT — always last ═══ */
+  '<button class="eztb" id="ez-t-pr">'+
+    '<div class="ezic" style="background:#f0f9ff;color:#38bdf8">🖨️</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">طباعة الملخص</div>'+
+    '<div style="font-size:10px;color:#94a3b8;margin-top:1px">Print Summary</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
 
 '</div>'+
-'<div style="padding:8px 20px 10px;text-align:center;border-top:1px solid #f1f5f9;margin-top:2px"><div style="font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1px">EZ TOOLS v1.0</div></div>';
+
+/* ─── Footer ─── */
+'<div style="padding:8px 20px 10px;text-align:center;border-top:1px solid #f1f5f9;margin-top:2px">'+
+  '<div style="font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1px">EZ TOOLS v1.1 — DEVELOPED BY ALI EL-BAZ</div>'+
+'</div>';
 
 document.body.appendChild(p);
 
-/* ─── Events ─── */
+/* ═══════════════════════════════════════════
+   EVENTS
+   ═══════════════════════════════════════════ */
+
+/* Close */
 document.getElementById('ez-t-close').onclick=function(){p.remove()};
 
-/* Add Drug toggle */
+/* ─── Add Drug ─── */
 var subAdd=document.getElementById('ez-s-add'),addOpen=false;
 if(!window.EZPillDrugDB)window.EZPillDrugDB=[];
+
 document.getElementById('ez-t-add').onclick=function(){
   addOpen=!addOpen;subAdd.style.display=addOpen?'block':'none';
-  var ic=this.querySelector('.ezic');ic.style.background=addOpen?'linear-gradient(145deg,#a5b4fc,#818cf8)':'#eff6ff';ic.style.color=addOpen?'#fff':'#60a5fa';
-  if(addOpen){var st=document.getElementById('ez-f-st');st.textContent=window.EZPillDrugDB.length?'✅ '+window.EZPillDrugDB.length+' صنف محمّل':'📁 ارفع ملف الأصناف';setTimeout(function(){document.getElementById('ez-f-q').focus()},100)}
+  var ic=this.querySelector('.ezic');
+  ic.style.background=addOpen?'linear-gradient(145deg,#a5b4fc,#818cf8)':'#eff6ff';
+  ic.style.color=addOpen?'#fff':'#60a5fa';
+  if(addOpen){
+    var st=document.getElementById('ez-f-st');
+    st.textContent=window.EZPillDrugDB.length?'✅ '+window.EZPillDrugDB.length+' صنف محمّل':'📁 ارفع ملف الأصناف';
+    setTimeout(function(){document.getElementById('ez-f-q').focus()},100);
+  }
 };
 
 document.getElementById('ez-f-file').onchange=function(){
-  var f=this.files&&this.files[0];if(!f)return;var st=document.getElementById('ez-f-st');st.textContent='⏳ جاري التحميل...';
-  parseExcel(f,function(db){if(db===null){st.textContent='❌ خطأ';return}window.EZPillDrugDB=db||[];st.textContent='✅ '+window.EZPillDrugDB.length+' صنف';document.getElementById('ez-f-q').focus()})
+  var f=this.files&&this.files[0];if(!f)return;
+  var st=document.getElementById('ez-f-st');st.textContent='⏳ جاري التحميل...';
+  parseExcel(f,function(db){
+    if(db===null){st.textContent='❌ خطأ';return}
+    window.EZPillDrugDB=db||[];
+    st.textContent='✅ '+window.EZPillDrugDB.length+' صنف';
+    document.getElementById('ez-f-q').focus();
+  });
 };
 
 document.getElementById('ez-f-q').oninput=function(){
   var q=this.value,sug=document.getElementById('ez-f-sug');sug.innerHTML='';
   if(q.length>0&&window.EZPillDrugDB.length){
     var m=window.EZPillDrugDB.filter(function(it){return nl(it.name).indexOf(nl(q))>-1||nl(it.code).indexOf(nl(q))>-1}).slice(0,10);
-    if(m.length){for(var i=0;i<m.length;i++){(function(item){var d=document.createElement('div');d.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid #f5f5f5;direction:rtl';d.innerHTML='<div style="font-weight:700;font-size:11px;color:#1e293b">'+item.name+'</div><div style="font-size:9px;color:#94a3b8">'+item.code+'</div>';d.onmouseover=function(){this.style.background='#f8f9ff'};d.onmouseout=function(){this.style.background=''};d.onclick=function(){document.getElementById('ez-f-q').value=item.name;sug.style.display='none';document.getElementById('ez-f-q').focus()};sug.appendChild(d)})(m[i])}sug.style.display='block'}else{sug.style.display='none'}
+    if(m.length){
+      for(var i=0;i<m.length;i++){(function(item){
+        var d=document.createElement('div');
+        d.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid #f5f5f5;direction:rtl';
+        d.innerHTML='<div style="font-weight:700;font-size:11px;color:#1e293b">'+item.name+'</div><div style="font-size:9px;color:#94a3b8">'+item.code+'</div>';
+        d.onmouseover=function(){this.style.background='#f8f9ff'};
+        d.onmouseout=function(){this.style.background=''};
+        d.onclick=function(){document.getElementById('ez-f-q').value=item.name;sug.style.display='none';document.getElementById('ez-f-q').focus()};
+        sug.appendChild(d);
+      })(m[i])}
+      sug.style.display='block';
+    }else{sug.style.display='none'}
   }else{sug.style.display='none'}
 };
 
-function doAdd(){var q=document.getElementById('ez-f-q').value||'';var st=document.getElementById('ez-f-st');if(!window.EZPillDrugDB||!window.EZPillDrugDB.length){st.textContent='⚠️ ارفع الملف أولاً';return}var item=matchDrug(window.EZPillDrugDB,q);if(!item){st.textContent='❌ مش موجود: '+q;return}if(addRowWith(item.name,item.code)){st.textContent='✅ '+item.name;document.getElementById('ez-f-q').value='';document.getElementById('ez-f-sug').style.display='none'}else{st.textContent='❌ فشل — الجدول مش موجود'}}
+function doAdd(){
+  var q=document.getElementById('ez-f-q').value||'';
+  var st=document.getElementById('ez-f-st');
+  if(!window.EZPillDrugDB||!window.EZPillDrugDB.length){st.textContent='⚠️ ارفع الملف أولاً';return}
+  var item=matchDrug(window.EZPillDrugDB,q);
+  if(!item){st.textContent='❌ مش موجود: '+q;return}
+  if(addRowWith(item.name,item.code)){
+    st.textContent='✅ '+item.name;
+    document.getElementById('ez-f-q').value='';
+    document.getElementById('ez-f-sug').style.display='none';
+  }else{st.textContent='❌ فشل — الجدول مش موجود'}
+}
 document.getElementById('ez-f-go').onclick=doAdd;
 document.getElementById('ez-f-q').onkeydown=function(e){if(e.key==='Enter')doAdd()};
 
-/* Download */
+/* ─── Download ─── */
 document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
 
-/* Print */
-document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}else{alert('فانكشن الطباعة مش موجودة')}};
+/* ─── Print ─── */
+document.getElementById('ez-t-pr').onclick=function(){
+  if(typeof printsum==='function'){printsum()}
+  else{alert('فانكشن الطباعة مش موجودة')}
+};
 
 })();
