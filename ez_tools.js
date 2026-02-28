@@ -2,39 +2,34 @@
 'use strict';
 
 /* ══════════════════════════════════════════
-   EZ TOOLS v1.2
+   EZ TOOLS v1.4 — Lightweight Launcher
    ══════════════════════════════════════════ */
 
-/* ─── Helpers ─── */
-function n(t){return(t||'').toString().trim().replace(/\s+/g,' ')}
-function nl(t){return n(t).toLowerCase()}
-function fire(el){
-  try{el.dispatchEvent(new Event('input',{bubbles:true}))}catch(e){}
-  try{el.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}
-  try{el.dispatchEvent(new Event('blur',{bubbles:true}))}catch(e){}
-}
-function findT(){
-  var ts=document.querySelectorAll('table.styled-table.table-bordered');
-  for(var i=0;i<ts.length;i++){var ths=ts[i].querySelectorAll('tr th');for(var j=0;j<ths.length;j++){if(nl(ths[j].textContent)==='note')return ts[i]}}
-  return document.querySelector('table.styled-table.table-bordered');
-}
-function colIdx(ths,name){name=nl(name);for(var i=0;i<ths.length;i++){var t=nl(ths[i].textContent);if(t===name||t.indexOf(name)>-1)return i}return-1}
-function setCell(td,val){if(!td)return;var inp=td.querySelector('input,textarea,select');if(inp){inp.value=String(val);fire(inp)}else{td.textContent=String(val)}}
-function clearRow(row){
-  if(!row)return;row.removeAttribute('style');
-  if(row.dataset){delete row.dataset.spDupAuto;delete row.dataset.spAutoChild;delete row.dataset.spSkipDup;delete row.dataset.originalDuplicate}
-  var inputs=row.querySelectorAll('input,textarea,select');
-  for(var i=0;i<inputs.length;i++){var x=inputs[i];if(x.type==='checkbox'){x.checked=false;fire(x)}else if(x.tagName==='SELECT'){x.selectedIndex=0;fire(x)}else{x.value='';fire(x)}}
+var PID='ez-tools-main';
+var old=document.getElementById(PID);if(old){old.remove();return}
+
+/* ─── Loader: fetch from GitHub and execute ─── */
+function loadTool(url,name,closePanel){
+  if(closePanel){var pp=document.getElementById(PID);if(pp)pp.remove()}
+  var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
+  fetch(full).then(function(r){
+    if(!r.ok)throw new Error(r.status);
+    return r.text();
+  }).then(function(code){
+    try{new Function(code)()}catch(e){alert('خطأ في '+name+': '+e.message)}
+  }).catch(function(err){
+    /* fallback XMLHttpRequest */
+    try{
+      var x=new XMLHttpRequest();
+      x.open('GET',full,true);
+      x.onload=function(){if(x.status===200){try{new Function(x.responseText)()}catch(e){alert('خطأ في '+name+': '+e.message)}}else{alert('فشل تحميل '+name)}};
+      x.onerror=function(){alert('فشل تحميل '+name)};
+      x.send();
+    }catch(e2){alert('فشل تحميل '+name)}
+  });
 }
 
-/* ─── CSV/Excel ─── */
-function parseCSV(text){var lines=text.replace(/\r/g,'').split('\n').map(function(x){return x.trim()}).filter(function(x){return x.length});if(!lines.length)return[];var sep=lines[0].indexOf('\t')>-1?'\t':(lines[0].split(';').length>lines[0].split(',').length?';':',');function splitLine(line){var out=[],cur='',q=false;for(var i=0;i<line.length;i++){var ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else{q=!q}}else if(ch===sep&&!q){out.push(cur);cur=''}else{cur+=ch}}out.push(cur);return out.map(function(s){return n(s.replace(/^"|"$/g,''))})}var head=splitLine(lines[0]).map(nl);var iN=head.findIndex(function(h){return h==='name'||h.indexOf('name')>-1||h==='اسم'||h.indexOf('اسم')>-1});var iC=head.findIndex(function(h){return h==='code'||h.indexOf('code')>-1||h==='كود'||h.indexOf('كود')>-1});if(iN<0)iN=0;if(iC<0)iC=1;var db=[];for(var r=1;r<lines.length;r++){var cols=splitLine(lines[r]);var nm=cols[iN]||'';var cd=cols[iC]||'';if(nm||cd)db.push({name:n(nm),code:n(cd)})}return db}
-function ensureXLSX(cb){if(window.XLSX)return cb(true);var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=function(){cb(!!window.XLSX)};s.onerror=function(){cb(false)};document.head.appendChild(s)}
-function parseExcel(file,cb){var ext=(file.name||'').toLowerCase();if(ext.endsWith('.csv')){var fr=new FileReader();fr.onload=function(){cb(parseCSV(String(fr.result||'')))};fr.readAsText(file);return}ensureXLSX(function(ok){if(!ok){cb(null);return}var fr=new FileReader();fr.onload=function(e){try{var data=new Uint8Array(e.target.result);var wb=XLSX.read(data,{type:'array'});var ws=wb.Sheets[wb.SheetNames[0]];var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false});if(!rows||!rows.length){cb([]);return}var head=(rows[0]||[]).map(function(x){return nl(String(x||''))});var iN=head.findIndex(function(h){return h==='name'||h.indexOf('name')>-1||h==='اسم'||h.indexOf('اسم')>-1});var iC=head.findIndex(function(h){return h==='code'||h.indexOf('code')>-1||h==='كود'||h.indexOf('كود')>-1});if(iN<0)iN=0;if(iC<0)iC=1;var db=[];for(var i=1;i<rows.length;i++){var r=rows[i]||[];var nm=n(r[iN]);var cd=n(r[iC]);if(nm||cd)db.push({name:nm,code:cd})}cb(db)}catch(err){cb(null)}};fr.readAsArrayBuffer(file)})}
-function matchDrug(db,q){q=nl(q);if(!q)return null;var exact=db.find(function(x){return nl(x.code)===q||nl(x.name)===q});if(exact)return exact;var byC=db.find(function(x){return nl(x.code).indexOf(q)>-1});if(byC)return byC;return db.find(function(x){return nl(x.name).indexOf(q)>-1})||null}
-function addRowWith(name,code){var table=findT();if(!table)return false;var header=table.querySelector('tr');if(!header)return false;var hs=header.querySelectorAll('th,td');var iN=colIdx(hs,'name'),iC=colIdx(hs,'code');if(iN<0||iC<0)return false;var tbody=(table.tBodies&&table.tBodies.length)?table.tBodies[0]:table;var rows=[].slice.call(tbody.querySelectorAll('tr')).filter(function(r){return r.querySelectorAll('th').length===0});if(!rows.length)return false;var base=rows[rows.length-1];var newRow=base.cloneNode(true);clearRow(newRow);var tds=newRow.querySelectorAll('td');if(!tds.length||Math.max(iN,iC)>=tds.length)return false;if(tds[0]&&tds[0].querySelector('input.checkk')){tds[0].querySelector('input.checkk').checked=true;fire(tds[0].querySelector('input.checkk'))}setCell(tds[iN],name||'');setCell(tds[iC],code||'');setCell(tds[3],1);setCell(tds[5],1);tbody.appendChild(newRow);newRow.scrollIntoView({block:'center'});return true}
-
-/* ─── Safe Download ─── */
+/* ─── Safe Download (inline) ─── */
 function safeDownload(){
   try{
     var pname=(document.getElementById('pname')||{}).value||'';
@@ -43,131 +38,26 @@ function safeDownload(){
     if(!pname||!mobile){alert('الاسم أو الموبايل فاضي');return}
     if(!inv){alert('رقم الفاتورة مش موجود');return}
     var treats=[];var rows=document.querySelectorAll('table.styled-table tr');
-    for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;
+    for(var r=1;r<rows.length;r++){
+      var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;
       function gv(td){if(!td)return'';var inp=td.querySelector('input,textarea');if(inp)return inp.value.trim();var sel=td.querySelector('select');if(sel){var o=sel.options[sel.selectedIndex];return o?o.text.trim():''}return td.textContent.trim()}
       var code=gv(tds[1]);if(!code||code.length<3)continue;
-      var every=gv(tds[6])||'';var mins=1440;if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;
-      var st=gv(tds[7])||'09:00';if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}if(!st||st.length<3)st='09:00';
+      var every=gv(tds[6])||'';var mins=1440;
+      if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;
+      var st=gv(tds[7])||'09:00';
+      if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}
+      if(!st||st.length<3)st='09:00';
       function fd(dd){if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}return dd}
-      var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;
-      treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]})
+      var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));
+      if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;
+      treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]});
     }
     if(!treats.length){alert('مفيش أصناف');return}
     downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv);
   }catch(e){alert('خطأ: '+e.message)}
 }
 
-/* ═══════════════════════════════════════════
-   EZ-PILL PRO (بحث الطلبات) — Full Code
-   ═══════════════════════════════════════════ */
-function launchOrderSearch(){
-
-  var PANEL_ID='ali_sys_v4';
-  var VERSION='4.8';
-
-  /* If already open, toggle off */
-  var ex=document.getElementById(PANEL_ID);
-  if(ex){ex.remove();return}
-
-  var state={savedRows:[],visitedSet:new Set(),isProcessing:false,isSyncing:false,openedCount:0,tbody:null,noNewStreak:0};
-
-  var NEU={bg:'#e0e5ec',shadowDark:'rgba(163,177,198,0.6)',shadowLight:'rgba(255,255,255,0.8)',insetDark:'rgba(163,177,198,0.5)',insetLight:'rgba(255,255,255,0.7)',text:'#2d3748',textMuted:'#718096',accent:'#7c3aed',accentLight:'#a78bfa',success:'#059669',error:'#dc2626',warning:'#d97706'};
-
-  /* Toast */
-  function showToast(message,type){
-    type=type||'info';var container=document.getElementById('ali-toast-box');
-    if(!container){container=document.createElement('div');container.id='ali-toast-box';container.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center';document.body.appendChild(container)}
-    var colors={success:'#059669',error:'#dc2626',warning:'#d97706',info:'#475569'};var icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
-    var toast=document.createElement('div');toast.style.cssText='background:'+NEU.bg+';color:'+colors[type]+';padding:12px 24px;border-radius:16px;font-size:13px;font-weight:700;font-family:Segoe UI,Roboto,sans-serif;box-shadow:6px 6px 14px '+NEU.shadowDark+',-6px -6px 14px '+NEU.shadowLight+';display:flex;align-items:center;gap:8px;direction:rtl;animation:aliToastIn 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
-    toast.innerHTML='<span>'+icons[type]+'</span> '+message;container.appendChild(toast);
-    setTimeout(function(){toast.style.transition='all 0.3s';toast.style.opacity='0';toast.style.transform='translateY(10px)';setTimeout(function(){toast.remove()},300)},3500);
-  }
-
-  /* Dialog */
-  function showDialog(opts){
-    return new Promise(function(resolve){
-      var overlay=document.createElement('div');overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(180,190,205,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s';
-      var infoHTML='';if(opts.info&&opts.info.length){for(var i=0;i<opts.info.length;i++){var r=opts.info[i];infoHTML+='<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:'+NEU.bg+';border-radius:14px;margin-bottom:8px;box-shadow:inset 3px 3px 6px '+NEU.insetDark+',inset -3px -3px 6px '+NEU.insetLight+'"><span style="font-size:13px;color:'+NEU.textMuted+';font-weight:700">'+r.label+'</span><span style="font-weight:900;color:'+(r.color||NEU.accent)+';font-size:14px;font-family:Segoe UI,monospace">'+r.value+'</span></div>'}}
-      var badgesHTML='';if(opts.badges&&opts.badges.length){badgesHTML='<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:4px 0 8px">';for(var b=0;b<opts.badges.length;b++){var badge=opts.badges[b];var bStyle=badge.active?'color:'+NEU.accent+';background:linear-gradient(135deg,#ede9fe,#e8e0fd)':'color:'+NEU.textMuted+';background:'+NEU.bg;badgesHTML+='<span style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;'+bStyle+';box-shadow:3px 3px 6px '+NEU.shadowDark+',-3px -3px 6px '+NEU.shadowLight+'">'+badge.text+'</span>'}badgesHTML+='</div>'}
-      var buttonsHTML='';if(opts.buttons&&opts.buttons.length){for(var j=0;j<opts.buttons.length;j++){var btn=opts.buttons[j];var btnCSS=btn.primary?'background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:white;box-shadow:4px 4px 12px rgba(124,58,237,0.35),-2px -2px 8px rgba(255,255,255,0.15)':'background:'+NEU.bg+';color:'+NEU.textMuted+';box-shadow:4px 4px 10px '+NEU.shadowDark+',-4px -4px 10px '+NEU.shadowLight;buttonsHTML+='<button data-idx="'+j+'" style="flex:1;padding:16px;border:none;border-radius:16px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;transition:all 0.25s;'+btnCSS+'">'+btn.text+'</button>'}}
-      overlay.innerHTML='<div style="background:'+NEU.bg+';border-radius:28px;width:420px;max-width:92vw;overflow:hidden;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:'+NEU.text+';box-shadow:12px 12px 30px '+NEU.shadowDark+',-12px -12px 30px '+NEU.shadowLight+';animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:32px 28px 0;text-align:center"><div style="width:80px;height:80px;border-radius:50%;background:'+NEU.bg+';box-shadow:6px 6px 14px '+NEU.shadowDark+',-6px -6px 14px '+NEU.shadowLight+',inset 2px 2px 4px '+NEU.insetLight+';display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 18px">'+opts.icon+'</div><div style="font-size:21px;font-weight:900;color:'+NEU.text+';margin-bottom:6px">'+opts.title+'</div><div style="font-size:13px;color:'+NEU.textMuted+';line-height:1.7;font-weight:500">'+opts.desc+'</div></div>'+badgesHTML+'<div style="padding:20px 28px">'+infoHTML+(opts.body||'')+'</div><div style="padding:8px 28px 28px;display:flex;gap:12px">'+buttonsHTML+'</div></div>';
-      overlay.addEventListener('click',function(e){var btnEl=e.target.closest('[data-idx]');if(btnEl){var idx=parseInt(btnEl.getAttribute('data-idx'));overlay.style.transition='opacity 0.2s';overlay.style.opacity='0';setTimeout(function(){overlay.remove()},200);resolve(opts.buttons[idx].value)}});
-      document.body.appendChild(overlay);
-    });
-  }
-
-  /* CSS */
-  if(!document.getElementById('ali-pro-css')){
-    var styleEl=document.createElement('style');styleEl.id='ali-pro-css';
-    styleEl.innerHTML='@keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}@keyframes aliPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}@keyframes aliSpin{to{transform:rotate(360deg)}}@keyframes aliFadeIn{from{opacity:0}to{opacity:1}}@keyframes aliDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}@keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}@keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}#'+PANEL_ID+'{position:fixed;top:3%;right:2%;width:380px;max-height:92vh;background:'+NEU.bg+';border-radius:24px;box-shadow:10px 10px 30px '+NEU.shadowDark+',-10px -10px 30px '+NEU.shadowLight+';z-index:9999999;font-family:Segoe UI,Roboto,sans-serif;direction:rtl;color:'+NEU.text+';overflow:hidden;transition:all 0.5s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}#'+PANEL_ID+'.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#7c3aed,#a78bfa)!important;box-shadow:6px 6px 16px '+NEU.shadowDark+',-6px -6px 16px '+NEU.shadowLight+'!important;animation:aliPulse 2s infinite;overflow:hidden}#'+PANEL_ID+'.ali-minimized .ali-inner{display:none!important}#'+PANEL_ID+'.ali-minimized::after{content:"⚙️";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
-    document.head.appendChild(styleEl);
-  }
-
-  /* Calc pages */
-  var calculatedPages=10;
-  try{var targetText='ready to pack';var loc=window.location.href.toLowerCase();if(loc.indexOf('new')!==-1)targetText='new orders';else if(loc.indexOf('packed')!==-1&&loc.indexOf('ready')===-1)targetText='packed';else if(loc.indexOf('delivered')!==-1)targetText='delivered orders';var elements=document.querySelectorAll('*');for(var i=0;i<elements.length;i++){var el=elements[i];if(el.children.length===0&&el.textContent&&el.textContent.trim().toLowerCase()===targetText){var parent=el.parentElement;for(var j=0;j<4;j++){if(parent){var txt=parent.innerText||parent.textContent||'';var nums=txt.match(/\d+/g);if(nums&&nums.length>0){var maxN=0;for(var k=0;k<nums.length;k++){var nn=parseInt(nums[k]);if(nn>maxN)maxN=nn}if(maxN>0){calculatedPages=Math.ceil(maxN/10);break}}parent=parent.parentElement}}break}}if(calculatedPages<1)calculatedPages=1}catch(err){}
-
-  var neuOutset='6px 6px 14px '+NEU.shadowDark+',-6px -6px 14px '+NEU.shadowLight;
-  var neuInset='inset 3px 3px 6px '+NEU.insetDark+',inset -3px -3px 6px '+NEU.insetLight;
-  var neuBtnSm='4px 4px 10px '+NEU.shadowDark+',-4px -4px 10px '+NEU.shadowLight;
-
-  function neuStatCard(icon,val,label,color,id){return'<div style="background:'+NEU.bg+';border-radius:16px;padding:14px 8px;text-align:center;box-shadow:'+neuOutset+'"><div style="font-size:20px;margin-bottom:6px">'+icon+'</div><div id="'+id+'" style="font-size:24px;font-weight:900;color:'+color+';line-height:1;margin-bottom:4px">'+val+'</div><div style="font-size:10px;color:'+NEU.textMuted+';font-weight:700;letter-spacing:0.5px">'+label+'</div></div>'}
-
-  /* Panel */
-  var panel=document.createElement('div');panel.id=PANEL_ID;
-  panel.innerHTML='<div class="ali-inner"><div style="background:linear-gradient(135deg,#4a1d96,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden;border-radius:0 0 24px 24px;box-shadow:0 6px 20px rgba(109,40,217,0.25)"><div style="position:absolute;top:-50%;right:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div><div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1"><div style="display:flex;gap:6px"><span id="ali_min" style="width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.15);cursor:pointer;transition:0.2s;backdrop-filter:blur(4px)">−</span><span id="ali_close" style="width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.25);cursor:pointer;transition:0.2s;backdrop-filter:blur(4px)">✕</span></div><h3 style="font-size:20px;font-weight:900;letter-spacing:-0.3px;margin:0">بحث الطلبات</h3></div><div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:10px;padding:3px 10px;border-radius:8px;font-weight:700;backdrop-filter:blur(4px)">v'+VERSION+' EZ Tools</span></div></div><div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">'+neuStatCard('📊','0','إجمالي','#8b5cf6','stat_total')+neuStatCard('🔍','0','مطابق','#10b981','stat_match')+neuStatCard('🚀','0','تم فتحه','#3b82f6','stat_opened')+'</div><div id="ali_settings_box" style="background:'+NEU.bg+';border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:'+neuOutset+'"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:13px;font-weight:800;color:'+NEU.text+'">📄 عدد الصفحات</span><div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;color:'+NEU.textMuted+';font-weight:600">صفحة</span><input type="number" id="p_lim" value="'+calculatedPages+'" min="1" style="width:70px;padding:8px 6px;border:none;border-radius:12px;text-align:center;font-size:16px;font-weight:900;color:'+NEU.accent+';background:'+NEU.bg+';outline:none;font-family:Segoe UI,Roboto,sans-serif;box-shadow:'+neuInset+'"></div></div><div id="p-bar" style="height:8px;background:'+NEU.bg+';border-radius:10px;overflow:hidden;box-shadow:'+neuInset+'"><div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1)"></div></div></div><div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:'+NEU.bg+';color:#059669;box-shadow:'+neuInset+'"><span>✅</span><span>جاهز للبدء</span></div><div id="ali_dynamic_area"><button id="ali_start" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:6px 6px 14px rgba(109,40,217,0.3),-4px -4px 10px '+NEU.shadowLight+';transition:all 0.3s">🚀 بدء الفحص الذكي</button></div><div style="text-align:center;padding:14px 0 4px;font-size:10px;color:'+NEU.textMuted+';font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div></div></div>';
-  document.body.appendChild(panel);
-
-  /* Core helpers */
-  function setStatus(text,type){var el=document.getElementById('status-msg');if(!el)return;var configs={ready:{color:'#059669',icon:'✅'},working:{color:'#6d28d9',icon:'spinner'},error:{color:'#dc2626',icon:'❌'},done:{color:'#059669',icon:'🎉'},sync:{color:'#a16207',icon:'spinner'}};var c=configs[type]||configs.ready;var iconHTML=c.icon==='spinner'?'<div style="width:16px;height:16px;border:2.5px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.8s linear infinite;flex-shrink:0"></div>':'<span>'+c.icon+'</span>';el.style.cssText='display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:'+NEU.bg+';color:'+c.color+';box-shadow:'+neuInset+';transition:all 0.3s';el.innerHTML=iconHTML+'<span>'+text+'</span>'}
-  function animNum(id,val){var el=document.getElementById(id);if(!el||el.innerText===String(val))return;requestAnimationFrame(function(){el.innerText=val;el.style.animation='aliCountUp 0.4s';setTimeout(function(){el.style.animation=''},400)})}
-  function updateStats(mc){animNum('stat_total',state.savedRows.length);animNum('stat_match',mc!==undefined?mc:state.savedRows.length);animNum('stat_opened',state.openedCount)}
-  function debounce(fn,delay){var t;return function(){clearTimeout(t);t=setTimeout(fn,delay)}}
-  function getCurrentStatus(){var s='readypack';var l=window.location.href.toLowerCase();if(l.indexOf('new')!==-1)s='new';else if(l.indexOf('packed')!==-1&&l.indexOf('ready')===-1)s='packed';else if(l.indexOf('delivered')!==-1)s='delivered';return s}
-
-  /* Header events */
-  panel.addEventListener('click',function(e){if(panel.classList.contains('ali-minimized')){panel.classList.remove('ali-minimized');e.stopPropagation()}});
-  document.getElementById('ali_close').addEventListener('click',function(e){e.stopPropagation();panel.style.animation='aliSlideIn 0.3s reverse';setTimeout(function(){panel.remove()},280)});
-  document.getElementById('ali_min').addEventListener('click',function(e){e.stopPropagation();panel.classList.add('ali-minimized')});
-
-  function createSafeLabel(inv,args){var label=document.createElement('label');label.style.cssText='cursor:pointer;color:'+NEU.accent+';text-decoration:underline;font-weight:bold';label.textContent=inv;if(args){label.addEventListener('click',function(){getDetails(args[0],args[1],args[2],args[3])})}return label}
-
-  /* API */
-  async function fetchPageOrders(pageNum,currentStatus){var baseUrl=window.location.origin+"/ez_pill_web/";var res=await fetch(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:pageNum,searchby:''})});return await res.json()}
-
-  function buildOrderRow(item,templateRow){var inv=item.Invoice||'';var onl=item.onlineNumber||'';var typee=item.typee!==undefined?item.typee:'';var head_id=item.head_id!==undefined?item.head_id:'';var args=null;if(onl!==''&&inv!=='')args=[onl.replace(/ERX/gi,''),inv,typee,head_id];var clone;if(templateRow){clone=templateRow.cloneNode(true);var cells=clone.querySelectorAll('td');if(cells.length>3){cells[0].innerHTML='';cells[0].appendChild(createSafeLabel(inv,args));cells[1].textContent=onl;cells[2].textContent=item.guestName||'';cells[3].textContent=item.guestMobile||item.mobile||''}}else{clone=document.createElement('tr');var td0=document.createElement('td'),td1=document.createElement('td'),td2=document.createElement('td'),td3=document.createElement('td');td0.appendChild(createSafeLabel(inv,args));td1.textContent=onl;td2.textContent=item.guestName||'';td3.textContent=item.guestMobile||item.mobile||'';clone.appendChild(td0);clone.appendChild(td1);clone.appendChild(td2);clone.appendChild(td3)}return{id:inv,onl:onl,node:clone,args:args,hasArgs:args!==null}}
-
-  /* Scan */
-  var totalNoArgs=0;
-  async function scanPage(isSync){state.isProcessing=true;var fill=document.getElementById('p-fill');var currentStatus=getCurrentStatus();try{setStatus(isSync?'جاري المزامنة...':'جاري حساب الصفحات...',isSync?'sync':'working');var maxPages=parseInt(document.getElementById('p_lim').value)||1;var tables=document.querySelectorAll('table');var targetTable=tables[0];for(var t=0;t<tables.length;t++){if(tables[t].innerText.length>targetTable.innerText.length)targetTable=tables[t]}var tbody=targetTable.querySelector('tbody')||targetTable;var templateRow=tbody.querySelector('tr');var consecutiveEmpty=0;for(var page=1;page<=maxPages;page++){if(fill)fill.style.width=((page/maxPages)*100)+'%';setStatus((isSync?'مزامنة':'تحليل')+' الصفحة '+page+' من '+maxPages+' ...',isSync?'sync':'working');var data=await fetchPageOrders(page,currentStatus);if(page===1&&data.total_orders){var exactTotal=parseInt(data.total_orders)||0;if(exactTotal>0){maxPages=Math.ceil(exactTotal/10);document.getElementById('p_lim').value=maxPages}}var orders=[];try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}if(!orders||orders.length===0){consecutiveEmpty++;if(consecutiveEmpty>=2)break;continue}else consecutiveEmpty=0;var noArgsCount=0;for(var i=0;i<orders.length;i++){var inv=orders[i].Invoice||'';if(inv.length>3&&!state.visitedSet.has(inv)){state.visitedSet.add(inv);var rowData=buildOrderRow(orders[i],templateRow);if(!rowData.hasArgs)noArgsCount++;state.savedRows.push(rowData)}}totalNoArgs+=noArgsCount;updateStats()}finishScan(isSync)}catch(err){console.error(err);setStatus('حدث خطأ في الاتصال بالخادم','error');showToast('مشكلة في سحب البيانات!','error');state.isProcessing=false;state.isSyncing=false}}
-
-  /* Smart Sync */
-  async function smartSync(){state.isSyncing=true;state.isProcessing=true;var fill=document.getElementById('p-fill');var currentStatus=getCurrentStatus();try{setStatus('جاري جلب البيانات الحديثة...','sync');var serverOrders=new Map();var maxPages=parseInt(document.getElementById('p_lim').value)||1;var consecutiveEmpty=0;var firstData=await fetchPageOrders(1,currentStatus);if(firstData.total_orders){var exactTotal=parseInt(firstData.total_orders)||0;if(exactTotal>0){maxPages=Math.ceil(exactTotal/10);document.getElementById('p_lim').value=maxPages}}var firstOrders=[];try{firstOrders=typeof firstData.orders_list==='string'?JSON.parse(firstData.orders_list):firstData.orders_list}catch(e){}if(firstOrders&&firstOrders.length>0){for(var fi=0;fi<firstOrders.length;fi++){var fInv=firstOrders[fi].Invoice||'';if(fInv.length>3)serverOrders.set(fInv,firstOrders[fi])}}if(fill)fill.style.width=((1/maxPages)*100)+'%';for(var page=2;page<=maxPages;page++){if(fill)fill.style.width=((page/maxPages)*100)+'%';setStatus('مزامنة الصفحة '+page+' من '+maxPages+'...','sync');var data=await fetchPageOrders(page,currentStatus);var orders=[];try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}if(!orders||orders.length===0){consecutiveEmpty++;if(consecutiveEmpty>=2)break;continue}else consecutiveEmpty=0;for(var oi=0;oi<orders.length;oi++){var oInv=orders[oi].Invoice||'';if(oInv.length>3)serverOrders.set(oInv,orders[oi])}}setStatus('جاري مقارنة البيانات...','sync');var oldIds=new Set(state.savedRows.map(function(r){return r.id}));var removedIds=[];var keptRows=[];for(var ri=0;ri<state.savedRows.length;ri++){if(serverOrders.has(state.savedRows[ri].id))keptRows.push(state.savedRows[ri]);else removedIds.push(state.savedRows[ri].id)}var tables=document.querySelectorAll('table');var targetTable=tables[0];for(var t=0;t<tables.length;t++){if(tables[t].innerText.length>targetTable.innerText.length)targetTable=tables[t]}var tbody=targetTable.querySelector('tbody')||targetTable;var templateRow=tbody.querySelector('tr');var newRows=[];var noArgsNew=0;serverOrders.forEach(function(item,inv){if(!oldIds.has(inv)){var rowData=buildOrderRow(item,templateRow);if(!rowData.hasArgs)noArgsNew++;newRows.push(rowData)}});state.savedRows=keptRows.concat(newRows);state.visitedSet.clear();for(var si=0;si<state.savedRows.length;si++)state.visitedSet.add(state.savedRows[si].id);state.tbody=tbody;state.tbody.innerHTML='';for(var di=0;di<state.savedRows.length;di++){state.savedRows[di].node.style.cursor='pointer';state.tbody.appendChild(state.savedRows[di].node)}updateStats(state.savedRows.length);var summaryParts=[];if(removedIds.length>0)summaryParts.push('🗑 '+removedIds.length+' تم إزالته');if(newRows.length>0)summaryParts.push('✨ '+newRows.length+' جديد');if(removedIds.length===0&&newRows.length===0)summaryParts.push('لا تغييرات');var summaryText=summaryParts.join(' | ')+' — الإجمالي: '+state.savedRows.length;setStatus('تمت المزامنة — '+summaryText,'done');if(noArgsNew>0)showToast(noArgsNew+' طلب جديد بدون بيانات فتح','warning');await showDialog({icon:'✅',title:'تمت المزامنة بنجاح',desc:'تم تحديث القائمة بأحدث البيانات من الخادم',badges:[{text:'🗑 حُذف '+removedIds.length,active:removedIds.length>0},{text:'✨ جديد '+newRows.length,active:newRows.length>0},{text:'📦 إجمالي '+state.savedRows.length,active:true}],info:[{label:'تم إزالته (مُغلق)',value:removedIds.length.toString(),color:removedIds.length>0?'#dc2626':'#94a3b8'},{label:'أوردرات جديدة',value:newRows.length.toString(),color:newRows.length>0?'#059669':'#94a3b8'},{label:'الإجمالي الحالي',value:state.savedRows.length.toString(),color:'#7c3aed'}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'👍 تمام',value:'ok',primary:true}]});showToast(summaryText,'success')}catch(err){console.error('Sync error:',err);setStatus('خطأ في المزامنة — حاول تاني','error');showToast('فشلت المزامنة: '+(err.message||'خطأ غير متوقع'),'error')}finally{state.isSyncing=false;state.isProcessing=false;var syncBtn=document.getElementById('ali_btn_sync');if(syncBtn){syncBtn.disabled=false;syncBtn.innerHTML='🔄 مزامنة ذكية';syncBtn.style.boxShadow=neuBtnSm;syncBtn.style.color=NEU.textMuted}}}
-
-  /* Finish */
-  function finishScan(isSync){state.isProcessing=false;state.isSyncing=false;var tables=document.querySelectorAll('table');var target=tables[0];for(var t=0;t<tables.length;t++){if(tables[t].innerText.length>target.innerText.length)target=tables[t]}state.tbody=target.querySelector('tbody')||target;state.tbody.innerHTML='';for(var i=0;i<state.savedRows.length;i++){state.savedRows[i].node.style.cursor='pointer';state.tbody.appendChild(state.savedRows[i].node)}updateStats(state.savedRows.length);if(totalNoArgs>0)showToast(totalNoArgs+' طلب بدون بيانات فتح','warning');if(isSync){setStatus('تمت المزامنة — '+state.savedRows.length+' طلب','done');showToast('تمت المزامنة: '+state.savedRows.length+' طلب','success')}else{setStatus('تم التجميع — '+state.savedRows.length+' طلب جاهز','done');showToast('تم تجميع '+state.savedRows.length+' طلب بنجاح','success')}buildSearchUI()}
-
-  /* Search UI */
-  function buildSearchUI(){var dynArea=document.getElementById('ali_dynamic_area');dynArea.innerHTML='<div style="margin-bottom:10px"><div style="position:relative"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;color:'+NEU.textMuted+';z-index:1;pointer-events:none;font-family:monospace">0</span><input type="text" id="ali_sI" placeholder="أدخل الأرقام بعد الـ 0..." style="width:100%;padding:14px 16px 14px 34px;border:none;border-radius:14px;font-size:15px;font-family:Segoe UI,monospace;outline:none;background:'+NEU.bg+';color:'+NEU.text+';direction:ltr;text-align:left;transition:all 0.25s;letter-spacing:1px;font-weight:700;box-sizing:border-box;box-shadow:'+neuInset+'"></div></div><div style="margin-bottom:10px"><div style="position:relative"><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;z-index:1;pointer-events:none">🔗</span><input type="text" id="ali_sO" placeholder="بحث برقم الطلب (ERX)..." style="width:100%;padding:14px 42px 14px 16px;border:none;border-radius:14px;font-size:14px;font-family:Segoe UI,Roboto,sans-serif;outline:none;background:'+NEU.bg+';color:'+NEU.text+';direction:rtl;transition:all 0.25s;font-weight:600;box-sizing:border-box;box-shadow:'+neuInset+'"></div></div><div id="ali_search_count" style="font-size:11px;color:'+NEU.textMuted+';text-align:center;font-weight:600;padding:2px 0 12px">عرض '+state.savedRows.length+' من '+state.savedRows.length+' نتيجة</div><button id="ali_btn_open" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:6px 6px 14px rgba(5,150,105,0.3),-4px -4px 10px '+NEU.shadowLight+';transition:all 0.3s;margin-bottom:10px">⚡ ابحث أولاً ثم افتح المطابق</button><button id="ali_btn_sync" style="width:100%;padding:14px 16px;border:none;border-radius:16px;cursor:pointer;font-weight:800;font-size:13px;font-family:Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:'+NEU.bg+';color:'+NEU.textMuted+';box-shadow:'+neuBtnSm+';transition:all 0.3s">🔄 مزامنة ذكية</button>';
-    var sI=document.getElementById('ali_sI');var sO=document.getElementById('ali_sO');var searchCount=document.getElementById('ali_search_count');var openBtn=document.getElementById('ali_btn_open');var currentMatches=[];
-    function filterResults(){var rawInvoice=sI.value.trim();var invoiceSearch=rawInvoice!==''?'0'+rawInvoice:'';var orderSearch=sO.value.trim().toLowerCase();state.tbody.innerHTML='';var shown=0;currentMatches=[];var hasFilter=invoiceSearch!==''||orderSearch!=='';for(var i=0;i<state.savedRows.length;i++){var row=state.savedRows[i];var matchInvoice=invoiceSearch!==''&&row.id.startsWith(invoiceSearch);var matchOrder=orderSearch!==''&&row.onl.toLowerCase().indexOf(orderSearch)!==-1;var show=hasFilter?(matchInvoice||matchOrder):true;if(show){state.tbody.appendChild(row.node);shown++;if(hasFilter)currentMatches.push(row)}}searchCount.innerText='عرض '+shown+' من '+state.savedRows.length+' نتيجة';updateStats(shown);if(hasFilter&&currentMatches.length>0){var openable=currentMatches.filter(function(r){return r.args!==null}).length;openBtn.innerHTML='⚡ فتح المطابق ('+openable+' طلب)';openBtn.style.opacity='1';openBtn.style.cursor='pointer'}else if(hasFilter&&currentMatches.length===0){openBtn.innerHTML='⚡ لا توجد نتائج مطابقة';openBtn.style.opacity='0.5';openBtn.style.cursor='not-allowed'}else{openBtn.innerHTML='⚡ ابحث أولاً ثم افتح المطابق';openBtn.style.opacity='0.7';openBtn.style.cursor='not-allowed'}if(rawInvoice.length>0&&shown===0){sI.style.boxShadow='inset 3px 3px 6px rgba(239,68,68,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'}else if(rawInvoice.length>0&&shown>0){sI.style.boxShadow='inset 3px 3px 6px rgba(16,185,129,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'}else{sI.style.boxShadow=neuInset}if(orderSearch.length>0&&shown===0){sO.style.boxShadow='inset 3px 3px 6px rgba(239,68,68,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'}else if(orderSearch.length>0&&shown>0){sO.style.boxShadow='inset 3px 3px 6px rgba(16,185,129,0.2),inset -3px -3px 6px rgba(255,255,255,0.7)'}else{sO.style.boxShadow=neuInset}}
-    var debouncedFilter=debounce(filterResults,150);sI.addEventListener('input',debouncedFilter);sO.addEventListener('input',debouncedFilter);
-    openBtn.addEventListener('click',async function(){var rawInvoice=sI.value.trim();var orderSearch=sO.value.trim().toLowerCase();var hasFilter=rawInvoice!==''||orderSearch!=='';if(!hasFilter){showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!','warning');sI.focus();sI.style.animation='aliBlink 0.5s 3';setTimeout(function(){sI.style.animation=''},1500);return}var openable=currentMatches.filter(function(r){return r.args!==null});var skipped=currentMatches.length-openable.length;if(openable.length===0){showToast(skipped>0?skipped+' طلب مطابق لكن بدون بيانات فتح!':'لا توجد طلبات مطابقة!',skipped>0?'error':'warning');return}if(skipped>0)showToast('⚠️ تم تخطي '+skipped+' طلب بدون بيانات فتح','warning');openBtn.disabled=true;openBtn.style.opacity='0.6';openBtn.style.cursor='not-allowed';var opened=0,failed=0;var base=window.location.origin+"/ez_pill_web/getEZPill_Details";for(var idx=0;idx<openable.length;idx++){var item=openable[idx];var url=base+"?onlineNumber="+encodeURIComponent(item.args[0])+"&Invoice="+encodeURIComponent(item.args[1])+"&typee="+encodeURIComponent(item.args[2])+"&head_id="+encodeURIComponent(item.args[3]);try{var w=window.open(url,"_blank");if(w){opened++;state.openedCount++;window.focus();try{w.blur()}catch(e){}}else failed++}catch(e){failed++}openBtn.innerHTML='🚀 جاري الفتح ('+(idx+1)+'/'+openable.length+')';setStatus('فتح '+(idx+1)+' من '+openable.length+': '+(item.onl||item.id),'working');updateStats();if(idx<openable.length-1)await new Promise(function(r){setTimeout(r,1200)})}showToast('تم فتح '+opened+' طلب (فشل '+failed+')',opened>0?'success':'error');setStatus('تم فتح '+opened+' — الإجمالي: '+state.openedCount,'done');openBtn.disabled=false;openBtn.innerHTML='⚡ فتح المطابق ('+openable.length+' طلب)';filterResults()});
-    document.getElementById('ali_btn_sync').addEventListener('click',async function(){if(state.isSyncing||state.isProcessing){showToast('المزامنة شغالة بالفعل — انتظر!','warning');return}var syncBtn=this;var oldCount=state.savedRows.length;var result=await showDialog({icon:'🔄',title:'المزامنة الذكية',desc:'هيتم مقارنة بياناتك مع الخادم — حذف المُغلق وإضافة الجديد',badges:[{text:'حذف المُغلق',active:true},{text:'إضافة الجديد',active:true},{text:'تحديث البيانات',active:true}],info:[{label:'الطلبات الحالية',value:oldCount.toString(),color:'#7c3aed'},{label:'العملية',value:'مقارنة + تحديث ذكي',color:'#3b82f6'}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 بدء المزامنة',value:'confirm',primary:true}]});if(result!=='confirm')return;syncBtn.disabled=true;syncBtn.innerHTML='<div style="width:14px;height:14px;border:2.5px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري المزامنة...';syncBtn.style.boxShadow=neuInset;syncBtn.style.color=NEU.accent;await smartSync();buildSearchUI()});
-  }
-
-  /* Start */
-  document.getElementById('ali_start').addEventListener('click',function(){if(state.isProcessing)return;this.disabled=true;this.innerHTML='<div style="width:16px;height:16px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.8s linear infinite"></div> جاري الفحص...';this.style.opacity='0.7';this.style.cursor='not-allowed';this.style.boxShadow=neuInset;totalNoArgs=0;scanPage(false)});
-
-} /* end launchOrderSearch */
-
-
-/* ═══════════════════════════════════════════
-   BUILD EZ TOOLS UI
-   ═══════════════════════════════════════════ */
-var PID='ez-tools-main';
-var old=document.getElementById(PID);if(old){old.remove();return}
-
+/* ─── CSS ─── */
 if(!document.getElementById('ez-tools-css')){
   var css=document.createElement('style');css.id='ez-tools-css';
   css.textContent=
@@ -175,64 +65,140 @@ if(!document.getElementById('ez-tools-css')){
     '#'+PID+' .eztb{width:100%;padding:14px 16px;border:1px solid #edf0f7;border-radius:14px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#334155;display:flex;align-items:center;gap:12px;transition:all 0.2s;text-align:right;direction:rtl}'+
     '#'+PID+' .eztb:hover{border-color:#c7d2fe;background:#f8f9ff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,0.08)}'+
     '#'+PID+' .ezic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}'+
-    '#'+PID+' .ezsub{display:none;margin-top:10px;padding:14px;border-radius:14px;border:1px solid #edf0f7;background:#fafbff;animation:ezIn 0.25s ease}'+
     '#'+PID+' .ez-sep{height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);margin:6px 0}';
   document.head.appendChild(css);
 }
 
+/* ─── Panel ─── */
 var p=document.createElement('div');p.id=PID;
 p.style.cssText='position:fixed;top:14px;right:14px;z-index:999999;width:350px;background:#fff;border-radius:20px;overflow:visible;box-shadow:0 12px 40px rgba(15,23,42,0.08),0 0 0 1px rgba(99,102,241,0.06);font-family:Segoe UI,Cairo,Tahoma,sans-serif;animation:ezIn 0.35s ease;direction:rtl';
 
 p.innerHTML=
+/* Header */
 '<div style="background:linear-gradient(135deg,#fafbff,#eef2ff);padding:18px 20px 14px;border-bottom:1px solid #edf0f7;border-radius:20px 20px 0 0">'+
   '<div style="display:flex;align-items:center;justify-content:space-between">'+
-    '<div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#a5b4fc,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;box-shadow:0 4px 14px rgba(129,140,248,0.25)">EZ</div><div><div style="font-size:16px;font-weight:900;color:#312e81">EZ Tools</div><div style="font-size:10px;color:#a5b4fc;font-weight:600">v1.2 — أدوات مساعدة</div></div></div>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+      '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#a5b4fc,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;box-shadow:0 4px 14px rgba(129,140,248,0.25)">EZ</div>'+
+      '<div><div style="font-size:16px;font-weight:900;color:#312e81">EZ Tools</div><div style="font-size:10px;color:#a5b4fc;font-weight:600">v1.4 — أدوات مساعدة</div></div>'+
+    '</div>'+
     '<button id="ez-t-close" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#94a3b8;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#94a3b8\'">×</button>'+
   '</div>'+
 '</div>'+
+
+/* Tools */
 '<div id="ez-tools-body" style="padding:14px 16px 6px;display:flex;flex-direction:column;gap:8px">'+
 
-  /* Tool 1: Add Drug */
-  '<button class="eztb" id="ez-t-add"><div class="ezic" style="background:#eff6ff;color:#60a5fa">➕</div><div style="flex:1"><div style="font-weight:800;color:#1e293b">إضافة صنف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">إضافة دواء من ملف Excel/CSV</div></div><span style="color:#d1d5db">◂</span></button>'+
-  '<div class="ezsub" id="ez-s-add"><div style="margin-bottom:10px"><div style="font-weight:700;color:#64748b;margin-bottom:5px;font-size:11px">📁 ملف الأصناف</div><input id="ez-f-file" type="file" accept=".xlsx,.xls,.csv" style="width:100%;padding:8px;border:2px dashed #dde3ee;border-radius:8px;background:#f8fafc;font-size:11px;box-sizing:border-box;cursor:pointer"></div><div style="margin-bottom:10px;position:relative"><div style="font-weight:700;color:#64748b;margin-bottom:5px;font-size:11px">🔍 بحث</div><input id="ez-f-q" type="text" placeholder="اسم أو كود..." style="width:100%;padding:10px 12px;border:1px solid #dde3ee;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit;direction:rtl"><div id="ez-f-sug" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e8ecf4;border-radius:8px;max-height:160px;overflow-y:auto;display:none;z-index:1000000;box-shadow:0 6px 20px rgba(0,0,0,0.06);margin-top:3px"></div></div><button id="ez-f-go" style="width:100%;padding:10px;border-radius:8px;border:none;background:linear-gradient(145deg,#a5b4fc,#818cf8);color:#fff;cursor:pointer;font-weight:800;font-size:13px;font-family:inherit;transition:all 0.2s" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'\'">➕ إضافة</button><div id="ez-f-st" style="margin-top:8px;padding:6px;border-radius:6px;background:#f1f5f9;font-size:10px;color:#64748b;text-align:center;font-weight:600"></div></div>'+
+  /* 1: بحث الطلبات */
+  '<button class="eztb" id="ez-t-search">'+
+    '<div class="ezic" style="background:#faf5ff;color:#a855f7">🔍</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">بحث الطلبات</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">فحص وفتح الطلبات تلقائياً</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
 
-  /* Tool 2: Order Search */
-  '<button class="eztb" id="ez-t-search"><div class="ezic" style="background:#faf5ff;color:#a855f7">🔍</div><div style="flex:1"><div style="font-weight:800;color:#1e293b">بحث الطلبات</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">فحص وفتح الطلبات تلقائياً</div></div><span style="color:#d1d5db">◂</span></button>'+
+  /* 2: تقفيل الطلبات */
+  '<button class="eztb" id="ez-t-close-orders">'+
+    '<div class="ezic" style="background:#fef2f2;color:#ef4444">📝</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">تقفيل الطلبات</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">تسليم وتصدير الطلبات المجهزة</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
 
-  /* Separator */
+  /* 3: إضافة صنف */
+  '<button class="eztb" id="ez-t-add">'+
+    '<div class="ezic" style="background:#eff6ff;color:#60a5fa">➕</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">إضافة صنف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">إضافة دواء من ملف Excel/CSV</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
+
+  /* 4: تعديل الطباعة */
+  '<button class="eztb" id="ez-t-editor">'+
+    '<div class="ezic" style="background:#fefce8;color:#eab308">✏️</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">تعديل الطباعة</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Nahdi Editor</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
+
+  /* 5: البحث الشامل */
+  '<button class="eztb" id="ez-t-radar">'+
+    '<div class="ezic" style="background:#f0fdf4;color:#22c55e">📡</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">البحث الشامل</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Radar — بحث متقدم</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
+
+  /* 6: FarEye */
+  '<button class="eztb" id="ez-t-fareye">'+
+    '<div class="ezic" style="background:#fdf4ff;color:#d946ef">🚀</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">FarEye</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">FarEye Injector</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
+
+  /* ─── Separator ─── */
   '<div class="ez-sep"></div>'+
 
-  /* Download */
-  '<button class="eztb" id="ez-t-dl"><div class="ezic" style="background:#ecfdf5;color:#34d399">📥</div><div style="flex:1"><div style="font-weight:800;color:#1e293b">تحميل الملف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">بدون مسح البيانات</div></div><span style="color:#d1d5db">◂</span></button>'+
+  /* 7: تحميل الملف */
+  '<button class="eztb" id="ez-t-dl">'+
+    '<div class="ezic" style="background:#ecfdf5;color:#34d399">📥</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">تحميل الملف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">بدون مسح البيانات</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
 
-  /* Print */
-  '<button class="eztb" id="ez-t-pr"><div class="ezic" style="background:#f0f9ff;color:#38bdf8">🖨️</div><div style="flex:1"><div style="font-weight:800;color:#1e293b">طباعة الملخص</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Print Summary</div></div><span style="color:#d1d5db">◂</span></button>'+
+  /* 8: طباعة الملخص */
+  '<button class="eztb" id="ez-t-pr">'+
+    '<div class="ezic" style="background:#f0f9ff;color:#38bdf8">🖨️</div>'+
+    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">طباعة الملخص</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Print Summary</div></div>'+
+    '<span style="color:#d1d5db">◂</span>'+
+  '</button>'+
 
 '</div>'+
-'<div style="padding:8px 20px 10px;text-align:center;border-top:1px solid #f1f5f9;margin-top:2px"><div style="font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1px">EZ TOOLS v1.2 — DEVELOPED BY ALI EL-BAZ</div></div>';
+
+/* Footer */
+'<div style="padding:8px 20px 10px;text-align:center;border-top:1px solid #f1f5f9;margin-top:2px">'+
+  '<div style="font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1px">EZ TOOLS v1.4 — DEVELOPED BY ALI EL-BAZ</div>'+
+'</div>';
 
 document.body.appendChild(p);
 
 /* ═══ EVENTS ═══ */
+
+/* Close panel */
 document.getElementById('ez-t-close').onclick=function(){p.remove()};
 
-/* Add Drug */
-var subAdd=document.getElementById('ez-s-add'),addOpen=false;
-if(!window.EZPillDrugDB)window.EZPillDrugDB=[];
-document.getElementById('ez-t-add').onclick=function(){addOpen=!addOpen;subAdd.style.display=addOpen?'block':'none';var ic=this.querySelector('.ezic');ic.style.background=addOpen?'linear-gradient(145deg,#a5b4fc,#818cf8)':'#eff6ff';ic.style.color=addOpen?'#fff':'#60a5fa';if(addOpen){var st=document.getElementById('ez-f-st');st.textContent=window.EZPillDrugDB.length?'✅ '+window.EZPillDrugDB.length+' صنف محمّل':'📁 ارفع ملف الأصناف';setTimeout(function(){document.getElementById('ez-f-q').focus()},100)}};
-document.getElementById('ez-f-file').onchange=function(){var f=this.files&&this.files[0];if(!f)return;var st=document.getElementById('ez-f-st');st.textContent='⏳ جاري التحميل...';parseExcel(f,function(db){if(db===null){st.textContent='❌ خطأ';return}window.EZPillDrugDB=db||[];st.textContent='✅ '+window.EZPillDrugDB.length+' صنف';document.getElementById('ez-f-q').focus()})};
-document.getElementById('ez-f-q').oninput=function(){var q=this.value,sug=document.getElementById('ez-f-sug');sug.innerHTML='';if(q.length>0&&window.EZPillDrugDB.length){var m=window.EZPillDrugDB.filter(function(it){return nl(it.name).indexOf(nl(q))>-1||nl(it.code).indexOf(nl(q))>-1}).slice(0,10);if(m.length){for(var i=0;i<m.length;i++){(function(item){var d=document.createElement('div');d.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid #f5f5f5;direction:rtl';d.innerHTML='<div style="font-weight:700;font-size:11px;color:#1e293b">'+item.name+'</div><div style="font-size:9px;color:#94a3b8">'+item.code+'</div>';d.onmouseover=function(){this.style.background='#f8f9ff'};d.onmouseout=function(){this.style.background=''};d.onclick=function(){document.getElementById('ez-f-q').value=item.name;sug.style.display='none';document.getElementById('ez-f-q').focus()};sug.appendChild(d)})(m[i])}sug.style.display='block'}else{sug.style.display='none'}}else{sug.style.display='none'}};
-function doAdd(){var q=document.getElementById('ez-f-q').value||'';var st=document.getElementById('ez-f-st');if(!window.EZPillDrugDB||!window.EZPillDrugDB.length){st.textContent='⚠️ ارفع الملف أولاً';return}var item=matchDrug(window.EZPillDrugDB,q);if(!item){st.textContent='❌ مش موجود: '+q;return}if(addRowWith(item.name,item.code)){st.textContent='✅ '+item.name;document.getElementById('ez-f-q').value='';document.getElementById('ez-f-sug').style.display='none'}else{st.textContent='❌ فشل — الجدول مش موجود'}}
-document.getElementById('ez-f-go').onclick=doAdd;
-document.getElementById('ez-f-q').onkeydown=function(e){if(e.key==='Enter')doAdd()};
+/* 1: بحث الطلبات */
+document.getElementById('ez-t-search').onclick=function(){
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث الطلبات',true);
+};
 
-/* Order Search — close EZ Tools, launch PRO */
-document.getElementById('ez-t-search').onclick=function(){p.remove();launchOrderSearch()};
+/* 2: تقفيل الطلبات */
+document.getElementById('ez-t-close-orders').onclick=function(){
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات',true);
+};
 
-/* Download */
-document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
+/* 3: إضافة صنف */
+document.getElementById('ez-t-add').onclick=function(){
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
+};
 
-/* Print */
-document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}else{alert('فانكشن الطباعة مش موجودة')}};
+/* 4: تعديل الطباعة */
+document.getElementById('ez-t-editor').onclick=function(){
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);
+};
+
+/* 5: البحث الشامل */
+document.getElementById('ez-t-radar').onclick=function(){
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);
+};
+
+/* 6: FarEye */
+document.getElementById('ez-t-fareye').onclick=function(){
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);
+};
+
+/* 7: تحميل الملف */
+document.getElementById('ez-t-dl').onclick=function(){
+  safeDownload();
+};
+
+/* 8: طباعة الملخص */
+document.getElementById('ez-t-pr').onclick=function(){
+  if(typeof printsum==='function'){printsum()}else{alert('فانكشن الطباعة مش موجودة')}
+};
 
 })();
