@@ -1157,7 +1157,8 @@ window._ezDoAddDrug=function(){
 };
 
 /* ══════════════════════════════════════════
-   DOWNLOAD INTERCEPTOR — تعديل external_id في الـ response
+   DOWNLOAD INTERCEPTOR — تعديل external_id
+   يعترض زر Download ويعدّل الـ JSON قبل التحميل
    ══════════════════════════════════════════ */
 window._ezInterceptDownload=false;
 window._ezDownloadCounter=0;
@@ -1168,102 +1169,126 @@ window.ezToggleDownloadIntercept=function(){
   var btn=document.getElementById('ez-dl-intercept-btn');
   if(btn){
     btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'linear-gradient(145deg,#94a3b8,#64748b)';
-    btn.textContent=window._ezInterceptDownload?'\u{1f504} تعديل الفاتورة: مُفعّل ✅':'\u{1f504} تعديل رقم الفاتورة عند التحميل';
+    btn.textContent=window._ezInterceptDownload?'🔄 تعديل الفاتورة: مُفعّل ✅':'🔄 تعديل رقم الفاتورة عند التحميل';
+  }
+  /* Hook into download buttons when enabled */
+  if(window._ezInterceptDownload){
+    _ezHookDownloadBtns();
   }
   window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هينقّص رقم':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
 };
 
+function _ezHookDownloadBtns(){
+  var btns=document.querySelectorAll('.downloadBtn,button[onclick*="downloaded"]');
+  for(var i=0;i<btns.length;i++){
+    if(btns[i]._ezHooked) continue;
+    btns[i]._ezHooked=true;
+    btns[i].addEventListener('click',function(e){
+      if(!window._ezInterceptDownload) return; /* disabled, let original run */
+      /* Let original downloaded() run, then after a delay find the downloaded file and modify it */
+    },false);
+  }
+}
+
+/* Monitor all downloads: intercept the <a> element click */
 (function(){
-  var _origOpen=XMLHttpRequest.prototype.open;
-  var _origSend=XMLHttpRequest.prototype.send;
-  XMLHttpRequest.prototype.open=function(method,url){
-    this._ezUrl=url||'';this._ezMethod=(method||'').toUpperCase();
-    return _origOpen.apply(this,arguments);
+  /* Override createObjectURL to track blob URLs */
+  var _origCOU=URL.createObjectURL;
+  var _blobMap={};
+  URL.createObjectURL=function(blob){
+    var url=_origCOU.call(URL,blob);
+    if(blob&&blob.size>50) _blobMap[url]=blob;
+    return url;
   };
-  XMLHttpRequest.prototype.send=function(body){
-    var xhr=this;
-    if(window._ezInterceptDownload&&xhr._ezMethod==='POST'&&xhr._ezUrl&&xhr._ezUrl.indexOf('downloaded')>-1){
-      xhr.addEventListener('readystatechange',function(){
-        if(xhr.readyState===4&&xhr.status===200){
-          try{
-            var json=JSON.parse(xhr.responseText||'');
-            if(json){
-              window._ezDownloadCounter++;var modified=false;
-              if(json.patients){for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){var o=json.patients[p].external_id;json.patients[p].external_id=o.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}}}
-              if(json.external_id){json.external_id=json.external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}
-              if(modified){var nr=JSON.stringify(json);Object.defineProperty(xhr,'responseText',{writable:true,value:nr});Object.defineProperty(xhr,'response',{writable:true,value:nr});window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');}
+
+  /* Intercept all anchor clicks for download */
+  document.addEventListener('click',function(e){
+    if(!window._ezInterceptDownload) return;
+    var a=e.target.closest('a[download],a[href*="blob:"]');
+    if(!a) return;
+
+    var href=a.href;
+    if(!href) return;
+
+    /* Check if this is a blob URL we tracked */
+    var blob=_blobMap[href];
+    if(blob){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      var reader=new FileReader();
+      reader.onload=function(){
+        try{
+          var json=JSON.parse(reader.result);
+          if(json.patients||json.external_id){
+            window._ezDownloadCounter++;
+            var modified=false;
+            if(json.patients){
+              for(var p=0;p<json.patients.length;p++){
+                if(json.patients[p].external_id){
+                  var orig=json.patients[p].external_id;
+                  json.patients[p].external_id=orig.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
+                  console.log('EZ_PILL: '+orig+' → '+json.patients[p].external_id);
+                  modified=true;
+                }
+              }
             }
-          }catch(e){}
-        }
-      });
+            if(json.external_id){
+              json.external_id=json.external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
+              modified=true;
+            }
+            if(modified){
+              var newBlob=new Blob([JSON.stringify(json)],{type:blob.type||'application/json'});
+              var newUrl=_origCOU.call(URL,newBlob);
+              var dl=document.createElement('a');
+              dl.href=newUrl;
+              dl.download=a.download||('order_'+window._ezDownloadCounter+'.json');
+              document.body.appendChild(dl);
+              dl.click();
+              setTimeout(function(){document.body.removeChild(dl);URL.revokeObjectURL(newUrl);},500);
+              window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');
+              return;
+            }
+          }
+        }catch(ex){console.error('EZ intercept error:',ex);}
+        /* If modification failed, download original */
+        window.open(href);
+      };
+      reader.readAsText(blob);
+      return false;
     }
-    return _origSend.call(this,body);
-  };
+  },true);
 })();
 
-(function(){
-  var _origFetch=window.fetch;
-  window.fetch=function(url,opts){
-    var urlStr=typeof url==='string'?url:(url&&url.url?url.url:'');
-    if(window._ezInterceptDownload&&opts&&opts.method&&opts.method.toUpperCase()==='POST'&&urlStr.indexOf('downloaded')>-1){
-      return _origFetch.apply(this,arguments).then(function(response){
-        return response.clone().text().then(function(text){
-          try{
-            var json=JSON.parse(text);window._ezDownloadCounter++;var modified=false;
-            if(json.patients){for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){json.patients[p].external_id=json.patients[p].external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}}}
-            if(json.external_id){json.external_id=json.external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}
-            if(modified){window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');return new Response(JSON.stringify(json),{status:response.status,statusText:response.statusText,headers:response.headers});}
-          }catch(e){}
-          return response;
-        });
-      });
-    }
-    return _origFetch.apply(this,arguments);
-  };
-})();
-
+/* Also intercept Blob constructor for sites that build JSON blob inline */
 (function(){
   var _origBlob=window.Blob;
   window.Blob=function(parts,opts){
-    if(window._ezInterceptDownload&&parts&&parts.length===1&&typeof parts[0]==='string'){
+    if(window._ezInterceptDownload&&parts&&parts.length>=1&&typeof parts[0]==='string'&&parts[0].length>50){
       try{
         var json=JSON.parse(parts[0]);
         if(json.patients){
-          window._ezDownloadCounter++;var modified=false;
-          for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){var o=json.patients[p].external_id;json.patients[p].external_id=o.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}}
-          if(modified){parts=[JSON.stringify(json)];window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');}
+          window._ezDownloadCounter++;
+          var modified=false;
+          for(var p=0;p<json.patients.length;p++){
+            if(json.patients[p].external_id){
+              var orig=json.patients[p].external_id;
+              json.patients[p].external_id=orig.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
+              console.log('EZ_PILL Blob: '+orig+' → '+json.patients[p].external_id);
+              modified=true;
+            }
+          }
+          if(modified){
+            parts=[JSON.stringify(json)];
+            window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');
+          }
         }
       }catch(e){}
     }
     return new _origBlob(parts,opts);
   };
   window.Blob.prototype=_origBlob.prototype;
-})();
-
-(function(){
-  if(window.saveAs){
-    var _origSaveAs=window.saveAs;
-    window.saveAs=function(blob,name){
-      if(window._ezInterceptDownload&&blob){
-        var reader=new FileReader();
-        reader.onload=function(){
-          try{
-            var json=JSON.parse(reader.result);
-            if(json.patients){
-              window._ezDownloadCounter++;
-              for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){json.patients[p].external_id=json.patients[p].external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});}}
-              var newBlob=new Blob([JSON.stringify(json)],{type:'application/json'});
-              window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');
-              return _origSaveAs(newBlob,name);
-            }
-          }catch(e){}
-          return _origSaveAs(blob,name);
-        };
-        reader.readAsText(blob);return;
-      }
-      return _origSaveAs(blob,name);
-    };
-  }
 })();
 
 window.ezSelect=function(el,type,val){
