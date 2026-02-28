@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '6.2';
+  const VERSION = '5.4';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -10,7 +10,6 @@ javascript:(function(){
   }
 
   const MAX_PER_FILE = 49;
-  const BATCH_SIZE = 5;
 
   const state = {
     savedRows: [],
@@ -73,7 +72,7 @@ javascript:(function(){
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(10px)';
       setTimeout(() => toast.remove(), 300);
-    }, 4000);
+    }, 3500);
   }
 
   function showDialog({ icon, title, desc, info, badges, buttons }) {
@@ -199,7 +198,7 @@ javascript:(function(){
             <input type="number" id="p_lim" value="${defaultPages}" min="1" style="width:70px;padding:8px 6px;border:none;border-radius:12px;text-align:center;font-size:16px;font-weight:900;color:${NEU.accent};background:${NEU.bg};outline:none;font-family:'Tajawal',sans-serif;box-shadow:${neuInset}">
           </div>
           <div id="p-bar" style="height:8px;background:${NEU.bg};border-radius:10px;overflow:hidden;box-shadow:${neuInset}">
-            <div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.3s"></div>
+            <div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.2s"></div>
           </div>
           <div id="p-label" style="text-align:center;margin-top:6px;font-size:11px;color:${NEU.textMuted};font-weight:700;display:none"></div>
         </div>
@@ -207,9 +206,6 @@ javascript:(function(){
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:${NEU.bg};color:${NEU.success};box-shadow:${neuInset}">
           <span>✅</span><span>النظام في وضع الاستعداد</span>
         </div>
-        
-        <!-- Debug Log Area -->
-        <div id="ali_debug_log" style="display:none;background:#1e1e2e;border-radius:14px;padding:12px;margin-bottom:16px;font-size:11px;color:#a6e3a1;font-family:'Courier New',monospace;direction:ltr;text-align:left;max-height:200px;overflow-y:auto;box-shadow:${neuInset};line-height:1.6;word-break:break-all"></div>
         
         <div id="ali_dynamic_area">
           <button id="ali_start" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:6px 6px 14px rgba(109,40,217,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s">
@@ -223,24 +219,6 @@ javascript:(function(){
   `;
   document.body.appendChild(panel);
 
-  // ═══════════════════════════════════════════
-  // Debug Logger
-  // ═══════════════════════════════════════════
-  function debugLog(msg, type) {
-    const logEl = document.getElementById('ali_debug_log');
-    if (!logEl) return;
-    logEl.style.display = 'block';
-    const colors = { info:'#89b4fa', ok:'#a6e3a1', err:'#f38ba8', warn:'#fab387' };
-    const c = colors[type] || colors.info;
-    const time = new Date().toLocaleTimeString('en-US',{hour12:false});
-    logEl.innerHTML += `<div style="color:${c}">[${time}] ${esc(msg)}</div>`;
-    logEl.scrollTop = logEl.scrollHeight;
-    console.log(`[ALI v${VERSION}] ${msg}`);
-  }
-
-  // ═══════════════════════════════════════════
-  // Core Functions
-  // ═══════════════════════════════════════════
   function setStatus(text, type) {
     const el = document.getElementById('status-msg');
     if (!el) return;
@@ -281,26 +259,12 @@ javascript:(function(){
     animNum('stat_total', state.savedRows.length);
   }
 
-  function updateProgress(completed, total) {
-    const fill = document.getElementById('p-fill');
-    const label = document.getElementById('p-label');
-    const pct = Math.round((completed / total) * 100);
-    if (fill) fill.style.width = pct + '%';
-    if (label) {
-      label.style.display = 'block';
-      label.innerText = `${completed} / ${total} صفحة (${pct}%)`;
-    }
-  }
-
   panel.addEventListener('click', e => { if(panel.classList.contains('ali-minimized')){ panel.classList.remove('ali-minimized'); e.stopPropagation(); } });
   document.getElementById('ali_close').addEventListener('click', e => { e.stopPropagation(); panel.style.animation='aliSlideIn 0.3s reverse'; setTimeout(()=>panel.remove(),280); });
   document.getElementById('ali_min').addEventListener('click', e => { e.stopPropagation(); panel.classList.add('ali-minimized'); });
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  // ═══════════════════════════════════════════
-  // Process Data
-  // ═══════════════════════════════════════════
   function processData(data) {
     let orders = [];
     try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
@@ -350,231 +314,85 @@ javascript:(function(){
   }
 
   // ═══════════════════════════════════════════
-  // Fetch with XHR Fallback
-  // ═══════════════════════════════════════════
-  function fetchWithXHR(url, bodyObj) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              resolve(JSON.parse(xhr.responseText));
-            } catch(e) {
-              reject(new Error('XHR JSON parse error: ' + xhr.responseText.substring(0, 100)));
-            }
-          } else {
-            reject(new Error('XHR HTTP ' + xhr.status + ': ' + xhr.statusText));
-          }
-        }
-      };
-      xhr.onerror = function() {
-        reject(new Error('XHR Network Error'));
-      };
-      xhr.send(JSON.stringify(bodyObj));
-    });
-  }
-
-  async function smartFetch(url, bodyObj, pageLabel) {
-    // محاولة 1: fetch عادي
-    try {
-      debugLog(`[${pageLabel}] Trying fetch()...`, 'info');
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyObj)
-      });
-      debugLog(`[${pageLabel}] fetch() status: ${res.status}`, res.ok ? 'ok' : 'err');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const text = await res.text();
-      debugLog(`[${pageLabel}] Response length: ${text.length} chars`, 'ok');
-      if (!text || text.trim().length === 0) throw new Error('Empty response');
-      try {
-        return JSON.parse(text);
-      } catch(e) {
-        debugLog(`[${pageLabel}] JSON parse failed: ${text.substring(0, 80)}`, 'err');
-        throw new Error('Invalid JSON');
-      }
-    } catch(fetchErr) {
-      debugLog(`[${pageLabel}] fetch() failed: ${fetchErr.message}`, 'warn');
-    }
-
-    // محاولة 2: XMLHttpRequest
-    try {
-      debugLog(`[${pageLabel}] Trying XHR fallback...`, 'info');
-      const data = await fetchWithXHR(url, bodyObj);
-      debugLog(`[${pageLabel}] XHR success!`, 'ok');
-      return data;
-    } catch(xhrErr) {
-      debugLog(`[${pageLabel}] XHR failed: ${xhrErr.message}`, 'err');
-    }
-
-    // محاولة 3: fetch مع credentials
-    try {
-      debugLog(`[${pageLabel}] Trying fetch() with credentials...`, 'info');
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyObj),
-        credentials: 'include'
-      });
-      debugLog(`[${pageLabel}] fetch+creds status: ${res.status}`, res.ok ? 'ok' : 'err');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      debugLog(`[${pageLabel}] fetch+creds success!`, 'ok');
-      return data;
-    } catch(credErr) {
-      debugLog(`[${pageLabel}] fetch+creds failed: ${credErr.message}`, 'err');
-    }
-
-    return null;
-  }
-
-  // ═══════════════════════════════════════════
-  // Scan All Pages
+  // Scan — نفس الكود الأصلي بالظبط + تقدم + وقت
   // ═══════════════════════════════════════════
   async function scanAllPages() {
     state.isProcessing = true;
+    const fill = document.getElementById('p-fill');
+    const pLabel = document.getElementById('p-label');
     const baseUrl = window.location.origin + "/ez_pill_web/";
-    const fetchUrl = baseUrl + 'Home/getOrders';
     const currentStatus = 'packed';
     const startTime = performance.now();
 
-    // Reset debug log
-    const logEl = document.getElementById('ali_debug_log');
-    if (logEl) logEl.innerHTML = '';
-
     setStatus('جاري الاتصال بقاعدة البيانات...', 'working');
-    debugLog('=== بداية العملية ===', 'info');
-    debugLog('URL: ' + fetchUrl, 'info');
-    debugLog('Origin: ' + window.location.origin, 'info');
-    debugLog('Current page URL: ' + window.location.href, 'info');
 
     let maxPages = parseInt(document.getElementById('p_lim').value) || 1;
     state.savedRows = [];
     state.visitedSet.clear();
     state.htmlBuffer = '';
+    let completedPages = 0;
 
-    let failedPages = [];
+    try {
+      const res1 = await fetch(baseUrl + 'Home/getOrders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' })
+      });
+      const data1 = await res1.json();
 
-    // ─── الصفحة الأولى ───
-    setStatus('جاري تحميل الصفحة الأولى...', 'working');
-    const bodyObj1 = { status: currentStatus, pageSelected: 1, searchby: '' };
-    debugLog('Request body: ' + JSON.stringify(bodyObj1), 'info');
+      if (data1.total_orders) {
+        const exactTotal = parseInt(data1.total_orders) || 0;
+        if (exactTotal > 0) {
+          maxPages = Math.ceil(exactTotal / 10);
+          document.getElementById('p_lim').value = maxPages;
+        }
+      }
 
-    const data1 = await smartFetch(fetchUrl, bodyObj1, 'Page 1');
+      processData(data1);
+      updateStats();
+      completedPages = 1;
+      if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
+      if (pLabel) { pLabel.style.display = 'block'; pLabel.innerText = `1 / ${maxPages} صفحة`; }
 
-    if (!data1) {
-      debugLog('!!! فشل كل المحاولات للصفحة الأولى !!!', 'err');
-      setStatus('فشل الاتصال — شاهد سجل التشخيص بالأسفل', 'error');
-      showToast('فشل الاتصال — تحقق من سجل التشخيص', 'error');
+      const fetchPromises = [];
+      for (let i = 2; i <= maxPages; i++) {
+        fetchPromises.push(
+          fetch(baseUrl + 'Home/getOrders', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: currentStatus, pageSelected: i, searchby: '' })
+          })
+          .then(r => r.json())
+          .then(data => {
+            processData(data);
+            completedPages++;
+            updateStats();
+            if (fill) fill.style.width = ((completedPages / maxPages) * 100) + '%';
+            if (pLabel) pLabel.innerText = `${completedPages} / ${maxPages} صفحة`;
+            setStatus(`جاري الجلب... ${completedPages}/${maxPages} (${state.savedRows.length} سجل)`, 'working');
+          })
+          .catch(err => {
+            completedPages++;
+            console.warn('فشل تحميل صفحة', err);
+          })
+        );
+      }
+
+      await Promise.all(fetchPromises);
+      if (fill) fill.style.width = '100%';
+
+    } catch (err) {
+      console.error(err);
+      setStatus('خطأ في الاتصال بالخادم', 'error');
+      showToast('فشل الاتصال بالخادم', 'error');
       state.isProcessing = false;
       return;
     }
 
-    debugLog('Page 1 keys: ' + Object.keys(data1).join(', '), 'ok');
-    if (data1.total_orders) debugLog('total_orders: ' + data1.total_orders, 'ok');
-    if (data1.orders_list) {
-      const ol = typeof data1.orders_list === 'string' ? JSON.parse(data1.orders_list) : data1.orders_list;
-      debugLog('orders_list count: ' + (ol ? ol.length : 0), 'ok');
-    }
-
-    if (data1.total_orders) {
-      const exactTotal = parseInt(data1.total_orders) || 0;
-      if (exactTotal > 0) {
-        maxPages = Math.ceil(exactTotal / 10);
-        document.getElementById('p_lim').value = maxPages;
-        debugLog('Calculated maxPages: ' + maxPages, 'ok');
-      }
-    }
-
-    processData(data1);
-    updateStats();
-    updateProgress(1, maxPages);
-
-    if (maxPages <= 1) {
-      debugLog('Only 1 page needed, finishing...', 'ok');
-      updateProgress(1, 1);
-      finishScan(startTime, []);
-      return;
-    }
-
-    // ─── باقي الصفحات ───
-    debugLog(`Fetching pages 2-${maxPages} in batches of ${BATCH_SIZE}...`, 'info');
-    let completed = 1;
-
-    for (let batchStart = 2; batchStart <= maxPages; batchStart += BATCH_SIZE) {
-      const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, maxPages);
-      debugLog(`Batch: pages ${batchStart}-${batchEnd}`, 'info');
-      const batchPromises = [];
-
-      for (let i = batchStart; i <= batchEnd; i++) {
-        batchPromises.push(
-          (async (pageNum) => {
-            try {
-              const res = await fetch(fetchUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
-              });
-              if (!res.ok) {
-                debugLog(`Page ${pageNum}: HTTP ${res.status}`, 'warn');
-                failedPages.push(pageNum);
-                return;
-              }
-              const data = await res.json();
-              processData(data);
-              debugLog(`Page ${pageNum}: OK`, 'ok');
-            } catch(err) {
-              debugLog(`Page ${pageNum}: ${err.message}`, 'warn');
-              failedPages.push(pageNum);
-            }
-          })(i)
-        );
-      }
-
-      await Promise.all(batchPromises);
-      completed = Math.min(batchEnd, maxPages);
-      updateStats();
-      updateProgress(completed, maxPages);
-      setStatus(`جاري الجلب... ${completed}/${maxPages} صفحة`, 'working');
-    }
-
-    // ─── إعادة محاولة الفاشلة ───
-    if (failedPages.length > 0) {
-      debugLog(`Retrying ${failedPages.length} failed pages...`, 'warn');
-      setStatus(`إعادة محاولة ${failedPages.length} صفحة فاشلة...`, 'working');
-      await sleep(1000);
-
-      const retryList = [...failedPages];
-      failedPages = [];
-
-      for (const pageNum of retryList) {
-        const data = await smartFetch(fetchUrl, { status: currentStatus, pageSelected: pageNum, searchby: '' }, 'Retry-' + pageNum);
-        if (data) {
-          processData(data);
-          updateStats();
-        } else {
-          failedPages.push(pageNum);
-        }
-        await sleep(300);
-      }
-    }
-
-    updateProgress(maxPages, maxPages);
-    debugLog(`=== اكتمل: ${state.savedRows.length} records, ${failedPages.length} failed pages ===`, failedPages.length > 0 ? 'warn' : 'ok');
-    finishScan(startTime, failedPages);
+    finishScan(startTime);
   }
 
-  // ═══════════════════════════════════════════
-  // Finish Scan
-  // ═══════════════════════════════════════════
-  function finishScan(startTime, failedPages) {
+  function finishScan(startTime) {
     state.isProcessing = false;
     const elapsed = startTime ? ((performance.now() - startTime) / 1000).toFixed(1) : '?';
-    const failCount = (failedPages && failedPages.length) || 0;
 
     const tables = document.querySelectorAll('table');
     let target = tables[0];
@@ -599,17 +417,16 @@ javascript:(function(){
     let recCount = 0;
     state.savedRows.forEach(r => { if (r.st === 'received') recCount++; });
 
-    const failMsg = failCount > 0 ? ` (⚠️ ${failCount} صفحة فشلت)` : '';
-    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed}s${failMsg}`, 'done');
-    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل (${elapsed}s)`, 'success');
-
     const pLabel = document.getElementById('p-label');
     if (pLabel) pLabel.style.display = 'none';
+
+    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed} ثانية ⚡`, 'done');
+    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل (${elapsed}s)`, 'success');
 
     const dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML = `
       <div style="background:${NEU.bg};border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6d28d9;font-weight:700;text-align:center;box-shadow:${neuInset}">
-        ✅ تم تفعيل الروابط المباشرة — ⚡ ${elapsed}s${failCount > 0 ? ' — ⚠️ ' + failCount + ' صفحة فشلت' : ''}
+        ✅ تم تفعيل الروابط المباشرة — ⚡ ${elapsed} ثانية
       </div>
 
       <div style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:${neuOutset}">
@@ -630,7 +447,6 @@ javascript:(function(){
       </button>
     `;
 
-    // ─── Deliver ───
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async () => {
       const list = state.savedRows.filter(r => r.st === 'received');
       const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
@@ -719,7 +535,6 @@ javascript:(function(){
       btn.disabled = false;
     });
 
-    // ─── Export ───
     document.getElementById('ali_btn_export').addEventListener('click', async () => {
       const packedRows = state.savedRows.filter(r => r.st === 'packed');
       if (!packedRows.length) { showToast('لا توجد بيانات متاحة للتصدير.', 'warning'); return; }
@@ -756,7 +571,6 @@ javascript:(function(){
       showToast(`تم تصدير ${numFiles} ملف بنجاح`, 'success');
     });
 
-    // ─── Sync ───
     document.getElementById('ali_btn_sync').addEventListener('click', async function() {
       if (state.isProcessing) { showToast('العملية جارية بالفعل — انتظر!', 'warning'); return; }
 
@@ -793,9 +607,6 @@ javascript:(function(){
     });
   }
 
-  // ═══════════════════════════════════════════
-  // Start
-  // ═══════════════════════════════════════════
   document.getElementById('ali_start').addEventListener('click', function() {
     if (state.isProcessing) return;
     this.disabled = true;
