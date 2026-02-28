@@ -1,765 +1,583 @@
-javascript: (function () {
+javascript:(function(){
+  'use strict';
 
-  // ============================================================
-  //  رادار علي الباز — V12  |  Dark Dashboard + Cards
-  // ============================================================
+  const PANEL_ID = 'ali_sys_v5';
+  const VERSION = '8.0';
+  
+  if (document.getElementById(PANEL_ID)) {
+    document.getElementById(PANEL_ID).remove();
+    return;
+  }
 
-  const BASE_URL = 'https://rtlapps.nahdi.sa/ez_pill_web/';
+  const MAX_PER_FILE = 49;
 
-  const STATUSES = {
-    readypack: { label: 'Ready to Pack', color: '#00e5a0', dot: '#00e5a0' },
-    new:       { label: 'New',           color: '#fbbf24', dot: '#fbbf24' },
-    packed:    { label: 'Packed',        color: '#60a5fa', dot: '#60a5fa' },
-    delivered: { label: 'Delivered',     color: '#c084fc', dot: '#c084fc' },
+  const state = {
+    savedRows: [],
+    visitedSet: new Set(),
+    isProcessing: false,
+    htmlBuffer: ''
   };
 
-  const d          = document;
-  let links        = [];
-  let openedLinks  = new Set();
-  let isDragging   = false;
-  let dragX        = 0, dragY = 0;
-  let isMinimized  = false;
-  let cancelSearch = false;
+  const NEU = {
+    bg: '#e0e5ec',
+    shadowDark: 'rgba(163,177,198,0.6)',
+    shadowLight: 'rgba(255,255,255,0.8)',
+    insetDark: 'rgba(163,177,198,0.5)',
+    insetLight: 'rgba(255,255,255,0.7)',
+    text: '#2d3748',
+    textMuted: '#718096',
+    accent: '#7c3aed',
+    accentLight: '#a78bfa',
+    success: '#059669',
+    error: '#dc2626',
+    warning: '#d97706',
+    blue: '#3b82f6'
+  };
+  const neuOutset = `6px 6px 14px ${NEU.shadowDark},-6px -6px 14px ${NEU.shadowLight}`;
+  const neuInset = `inset 3px 3px 6px ${NEU.insetDark},inset -3px -3px 6px ${NEU.insetLight}`;
+  const neuBtnSm = `4px 4px 10px ${NEU.shadowDark},-4px -4px 10px ${NEU.shadowLight}`;
+  const neuBtnPressed = `inset 2px 2px 5px ${NEU.insetDark},inset -2px -2px 5px ${NEU.insetLight}`;
 
-  d.getElementById('baz-ui')    && d.getElementById('baz-ui').remove();
-  d.getElementById('baz-style') && d.getElementById('baz-style').remove();
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  }
 
-  const esc = (s) => (s||'').toString()
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function showToast(message, type = 'info') {
+    let container = document.getElementById('ali-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'ali-toast-container';
+      container.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center';
+      document.body.appendChild(container);
+    }
+    const colors = { success:NEU.success, error:NEU.error, warning:NEU.warning, info:'#475569' };
+    const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+    const toast = document.createElement('div');
+    toast.style.cssText = `background:${NEU.bg};color:${colors[type]};padding:14px 24px;border-radius:18px;font-size:13px;font-weight:700;font-family:'Tajawal','Segoe UI',sans-serif;box-shadow:${neuOutset};display:flex;align-items:center;gap:8px;direction:rtl;animation:aliToastIn 0.4s cubic-bezier(0.16,1,0.3,1)`;
+    toast.innerHTML = `<span>${icons[type]}</span> ${esc(message)}`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'all 0.3s';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
 
-  // ============================================================
-  //  STYLES
-  // ============================================================
-  const style = d.createElement('style');
-  style.id = 'baz-style';
-  style.innerHTML = `
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap');
+  function showDialog({ icon, title, desc, info, badges, buttons }) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(180,190,205,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.25s`;
 
-    #baz-ui, #baz-ui * { box-sizing: border-box; margin: 0; padding: 0; }
+      let infoHTML = '';
+      if (info && info.length) {
+        infoHTML = info.map(r =>
+          `<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:${NEU.bg};border-radius:14px;margin-bottom:8px;box-shadow:${neuInset}">` +
+            `<span style="font-size:13px;color:${NEU.textMuted};font-weight:700">${esc(r.label)}</span>` +
+            `<span style="font-weight:900;color:${esc(r.color||NEU.accent)};font-size:14px;font-family:'Tajawal',monospace">${esc(String(r.value))}</span>` +
+          `</div>`
+        ).join('');
+      }
 
-    #baz-ui {
-      position: fixed;
-      width: 480px;
-      max-width: 96vw;
-      background: #0d1117;
-      z-index: 999999;
-      border-radius: 16px;
-      direction: rtl;
-      font-family: 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
-      max-height: 88vh;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid #21262d;
-      box-shadow: 0 0 0 1px #30363d, 0 24px 64px rgba(0,0,0,0.7);
-      overflow: hidden;
-    }
+      let badgesHTML = '';
+      if (badges && badges.length) {
+        badgesHTML = '<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:4px 0 8px">';
+        badges.forEach(b => {
+          const bStyle = b.active
+            ? `color:${NEU.accent};background:linear-gradient(135deg,#ede9fe,#e8e0fd)`
+            : `color:${NEU.textMuted};background:${NEU.bg}`;
+          badgesHTML += `<span style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;${bStyle};box-shadow:3px 3px 6px ${NEU.shadowDark},-3px -3px 6px ${NEU.shadowLight}">${esc(b.text)}</span>`;
+        });
+        badgesHTML += '</div>';
+      }
 
-    #baz-ui.minimized #baz-body   { display: none; }
-    #baz-ui.minimized              { max-height: unset; }
-    #baz-ui.minimized #baz-header  { border-radius: 16px; }
+      let buttonsHTML = '';
+      if (buttons && buttons.length) {
+        buttonsHTML = buttons.map((btn, idx) => {
+          const s = btn.primary
+            ? `background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:white;box-shadow:4px 4px 12px rgba(124,58,237,0.35),-2px -2px 8px rgba(255,255,255,0.15)`
+            : `background:${NEU.bg};color:${NEU.textMuted};box-shadow:${neuBtnSm}`;
+          return `<button data-idx="${idx}" style="flex:1;padding:16px;border:none;border-radius:16px;cursor:pointer;font-weight:800;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;transition:all 0.25s;${s}">${esc(btn.text)}</button>`;
+        }).join('');
+      }
 
-    /* HEADER */
-    #baz-ui #baz-header {
-      background: #161b22;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #21262d;
-      cursor: grab;
-      user-select: none;
-      flex-shrink: 0;
-    }
-    #baz-ui #baz-header:active { cursor: grabbing; }
+      overlay.innerHTML =
+        `<div style="background:${NEU.bg};border-radius:28px;width:440px;max-width:92vw;overflow:hidden;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:${NEU.text};box-shadow:12px 12px 30px ${NEU.shadowDark},-12px -12px 30px ${NEU.shadowLight};animation:aliDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)">` +
+          `<div style="padding:32px 28px 0;text-align:center">` +
+            `<div style="width:80px;height:80px;border-radius:50%;background:${NEU.bg};box-shadow:${neuOutset},inset 2px 2px 4px ${NEU.insetLight};display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 18px">${icon}</div>` +
+            `<div style="font-size:21px;font-weight:900;color:${NEU.text};margin-bottom:6px">${esc(title)}</div>` +
+            `<div style="font-size:13px;color:${NEU.textMuted};line-height:1.7;font-weight:500">${esc(desc)}</div>` +
+          `</div>` +
+          badgesHTML +
+          `<div style="padding:20px 28px">${infoHTML}</div>` +
+          `<div style="padding:8px 28px 28px;display:flex;gap:12px">${buttonsHTML}</div>` +
+        `</div>`;
 
-    #baz-ui .hdr-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+      overlay.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-idx]');
+        if (btn) {
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          overlay.style.transition = 'opacity 0.2s';
+          overlay.style.opacity = '0';
+          setTimeout(() => overlay.remove(), 200);
+          resolve({ action: buttons[idx].value });
+        }
+      });
+      document.body.appendChild(overlay);
+    });
+  }
 
-    #baz-ui .hdr-logo {
-      width: 30px;
-      height: 30px;
-      background: linear-gradient(135deg, #00e5a0, #00b4d8);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      flex-shrink: 0;
-    }
-
-    #baz-ui .hdr-title {
-      color: #e6edf3;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-    #baz-ui .hdr-ver {
-      color: #00e5a0;
-      font-size: 10px;
-      font-weight: 500;
-      background: rgba(0,229,160,0.1);
-      padding: 2px 7px;
-      border-radius: 20px;
-      border: 1px solid rgba(0,229,160,0.2);
-    }
-
-    #baz-ui .hdr-btns {
-      display: flex;
-      gap: 6px;
-    }
-    #baz-ui .hdr-btn {
-      background: transparent;
-      border: 1px solid #30363d;
-      color: #8b949e;
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-    }
-    #baz-ui .hdr-btn:hover { background: #21262d; color: #e6edf3; border-color: #8b949e; }
-
-    /* BODY */
-    #baz-ui #baz-body {
-      padding: 14px;
-      overflow-y: auto;
-      flex: 1;
-      scrollbar-width: thin;
-      scrollbar-color: #30363d transparent;
-    }
-    #baz-ui #baz-body::-webkit-scrollbar { width: 4px; }
-    #baz-ui #baz-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
-
-    /* SEARCH SECTION */
-    #baz-ui .search-section {
-      background: #161b22;
-      border: 1px solid #21262d;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-
-    #baz-ui .fields-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    #baz-ui .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    #baz-ui .field-label {
-      font-size: 10px;
-      font-weight: 600;
-      color: #8b949e;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    #baz-ui .field-row {
-      display: flex;
-      align-items: center;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      overflow: hidden;
-      transition: border-color 0.15s;
-    }
-    #baz-ui .field-row:focus-within { border-color: #00e5a0; }
-
-    #baz-ui .field-prefix {
-      padding: 0 8px;
-      color: #00e5a0;
-      font-size: 11px;
-      font-weight: 700;
-      border-left: 1px solid #30363d;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      background: rgba(0,229,160,0.06);
-    }
-    #baz-ui .baz-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #e6edf3;
-      font-size: 12px;
-      padding: 8px 10px;
-      font-family: inherit;
-    }
-    #baz-ui .baz-input::placeholder { color: #484f58; }
-
-    /* BUTTONS */
-    #baz-ui .btn-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    #baz-ui .btn-grid.has-cancel { grid-template-columns: 1fr 1fr 1fr; }
-
-    #baz-ui .baz-btn {
-      padding: 9px 12px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: inherit;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      white-space: nowrap;
-    }
-    #baz-ui .baz-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-    #baz-ui .baz-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.1); }
-
-    #baz-ui .btn-ready  { background: linear-gradient(135deg,#00e5a0,#00b4d8); color: #0d1117; }
-    #baz-ui .btn-all    { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
-    #baz-ui .btn-all:not(:disabled):hover { background: #30363d !important; }
-    #baz-ui .btn-cancel { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid rgba(248,81,73,0.3); display: none; }
-
-    /* STATUS BAR */
-    #baz-ui #baz-status-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 0;
-      min-height: 32px;
-    }
-    #baz-ui #baz-spinner {
-      width: 14px;
-      height: 14px;
-      border: 2px solid #21262d;
-      border-top-color: #00e5a0;
-      border-radius: 50%;
-      animation: baz-spin 0.6s linear infinite;
-      display: none;
-      flex-shrink: 0;
-    }
-    @keyframes baz-spin { to { transform: rotate(360deg); } }
-    #baz-ui #baz-st {
-      font-size: 12px;
-      color: #8b949e;
-      flex: 1;
-    }
-    #baz-ui #baz-st b { color: #00e5a0; }
-    #baz-ui #baz-st .err { color: #f85149; }
-
-    /* OPEN PANEL */
-    #baz-ui #baz-open-panel {
-      background: #161b22;
-      border: 1px solid #21262d;
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 12px;
-      display: none;
-    }
-    #baz-ui .open-stats {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 10px;
-    }
-    #baz-ui .stat-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    #baz-ui .stat-val {
-      font-size: 18px;
-      font-weight: 700;
-      color: #e6edf3;
-    }
-    #baz-ui .stat-val.green  { color: #00e5a0; }
-    #baz-ui .stat-val.orange { color: #fbbf24; }
-    #baz-ui .stat-lbl {
-      font-size: 10px;
-      color: #8b949e;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    #baz-ui .open-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    #baz-ui .open-count-input {
-      width: 56px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 7px;
-      color: #e6edf3;
-      font-size: 13px;
-      font-weight: 700;
-      text-align: center;
-      padding: 7px;
-      outline: none;
-      font-family: inherit;
-    }
-    #baz-ui .open-count-input:focus { border-color: #00e5a0; }
-    #baz-ui .btn-open {
-      background: linear-gradient(135deg,#f97316,#f59e0b);
-      color: #0d1117;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 7px;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.15s;
-    }
-    #baz-ui .btn-open:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-    /* CARDS */
-    #baz-ui #baz-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    #baz-ui .result-card {
-      background: #161b22;
-      border: 1px solid #21262d;
-      border-radius: 10px;
-      padding: 12px 14px;
-      transition: all 0.15s;
-      position: relative;
-      overflow: hidden;
-    }
-    #baz-ui .result-card::before {
-      content: '';
-      position: absolute;
-      right: 0; top: 0; bottom: 0;
-      width: 3px;
-      border-radius: 0 10px 10px 0;
-      background: var(--card-color, #00e5a0);
-    }
-    #baz-ui .result-card:hover {
-      border-color: #30363d;
-      background: #1c2128;
-      transform: translateX(-2px);
-    }
-    #baz-ui .result-card.opened {
-      opacity: 0.35;
-    }
-
-    #baz-ui .card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    #baz-ui .card-order {
-      font-size: 13px;
-      font-weight: 700;
-      color: #e6edf3;
-      letter-spacing: 0.3px;
-    }
-    #baz-ui .card-status {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.06);
-      color: var(--card-color, #00e5a0);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    #baz-ui .card-info {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-    #baz-ui .info-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    #baz-ui .info-lbl {
-      font-size: 10px;
-      color: #484f58;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    #baz-ui .info-val {
-      font-size: 12px;
-      color: #adbac7;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    #baz-ui .card-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    #baz-ui .card-invoice {
-      font-size: 11px;
-      color: #484f58;
-      font-family: monospace;
-    }
-    #baz-ui .card-open-btn {
-      text-decoration: none;
-      background: rgba(0,229,160,0.1);
-      color: #00e5a0;
-      border: 1px solid rgba(0,229,160,0.2);
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      transition: all 0.15s;
-      font-family: inherit;
-    }
-    #baz-ui .card-open-btn:hover {
-      background: #00e5a0;
-      color: #0d1117;
-      border-color: #00e5a0;
-    }
-    #baz-ui .card-opened-lbl {
-      font-size: 11px;
-      color: #484f58;
-    }
-
-    /* EMPTY STATE */
-    #baz-ui .empty-state {
-      text-align: center;
-      padding: 32px 20px;
-      color: #484f58;
-    }
-    #baz-ui .empty-icon { font-size: 32px; margin-bottom: 8px; }
-    #baz-ui .empty-text { font-size: 13px; }
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = `
+    @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}
+    @keyframes aliPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    @keyframes aliSpin{to{transform:rotate(360deg)}}
+    @keyframes aliFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes aliDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    @keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}
+    #${PANEL_ID}{position:fixed;top:3%;right:2%;width:400px;max-height:92vh;background:${NEU.bg};border-radius:24px;box-shadow:${neuOutset};z-index:999999;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:${NEU.text};overflow:hidden;transition:all 0.4s;animation:aliSlideIn 0.4s}
+    #${PANEL_ID}.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#7c3aed,#a78bfa)!important;box-shadow:6px 6px 16px ${NEU.shadowDark},-6px -6px 16px ${NEU.shadowLight}!important;animation:aliPulse 2s infinite;overflow:hidden}
+    #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
+    #${PANEL_ID}.ali-minimized::after{content:"🔍";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    .fast-row{border-bottom:1px solid rgba(163,177,198,0.2);transition:background 0.2s}
+    .fast-row:hover{background:rgba(163,177,198,0.15)}
+    .ali-link{color:${NEU.accent};text-decoration:underline;font-weight:bold;cursor:pointer}
   `;
-  d.head.appendChild(style);
+  document.head.appendChild(styleEl);
 
-  // ============================================================
-  //  HTML
-  // ============================================================
-  const ui = d.createElement('div');
-  ui.id = 'baz-ui';
-  ui.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%);';
+  function buildStatCard(icon, val, label, color, id) {
+    return `<div style="background:${NEU.bg};border-radius:16px;padding:14px 6px;text-align:center;box-shadow:${neuOutset}">` +
+      `<div style="font-size:18px;margin-bottom:5px">${icon}</div>` +
+      `<div id="${id}" style="font-size:22px;font-weight:900;color:${color};line-height:1;margin-bottom:3px">${val}</div>` +
+      `<div style="font-size:9px;color:${NEU.textMuted};font-weight:700;text-transform:uppercase;letter-spacing:0.5px">${label}</div>` +
+    `</div>`;
+  }
 
-  ui.innerHTML = `
-    <div id="baz-header">
-      <div class="hdr-left">
-        <div class="hdr-logo">⚡</div>
-        <span class="hdr-title">رادار النهدي</span>
-        <span class="hdr-ver">V12</span>
+  const panel = document.createElement('div');
+  panel.id = PANEL_ID;
+  panel.innerHTML = `
+    <div class="ali-inner">
+      <div style="background:linear-gradient(135deg,#4a1d96,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden;border-radius:0 0 22px 22px;box-shadow:0 6px 20px rgba(109,40,217,0.25)">
+        <div style="position:absolute;top:-50%;right:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">
+          <div style="display:flex;gap:6px">
+            <span id="ali_min" style="width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.15);cursor:pointer;backdrop-filter:blur(4px)">−</span>
+            <span id="ali_close" style="width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.25);cursor:pointer;backdrop-filter:blur(4px)">✕</span>
+          </div>
+          <h3 style="font-size:18px;font-weight:900;margin:0">محرك بحث وإنهاء الطلبات</h3>
+        </div>
+        <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
+          <span style="display:inline-block;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:10px;padding:3px 10px;border-radius:8px;font-weight:700;backdrop-filter:blur(4px)">v${VERSION}</span>
+        </div>
       </div>
-      <div class="hdr-btns">
-        <button class="hdr-btn" id="baz-min" title="تصغير">−</button>
-        <button class="hdr-btn" id="baz-close" title="إغلاق">✕</button>
+
+      <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
+        <div id="ali_stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+          ${buildStatCard('📥','0','Received','#10b981','stat_rec')}
+          ${buildStatCard('📦','0','Packed','#f59e0b','stat_pack')}
+          ${buildStatCard('✅','0','المنجز','#3b82f6','stat_done')}
+          ${buildStatCard('📊','0','إجمالي','#8b5cf6','stat_total')}
+        </div>
+        
+        <div id="ali_settings_box" style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:${neuOutset}">
+          <div id="p-bar" style="height:8px;background:${NEU.bg};border-radius:10px;overflow:hidden;box-shadow:${neuInset}">
+            <div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.2s"></div>
+          </div>
+          <div id="p-label" style="text-align:center;margin-top:8px;font-size:11px;color:${NEU.textMuted};font-weight:700;display:none"></div>
+        </div>
+        
+        <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:${NEU.bg};color:${NEU.success};box-shadow:${neuInset}">
+          <span>✅</span><span>النظام في وضع الاستعداد</span>
+        </div>
+        
+        <div id="ali_dynamic_area">
+          <!-- 3 Search Buttons -->
+          <button id="ali_btn_packed" style="width:100%;padding:14px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:14px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:6px 6px 14px rgba(217,119,6,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">
+            📦 بحث Packed فقط
+          </button>
+
+          <button id="ali_btn_received" style="width:100%;padding:14px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:14px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:6px 6px 14px rgba(5,150,105,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">
+            📥 بحث Received فقط
+          </button>
+
+          <button id="ali_btn_both" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:6px 6px 14px rgba(109,40,217,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">
+            🚀 بحث الكل (Packed + Received)
+          </button>
+        </div>
+
+        <div style="text-align:center;padding:14px 0 4px;font-size:10px;color:${NEU.textMuted};font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>
       </div>
     </div>
-
-    <div id="baz-body">
-
-      <div class="search-section">
-        <div class="fields-grid">
-
-          <div class="field-group">
-            <span class="field-label">رقم الفاتورة</span>
-            <div class="field-row">
-              <input class="baz-input" id="f-invoice" placeholder="INV-12345">
-            </div>
-          </div>
-
-          <div class="field-group">
-            <span class="field-label">رقم الطلب</span>
-            <div class="field-row">
-              <span class="field-prefix">ERX</span>
-              <input class="baz-input" id="f-order" placeholder="أرقام فقط">
-            </div>
-          </div>
-
-          <div class="field-group">
-            <span class="field-label">اسم الضيف</span>
-            <div class="field-row">
-              <input class="baz-input" id="f-name" placeholder="اسم العميل">
-            </div>
-          </div>
-
-          <div class="field-group">
-            <span class="field-label">موبايل الضيف</span>
-            <div class="field-row">
-              <input class="baz-input" id="f-mobile" placeholder="05xxxxxxxx">
-            </div>
-          </div>
-
-        </div>
-
-        <div class="btn-grid" id="baz-btn-grid">
-          <button id="baz-run-ready" class="baz-btn btn-ready">📦 Ready to Pack</button>
-          <button id="baz-run-all"   class="baz-btn btn-all">🌐 بحث في الكل</button>
-          <button id="baz-cancel"    class="baz-btn btn-cancel">⛔ إلغاء</button>
-        </div>
-      </div>
-
-      <div id="baz-status-bar">
-        <div id="baz-spinner"></div>
-        <div id="baz-st"></div>
-      </div>
-
-      <div id="baz-open-panel">
-        <div class="open-stats">
-          <div class="stat-item">
-            <span class="stat-val" id="stat-total">0</span>
-            <span class="stat-lbl">إجمالي</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-val green" id="stat-opened">0</span>
-            <span class="stat-lbl">مفتوحة</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-val orange" id="stat-remain">0</span>
-            <span class="stat-lbl">متبقية</span>
-          </div>
-        </div>
-        <div class="open-row">
-          <input class="open-count-input" id="baz-open-count" type="number" min="1" value="10">
-          <button class="btn-open" id="baz-do-open">فتح ▶</button>
-        </div>
-      </div>
-
-      <div id="baz-cards"></div>
-
-    </div>
   `;
-  d.body.appendChild(ui);
+  document.body.appendChild(panel);
 
-  // ============================================================
-  //  DRAG
-  // ============================================================
-  const hdr = d.getElementById('baz-header');
-  hdr.addEventListener('mousedown', (e) => {
-    if (e.target.closest('.hdr-btn')) return;
-    isDragging = true;
-    const rect = ui.getBoundingClientRect();
-    dragX = e.clientX - rect.left;
-    dragY = e.clientY - rect.top;
-    ui.style.transform = 'none';
-  });
-  d.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    let x = Math.max(0, Math.min(window.innerWidth  - ui.offsetWidth,  e.clientX - dragX));
-    let y = Math.max(0, Math.min(window.innerHeight - ui.offsetHeight, e.clientY - dragY));
-    ui.style.left = x + 'px';
-    ui.style.top  = y + 'px';
-  });
-  d.addEventListener('mouseup', () => { isDragging = false; });
+  function setStatus(text, type) {
+    const el = document.getElementById('status-msg');
+    if (!el) return;
+    const configs = {
+      ready:   { color:NEU.success, icon:'✅' },
+      working: { color:'#6d28d9', icon:'spinner' },
+      error:   { color:NEU.error, icon:'❌' },
+      done:    { color:NEU.success, icon:'✅' }
+    };
+    const c = configs[type] || configs.ready;
+    const iconHTML = c.icon === 'spinner'
+      ? `<div style="width:16px;height:16px;border:2.5px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.5s linear infinite;flex-shrink:0"></div>`
+      : `<span>${c.icon}</span>`;
+    el.style.cssText = `display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:${NEU.bg};color:${c.color};box-shadow:${neuInset};transition:all 0.3s`;
+    el.innerHTML = `${iconHTML}<span>${esc(text)}</span>`;
+  }
 
-  // ============================================================
-  //  HELPERS
-  // ============================================================
-  const getQuery = () => ({
-    inv:  d.getElementById('f-invoice').value.trim(),
-    ord:  d.getElementById('f-order').value.trim(),
-    name: d.getElementById('f-name').value.trim(),
-    mob:  d.getElementById('f-mobile').value.trim(),
-  });
-  const getSearchValue = (q) => q.mob || q.inv || q.ord || q.name || '';
+  function animNum(id, val) {
+    const el = document.getElementById(id);
+    if (!el || el.innerText === String(val)) return;
+    requestAnimationFrame(() => {
+      el.innerText = val;
+      el.style.animation = 'aliCountUp 0.4s';
+      setTimeout(() => el.style.animation = '', 400);
+    });
+  }
 
-  const setLoading = (on) => {
-    d.getElementById('baz-spinner').style.display    = on ? 'block' : 'none';
-    d.getElementById('baz-run-ready').disabled       = on;
-    d.getElementById('baz-run-all').disabled         = on;
-    const cancelBtn = d.getElementById('baz-cancel');
-    cancelBtn.style.display = on ? 'flex' : 'none';
-    const grid = d.getElementById('baz-btn-grid');
-    grid.className = on ? 'btn-grid has-cancel' : 'btn-grid';
-  };
+  function updateStats() {
+    let rec=0, done=0, packed=0;
+    state.savedRows.forEach(r => {
+      if(r.st==='received') rec++;
+      if(r.st==='processed') done++;
+      if(r.st==='packed') packed++;
+    });
+    animNum('stat_rec', rec);
+    animNum('stat_pack', packed);
+    animNum('stat_done', done);
+    animNum('stat_total', state.savedRows.length);
+  }
 
-  const updateOpenPanel = () => {
-    const remaining = links.filter(l => !openedLinks.has(l.key));
-    d.getElementById('stat-total').textContent  = links.length;
-    d.getElementById('stat-opened').textContent = openedLinks.size;
-    d.getElementById('stat-remain').textContent = remaining.length;
-    const countEl = d.getElementById('baz-open-count');
-    countEl.max   = remaining.length;
-    countEl.value = Math.min(parseInt(countEl.value) || 10, remaining.length || 1);
-  };
+  function updateProgress(completed, total, label) {
+    const fill = document.getElementById('p-fill');
+    const pLabel = document.getElementById('p-label');
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    if (fill) fill.style.width = pct + '%';
+    if (pLabel) {
+      pLabel.style.display = 'block';
+      pLabel.innerText = label || `${completed} / ${total} (${pct}%)`;
+    }
+  }
 
-  const addCard = (item, info) => {
-    const url = BASE_URL
-      + `getEZPill_Details?onlineNumber=${encodeURIComponent((item.onlineNumber||'').replace(/ERX/gi,''))}`
-      + `&Invoice=${encodeURIComponent(item.Invoice||'')}`
-      + `&typee=${encodeURIComponent(item.typee||'')}`
-      + `&head_id=${encodeURIComponent(item.head_id||'')}`;
+  panel.addEventListener('click', e => { if(panel.classList.contains('ali-minimized')){ panel.classList.remove('ali-minimized'); e.stopPropagation(); } });
+  document.getElementById('ali_close').addEventListener('click', e => { e.stopPropagation(); panel.style.animation='aliSlideIn 0.3s reverse'; setTimeout(()=>panel.remove(),280); });
+  document.getElementById('ali_min').addEventListener('click', e => { e.stopPropagation(); panel.classList.add('ali-minimized'); });
 
-    links.push({ url, key: (item.Invoice||'') + ':' + (item.onlineNumber||'') });
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    const card = d.createElement('div');
-    card.className = 'result-card';
-    card.id = 'card-' + links.length;
-    card.style.setProperty('--card-color', info.color);
+  function processData(data) {
+    let orders = [];
+    try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
+    if (!orders || orders.length === 0) return;
 
-    card.innerHTML = `
-      <div class="card-top">
-        <span class="card-order">${esc(item.onlineNumber || '—')}</span>
-        <span class="card-status">${esc(info.label)}</span>
-      </div>
-      <div class="card-info">
-        <div class="info-item">
-          <span class="info-lbl">الضيف</span>
-          <span class="info-val">${esc(item.guestName || '—')}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-lbl">الموبايل</span>
-          <span class="info-val">${esc(item.guestMobile || item.mobile || '—')}</span>
-        </div>
-      </div>
-      <div class="card-bottom">
-        <span class="card-invoice">${esc(item.Invoice || '')}</span>
-        <a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a>
-      </div>
-    `;
-    d.getElementById('baz-cards').appendChild(card);
-  };
+    for (let i = 0; i < orders.length; i++) {
+      const item = orders[i];
+      const inv = item.Invoice || '';
+      const onl = item.onlineNumber || '';
+      const src = item.source || 'StorePaid';
+      const hid = item.head_id || '';
 
-  // ============================================================
-  //  SEARCH
-  // ============================================================
-  const runSearch = async (statusKeys) => {
-    const q           = getQuery();
-    const searchValue = getSearchValue(q);
-    const st          = d.getElementById('baz-st');
-    const cards       = d.getElementById('baz-cards');
-    const panel       = d.getElementById('baz-open-panel');
+      if (inv.length >= 5 && inv.startsWith('0') && !state.visitedSet.has(inv)) {
+        state.visitedSet.add(inv);
 
-    if (!searchValue) {
-      st.innerHTML = '<span class="err">⚠️ أدخل قيمة بحث أولاً</span>';
+        let st = 'other';
+        let rawStatus = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+        if (rawStatus.includes('packed')) st = 'packed';
+        else if (rawStatus.includes('received')) st = 'received';
+        else {
+          let cleanStr = JSON.stringify(item).toLowerCase();
+          if (cleanStr.includes('"packed"')) st = 'packed';
+          else if (cleanStr.includes('"received"')) st = 'received';
+        }
+
+        const bgColor = st === 'received' ? 'rgba(16,185,129,0.08)' : (st === 'packed' ? 'rgba(245,158,11,0.08)' : 'transparent');
+
+        state.htmlBuffer += `<tr class="fast-row" id="row_${esc(inv)}" style="background:${bgColor}" data-inv="${esc(inv)}" data-onl="${esc(onl)}" data-src="${esc(src)}" data-hid="${esc(hid)}">
+          <td style="padding:12px 8px"><span class="ali-link">${esc(inv)}</span></td>
+          <td style="padding:12px 8px">${esc(onl)}</td>
+          <td style="padding:12px 8px">${esc(item.guestName || '')}</td>
+          <td style="padding:12px 8px">${esc(item.guestMobile || item.mobile || '')}</td>
+          <td style="padding:12px 8px">${esc(item.payment_method || 'Cash')}</td>
+          <td style="padding:12px 8px">${esc(item.created_at || item.Created_Time || '')}</td>
+          <td id="st_${esc(inv)}" style="padding:12px 8px">${esc(st)}</td>
+          <td style="padding:12px 8px">${esc(src)}</td>
+        </tr>`;
+
+        state.savedRows.push({
+          id: inv, onl: onl, st: st,
+          guestName: item.guestName || '',
+          guestMobile: item.guestMobile || item.mobile || '',
+          src: src, hid: hid
+        });
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // جلب كل صفحات حالة معينة
+  // ═══════════════════════════════════════════
+  async function fetchAllPagesForStatus(statusName) {
+    const baseUrl = window.location.origin + "/ez_pill_web/";
+
+    // الصفحة الأولى — لمعرفة العدد الكلي
+    const res1 = await fetch(baseUrl + 'Home/getOrders', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: statusName, pageSelected: 1, searchby: '' })
+    });
+    const data1 = await res1.json();
+    processData(data1);
+    updateStats();
+
+    const total = parseInt(data1.total_orders) || 0;
+    const maxPages = Math.ceil(total / 10);
+
+    if (maxPages <= 1) return { status: statusName, total: total, pages: 1 };
+
+    // باقي الصفحات — Promise.all زي الكود الأصلي
+    const fetchPromises = [];
+    for (let i = 2; i <= maxPages; i++) {
+      fetchPromises.push(
+        fetch(baseUrl + 'Home/getOrders', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: statusName, pageSelected: i, searchby: '' })
+        })
+        .then(r => r.json())
+        .then(data => { processData(data); updateStats(); })
+        .catch(err => { console.warn('فشل صفحة ' + i + ' لـ ' + statusName, err); })
+      );
+    }
+
+    await Promise.all(fetchPromises);
+    return { status: statusName, total: total, pages: maxPages };
+  }
+
+  // ═══════════════════════════════════════════
+  // البحث الرئيسي
+  // ═══════════════════════════════════════════
+  async function startSearch(statuses) {
+    if (state.isProcessing) { showToast('العملية جارية...', 'warning'); return; }
+
+    state.isProcessing = true;
+    state.savedRows = [];
+    state.visitedSet.clear();
+    state.htmlBuffer = '';
+    const startTime = performance.now();
+
+    const statusLabels = statuses.join(' + ');
+    setStatus(`جاري البحث عن: ${statusLabels}...`, 'working');
+    updateProgress(0, statuses.length, `جاري تحميل ${statusLabels}...`);
+
+    // تعطيل الأزرار
+    const btns = ['ali_btn_packed','ali_btn_received','ali_btn_both'];
+    btns.forEach(id => { const b = document.getElementById(id); if(b) { b.disabled = true; b.style.opacity = '0.5'; } });
+
+    try {
+      if (statuses.length === 1) {
+        // حالة واحدة — جلب مباشر
+        updateProgress(0, 1, `جاري تحميل ${statuses[0]}...`);
+        const result = await fetchAllPagesForStatus(statuses[0]);
+        updateProgress(1, 1, `${result.status}: ${result.total} طلب (${result.pages} صفحة)`);
+
+      } else {
+        // حالتين بالتوازي — كل حالة تجلب صفحاتها مستقلة
+        let completed = 0;
+
+        const promises = statuses.map(statusName => {
+          return fetchAllPagesForStatus(statusName).then(result => {
+            completed++;
+            updateProgress(completed, statuses.length, `${completed}/${statuses.length} حالات — ${state.savedRows.length} سجل`);
+            setStatus(`تم تحميل ${result.status} (${result.total} طلب)`, 'working');
+            return result;
+          });
+        });
+
+        await Promise.all(promises);
+      }
+
+      const fill = document.getElementById('p-fill');
+      if (fill) fill.style.width = '100%';
+
+    } catch (err) {
+      console.error(err);
+      setStatus('خطأ في الاتصال بالخادم', 'error');
+      showToast('فشل الاتصال', 'error');
+      state.isProcessing = false;
+      btns.forEach(id => { const b = document.getElementById(id); if(b) { b.disabled = false; b.style.opacity = '1'; } });
       return;
     }
 
-    cards.innerHTML        = '';
-    panel.style.display    = 'none';
-    links                  = [];
-    openedLinks            = new Set();
-    cancelSearch           = false;
+    finishScan(startTime);
+  }
 
-    setLoading(true);
+  // ═══════════════════════════════════════════
+  // Finish Scan
+  // ═══════════════════════════════════════════
+  function finishScan(startTime) {
+    state.isProcessing = false;
+    const elapsed = startTime ? ((performance.now() - startTime) / 1000).toFixed(1) : '?';
 
-    let count = 0;
-    let seen  = new Set();
+    const tables = document.querySelectorAll('table');
+    let target = tables[0];
+    if (target) {
+      for (const t of tables) if (t.innerText.length > target.innerText.length) target = t;
+      const tbody = target.querySelector('tbody') || target;
+      tbody.innerHTML = state.htmlBuffer;
 
-    for (const status of statusKeys) {
-      if (cancelSearch) break;
-      const info = STATUSES[status];
-      st.innerHTML = `جاري البحث في <b>${info.label}</b>...`;
-
-      try {
-        const res  = await fetch(BASE_URL + 'Home/getOrders', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ status, pageSelected: 1, searchby: searchValue }),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = await res.json();
-        let orders;
-        try        { orders = JSON.parse(data.orders_list); }
-        catch (_)  { orders = data.orders_list; }
-
-        if (!Array.isArray(orders) || orders.length === 0) continue;
-
-        orders.forEach(item => {
-          const key = (item.Invoice||'') + ':' + (item.onlineNumber||'');
-          if (seen.has(key)) return;
-          seen.add(key);
-          count++;
-          addCard(item, info);
-        });
-
-      } catch (err) {
-        st.innerHTML = `<span class="err">❌ خطأ في "${esc(info.label)}"</span>`;
-        console.error('[BazRadar]', err);
-      }
-    }
-
-    setLoading(false);
-
-    if (cancelSearch) {
-      st.innerHTML = `<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`;
-    } else if (count > 0) {
-      st.innerHTML        = `✅ اكتمل — <b>${count}</b> نتيجة`;
-      panel.style.display = 'block';
-      updateOpenPanel();
-    } else {
-      cards.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🔍</div>
-          <div class="empty-text">لم نجد نتائج لـ "${esc(searchValue)}"</div>
-        </div>`;
-      st.innerHTML = '';
-    }
-  };
-
-  // ============================================================
-  //  OPEN RESULTS
-  // ============================================================
-  const openResults = async () => {
-    const n         = parseInt(d.getElementById('baz-open-count').value) || 10;
-    const remaining = links.filter(l => !openedLinks.has(l.key));
-    const st        = d.getElementById('baz-st');
-
-    if (remaining.length === 0) { st.innerHTML = '✅ كل النتائج تم فتحها'; return; }
-
-    const toOpen = remaining.slice(0, n);
-
-    for (let i = 0; i < toOpen.length; i++) {
-      st.innerHTML = `🚀 فتح <b>${i + 1}</b> من <b>${toOpen.length}</b>...`;
-      window.open(toOpen[i].url, '_blank');
-      openedLinks.add(toOpen[i].key);
-
-      // تحديث الكارد
-      d.querySelectorAll('.result-card').forEach(card => {
-        const btn = card.querySelector('.card-open-btn');
-        if (btn && btn.getAttribute('href') === toOpen[i].url) {
-          card.classList.add('opened');
-          const bottom = card.querySelector('.card-bottom');
-          bottom.querySelector('.card-open-btn').outerHTML = `<span class="card-opened-lbl">✓ تم الفتح</span>`;
+      tbody.addEventListener('click', (e) => {
+        const row = e.target.closest('tr[data-inv]');
+        if (!row) return;
+        const inv = row.dataset.inv;
+        const onl = row.dataset.onl;
+        const src = row.dataset.src;
+        const hid = row.dataset.hid;
+        if (inv && typeof getDetails === 'function') {
+          getDetails(onl, inv, src, hid);
         }
       });
-
-      await new Promise(r => setTimeout(r, 800));
     }
 
-    updateOpenPanel();
-    const left = links.filter(l => !openedLinks.has(l.key)).length;
-    st.innerHTML = `✅ فُتح <b>${toOpen.length}</b> — متبقي: <b>${left}</b>`;
-  };
+    let recCount = 0, packedCount = 0;
+    state.savedRows.forEach(r => {
+      if (r.st === 'received') recCount++;
+      if (r.st === 'packed') packedCount++;
+    });
 
-  // ============================================================
-  //  EVENTS
-  // ============================================================
-  d.getElementById('baz-min').onclick = () => {
-    isMinimized = !isMinimized;
-    ui.classList.toggle('minimized', isMinimized);
-    d.getElementById('baz-min').innerHTML = isMinimized ? '+' : '−';
-  };
-  d.getElementById('baz-close').onclick = () => {
-    ui.remove();
-    d.getElementById('baz-style') && d.getElementById('baz-style').remove();
-  };
-  d.getElementById('baz-run-ready').onclick = () => runSearch(['readypack']);
-  d.getElementById('baz-run-all').onclick   = () => runSearch(['readypack','new','packed','delivered']);
-  d.getElementById('baz-cancel').onclick    = () => { cancelSearch = true; };
-  d.getElementById('baz-do-open').onclick   = openResults;
-  d.querySelectorAll('.baz-input').forEach(el => {
-    el.onkeypress = (e) => { if (e.key === 'Enter') runSearch(['readypack']); };
-  });
+    const pLabel = document.getElementById('p-label');
+    if (pLabel) pLabel.innerText = `✅ ${state.savedRows.length} سجل — ⚡ ${elapsed}s`;
+
+    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed} ثانية ⚡`, 'done');
+    showToast(`اكتمل: ${state.savedRows.length} سجل (${elapsed}s)`, 'success');
+
+    const dynArea = document.getElementById('ali_dynamic_area');
+    dynArea.innerHTML = `
+      <div style="background:${NEU.bg};border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6d28d9;font-weight:700;text-align:center;box-shadow:${neuInset}">
+        ✅ ${state.savedRows.length} سجل — 📦 Packed: ${packedCount} — 📥 Received: ${recCount} — ⚡ ${elapsed}s
+      </div>
+
+      <div style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:${neuOutset}">
+        <span style="font-size:14px;font-weight:800;color:${NEU.text}">الطلبات القابلة للتسليم:</span>
+        <input type="number" id="ali_open_count" value="${recCount}" style="width:64px;padding:10px;border:none;border-radius:14px;text-align:center;font-size:18px;font-weight:900;color:${NEU.error};background:${NEU.bg};outline:none;font-family:'Tajawal',sans-serif;box-shadow:${neuInset}" onfocus="this.value=''">
+      </div>
+
+      <button id="ali_btn_deliver_silent" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:6px 6px 14px rgba(220,38,38,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">
+        📝 تنفيذ أوامر التسليم (${recCount} Received)
+      </button>
+
+      <button id="ali_btn_export" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:6px 6px 14px rgba(217,119,6,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">
+        📦 تصدير Packed (${packedCount})
+      </button>
+
+      <!-- Re-search buttons -->
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="ali-re-search" data-mode="packed" style="flex:1;padding:12px 8px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:11px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:${neuBtnSm}">📦 Packed</button>
+        <button class="ali-re-search" data-mode="received" style="flex:1;padding:12px 8px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:11px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:${neuBtnSm}">📥 Received</button>
+        <button class="ali-re-search" data-mode="both" style="flex:1;padding:12px 8px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:11px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:${neuBtnSm}">🔄 الكل</button>
+      </div>
+    `;
+
+    // ─── Re-search buttons ───
+    dynArea.querySelectorAll('.ali-re-search').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const mode = this.dataset.mode;
+        if (mode === 'packed') startSearch(['packed']);
+        else if (mode === 'received') startSearch(['received']);
+        else startSearch(['packed','received']);
+      });
+    });
+
+    // ─── Deliver ───
+    document.getElementById('ali_btn_deliver_silent').addEventListener('click', async () => {
+      const list = state.savedRows.filter(r => r.st === 'received');
+      const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
+      const toDeliver = list.slice(0, count);
+      if (!toDeliver.length) { showToast('لا توجد سجلات Received.', 'warning'); return; }
+
+      const res = await showDialog({
+        icon: '📝', title: 'تأكيد أمر التسليم',
+        desc: 'سيتم إرسال طلبات التحديث للخادم.',
+        badges: [{ text: '📥 Received: ' + toDeliver.length, active: true }],
+        info: [{ label: 'إجمالي', value: toDeliver.length, color: NEU.error }],
+        buttons: [{ text: 'إلغاء', value: 'cancel', primary: false }, { text: '✅ تنفيذ', value: 'confirm', primary: true }]
+      });
+      if (res.action !== 'confirm') return;
+
+      const btn = document.getElementById('ali_btn_deliver_silent');
+      btn.disabled = true; btn.style.boxShadow = neuBtnPressed; btn.style.opacity = '0.8';
+
+      let successCount = 0;
+      const deliverUrl = window.location.origin + '/ez_pill_web/getEZPill_Details/updatetoDeliver';
+
+      for (let i = 0; i < toDeliver.length; i++) {
+        const item = toDeliver[i];
+        btn.innerHTML = `<div style="width:14px;height:14px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> (${i+1}/${toDeliver.length})`;
+        try {
+          const params = new URLSearchParams();
+          params.append('invoice_num', item.id);
+          params.append('patienName', item.guestName);
+          params.append('mobile', item.guestMobile);
+          const r = await fetch(deliverUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: params });
+          if (r.ok) {
+            successCount++; item.st = 'processed';
+            const rowEl = document.getElementById('row_' + item.id);
+            if (rowEl) { rowEl.style.background = 'rgba(163,177,198,0.2)'; rowEl.style.opacity = '0.5'; }
+            const stEl = document.getElementById('st_' + item.id);
+            if (stEl) stEl.innerText = 'processed';
+          }
+        } catch(e) { console.warn('فشل:', item.id); }
+        updateStats(); await sleep(150);
+      }
+
+      await showDialog({
+        icon: '🎉', title: 'اكتمل',
+        desc: `تم تسليم ${successCount} من ${toDeliver.length}`,
+        info: [{ label: 'نجح', value: successCount, color: NEU.success }, { label: 'فشل', value: toDeliver.length - successCount, color: NEU.error }],
+        buttons: [{ text: '👍 تمام', value: 'ok', primary: true }]
+      });
+
+      showToast(`تم ${successCount} سجل`, 'success');
+      btn.innerHTML = '✅ اكتمل'; btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+      btn.style.boxShadow = `6px 6px 14px rgba(5,150,105,0.3),-4px -4px 10px ${NEU.shadowLight}`;
+      btn.style.opacity = '1'; btn.disabled = false;
+    });
+
+    // ─── Export ───
+    document.getElementById('ali_btn_export').addEventListener('click', async () => {
+      const packedRows = state.savedRows.filter(r => r.st === 'packed');
+      if (!packedRows.length) { showToast('لا توجد بيانات Packed.', 'warning'); return; }
+
+      const res = await showDialog({
+        icon: '📦', title: 'تصدير Packed',
+        desc: `تصدير ${packedRows.length} طلب كملفات نصية`,
+        info: [{ label: 'الطلبات', value: packedRows.length, color: NEU.warning }, { label: 'الملفات', value: Math.ceil(packedRows.length / MAX_PER_FILE), color: NEU.accent }],
+        buttons: [{ text: 'إلغاء', value: 'cancel', primary: false }, { text: '📥 تصدير', value: 'confirm', primary: true }]
+      });
+      if (res.action !== 'confirm') return;
+
+      const numFiles = Math.ceil(packedRows.length / MAX_PER_FILE);
+      for (let i = 0; i < numFiles; i++) {
+        const chunk = packedRows.slice(i * MAX_PER_FILE, Math.min((i+1) * MAX_PER_FILE, packedRows.length));
+        const blob = new Blob([chunk.map(r => r.onl).join('\n')], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        setTimeout(() => { const a = document.createElement('a'); a.href = url; a.download = 'Data_Export_' + (i+1) + '.txt'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }, i * 500);
+      }
+      showToast(`تم تصدير ${numFiles} ملف`, 'success');
+    });
+  }
+
+  // ═══════════════════════════════════════════
+  // Start Buttons
+  // ═══════════════════════════════════════════
+  document.getElementById('ali_btn_packed').addEventListener('click', () => startSearch(['packed']));
+  document.getElementById('ali_btn_received').addEventListener('click', () => startSearch(['received']));
+  document.getElementById('ali_btn_both').addEventListener('click', () => startSearch(['packed','received']));
 
 })();
