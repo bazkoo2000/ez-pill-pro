@@ -1157,140 +1157,82 @@ window._ezDoAddDrug=function(){
 };
 
 /* ══════════════════════════════════════════
-   JSON DOWNLOAD INTERCEPTOR — تعديل external_id
+   DOWNLOAD INTERCEPTOR — تعديل head_id (رقم الفاتورة)
    ══════════════════════════════════════════ */
 window._ezInterceptDownload=false;
 window._ezDownloadCounter=0;
 
 window.ezToggleDownloadIntercept=function(){
   window._ezInterceptDownload=!window._ezInterceptDownload;
+  window._ezDownloadCounter=0;
   var btn=document.getElementById('ez-dl-intercept-btn');
   if(btn){
     btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'linear-gradient(145deg,#94a3b8,#64748b)';
+    btn.textContent=window._ezInterceptDownload?'🔄 تعديل الفاتورة: مُفعّل ✅':'🔄 تعديل رقم الفاتورة عند التحميل';
   }
-  window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
-};
-
-window._ezModifyExternalId=function(jsonStr){
-  try{
-    var json=JSON.parse(jsonStr);
-    if(!json.patients||!json.patients.length) return null;
-    window._ezDownloadCounter++;
-    var suffix=String(window._ezDownloadCounter).padStart(2,'0');
-    var changed=false;
-    for(var p=0;p<json.patients.length;p++){
-      if(json.patients[p].external_id){
-        var origId=json.patients[p].external_id;
-        json.patients[p].external_id=origId+'_'+suffix;
-        console.log('EZ_PILL: external_id: '+origId+' → '+json.patients[p].external_id);
-        changed=true;
-      }
-    }
-    if(changed){
-      window.ezShowToast('✅ رقم الفاتورة +_'+suffix+' (ملف #'+window._ezDownloadCounter+')','success');
-      return JSON.stringify(json);
-    }
-  }catch(e){console.error('EZ intercept error:',e);}
-  return null;
+  window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هينقّص رقم':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
 };
 
 (function(){
-  if(typeof window.downloaded==='function'){
-    var _origDownloaded=window.downloaded;
-    window.downloaded=function(){
-      if(!window._ezInterceptDownload) return _origDownloaded.apply(this,arguments);
-      _origDownloaded.apply(this,arguments);
-    };
-  }
-})();
-
-(function(){
-  var _obs=new MutationObserver(function(mutations){
-    if(!window._ezInterceptDownload) return;
-    for(var m=0;m<mutations.length;m++){
-      var nodes=mutations[m].addedNodes;
-      for(var n=0;n<nodes.length;n++){
-        var node=nodes[n];
-        if(node.tagName==='A'&&node.download&&node.href){
-          _tryInterceptAnchor(node);
-        }
-      }
-    }
-  });
-  _obs.observe(document.body,{childList:true,subtree:true});
-  function _tryInterceptAnchor(anchor){
-    var href=anchor.href||'';
-    if(href.indexOf('blob:')===0){
-      fetch(href).then(function(r){return r.text();}).then(function(text){
-        var modified=window._ezModifyExternalId(text);
-        if(modified){
-          var newBlob=new Blob([modified],{type:'application/json'});
-          anchor.href=URL.createObjectURL(newBlob);
-        }
-      }).catch(function(){});
-    }else if(href.indexOf('data:')===0){
+  var _origOpen=XMLHttpRequest.prototype.open;
+  var _origSend=XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open=function(method,url){
+    this._ezUrl=url||'';
+    this._ezMethod=(method||'').toUpperCase();
+    return _origOpen.apply(this,arguments);
+  };
+  XMLHttpRequest.prototype.send=function(body){
+    if(window._ezInterceptDownload&&this._ezMethod==='POST'&&this._ezUrl&&this._ezUrl.indexOf('downloaded')>-1){
       try{
-        var b64=href.split(',')[1];
-        var decoded=atob(b64);
-        var modified=window._ezModifyExternalId(decoded);
-        if(modified){anchor.href='data:application/json;charset=utf-8,'+encodeURIComponent(modified);}
-      }catch(e){}
-    }
-  }
-})();
-
-(function(){
-  var _origCOU=URL.createObjectURL;
-  URL.createObjectURL=function(blob){
-    var url=_origCOU.call(URL,blob);
-    if(!window._ezInterceptDownload) return url;
-    if(blob&&blob.size&&blob.size>10&&blob.type&&blob.type.indexOf('json')>-1){
-      try{
-        var reader=new FileReader();
-        reader.onload=function(){
-          var modified=window._ezModifyExternalId(reader.result);
-          if(modified){
-            setTimeout(function(){
-              var anchors=document.querySelectorAll('a[href="'+url+'"]');
-              if(anchors.length){
-                var newBlob=new Blob([modified],{type:'application/json'});
-                var newUrl=_origCOU.call(URL,newBlob);
-                for(var i=0;i<anchors.length;i++) anchors[i].href=newUrl;
-              }
-            },50);
+        var data=typeof body==='string'?JSON.parse(body):body;
+        if(data&&data.head_id){
+          window._ezDownloadCounter++;
+          var origId=parseInt(data.head_id,10);
+          var newId=String(origId-window._ezDownloadCounter);
+          data.head_id=newId;
+          if(data.itemsList&&Array.isArray(data.itemsList)){
+            for(var i=0;i<data.itemsList.length;i++){
+              if(data.itemsList[i].external_id) data.itemsList[i].external_id=data.itemsList[i].external_id.replace(String(origId),newId);
+            }
           }
-        };
-        reader.readAsText(blob);
-      }catch(e){}
+          body=JSON.stringify(data);
+          console.log('EZ_PILL: head_id: '+origId+' → '+newId);
+          window.ezShowToast('✅ رقم الفاتورة: '+origId+' → '+newId+' (تحميل #'+window._ezDownloadCounter+')','success');
+        }
+      }catch(e){console.error('EZ intercept error:',e);}
     }
-    return url;
+    return _origSend.call(this,body);
   };
 })();
 
-document.addEventListener('click',function(e){
-  if(!window._ezInterceptDownload) return;
-  var btn=e.target.closest('.downloadBtn,button[onclick*="downloaded"]');
-  if(!btn) return;
-  setTimeout(function(){
-    var anchors=document.querySelectorAll('a[download]');
-    for(var i=0;i<anchors.length;i++){
-      var a=anchors[i];
-      if(a.href&&a.href.indexOf('blob:')===0){
-        fetch(a.href).then(function(r){return r.text();}).then(function(text){
-          var modified=window._ezModifyExternalId(text);
-          if(modified){
-            var newBlob=new Blob([modified],{type:'application/json'});
-            var newUrl=URL.createObjectURL(newBlob);
-            var a2=document.createElement('a');
-            a2.href=newUrl;a2.download='order_'+window._ezDownloadCounter+'.json';
-            document.body.appendChild(a2);a2.click();
-            setTimeout(function(){document.body.removeChild(a2);URL.revokeObjectURL(newUrl);},200);
+(function(){
+  var _origFetch=window.fetch;
+  window.fetch=function(url,opts){
+    if(window._ezInterceptDownload&&opts&&opts.method&&opts.method.toUpperCase()==='POST'){
+      var urlStr=typeof url==='string'?url:(url.url||'');
+      if(urlStr.indexOf('downloaded')>-1&&opts.body){
+        try{
+          var data=typeof opts.body==='string'?JSON.parse(opts.body):opts.body;
+          if(data&&data.head_id){
+            window._ezDownloadCounter++;
+            var origId=parseInt(data.head_id,10);
+            var newId=String(origId-window._ezDownloadCounter);
+            data.head_id=newId;
+            if(data.itemsList&&Array.isArray(data.itemsList)){
+              for(var i=0;i<data.itemsList.length;i++){
+                if(data.itemsList[i].external_id) data.itemsList[i].external_id=data.itemsList[i].external_id.replace(String(origId),newId);
+              }
+            }
+            opts.body=JSON.stringify(data);
+            console.log('EZ_PILL fetch: head_id: '+origId+' → '+newId);
+            window.ezShowToast('✅ رقم الفاتورة: '+origId+' → '+newId+' (تحميل #'+window._ezDownloadCounter+')','success');
           }
-        }).catch(function(){});
+        }catch(e){console.error('EZ fetch intercept error:',e);}
       }
     }
-  },200);
-},true);
+    return _origFetch.apply(this,arguments);
+  };
+})();
 
 window.ezSelect=function(el,type,val){
   var p=el.parentNode;
