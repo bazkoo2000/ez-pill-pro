@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '6.0';
+  const VERSION = '6.1';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -10,7 +10,7 @@ javascript:(function(){
   }
 
   const MAX_PER_FILE = 49;
-  const BATCH_SIZE = 5; // عدد الطلبات المتوازية في كل دفعة
+  const BATCH_SIZE = 5;
 
   const state = {
     savedRows: [],
@@ -356,34 +356,6 @@ javascript:(function(){
   }
 
   // ═══════════════════════════════════════════
-  // Fetch Single Page (with retry)
-  // ═══════════════════════════════════════════
-  async function fetchPage(baseUrl, status, page, retries = 2) {
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-        const res = await fetch(baseUrl + 'Home/getOrders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: status, pageSelected: page, searchby: '' }),
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-        const data = await res.json();
-        return data;
-      } catch (err) {
-        if (attempt === retries) {
-          console.warn(`فشل تحميل صفحة ${page} بعد ${retries + 1} محاولات`, err);
-          return null;
-        }
-        await sleep(500 * (attempt + 1)); // تأخير متزايد قبل إعادة المحاولة
-      }
-    }
-    return null;
-  }
-
-  // ═══════════════════════════════════════════
   // Scan All Pages — Optimized Batch Concurrency
   // ═══════════════════════════════════════════
   async function scanAllPages() {
@@ -399,14 +371,28 @@ javascript:(function(){
     state.visitedSet.clear();
     state.htmlBuffer = '';
 
+    let failedPages = [];
+
     try {
-      // ─── الصفحة الأولى: لتحديد العدد الحقيقي للصفحات ───
-      const data1 = await fetchPage(baseUrl, currentStatus, 1, 3);
-      if (!data1) {
-        setStatus('خطأ في الاتصال بالخادم', 'error');
-        showToast('فشل الاتصال بالخادم', 'error');
-        state.isProcessing = false;
-        return;
+      // ─── الصفحة الأولى ───
+      setStatus('جاري تحميل الصفحة الأولى...', 'working');
+      const res1 = await fetch(baseUrl + 'Home/getOrders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' })
+      });
+
+      if (!res1.ok) {
+        throw new Error('HTTP ' + res1.status + ' - ' + res1.statusText);
+      }
+
+      const text1 = await res1.text();
+      let data1;
+      try {
+        data1 = JSON.parse(text1);
+      } catch(e) {
+        console.error('فشل تحويل JSON للصفحة الأولى:', text1.substring(0, 200));
+        throw new Error('الرد من السيرفر ليس JSON صالح');
       }
 
       if (data1.total_orders) {
@@ -423,7 +409,7 @@ javascript:(function(){
 
       if (maxPages <= 1) {
         updateProgress(1, 1);
-        finishScan(startTime);
+        finishScan(startTime, failedPages);
         return;
       }
 
@@ -436,15 +422,30 @@ javascript:(function(){
 
         for (let i = batchStart; i <= batchEnd; i++) {
           batchPromises.push(
-            fetchPage(baseUrl, currentStatus, i, 1)
-              .then(data => {
-                if (data) processData(data);
-              })
+            (async (pageNum) => {
+              try {
+                const res = await fetch(baseUrl + 'Home/getOrders', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
+                });
+                if (!res.ok) {
+                  console.warn('صفحة ' + pageNum + ' رجعت HTTP ' + res.status);
+                  failedPages.push(pageNum);
+                  return;
+                }
+                const data = await res.json();
+                processData(data);
+              } catch(err) {
+                console.warn('فشل تحميل صفحة ' + pageNum + ':', err.message);
+                failedPages.push(pageNum);
+              }
+            })(i)
           );
         }
 
         await Promise.all(batchPromises);
-        completed += batchPromises.length;
+        completed = Math.min(batchEnd, maxPages);
         updateStats();
         updateProgress(completed, maxPages);
         setStatus(`جاري الجلب... ${completed}/${maxPages} صفحة`, 'working');
@@ -452,23 +453,53 @@ javascript:(function(){
 
       updateProgress(maxPages, maxPages);
 
+      // ─── إعادة محاولة الصفحات الفاشلة ───
+      if (failedPages.length > 0) {
+        setStatus(`إعادة محاولة ${failedPages.length} صفحة فاشلة...`, 'working');
+        await sleep(1000);
+
+        const retryFailed = [...failedPages];
+        failedPages = [];
+
+        for (const pageNum of retryFailed) {
+          try {
+            const res = await fetch(baseUrl + 'Home/getOrders', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              processData(data);
+              updateStats();
+            } else {
+              failedPages.push(pageNum);
+            }
+          } catch(err) {
+            failedPages.push(pageNum);
+          }
+          await sleep(300);
+        }
+      }
+
     } catch (err) {
-      console.error(err);
-      setStatus('خطأ في الاتصال بالخادم', 'error');
-      showToast('فشل الاتصال بالخادم', 'error');
+      console.error('خطأ رئيسي:', err);
+      setStatus('خطأ: ' + err.message, 'error');
+      showToast('فشل الاتصال: ' + err.message, 'error');
       state.isProcessing = false;
       return;
     }
 
-    finishScan(startTime);
+    finishScan(startTime, failedPages);
   }
 
   // ═══════════════════════════════════════════
   // Finish Scan — Neumorphic UI
   // ═══════════════════════════════════════════
-  function finishScan(startTime) {
+  function finishScan(startTime, failedPages) {
     state.isProcessing = false;
     const elapsed = startTime ? ((performance.now() - startTime) / 1000).toFixed(1) : '?';
+    const failCount = (failedPages && failedPages.length) || 0;
 
     const tables = document.querySelectorAll('table');
     let target = tables[0];
@@ -493,10 +524,10 @@ javascript:(function(){
     let recCount = 0;
     state.savedRows.forEach(r => { if (r.st === 'received') recCount++; });
 
-    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed} ثانية ⚡`, 'done');
+    const failMsg = failCount > 0 ? ` (⚠️ ${failCount} صفحة فشلت)` : '';
+    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed}s${failMsg}`, 'done');
     showToast(`اكتمل الحصر: ${state.savedRows.length} سجل (${elapsed}s)`, 'success');
 
-    // إخفاء label التقدم
     const pLabel = document.getElementById('p-label');
     if (pLabel) pLabel.style.display = 'none';
 
@@ -504,7 +535,7 @@ javascript:(function(){
     dynArea.innerHTML = `
       <!-- Info Banner -->
       <div style="background:${NEU.bg};border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6d28d9;font-weight:700;text-align:center;box-shadow:${neuInset}">
-        ✅ تم تفعيل الروابط المباشرة لفتح تفاصيل الطلبات — ⚡ ${elapsed}s
+        ✅ تم تفعيل الروابط المباشرة — ⚡ ${elapsed}s${failCount > 0 ? ' — ⚠️ ' + failCount + ' صفحة فشلت' : ''}
       </div>
 
       <!-- Deliver Count -->
@@ -593,7 +624,6 @@ javascript:(function(){
         await sleep(150);
       }
 
-      // Success dialog
       await showDialog({
         icon: '🎉',
         title: 'اكتمل التنفيذ',
