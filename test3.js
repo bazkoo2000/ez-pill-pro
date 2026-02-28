@@ -270,16 +270,18 @@ javascript:(function(){
     showToast(`${state.savedRows.length} سجل (${elapsed}s)`, 'success');
 
     const dynArea = document.getElementById('ali_dynamic_area');
+    const showDeliver = recCount > 0;
+    const showExport = packedCount > 0;
     dynArea.innerHTML = `
       <div style="background:${NEU.bg};border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6d28d9;font-weight:700;text-align:center;box-shadow:${neuInset}">
-        📦 Packed: ${packedCount} — 📥 Received: ${recCount} — ⚡ ${elapsed}s
+        ${packedCount > 0 ? '📦 Packed: '+packedCount+' — ' : ''}${recCount > 0 ? '📥 Received: '+recCount+' — ' : ''}⚡ ${elapsed}s
       </div>
-      <div style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:${neuOutset}">
+      ${showDeliver ? `<div style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:${neuOutset}">
         <span style="font-size:14px;font-weight:800;color:${NEU.text}">عدد التسليم:</span>
         <input type="number" id="ali_open_count" value="${recCount}" style="width:64px;padding:10px;border:none;border-radius:14px;text-align:center;font-size:18px;font-weight:900;color:${NEU.error};background:${NEU.bg};outline:none;font-family:'Tajawal',sans-serif;box-shadow:${neuInset}" onfocus="this.value=''">
       </div>
-      <button id="ali_btn_deliver_silent" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:6px 6px 14px rgba(220,38,38,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">📝 تسليم (${recCount} Received)</button>
-      <button id="ali_btn_export" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:6px 6px 14px rgba(217,119,6,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">📦 تصدير Packed (${packedCount})</button>
+      <button id="ali_btn_deliver_silent" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:6px 6px 14px rgba(220,38,38,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">📝 تسليم (${recCount} Received)</button>` : ''}
+      ${showExport ? `<button id="ali_btn_export" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:6px 6px 14px rgba(217,119,6,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">📦 تصدير Packed (${packedCount})</button>` : ''}
       <div style="display:flex;gap:8px;margin-bottom:10px">
         <button class="ali-re" data-m="packed" style="flex:1;padding:12px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:11px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:${neuBtnSm}">📦 Packed</button>
         <button class="ali-re" data-m="received" style="flex:1;padding:12px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:11px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:${neuBtnSm}">📥 Received</button>
@@ -296,6 +298,7 @@ javascript:(function(){
       });
     });
 
+    if (document.getElementById('ali_btn_deliver_silent')) {
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async () => {
       const list = state.savedRows.filter(r => r.st === 'received');
       const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
@@ -321,7 +324,9 @@ javascript:(function(){
       showToast(`تم ${ok} سجل`, 'success');
       btn.innerHTML='✅ اكتمل'; btn.style.background='linear-gradient(135deg,#059669,#10b981)'; btn.style.opacity='1'; btn.disabled=false;
     });
+    }
 
+    if (document.getElementById('ali_btn_export')) {
     document.getElementById('ali_btn_export').addEventListener('click', async () => {
       const packedRows = state.savedRows.filter(r => r.st === 'packed');
       if (!packedRows.length) { showToast('لا يوجد Packed', 'warning'); return; }
@@ -336,6 +341,7 @@ javascript:(function(){
       }
       showToast(`تم تصدير ${n} ملف`, 'success');
     });
+    }
   }
 
   // ═══════════════════════════════════════════
