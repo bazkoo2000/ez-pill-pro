@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '6.3';
+  const VERSION = '7.0';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -10,14 +10,11 @@ javascript:(function(){
   }
 
   const MAX_PER_FILE = 49;
-  const BATCH_SIZE = 2;
-  const BATCH_DELAY = 500;
 
   const state = {
     savedRows: [],
     visitedSet: new Set(),
     isProcessing: false,
-    isSyncing: false,
     htmlBuffer: ''
   };
 
@@ -74,7 +71,7 @@ javascript:(function(){
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(10px)';
       setTimeout(() => toast.remove(), 300);
-    }, 4000);
+    }, 3500);
   }
 
   function showDialog({ icon, title, desc, info, badges, buttons }) {
@@ -149,7 +146,6 @@ javascript:(function(){
     @keyframes aliDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
     @keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
     @keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}
-    @keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}
     #${PANEL_ID}{position:fixed;top:3%;right:2%;width:400px;max-height:92vh;background:${NEU.bg};border-radius:24px;box-shadow:${neuOutset};z-index:999999;font-family:'Tajawal','Segoe UI',sans-serif;direction:rtl;color:${NEU.text};overflow:hidden;transition:all 0.4s;animation:aliSlideIn 0.4s}
     #${PANEL_ID}.ali-minimized{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#7c3aed,#a78bfa)!important;box-shadow:6px 6px 16px ${NEU.shadowDark},-6px -6px 16px ${NEU.shadowLight}!important;animation:aliPulse 2s infinite;overflow:hidden}
     #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
@@ -182,7 +178,7 @@ javascript:(function(){
           <h3 style="font-size:18px;font-weight:900;margin:0">محرك بحث وإنهاء الطلبات</h3>
         </div>
         <div style="text-align:right;margin-top:4px;position:relative;z-index:1">
-          <span style="display:inline-block;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:10px;padding:3px 10px;border-radius:8px;font-weight:700;backdrop-filter:blur(4px)">v${VERSION} Neumorphic</span>
+          <span style="display:inline-block;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:10px;padding:3px 10px;border-radius:8px;font-weight:700;backdrop-filter:blur(4px)">v${VERSION} ⚡ Turbo</span>
         </div>
       </div>
 
@@ -200,7 +196,7 @@ javascript:(function(){
             <input type="number" id="p_lim" value="${defaultPages}" min="1" style="width:70px;padding:8px 6px;border:none;border-radius:12px;text-align:center;font-size:16px;font-weight:900;color:${NEU.accent};background:${NEU.bg};outline:none;font-family:'Tajawal',sans-serif;box-shadow:${neuInset}">
           </div>
           <div id="p-bar" style="height:8px;background:${NEU.bg};border-radius:10px;overflow:hidden;box-shadow:${neuInset}">
-            <div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.3s"></div>
+            <div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.2s"></div>
           </div>
           <div id="p-label" style="text-align:center;margin-top:6px;font-size:11px;color:${NEU.textMuted};font-weight:700;display:none"></div>
         </div>
@@ -210,6 +206,16 @@ javascript:(function(){
         </div>
         
         <div id="ali_dynamic_area">
+          <!-- Strategy Selection -->
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="ali-strategy-btn" data-strategy="turbo" style="flex:1;padding:12px 8px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:12px;font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:${neuBtnSm};transition:all 0.3s">
+              ⚡ Turbo<br><span style="font-size:10px;opacity:0.8">طلب واحد سريع</span>
+            </button>
+            <button class="ali-strategy-btn" data-strategy="parallel" style="flex:1;padding:12px 8px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:12px;font-family:'Tajawal',sans-serif;background:${NEU.bg};color:${NEU.textMuted};box-shadow:${neuBtnSm};transition:all 0.3s">
+              🔄 عادي<br><span style="font-size:10px;opacity:0.8">صفحة صفحة</span>
+            </button>
+          </div>
+
           <button id="ali_start" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:6px 6px 14px rgba(109,40,217,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s">
             🚀 بدء عملية البحث والاستعلام
           </button>
@@ -220,6 +226,23 @@ javascript:(function(){
     </div>
   `;
   document.body.appendChild(panel);
+
+  // Strategy selection
+  let selectedStrategy = 'turbo';
+  panel.querySelectorAll('.ali-strategy-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      selectedStrategy = this.dataset.strategy;
+      panel.querySelectorAll('.ali-strategy-btn').forEach(b => {
+        if (b.dataset.strategy === selectedStrategy) {
+          b.style.background = 'linear-gradient(135deg,#6d28d9,#8b5cf6)';
+          b.style.color = 'white';
+        } else {
+          b.style.background = NEU.bg;
+          b.style.color = NEU.textMuted;
+        }
+      });
+    });
+  });
 
   function setStatus(text, type) {
     const el = document.getElementById('status-msg');
@@ -259,17 +282,6 @@ javascript:(function(){
     animNum('stat_pack', packed);
     animNum('stat_done', done);
     animNum('stat_total', state.savedRows.length);
-  }
-
-  function updateProgress(completed, total) {
-    const fill = document.getElementById('p-fill');
-    const label = document.getElementById('p-label');
-    const pct = Math.round((completed / total) * 100);
-    if (fill) fill.style.width = pct + '%';
-    if (label) {
-      label.style.display = 'block';
-      label.innerText = `${completed} / ${total} صفحة (${pct}%)`;
-    }
   }
 
   panel.addEventListener('click', e => { if(panel.classList.contains('ali-minimized')){ panel.classList.remove('ali-minimized'); e.stopPropagation(); } });
@@ -327,37 +339,110 @@ javascript:(function(){
   }
 
   // ═══════════════════════════════════════════
-  // Fetch single page with retry
+  // TURBO: جلب كل الحالات بطلب واحد لكل حالة
   // ═══════════════════════════════════════════
-  async function fetchPageSafe(url, bodyObj, retries) {
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyObj)
+  async function scanTurbo() {
+    state.isProcessing = true;
+    const fill = document.getElementById('p-fill');
+    const pLabel = document.getElementById('p-label');
+    const baseUrl = window.location.origin + "/ez_pill_web/";
+    const startTime = performance.now();
+
+    setStatus('⚡ وضع Turbo — جاري الجلب...', 'working');
+
+    state.savedRows = [];
+    state.visitedSet.clear();
+    state.htmlBuffer = '';
+
+    if (pLabel) { pLabel.style.display = 'block'; pLabel.innerText = 'جاري اكتشاف البيانات...'; }
+
+    // الفكرة: نبعت كل الحالات في نفس الوقت (packed + received + processed)
+    // كل حالة بطلب واحد بس — بدل 15 طلب، 3 طلبات بس
+    const statuses = ['packed', 'received'];
+    let totalOrders = 0;
+    let completedStatuses = 0;
+
+    try {
+      // أولاً: نعرف عدد الصفحات لكل حالة
+      const statusPages = {};
+      
+      for (const status of statuses) {
+        const res = await fetch(baseUrl + 'Home/getOrders', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: status, pageSelected: 1, searchby: '' })
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.json();
-      } catch(e) {
-        if (attempt < retries) {
-          await sleep(1000 * (attempt + 1));
-        } else {
-          console.warn('Failed page ' + bodyObj.pageSelected + ':', e.message);
-          return null;
+        const data = await res.json();
+        processData(data);
+        updateStats();
+        
+        const total = parseInt(data.total_orders) || 0;
+        statusPages[status] = { total: total, pages: Math.ceil(total / 10) };
+        totalOrders += total;
+
+        completedStatuses++;
+        if (fill) fill.style.width = ((completedStatuses / (statuses.length + 1)) * 30) + '%';
+        if (pLabel) pLabel.innerText = `تم اكتشاف ${totalOrders} طلب...`;
+      }
+
+      // ثانياً: نجلب كل الصفحات المتبقية بالتوازي
+      const allPromises = [];
+      let totalPages = 0;
+      let completedPages = 0;
+
+      for (const status of statuses) {
+        const pages = statusPages[status].pages;
+        totalPages += Math.max(0, pages - 1); // الصفحة الأولى اتجلبت
+        
+        for (let i = 2; i <= pages; i++) {
+          allPromises.push(
+            fetch(baseUrl + 'Home/getOrders', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: status, pageSelected: i, searchby: '' })
+            })
+            .then(r => r.json())
+            .then(data => {
+              processData(data);
+              completedPages++;
+              updateStats();
+              const pct = 30 + ((completedPages / Math.max(totalPages, 1)) * 70);
+              if (fill) fill.style.width = pct + '%';
+              if (pLabel) pLabel.innerText = `${completedPages + statuses.length} / ${totalPages + statuses.length} (${state.savedRows.length} سجل)`;
+              setStatus(`⚡ ${state.savedRows.length} سجل...`, 'working');
+            })
+            .catch(err => {
+              completedPages++;
+              console.warn('فشل:', err);
+            })
+          );
         }
       }
+
+      if (allPromises.length > 0) {
+        setStatus(`⚡ جاري جلب ${totalPages} صفحة متبقية...`, 'working');
+        await Promise.all(allPromises);
+      }
+
+      if (fill) fill.style.width = '100%';
+
+    } catch (err) {
+      console.error(err);
+      setStatus('خطأ في الاتصال بالخادم', 'error');
+      showToast('فشل الاتصال بالخادم', 'error');
+      state.isProcessing = false;
+      return;
     }
-    return null;
+
+    finishScan(startTime);
   }
 
   // ═══════════════════════════════════════════
-  // Scan All Pages — Conservative batching for slow server
+  // PARALLEL: الطريقة الأصلية بالظبط
   // ═══════════════════════════════════════════
-  async function scanAllPages() {
+  async function scanParallel() {
     state.isProcessing = true;
+    const fill = document.getElementById('p-fill');
+    const pLabel = document.getElementById('p-label');
     const baseUrl = window.location.origin + "/ez_pill_web/";
-    const fetchUrl = baseUrl + 'Home/getOrders';
     const currentStatus = 'packed';
     const startTime = performance.now();
 
@@ -367,19 +452,14 @@ javascript:(function(){
     state.savedRows = [];
     state.visitedSet.clear();
     state.htmlBuffer = '';
-    let failedPages = [];
+    let completedPages = 0;
 
     try {
-      // ─── الصفحة الأولى ───
-      setStatus('جاري تحميل الصفحة الأولى...', 'working');
-      const data1 = await fetchPageSafe(fetchUrl, { status: currentStatus, pageSelected: 1, searchby: '' }, 3);
-
-      if (!data1) {
-        setStatus('فشل الاتصال بالخادم — حاول مرة أخرى', 'error');
-        showToast('فشل تحميل الصفحة الأولى', 'error');
-        state.isProcessing = false;
-        return;
-      }
+      const res1 = await fetch(baseUrl + 'Home/getOrders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' })
+      });
+      const data1 = await res1.json();
 
       if (data1.total_orders) {
         const exactTotal = parseInt(data1.total_orders) || 0;
@@ -391,83 +471,50 @@ javascript:(function(){
 
       processData(data1);
       updateStats();
-      updateProgress(1, maxPages);
+      completedPages = 1;
+      if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
+      if (pLabel) { pLabel.style.display = 'block'; pLabel.innerText = `1 / ${maxPages} صفحة`; }
 
-      if (maxPages <= 1) {
-        finishScan(startTime, []);
-        return;
-      }
-
-      // ─── باقي الصفحات: دفعات صغيرة مع تأخير ───
-      let completed = 1;
-
-      for (let batchStart = 2; batchStart <= maxPages; batchStart += BATCH_SIZE) {
-        const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, maxPages);
-        const batchPromises = [];
-
-        for (let i = batchStart; i <= batchEnd; i++) {
-          batchPromises.push(
-            (async (pageNum) => {
-              const data = await fetchPageSafe(fetchUrl, { status: currentStatus, pageSelected: pageNum, searchby: '' }, 2);
-              if (data) {
-                processData(data);
-              } else {
-                failedPages.push(pageNum);
-              }
-            })(i)
-          );
-        }
-
-        await Promise.all(batchPromises);
-        completed = Math.min(batchEnd, maxPages);
-        updateStats();
-        updateProgress(completed, maxPages);
-        setStatus(`جاري الجلب... ${completed}/${maxPages} صفحة (${state.savedRows.length} سجل)`, 'working');
-
-        // تأخير بين الدفعات عشان السيرفر يلحق
-        if (batchEnd < maxPages) {
-          await sleep(BATCH_DELAY);
-        }
-      }
-
-      // ─── إعادة محاولة الفاشلة واحدة واحدة ───
-      if (failedPages.length > 0) {
-        setStatus(`إعادة محاولة ${failedPages.length} صفحة فاشلة...`, 'working');
-        const retryList = [...failedPages];
-        failedPages = [];
-
-        for (const pageNum of retryList) {
-          await sleep(800);
-          const data = await fetchPageSafe(fetchUrl, { status: currentStatus, pageSelected: pageNum, searchby: '' }, 2);
-          if (data) {
+      const fetchPromises = [];
+      for (let i = 2; i <= maxPages; i++) {
+        fetchPromises.push(
+          fetch(baseUrl + 'Home/getOrders', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: currentStatus, pageSelected: i, searchby: '' })
+          })
+          .then(r => r.json())
+          .then(data => {
             processData(data);
+            completedPages++;
             updateStats();
-          } else {
-            failedPages.push(pageNum);
-          }
-        }
+            if (fill) fill.style.width = ((completedPages / maxPages) * 100) + '%';
+            if (pLabel) pLabel.innerText = `${completedPages} / ${maxPages} صفحة`;
+            setStatus(`جاري الجلب... ${completedPages}/${maxPages} (${state.savedRows.length} سجل)`, 'working');
+          })
+          .catch(err => { completedPages++; console.warn('فشل تحميل صفحة', err); })
+        );
       }
 
-      updateProgress(maxPages, maxPages);
+      await Promise.all(fetchPromises);
+      if (fill) fill.style.width = '100%';
 
     } catch (err) {
       console.error(err);
-      setStatus('خطأ: ' + err.message, 'error');
-      showToast('خطأ: ' + err.message, 'error');
+      setStatus('خطأ في الاتصال بالخادم', 'error');
+      showToast('فشل الاتصال بالخادم', 'error');
       state.isProcessing = false;
       return;
     }
 
-    finishScan(startTime, failedPages);
+    finishScan(startTime);
   }
 
   // ═══════════════════════════════════════════
   // Finish Scan
   // ═══════════════════════════════════════════
-  function finishScan(startTime, failedPages) {
+  function finishScan(startTime) {
     state.isProcessing = false;
     const elapsed = startTime ? ((performance.now() - startTime) / 1000).toFixed(1) : '?';
-    const failCount = (failedPages && failedPages.length) || 0;
 
     const tables = document.querySelectorAll('table');
     let target = tables[0];
@@ -492,17 +539,16 @@ javascript:(function(){
     let recCount = 0;
     state.savedRows.forEach(r => { if (r.st === 'received') recCount++; });
 
-    const failMsg = failCount > 0 ? ` (⚠️ ${failCount} صفحة فشلت)` : '';
-    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed}s${failMsg}`, 'done');
-    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل (${elapsed}s)`, 'success');
-
     const pLabel = document.getElementById('p-label');
     if (pLabel) pLabel.style.display = 'none';
+
+    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed} ثانية ⚡`, 'done');
+    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل (${elapsed}s)`, 'success');
 
     const dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML = `
       <div style="background:${NEU.bg};border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6d28d9;font-weight:700;text-align:center;box-shadow:${neuInset}">
-        ✅ تم تفعيل الروابط المباشرة — ⚡ ${elapsed}s${failCount > 0 ? ' — ⚠️ ' + failCount + ' صفحة فشلت' : ''}
+        ✅ تم تفعيل الروابط — ⚡ ${elapsed} ثانية — ${state.savedRows.length} سجل
       </div>
 
       <div style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:${neuOutset}">
@@ -523,7 +569,6 @@ javascript:(function(){
       </button>
     `;
 
-    // ─── Deliver ───
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async () => {
       const list = state.savedRows.filter(r => r.st === 'received');
       const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
@@ -531,168 +576,100 @@ javascript:(function(){
       if (!toDeliver.length) { showToast('لا توجد سجلات مطابقة للمعايير.', 'warning'); return; }
 
       const res = await showDialog({
-        icon: '📝',
-        title: 'تأكيد أمر التسليم',
+        icon: '📝', title: 'تأكيد أمر التسليم',
         desc: 'سيتم إرسال طلبات التحديث للخادم في الخلفية.',
-        badges: [
-          { text: '📥 Received: ' + toDeliver.length, active: true },
-          { text: '⚡ معالجة تلقائية', active: true }
-        ],
-        info: [
-          { label: 'إجمالي السجلات', value: toDeliver.length, color: NEU.error },
-          { label: 'العملية', value: 'تحديث حالة التسليم', color: NEU.accent }
-        ],
-        buttons: [
-          { text: 'إلغاء', value: 'cancel', primary: false },
-          { text: '✅ تأكيد التنفيذ', value: 'confirm', primary: true }
-        ]
+        badges: [{ text: '📥 Received: ' + toDeliver.length, active: true }, { text: '⚡ معالجة تلقائية', active: true }],
+        info: [{ label: 'إجمالي السجلات', value: toDeliver.length, color: NEU.error }, { label: 'العملية', value: 'تحديث حالة التسليم', color: NEU.accent }],
+        buttons: [{ text: 'إلغاء', value: 'cancel', primary: false }, { text: '✅ تأكيد التنفيذ', value: 'confirm', primary: true }]
       });
-
       if (res.action !== 'confirm') return;
 
       const btn = document.getElementById('ali_btn_deliver_silent');
-      btn.disabled = true;
-      btn.style.boxShadow = neuBtnPressed;
-      btn.style.opacity = '0.8';
+      btn.disabled = true; btn.style.boxShadow = neuBtnPressed; btn.style.opacity = '0.8';
 
       let successCount = 0;
       const deliverUrl = window.location.origin + '/ez_pill_web/getEZPill_Details/updatetoDeliver';
 
       for (let i = 0; i < toDeliver.length; i++) {
         const item = toDeliver[i];
-        btn.innerHTML = `<div style="width:14px;height:14px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري المعالجة (${i+1}/${toDeliver.length})...`;
+        btn.innerHTML = `<div style="width:14px;height:14px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> (${i+1}/${toDeliver.length})`;
         try {
           const params = new URLSearchParams();
           params.append('invoice_num', item.id);
           params.append('patienName', item.guestName);
           params.append('mobile', item.guestMobile);
-          const r = await fetch(deliverUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-            body: params
-          });
+          const r = await fetch(deliverUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: params });
           if (r.ok) {
-            successCount++;
-            item.st = 'processed';
+            successCount++; item.st = 'processed';
             const rowEl = document.getElementById('row_' + item.id);
-            if (rowEl) {
-              rowEl.style.background = 'rgba(163,177,198,0.2)';
-              rowEl.style.opacity = '0.5';
-              const stEl = document.getElementById('st_' + item.id);
-              if (stEl) stEl.innerText = 'processed';
-            }
+            if (rowEl) { rowEl.style.background = 'rgba(163,177,198,0.2)'; rowEl.style.opacity = '0.5'; }
+            const stEl = document.getElementById('st_' + item.id);
+            if (stEl) stEl.innerText = 'processed';
           }
-        } catch(e) { console.warn('فشل تسليم:', item.id, e); }
-        updateStats();
-        await sleep(150);
+        } catch(e) { console.warn('فشل:', item.id); }
+        updateStats(); await sleep(150);
       }
 
       await showDialog({
-        icon: '🎉',
-        title: 'اكتمل التنفيذ',
-        desc: 'تم معالجة أوامر التسليم بنجاح',
-        badges: [
-          { text: '✅ نجح: ' + successCount, active: true },
-          { text: '❌ فشل: ' + (toDeliver.length - successCount), active: (toDeliver.length - successCount) > 0 }
-        ],
-        info: [
-          { label: 'تم تسليمه', value: successCount, color: NEU.success },
-          { label: 'من إجمالي', value: toDeliver.length, color: NEU.accent }
-        ],
-        buttons: [
-          { text: '👍 تمام', value: 'ok', primary: true }
-        ]
+        icon: '🎉', title: 'اكتمل التنفيذ', desc: 'تم معالجة أوامر التسليم بنجاح',
+        badges: [{ text: '✅ نجح: ' + successCount, active: true }, { text: '❌ فشل: ' + (toDeliver.length - successCount), active: (toDeliver.length - successCount) > 0 }],
+        info: [{ label: 'تم تسليمه', value: successCount, color: NEU.success }, { label: 'من إجمالي', value: toDeliver.length, color: NEU.accent }],
+        buttons: [{ text: '👍 تمام', value: 'ok', primary: true }]
       });
 
       showToast(`تم تنفيذ ${successCount} سجل بنجاح`, 'success');
-      btn.innerHTML = '✅ اكتمل التنفيذ';
-      btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+      btn.innerHTML = '✅ اكتمل'; btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
       btn.style.boxShadow = `6px 6px 14px rgba(5,150,105,0.3),-4px -4px 10px ${NEU.shadowLight}`;
-      btn.style.opacity = '1';
-      btn.disabled = false;
+      btn.style.opacity = '1'; btn.disabled = false;
     });
 
-    // ─── Export ───
     document.getElementById('ali_btn_export').addEventListener('click', async () => {
       const packedRows = state.savedRows.filter(r => r.st === 'packed');
-      if (!packedRows.length) { showToast('لا توجد بيانات متاحة للتصدير.', 'warning'); return; }
+      if (!packedRows.length) { showToast('لا توجد بيانات للتصدير.', 'warning'); return; }
 
       const res = await showDialog({
-        icon: '📦',
-        title: 'تصدير البيانات',
-        desc: 'سيتم تصدير بيانات الطلبات المجهزة كملفات نصية',
-        info: [
-          { label: 'عدد الطلبات', value: packedRows.length, color: NEU.warning },
-          { label: 'عدد الملفات', value: Math.ceil(packedRows.length / MAX_PER_FILE), color: NEU.accent }
-        ],
-        buttons: [
-          { text: 'إلغاء', value: 'cancel', primary: false },
-          { text: '📥 بدء التصدير', value: 'confirm', primary: true }
-        ]
+        icon: '📦', title: 'تصدير البيانات', desc: 'تصدير الطلبات المجهزة كملفات نصية',
+        info: [{ label: 'عدد الطلبات', value: packedRows.length, color: NEU.warning }, { label: 'عدد الملفات', value: Math.ceil(packedRows.length / MAX_PER_FILE), color: NEU.accent }],
+        buttons: [{ text: 'إلغاء', value: 'cancel', primary: false }, { text: '📥 تصدير', value: 'confirm', primary: true }]
       });
-
       if (res.action !== 'confirm') return;
 
       const numFiles = Math.ceil(packedRows.length / MAX_PER_FILE);
       for (let i = 0; i < numFiles; i++) {
         const chunk = packedRows.slice(i * MAX_PER_FILE, Math.min((i+1) * MAX_PER_FILE, packedRows.length));
-        const content = chunk.map(r => r.onl).join('\n');
-        const blob = new Blob([content], { type: 'text/plain' });
+        const blob = new Blob([chunk.map(r => r.onl).join('\n')], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
-        setTimeout(() => {
-          const a = document.createElement('a');
-          a.href = url; a.download = 'Data_Export_' + (i+1) + '.txt';
-          document.body.appendChild(a); a.click();
-          document.body.removeChild(a); URL.revokeObjectURL(url);
-        }, i * 500);
+        setTimeout(() => { const a = document.createElement('a'); a.href = url; a.download = 'Data_Export_' + (i+1) + '.txt'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }, i * 500);
       }
-      showToast(`تم تصدير ${numFiles} ملف بنجاح`, 'success');
+      showToast(`تم تصدير ${numFiles} ملف`, 'success');
     });
 
-    // ─── Sync ───
     document.getElementById('ali_btn_sync').addEventListener('click', async function() {
-      if (state.isProcessing) { showToast('العملية جارية بالفعل — انتظر!', 'warning'); return; }
-
-      const syncBtn = this;
-      const oldCount = state.savedRows.length;
-
+      if (state.isProcessing) { showToast('انتظر...', 'warning'); return; }
       const res = await showDialog({
-        icon: '🔄',
-        title: 'إعادة فحص البيانات',
-        desc: 'سيتم إعادة جلب كل البيانات من الخادم وتحديث القائمة',
-        badges: [
-          { text: 'حذف القديم', active: true },
-          { text: 'جلب الجديد', active: true },
-          { text: 'تحديث الحالات', active: true }
-        ],
-        info: [
-          { label: 'السجلات الحالية', value: oldCount, color: NEU.accent },
-          { label: 'العملية', value: 'فحص شامل', color: NEU.blue }
-        ],
-        buttons: [
-          { text: 'إلغاء', value: 'cancel', primary: false },
-          { text: '🔄 بدء الفحص', value: 'confirm', primary: true }
-        ]
+        icon: '🔄', title: 'إعادة فحص', desc: 'إعادة جلب كل البيانات',
+        info: [{ label: 'السجلات الحالية', value: state.savedRows.length, color: NEU.accent }],
+        buttons: [{ text: 'إلغاء', value: 'cancel', primary: false }, { text: '🔄 فحص', value: 'confirm', primary: true }]
       });
-
       if (res.action !== 'confirm') return;
 
-      syncBtn.disabled = true;
-      syncBtn.innerHTML = `<div style="width:14px;height:14px;border:2.5px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري إعادة الفحص...`;
-      syncBtn.style.boxShadow = neuBtnPressed;
-      syncBtn.style.color = NEU.accent;
+      this.disabled = true;
+      this.innerHTML = `<div style="width:14px;height:14px;border:2.5px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري...`;
+      this.style.boxShadow = neuBtnPressed;
 
-      await scanAllPages();
+      if (selectedStrategy === 'turbo') await scanTurbo();
+      else await scanParallel();
     });
   }
 
   document.getElementById('ali_start').addEventListener('click', function() {
     if (state.isProcessing) return;
     this.disabled = true;
-    this.innerHTML = `<div style="width:16px;height:16px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري فحص البيانات...`;
-    this.style.boxShadow = neuBtnPressed;
-    this.style.opacity = '0.8';
-    scanAllPages();
+    this.innerHTML = `<div style="width:16px;height:16px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري...`;
+    this.style.boxShadow = neuBtnPressed; this.style.opacity = '0.8';
+
+    if (selectedStrategy === 'turbo') scanTurbo();
+    else scanParallel();
   });
 
 })();
