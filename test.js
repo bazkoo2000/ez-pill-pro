@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '6.1';
+  const VERSION = '6.2';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -20,9 +20,6 @@ javascript:(function(){
     htmlBuffer: ''
   };
 
-  // ═══════════════════════════════════════════
-  // Neumorphic Design System
-  // ═══════════════════════════════════════════
   const NEU = {
     bg: '#e0e5ec',
     shadowDark: 'rgba(163,177,198,0.6)',
@@ -57,9 +54,6 @@ javascript:(function(){
       .replace(/'/g, '&#x27;');
   }
 
-  // ═══════════════════════════════════════════
-  // Neumorphic Toast
-  // ═══════════════════════════════════════════
   function showToast(message, type = 'info') {
     let container = document.getElementById('ali-toast-container');
     if (!container) {
@@ -79,12 +73,9 @@ javascript:(function(){
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(10px)';
       setTimeout(() => toast.remove(), 300);
-    }, 3500);
+    }, 4000);
   }
 
-  // ═══════════════════════════════════════════
-  // Neumorphic Dialog
-  // ═══════════════════════════════════════════
   function showDialog({ icon, title, desc, info, badges, buttons }) {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
@@ -148,9 +139,6 @@ javascript:(function(){
     });
   }
 
-  // ═══════════════════════════════════════════
-  // CSS — Full Neumorphic
-  // ═══════════════════════════════════════════
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
     @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}
@@ -171,9 +159,6 @@ javascript:(function(){
   `;
   document.head.appendChild(styleEl);
 
-  // ═══════════════════════════════════════════
-  // Neumorphic Stat Card
-  // ═══════════════════════════════════════════
   function buildStatCard(icon, val, label, color, id) {
     return `<div style="background:${NEU.bg};border-radius:16px;padding:14px 6px;text-align:center;box-shadow:${neuOutset}">` +
       `<div style="font-size:18px;margin-bottom:5px">${icon}</div>` +
@@ -182,14 +167,10 @@ javascript:(function(){
     `</div>`;
   }
 
-  // ═══════════════════════════════════════════
-  // Panel — Full Neumorphic
-  // ═══════════════════════════════════════════
   const panel = document.createElement('div');
   panel.id = PANEL_ID;
   panel.innerHTML = `
     <div class="ali-inner">
-      <!-- Header -->
       <div style="background:linear-gradient(135deg,#4a1d96,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden;border-radius:0 0 22px 22px;box-shadow:0 6px 20px rgba(109,40,217,0.25)">
         <div style="position:absolute;top:-50%;right:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">
@@ -204,9 +185,7 @@ javascript:(function(){
         </div>
       </div>
 
-      <!-- Body -->
       <div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="ali_body">
-        <!-- Stats -->
         <div id="ali_stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
           ${buildStatCard('📥','0','Received','#10b981','stat_rec')}
           ${buildStatCard('📦','0','Packed','#f59e0b','stat_pack')}
@@ -214,7 +193,6 @@ javascript:(function(){
           ${buildStatCard('📊','0','إجمالي','#8b5cf6','stat_total')}
         </div>
         
-        <!-- Pages Setting -->
         <div id="ali_settings_box" style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:${neuOutset}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <span style="font-size:13px;font-weight:800;color:${NEU.text}">📄 نطاق الفحص (الصفحات)</span>
@@ -226,12 +204,13 @@ javascript:(function(){
           <div id="p-label" style="text-align:center;margin-top:6px;font-size:11px;color:${NEU.textMuted};font-weight:700;display:none"></div>
         </div>
         
-        <!-- Status -->
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:${NEU.bg};color:${NEU.success};box-shadow:${neuInset}">
           <span>✅</span><span>النظام في وضع الاستعداد</span>
         </div>
         
-        <!-- Dynamic Area -->
+        <!-- Debug Log Area -->
+        <div id="ali_debug_log" style="display:none;background:#1e1e2e;border-radius:14px;padding:12px;margin-bottom:16px;font-size:11px;color:#a6e3a1;font-family:'Courier New',monospace;direction:ltr;text-align:left;max-height:200px;overflow-y:auto;box-shadow:${neuInset};line-height:1.6;word-break:break-all"></div>
+        
         <div id="ali_dynamic_area">
           <button id="ali_start" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:6px 6px 14px rgba(109,40,217,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s">
             🚀 بدء عملية البحث والاستعلام
@@ -243,6 +222,21 @@ javascript:(function(){
     </div>
   `;
   document.body.appendChild(panel);
+
+  // ═══════════════════════════════════════════
+  // Debug Logger
+  // ═══════════════════════════════════════════
+  function debugLog(msg, type) {
+    const logEl = document.getElementById('ali_debug_log');
+    if (!logEl) return;
+    logEl.style.display = 'block';
+    const colors = { info:'#89b4fa', ok:'#a6e3a1', err:'#f38ba8', warn:'#fab387' };
+    const c = colors[type] || colors.info;
+    const time = new Date().toLocaleTimeString('en-US',{hour12:false});
+    logEl.innerHTML += `<div style="color:${c}">[${time}] ${esc(msg)}</div>`;
+    logEl.scrollTop = logEl.scrollHeight;
+    console.log(`[ALI v${VERSION}] ${msg}`);
+  }
 
   // ═══════════════════════════════════════════
   // Core Functions
@@ -356,15 +350,107 @@ javascript:(function(){
   }
 
   // ═══════════════════════════════════════════
-  // Scan All Pages — Optimized Batch Concurrency
+  // Fetch with XHR Fallback
+  // ═══════════════════════════════════════════
+  function fetchWithXHR(url, bodyObj) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch(e) {
+              reject(new Error('XHR JSON parse error: ' + xhr.responseText.substring(0, 100)));
+            }
+          } else {
+            reject(new Error('XHR HTTP ' + xhr.status + ': ' + xhr.statusText));
+          }
+        }
+      };
+      xhr.onerror = function() {
+        reject(new Error('XHR Network Error'));
+      };
+      xhr.send(JSON.stringify(bodyObj));
+    });
+  }
+
+  async function smartFetch(url, bodyObj, pageLabel) {
+    // محاولة 1: fetch عادي
+    try {
+      debugLog(`[${pageLabel}] Trying fetch()...`, 'info');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyObj)
+      });
+      debugLog(`[${pageLabel}] fetch() status: ${res.status}`, res.ok ? 'ok' : 'err');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      debugLog(`[${pageLabel}] Response length: ${text.length} chars`, 'ok');
+      if (!text || text.trim().length === 0) throw new Error('Empty response');
+      try {
+        return JSON.parse(text);
+      } catch(e) {
+        debugLog(`[${pageLabel}] JSON parse failed: ${text.substring(0, 80)}`, 'err');
+        throw new Error('Invalid JSON');
+      }
+    } catch(fetchErr) {
+      debugLog(`[${pageLabel}] fetch() failed: ${fetchErr.message}`, 'warn');
+    }
+
+    // محاولة 2: XMLHttpRequest
+    try {
+      debugLog(`[${pageLabel}] Trying XHR fallback...`, 'info');
+      const data = await fetchWithXHR(url, bodyObj);
+      debugLog(`[${pageLabel}] XHR success!`, 'ok');
+      return data;
+    } catch(xhrErr) {
+      debugLog(`[${pageLabel}] XHR failed: ${xhrErr.message}`, 'err');
+    }
+
+    // محاولة 3: fetch مع credentials
+    try {
+      debugLog(`[${pageLabel}] Trying fetch() with credentials...`, 'info');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyObj),
+        credentials: 'include'
+      });
+      debugLog(`[${pageLabel}] fetch+creds status: ${res.status}`, res.ok ? 'ok' : 'err');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      debugLog(`[${pageLabel}] fetch+creds success!`, 'ok');
+      return data;
+    } catch(credErr) {
+      debugLog(`[${pageLabel}] fetch+creds failed: ${credErr.message}`, 'err');
+    }
+
+    return null;
+  }
+
+  // ═══════════════════════════════════════════
+  // Scan All Pages
   // ═══════════════════════════════════════════
   async function scanAllPages() {
     state.isProcessing = true;
     const baseUrl = window.location.origin + "/ez_pill_web/";
+    const fetchUrl = baseUrl + 'Home/getOrders';
     const currentStatus = 'packed';
     const startTime = performance.now();
 
+    // Reset debug log
+    const logEl = document.getElementById('ali_debug_log');
+    if (logEl) logEl.innerHTML = '';
+
     setStatus('جاري الاتصال بقاعدة البيانات...', 'working');
+    debugLog('=== بداية العملية ===', 'info');
+    debugLog('URL: ' + fetchUrl, 'info');
+    debugLog('Origin: ' + window.location.origin, 'info');
+    debugLog('Current page URL: ' + window.location.href, 'info');
 
     let maxPages = parseInt(document.getElementById('p_lim').value) || 1;
     state.savedRows = [];
@@ -373,128 +459,117 @@ javascript:(function(){
 
     let failedPages = [];
 
-    try {
-      // ─── الصفحة الأولى ───
-      setStatus('جاري تحميل الصفحة الأولى...', 'working');
-      const res1 = await fetch(baseUrl + 'Home/getOrders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: currentStatus, pageSelected: 1, searchby: '' })
-      });
+    // ─── الصفحة الأولى ───
+    setStatus('جاري تحميل الصفحة الأولى...', 'working');
+    const bodyObj1 = { status: currentStatus, pageSelected: 1, searchby: '' };
+    debugLog('Request body: ' + JSON.stringify(bodyObj1), 'info');
 
-      if (!res1.ok) {
-        throw new Error('HTTP ' + res1.status + ' - ' + res1.statusText);
-      }
+    const data1 = await smartFetch(fetchUrl, bodyObj1, 'Page 1');
 
-      const text1 = await res1.text();
-      let data1;
-      try {
-        data1 = JSON.parse(text1);
-      } catch(e) {
-        console.error('فشل تحويل JSON للصفحة الأولى:', text1.substring(0, 200));
-        throw new Error('الرد من السيرفر ليس JSON صالح');
-      }
-
-      if (data1.total_orders) {
-        const exactTotal = parseInt(data1.total_orders) || 0;
-        if (exactTotal > 0) {
-          maxPages = Math.ceil(exactTotal / 10);
-          document.getElementById('p_lim').value = maxPages;
-        }
-      }
-
-      processData(data1);
-      updateStats();
-      updateProgress(1, maxPages);
-
-      if (maxPages <= 1) {
-        updateProgress(1, 1);
-        finishScan(startTime, failedPages);
-        return;
-      }
-
-      // ─── باقي الصفحات: جلب في دفعات متوازية ───
-      let completed = 1;
-
-      for (let batchStart = 2; batchStart <= maxPages; batchStart += BATCH_SIZE) {
-        const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, maxPages);
-        const batchPromises = [];
-
-        for (let i = batchStart; i <= batchEnd; i++) {
-          batchPromises.push(
-            (async (pageNum) => {
-              try {
-                const res = await fetch(baseUrl + 'Home/getOrders', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
-                });
-                if (!res.ok) {
-                  console.warn('صفحة ' + pageNum + ' رجعت HTTP ' + res.status);
-                  failedPages.push(pageNum);
-                  return;
-                }
-                const data = await res.json();
-                processData(data);
-              } catch(err) {
-                console.warn('فشل تحميل صفحة ' + pageNum + ':', err.message);
-                failedPages.push(pageNum);
-              }
-            })(i)
-          );
-        }
-
-        await Promise.all(batchPromises);
-        completed = Math.min(batchEnd, maxPages);
-        updateStats();
-        updateProgress(completed, maxPages);
-        setStatus(`جاري الجلب... ${completed}/${maxPages} صفحة`, 'working');
-      }
-
-      updateProgress(maxPages, maxPages);
-
-      // ─── إعادة محاولة الصفحات الفاشلة ───
-      if (failedPages.length > 0) {
-        setStatus(`إعادة محاولة ${failedPages.length} صفحة فاشلة...`, 'working');
-        await sleep(1000);
-
-        const retryFailed = [...failedPages];
-        failedPages = [];
-
-        for (const pageNum of retryFailed) {
-          try {
-            const res = await fetch(baseUrl + 'Home/getOrders', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
-            });
-            if (res.ok) {
-              const data = await res.json();
-              processData(data);
-              updateStats();
-            } else {
-              failedPages.push(pageNum);
-            }
-          } catch(err) {
-            failedPages.push(pageNum);
-          }
-          await sleep(300);
-        }
-      }
-
-    } catch (err) {
-      console.error('خطأ رئيسي:', err);
-      setStatus('خطأ: ' + err.message, 'error');
-      showToast('فشل الاتصال: ' + err.message, 'error');
+    if (!data1) {
+      debugLog('!!! فشل كل المحاولات للصفحة الأولى !!!', 'err');
+      setStatus('فشل الاتصال — شاهد سجل التشخيص بالأسفل', 'error');
+      showToast('فشل الاتصال — تحقق من سجل التشخيص', 'error');
       state.isProcessing = false;
       return;
     }
 
+    debugLog('Page 1 keys: ' + Object.keys(data1).join(', '), 'ok');
+    if (data1.total_orders) debugLog('total_orders: ' + data1.total_orders, 'ok');
+    if (data1.orders_list) {
+      const ol = typeof data1.orders_list === 'string' ? JSON.parse(data1.orders_list) : data1.orders_list;
+      debugLog('orders_list count: ' + (ol ? ol.length : 0), 'ok');
+    }
+
+    if (data1.total_orders) {
+      const exactTotal = parseInt(data1.total_orders) || 0;
+      if (exactTotal > 0) {
+        maxPages = Math.ceil(exactTotal / 10);
+        document.getElementById('p_lim').value = maxPages;
+        debugLog('Calculated maxPages: ' + maxPages, 'ok');
+      }
+    }
+
+    processData(data1);
+    updateStats();
+    updateProgress(1, maxPages);
+
+    if (maxPages <= 1) {
+      debugLog('Only 1 page needed, finishing...', 'ok');
+      updateProgress(1, 1);
+      finishScan(startTime, []);
+      return;
+    }
+
+    // ─── باقي الصفحات ───
+    debugLog(`Fetching pages 2-${maxPages} in batches of ${BATCH_SIZE}...`, 'info');
+    let completed = 1;
+
+    for (let batchStart = 2; batchStart <= maxPages; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, maxPages);
+      debugLog(`Batch: pages ${batchStart}-${batchEnd}`, 'info');
+      const batchPromises = [];
+
+      for (let i = batchStart; i <= batchEnd; i++) {
+        batchPromises.push(
+          (async (pageNum) => {
+            try {
+              const res = await fetch(fetchUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: currentStatus, pageSelected: pageNum, searchby: '' })
+              });
+              if (!res.ok) {
+                debugLog(`Page ${pageNum}: HTTP ${res.status}`, 'warn');
+                failedPages.push(pageNum);
+                return;
+              }
+              const data = await res.json();
+              processData(data);
+              debugLog(`Page ${pageNum}: OK`, 'ok');
+            } catch(err) {
+              debugLog(`Page ${pageNum}: ${err.message}`, 'warn');
+              failedPages.push(pageNum);
+            }
+          })(i)
+        );
+      }
+
+      await Promise.all(batchPromises);
+      completed = Math.min(batchEnd, maxPages);
+      updateStats();
+      updateProgress(completed, maxPages);
+      setStatus(`جاري الجلب... ${completed}/${maxPages} صفحة`, 'working');
+    }
+
+    // ─── إعادة محاولة الفاشلة ───
+    if (failedPages.length > 0) {
+      debugLog(`Retrying ${failedPages.length} failed pages...`, 'warn');
+      setStatus(`إعادة محاولة ${failedPages.length} صفحة فاشلة...`, 'working');
+      await sleep(1000);
+
+      const retryList = [...failedPages];
+      failedPages = [];
+
+      for (const pageNum of retryList) {
+        const data = await smartFetch(fetchUrl, { status: currentStatus, pageSelected: pageNum, searchby: '' }, 'Retry-' + pageNum);
+        if (data) {
+          processData(data);
+          updateStats();
+        } else {
+          failedPages.push(pageNum);
+        }
+        await sleep(300);
+      }
+    }
+
+    updateProgress(maxPages, maxPages);
+    debugLog(`=== اكتمل: ${state.savedRows.length} records, ${failedPages.length} failed pages ===`, failedPages.length > 0 ? 'warn' : 'ok');
     finishScan(startTime, failedPages);
   }
 
   // ═══════════════════════════════════════════
-  // Finish Scan — Neumorphic UI
+  // Finish Scan
   // ═══════════════════════════════════════════
   function finishScan(startTime, failedPages) {
     state.isProcessing = false;
@@ -533,34 +608,29 @@ javascript:(function(){
 
     const dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML = `
-      <!-- Info Banner -->
       <div style="background:${NEU.bg};border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6d28d9;font-weight:700;text-align:center;box-shadow:${neuInset}">
         ✅ تم تفعيل الروابط المباشرة — ⚡ ${elapsed}s${failCount > 0 ? ' — ⚠️ ' + failCount + ' صفحة فشلت' : ''}
       </div>
 
-      <!-- Deliver Count -->
       <div style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:${neuOutset}">
         <span style="font-size:14px;font-weight:800;color:${NEU.text}">الطلبات القابلة للتسليم:</span>
         <input type="number" id="ali_open_count" value="${recCount}" style="width:64px;padding:10px;border:none;border-radius:14px;text-align:center;font-size:18px;font-weight:900;color:${NEU.error};background:${NEU.bg};outline:none;font-family:'Tajawal',sans-serif;box-shadow:${neuInset}" onfocus="this.value=''">
       </div>
 
-      <!-- Deliver Button -->
       <button id="ali_btn_deliver_silent" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:6px 6px 14px rgba(220,38,38,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">
         📝 تنفيذ أوامر التسليم (Received)
       </button>
 
-      <!-- Export Button -->
       <button id="ali_btn_export" style="width:100%;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-weight:900;font-size:15px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;box-shadow:6px 6px 14px rgba(217,119,6,0.3),-4px -4px 10px ${NEU.shadowLight};transition:all 0.3s;margin-bottom:10px">
         📦 تصدير بيانات الطلبات (Packed)
       </button>
 
-      <!-- Sync Button -->
       <button id="ali_btn_sync" style="width:100%;padding:14px 16px;border:none;border-radius:16px;cursor:pointer;font-weight:800;font-size:13px;font-family:'Tajawal','Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:${NEU.bg};color:${NEU.textMuted};box-shadow:${neuBtnSm};transition:all 0.3s">
         🔄 إعادة فحص البيانات
       </button>
     `;
 
-    // ─── Deliver Button ───
+    // ─── Deliver ───
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async () => {
       const list = state.savedRows.filter(r => r.st === 'received');
       const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
@@ -649,7 +719,7 @@ javascript:(function(){
       btn.disabled = false;
     });
 
-    // ─── Export Button ───
+    // ─── Export ───
     document.getElementById('ali_btn_export').addEventListener('click', async () => {
       const packedRows = state.savedRows.filter(r => r.st === 'packed');
       if (!packedRows.length) { showToast('لا توجد بيانات متاحة للتصدير.', 'warning'); return; }
@@ -686,7 +756,7 @@ javascript:(function(){
       showToast(`تم تصدير ${numFiles} ملف بنجاح`, 'success');
     });
 
-    // ─── Sync Button ───
+    // ─── Sync ───
     document.getElementById('ali_btn_sync').addEventListener('click', async function() {
       if (state.isProcessing) { showToast('العملية جارية بالفعل — انتظر!', 'warning'); return; }
 
