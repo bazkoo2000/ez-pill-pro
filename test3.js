@@ -1159,58 +1159,138 @@ window._ezDoAddDrug=function(){
 /* ══════════════════════════════════════════
    JSON DOWNLOAD INTERCEPTOR — تعديل external_id
    ══════════════════════════════════════════ */
-(function(){
-  var _origCreateObjectURL=URL.createObjectURL;
-  var _downloadCounter=0;
-  URL.createObjectURL=function(blob){
-    if(blob&&blob.type&&blob.type.indexOf('json')>-1&&window._ezInterceptDownload){
-      try{
-        var reader=new FileReader();
-        reader.onload=function(){
-          try{
-            var json=JSON.parse(reader.result);
-            if(json.patients&&json.patients.length>0){
-              _downloadCounter++;
-              var suffix=String(_downloadCounter).padStart(2,'0');
-              for(var p=0;p<json.patients.length;p++){
-                if(json.patients[p].external_id){
-                  var origId=json.patients[p].external_id;
-                  json.patients[p].external_id=origId+'_'+suffix;
-                  console.log('EZ_PILL: external_id changed: '+origId+' → '+json.patients[p].external_id);
-                }
-              }
-              var newBlob=new Blob([JSON.stringify(json)],{type:'application/json'});
-              var url=_origCreateObjectURL.call(URL,newBlob);
-              var a=document.createElement('a');
-              a.href=url;
-              a.download='order_'+_downloadCounter+'.json';
-              document.body.appendChild(a);
-              a.click();
-              setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-              window.ezShowToast('✅ تم تعديل رقم الفاتورة (+_'+suffix+') — ملف #'+_downloadCounter,'success');
-            }
-          }catch(e){console.error('EZ JSON intercept parse error:',e);}
-        };
-        reader.readAsText(blob);
-        return _origCreateObjectURL.call(URL,new Blob([''],{type:'text/plain'}));
-      }catch(e){return _origCreateObjectURL.call(URL,blob);}
-    }
-    return _origCreateObjectURL.call(URL,blob);
-  };
-})();
 window._ezInterceptDownload=false;
 window._ezDownloadCounter=0;
+
 window.ezToggleDownloadIntercept=function(){
   window._ezInterceptDownload=!window._ezInterceptDownload;
   var btn=document.getElementById('ez-dl-intercept-btn');
   if(btn){
-    btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'rgba(148,163,184,0.08)';
-    btn.style.color=window._ezInterceptDownload?'#fff':'#64748b';
-    btn.style.border=window._ezInterceptDownload?'none':'1px solid rgba(148,163,184,0.15)';
-    btn.title=window._ezInterceptDownload?'تعديل رقم الفاتورة: مُفعّل':'تعديل رقم الفاتورة: مُعطّل';
+    btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'linear-gradient(145deg,#94a3b8,#64748b)';
   }
-  window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هيكون برقم مختلف':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
+  window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
 };
+
+window._ezModifyExternalId=function(jsonStr){
+  try{
+    var json=JSON.parse(jsonStr);
+    if(!json.patients||!json.patients.length) return null;
+    window._ezDownloadCounter++;
+    var suffix=String(window._ezDownloadCounter).padStart(2,'0');
+    var changed=false;
+    for(var p=0;p<json.patients.length;p++){
+      if(json.patients[p].external_id){
+        var origId=json.patients[p].external_id;
+        json.patients[p].external_id=origId+'_'+suffix;
+        console.log('EZ_PILL: external_id: '+origId+' → '+json.patients[p].external_id);
+        changed=true;
+      }
+    }
+    if(changed){
+      window.ezShowToast('✅ رقم الفاتورة +_'+suffix+' (ملف #'+window._ezDownloadCounter+')','success');
+      return JSON.stringify(json);
+    }
+  }catch(e){console.error('EZ intercept error:',e);}
+  return null;
+};
+
+(function(){
+  if(typeof window.downloaded==='function'){
+    var _origDownloaded=window.downloaded;
+    window.downloaded=function(){
+      if(!window._ezInterceptDownload) return _origDownloaded.apply(this,arguments);
+      _origDownloaded.apply(this,arguments);
+    };
+  }
+})();
+
+(function(){
+  var _obs=new MutationObserver(function(mutations){
+    if(!window._ezInterceptDownload) return;
+    for(var m=0;m<mutations.length;m++){
+      var nodes=mutations[m].addedNodes;
+      for(var n=0;n<nodes.length;n++){
+        var node=nodes[n];
+        if(node.tagName==='A'&&node.download&&node.href){
+          _tryInterceptAnchor(node);
+        }
+      }
+    }
+  });
+  _obs.observe(document.body,{childList:true,subtree:true});
+  function _tryInterceptAnchor(anchor){
+    var href=anchor.href||'';
+    if(href.indexOf('blob:')===0){
+      fetch(href).then(function(r){return r.text();}).then(function(text){
+        var modified=window._ezModifyExternalId(text);
+        if(modified){
+          var newBlob=new Blob([modified],{type:'application/json'});
+          anchor.href=URL.createObjectURL(newBlob);
+        }
+      }).catch(function(){});
+    }else if(href.indexOf('data:')===0){
+      try{
+        var b64=href.split(',')[1];
+        var decoded=atob(b64);
+        var modified=window._ezModifyExternalId(decoded);
+        if(modified){anchor.href='data:application/json;charset=utf-8,'+encodeURIComponent(modified);}
+      }catch(e){}
+    }
+  }
+})();
+
+(function(){
+  var _origCOU=URL.createObjectURL;
+  URL.createObjectURL=function(blob){
+    var url=_origCOU.call(URL,blob);
+    if(!window._ezInterceptDownload) return url;
+    if(blob&&blob.size&&blob.size>10&&blob.type&&blob.type.indexOf('json')>-1){
+      try{
+        var reader=new FileReader();
+        reader.onload=function(){
+          var modified=window._ezModifyExternalId(reader.result);
+          if(modified){
+            setTimeout(function(){
+              var anchors=document.querySelectorAll('a[href="'+url+'"]');
+              if(anchors.length){
+                var newBlob=new Blob([modified],{type:'application/json'});
+                var newUrl=_origCOU.call(URL,newBlob);
+                for(var i=0;i<anchors.length;i++) anchors[i].href=newUrl;
+              }
+            },50);
+          }
+        };
+        reader.readAsText(blob);
+      }catch(e){}
+    }
+    return url;
+  };
+})();
+
+document.addEventListener('click',function(e){
+  if(!window._ezInterceptDownload) return;
+  var btn=e.target.closest('.downloadBtn,button[onclick*="downloaded"]');
+  if(!btn) return;
+  setTimeout(function(){
+    var anchors=document.querySelectorAll('a[download]');
+    for(var i=0;i<anchors.length;i++){
+      var a=anchors[i];
+      if(a.href&&a.href.indexOf('blob:')===0){
+        fetch(a.href).then(function(r){return r.text();}).then(function(text){
+          var modified=window._ezModifyExternalId(text);
+          if(modified){
+            var newBlob=new Blob([modified],{type:'application/json'});
+            var newUrl=URL.createObjectURL(newBlob);
+            var a2=document.createElement('a');
+            a2.href=newUrl;a2.download='order_'+window._ezDownloadCounter+'.json';
+            document.body.appendChild(a2);a2.click();
+            setTimeout(function(){document.body.removeChild(a2);URL.revokeObjectURL(newUrl);},200);
+          }
+        }).catch(function(){});
+      }
+    }
+  },200);
+},true);
 
 window.ezSelect=function(el,type,val){
   var p=el.parentNode;
@@ -2822,7 +2902,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -4617,7 +4697,6 @@ d_box.innerHTML='\
     <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
     <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
     <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
-    <button id="ez-dl-intercept-btn" class="ez-btn-doses" onclick="window.ezToggleDownloadIntercept()" title="تعديل رقم الفاتورة: مُعطّل" style="opacity:0.6">🔄</button>\
     <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
   </div>\
 <div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
