@@ -1182,12 +1182,10 @@ window.ezToggleDownloadIntercept=function(){
       window.downloadObjectAsJson=function(exportObj,exportName){
         if(window._ezInterceptDownload&&exportObj){
           try{
-            window._ezDownloadCounter++;
             var modified=false;
-            /* Modify external_id in patients array */
             if(exportObj.patients){
               for(var p=0;p<exportObj.patients.length;p++){
-                if(exportObj.patients[p].external_id){
+                if(exportObj.patients[p].external_id&&window._ezDownloadCounter>0){
                   var orig=exportObj.patients[p].external_id;
                   exportObj.patients[p].external_id=orig.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
                   console.log('EZ_PILL: external_id: '+orig+' → '+exportObj.patients[p].external_id);
@@ -1196,9 +1194,13 @@ window.ezToggleDownloadIntercept=function(){
               }
             }
             if(modified){
-              window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');
+              window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+(window._ezDownloadCounter+1)+')','success');
               ezBeep('success');
+            } else if(window._ezDownloadCounter===0){
+              window.ezShowToast('📥 التحميل الأول — رقم الفاتورة الأصلي','info');
             }
+            /* Increment AFTER processing so first download = 0 (no change), second = 1, third = 2 */
+            window._ezDownloadCounter++;
           }catch(e){console.error('EZ intercept error:',e);}
         }
         return window._ezOrigDownloadObj(exportObj,exportName);
