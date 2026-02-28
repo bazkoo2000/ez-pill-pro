@@ -1158,7 +1158,7 @@ window._ezDoAddDrug=function(){
 
 /* ══════════════════════════════════════════
    DOWNLOAD INTERCEPTOR — تعديل external_id
-   يعترض زر Download ويعدّل الـ JSON قبل التحميل
+   Override downloadObjectAsJson() مباشرة
    ══════════════════════════════════════════ */
 window._ezInterceptDownload=false;
 window._ezDownloadCounter=0;
@@ -1171,124 +1171,44 @@ window.ezToggleDownloadIntercept=function(){
     btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'linear-gradient(145deg,#94a3b8,#64748b)';
     btn.textContent=window._ezInterceptDownload?'🔄 تعديل الفاتورة: مُفعّل ✅':'🔄 تعديل رقم الفاتورة عند التحميل';
   }
-  /* Hook into download buttons when enabled */
-  if(window._ezInterceptDownload){
-    _ezHookDownloadBtns();
-  }
   window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هينقّص رقم':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
 };
 
-function _ezHookDownloadBtns(){
-  var btns=document.querySelectorAll('.downloadBtn,button[onclick*="downloaded"]');
-  for(var i=0;i<btns.length;i++){
-    if(btns[i]._ezHooked) continue;
-    btns[i]._ezHooked=true;
-    btns[i].addEventListener('click',function(e){
-      if(!window._ezInterceptDownload) return; /* disabled, let original run */
-      /* Let original downloaded() run, then after a delay find the downloaded file and modify it */
-    },false);
-  }
-}
-
-/* Monitor all downloads: intercept the <a> element click */
+/* Override downloadObjectAsJson */
 (function(){
-  /* Override createObjectURL to track blob URLs */
-  var _origCOU=URL.createObjectURL;
-  var _blobMap={};
-  URL.createObjectURL=function(blob){
-    var url=_origCOU.call(URL,blob);
-    if(blob&&blob.size>50) _blobMap[url]=blob;
-    return url;
-  };
-
-  /* Intercept all anchor clicks for download */
-  document.addEventListener('click',function(e){
-    if(!window._ezInterceptDownload) return;
-    var a=e.target.closest('a[download],a[href*="blob:"]');
-    if(!a) return;
-
-    var href=a.href;
-    if(!href) return;
-
-    /* Check if this is a blob URL we tracked */
-    var blob=_blobMap[href];
-    if(blob){
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      var reader=new FileReader();
-      reader.onload=function(){
-        try{
-          var json=JSON.parse(reader.result);
-          if(json.patients||json.external_id){
+  function _waitAndOverride(){
+    if(typeof window.downloadObjectAsJson==='function'&&!window._ezOrigDownloadObj){
+      window._ezOrigDownloadObj=window.downloadObjectAsJson;
+      window.downloadObjectAsJson=function(exportObj,exportName){
+        if(window._ezInterceptDownload&&exportObj){
+          try{
             window._ezDownloadCounter++;
             var modified=false;
-            if(json.patients){
-              for(var p=0;p<json.patients.length;p++){
-                if(json.patients[p].external_id){
-                  var orig=json.patients[p].external_id;
-                  json.patients[p].external_id=orig.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
-                  console.log('EZ_PILL: '+orig+' → '+json.patients[p].external_id);
+            /* Modify external_id in patients array */
+            if(exportObj.patients){
+              for(var p=0;p<exportObj.patients.length;p++){
+                if(exportObj.patients[p].external_id){
+                  var orig=exportObj.patients[p].external_id;
+                  exportObj.patients[p].external_id=orig.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
+                  console.log('EZ_PILL: external_id: '+orig+' → '+exportObj.patients[p].external_id);
                   modified=true;
                 }
               }
             }
-            if(json.external_id){
-              json.external_id=json.external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
-              modified=true;
-            }
             if(modified){
-              var newBlob=new Blob([JSON.stringify(json)],{type:blob.type||'application/json'});
-              var newUrl=_origCOU.call(URL,newBlob);
-              var dl=document.createElement('a');
-              dl.href=newUrl;
-              dl.download=a.download||('order_'+window._ezDownloadCounter+'.json');
-              document.body.appendChild(dl);
-              dl.click();
-              setTimeout(function(){document.body.removeChild(dl);URL.revokeObjectURL(newUrl);},500);
               window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');
-              return;
+              ezBeep('success');
             }
-          }
-        }catch(ex){console.error('EZ intercept error:',ex);}
-        /* If modification failed, download original */
-        window.open(href);
-      };
-      reader.readAsText(blob);
-      return false;
-    }
-  },true);
-})();
-
-/* Also intercept Blob constructor for sites that build JSON blob inline */
-(function(){
-  var _origBlob=window.Blob;
-  window.Blob=function(parts,opts){
-    if(window._ezInterceptDownload&&parts&&parts.length>=1&&typeof parts[0]==='string'&&parts[0].length>50){
-      try{
-        var json=JSON.parse(parts[0]);
-        if(json.patients){
-          window._ezDownloadCounter++;
-          var modified=false;
-          for(var p=0;p<json.patients.length;p++){
-            if(json.patients[p].external_id){
-              var orig=json.patients[p].external_id;
-              json.patients[p].external_id=orig.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});
-              console.log('EZ_PILL Blob: '+orig+' → '+json.patients[p].external_id);
-              modified=true;
-            }
-          }
-          if(modified){
-            parts=[JSON.stringify(json)];
-            window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');
-          }
+          }catch(e){console.error('EZ intercept error:',e);}
         }
-      }catch(e){}
+        return window._ezOrigDownloadObj(exportObj,exportName);
+      };
+      console.log('EZ_PILL: downloadObjectAsJson override ✓');
+    } else {
+      setTimeout(_waitAndOverride,500);
     }
-    return new _origBlob(parts,opts);
-  };
-  window.Blob.prototype=_origBlob.prototype;
+  }
+  _waitAndOverride();
 })();
 
 window.ezSelect=function(el,type,val){
