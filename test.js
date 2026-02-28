@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   const PANEL_ID = 'ali_sys_v5';
-  const VERSION = '5.4';
+  const VERSION = '5.3';
   
   if (document.getElementById(PANEL_ID)) {
     document.getElementById(PANEL_ID).remove();
@@ -19,6 +19,9 @@ javascript:(function(){
     htmlBuffer: ''
   };
 
+  // ═══════════════════════════════════════════
+  // Neumorphic Design System
+  // ═══════════════════════════════════════════
   const NEU = {
     bg: '#e0e5ec',
     shadowDark: 'rgba(163,177,198,0.6)',
@@ -53,6 +56,9 @@ javascript:(function(){
       .replace(/'/g, '&#x27;');
   }
 
+  // ═══════════════════════════════════════════
+  // Neumorphic Toast
+  // ═══════════════════════════════════════════
   function showToast(message, type = 'info') {
     let container = document.getElementById('ali-toast-container');
     if (!container) {
@@ -75,6 +81,9 @@ javascript:(function(){
     }, 3500);
   }
 
+  // ═══════════════════════════════════════════
+  // Neumorphic Dialog
+  // ═══════════════════════════════════════════
   function showDialog({ icon, title, desc, info, badges, buttons }) {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
@@ -138,6 +147,9 @@ javascript:(function(){
     });
   }
 
+  // ═══════════════════════════════════════════
+  // CSS — Full Neumorphic
+  // ═══════════════════════════════════════════
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
     @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}
@@ -158,6 +170,9 @@ javascript:(function(){
   `;
   document.head.appendChild(styleEl);
 
+  // ═══════════════════════════════════════════
+  // Neumorphic Stat Card
+  // ═══════════════════════════════════════════
   function buildStatCard(icon, val, label, color, id) {
     return `<div style="background:${NEU.bg};border-radius:16px;padding:14px 6px;text-align:center;box-shadow:${neuOutset}">` +
       `<div style="font-size:18px;margin-bottom:5px">${icon}</div>` +
@@ -166,6 +181,9 @@ javascript:(function(){
     `</div>`;
   }
 
+  // ═══════════════════════════════════════════
+  // Panel — Full Neumorphic
+  // ═══════════════════════════════════════════
   const panel = document.createElement('div');
   panel.id = PANEL_ID;
   panel.innerHTML = `
@@ -200,7 +218,6 @@ javascript:(function(){
           <div id="p-bar" style="height:8px;background:${NEU.bg};border-radius:10px;overflow:hidden;box-shadow:${neuInset}">
             <div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.2s"></div>
           </div>
-          <div id="p-label" style="text-align:center;margin-top:6px;font-size:11px;color:${NEU.textMuted};font-weight:700;display:none"></div>
         </div>
         
         <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;margin-bottom:16px;font-size:13px;font-weight:700;background:${NEU.bg};color:${NEU.success};box-shadow:${neuInset}">
@@ -219,6 +236,9 @@ javascript:(function(){
   `;
   document.body.appendChild(panel);
 
+  // ═══════════════════════════════════════════
+  // Core Functions
+  // ═══════════════════════════════════════════
   function setStatus(text, type) {
     const el = document.getElementById('status-msg');
     if (!el) return;
@@ -265,6 +285,9 @@ javascript:(function(){
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  // ═══════════════════════════════════════════
+  // Process Data
+  // ═══════════════════════════════════════════
   function processData(data) {
     let orders = [];
     try { orders = typeof data.orders_list === 'string' ? JSON.parse(data.orders_list) : data.orders_list; } catch(e) {}
@@ -314,15 +337,13 @@ javascript:(function(){
   }
 
   // ═══════════════════════════════════════════
-  // Scan — نفس الكود الأصلي بالظبط + تقدم + وقت
+  // Scan All Pages
   // ═══════════════════════════════════════════
   async function scanAllPages() {
     state.isProcessing = true;
     const fill = document.getElementById('p-fill');
-    const pLabel = document.getElementById('p-label');
     const baseUrl = window.location.origin + "/ez_pill_web/";
     const currentStatus = 'packed';
-    const startTime = performance.now();
 
     setStatus('جاري الاتصال بقاعدة البيانات...', 'working');
 
@@ -330,7 +351,6 @@ javascript:(function(){
     state.savedRows = [];
     state.visitedSet.clear();
     state.htmlBuffer = '';
-    let completedPages = 0;
 
     try {
       const res1 = await fetch(baseUrl + 'Home/getOrders', {
@@ -349,34 +369,39 @@ javascript:(function(){
 
       processData(data1);
       updateStats();
-      completedPages = 1;
       if (fill) fill.style.width = ((1 / maxPages) * 100) + '%';
-      if (pLabel) { pLabel.style.display = 'block'; pLabel.innerText = `1 / ${maxPages} صفحة`; }
 
-      const fetchPromises = [];
-      for (let i = 2; i <= maxPages; i++) {
-        fetchPromises.push(
-          fetch(baseUrl + 'Home/getOrders', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: currentStatus, pageSelected: i, searchby: '' })
-          })
-          .then(r => r.json())
-          .then(data => {
+      // --- نظام المهام المتزامنة السريعة (Sliding Window) لسرعة قصوى ---
+      const CONCURRENCY_LIMIT = 25; // عدد الطلبات في نفس اللحظة (معدل عالي للسرعة)
+      let currentPage = 2;
+      const workers = [];
+
+      async function worker() {
+        while (currentPage <= maxPages) {
+          const p = currentPage++;
+          try {
+            const r = await fetch(baseUrl + 'Home/getOrders', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: currentStatus, pageSelected: p, searchby: '' })
+            });
+            const data = await r.json();
             processData(data);
-            completedPages++;
             updateStats();
-            if (fill) fill.style.width = ((completedPages / maxPages) * 100) + '%';
-            if (pLabel) pLabel.innerText = `${completedPages} / ${maxPages} صفحة`;
-            setStatus(`جاري الجلب... ${completedPages}/${maxPages} (${state.savedRows.length} سجل)`, 'working');
-          })
-          .catch(err => {
-            completedPages++;
-            console.warn('فشل تحميل صفحة', err);
-          })
-        );
+            if (fill) fill.style.width = ((p / maxPages) * 100) + '%';
+          } catch (err) {
+            console.warn('فشل تحميل صفحة ' + p, err);
+          }
+        }
       }
 
-      await Promise.all(fetchPromises);
+      // تشغيل جميع القنوات معاً
+      for (let i = 0; i < CONCURRENCY_LIMIT; i++) {
+        workers.push(worker());
+      }
+      
+      // انتظار انتهاء جميع القنوات
+      await Promise.all(workers);
+      
       if (fill) fill.style.width = '100%';
 
     } catch (err) {
@@ -387,12 +412,14 @@ javascript:(function(){
       return;
     }
 
-    finishScan(startTime);
+    finishScan();
   }
 
-  function finishScan(startTime) {
+  // ═══════════════════════════════════════════
+  // Finish Scan — Neumorphic UI
+  // ═══════════════════════════════════════════
+  function finishScan() {
     state.isProcessing = false;
-    const elapsed = startTime ? ((performance.now() - startTime) / 1000).toFixed(1) : '?';
 
     const tables = document.querySelectorAll('table');
     let target = tables[0];
@@ -417,16 +444,13 @@ javascript:(function(){
     let recCount = 0;
     state.savedRows.forEach(r => { if (r.st === 'received') recCount++; });
 
-    const pLabel = document.getElementById('p-label');
-    if (pLabel) pLabel.style.display = 'none';
-
-    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل في ${elapsed} ثانية ⚡`, 'done');
-    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل (${elapsed}s)`, 'success');
+    setStatus(`اكتملت العملية بنجاح: تم حصر ${state.savedRows.length} سجل`, 'done');
+    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل`, 'success');
 
     const dynArea = document.getElementById('ali_dynamic_area');
     dynArea.innerHTML = `
       <div style="background:${NEU.bg};border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6d28d9;font-weight:700;text-align:center;box-shadow:${neuInset}">
-        ✅ تم تفعيل الروابط المباشرة — ⚡ ${elapsed} ثانية
+        ✅ تم تفعيل الروابط المباشرة لفتح تفاصيل الطلبات
       </div>
 
       <div style="background:${NEU.bg};border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:${neuOutset}">
@@ -447,6 +471,7 @@ javascript:(function(){
       </button>
     `;
 
+    // ─── Deliver Button ───
     document.getElementById('ali_btn_deliver_silent').addEventListener('click', async () => {
       const list = state.savedRows.filter(r => r.st === 'received');
       const count = parseInt(document.getElementById('ali_open_count').value) || list.length;
@@ -510,6 +535,7 @@ javascript:(function(){
         await sleep(150);
       }
 
+      // Success dialog
       await showDialog({
         icon: '🎉',
         title: 'اكتمل التنفيذ',
@@ -535,6 +561,7 @@ javascript:(function(){
       btn.disabled = false;
     });
 
+    // ─── Export Button ───
     document.getElementById('ali_btn_export').addEventListener('click', async () => {
       const packedRows = state.savedRows.filter(r => r.st === 'packed');
       if (!packedRows.length) { showToast('لا توجد بيانات متاحة للتصدير.', 'warning'); return; }
@@ -571,6 +598,7 @@ javascript:(function(){
       showToast(`تم تصدير ${numFiles} ملف بنجاح`, 'success');
     });
 
+    // ─── Sync Button ───
     document.getElementById('ali_btn_sync').addEventListener('click', async function() {
       if (state.isProcessing) { showToast('العملية جارية بالفعل — انتظر!', 'warning'); return; }
 
@@ -607,6 +635,9 @@ javascript:(function(){
     });
   }
 
+  // ═══════════════════════════════════════════
+  // Start
+  // ═══════════════════════════════════════════
   document.getElementById('ali_start').addEventListener('click', function() {
     if (state.isProcessing) return;
     this.disabled = true;
