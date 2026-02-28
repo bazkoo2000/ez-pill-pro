@@ -1157,7 +1157,7 @@ window._ezDoAddDrug=function(){
 };
 
 /* ══════════════════════════════════════════
-   DOWNLOAD INTERCEPTOR — تعديل head_id (رقم الفاتورة)
+   DOWNLOAD INTERCEPTOR — تعديل external_id في الـ response
    ══════════════════════════════════════════ */
 window._ezInterceptDownload=false;
 window._ezDownloadCounter=0;
@@ -1168,7 +1168,7 @@ window.ezToggleDownloadIntercept=function(){
   var btn=document.getElementById('ez-dl-intercept-btn');
   if(btn){
     btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'linear-gradient(145deg,#94a3b8,#64748b)';
-    btn.textContent=window._ezInterceptDownload?'🔄 تعديل الفاتورة: مُفعّل ✅':'🔄 تعديل رقم الفاتورة عند التحميل';
+    btn.textContent=window._ezInterceptDownload?'\u{1f504} تعديل الفاتورة: مُفعّل ✅':'\u{1f504} تعديل رقم الفاتورة عند التحميل';
   }
   window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هينقّص رقم':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
 };
@@ -1177,29 +1177,25 @@ window.ezToggleDownloadIntercept=function(){
   var _origOpen=XMLHttpRequest.prototype.open;
   var _origSend=XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open=function(method,url){
-    this._ezUrl=url||'';
-    this._ezMethod=(method||'').toUpperCase();
+    this._ezUrl=url||'';this._ezMethod=(method||'').toUpperCase();
     return _origOpen.apply(this,arguments);
   };
   XMLHttpRequest.prototype.send=function(body){
-    if(window._ezInterceptDownload&&this._ezMethod==='POST'&&this._ezUrl&&this._ezUrl.indexOf('downloaded')>-1){
-      try{
-        var data=typeof body==='string'?JSON.parse(body):body;
-        if(data&&data.head_id){
-          window._ezDownloadCounter++;
-          var origId=parseInt(data.head_id,10);
-          var newId=String(origId-window._ezDownloadCounter);
-          data.head_id=newId;
-          if(data.itemsList&&Array.isArray(data.itemsList)){
-            for(var i=0;i<data.itemsList.length;i++){
-              if(data.itemsList[i].external_id) data.itemsList[i].external_id=data.itemsList[i].external_id.replace(String(origId),newId);
+    var xhr=this;
+    if(window._ezInterceptDownload&&xhr._ezMethod==='POST'&&xhr._ezUrl&&xhr._ezUrl.indexOf('downloaded')>-1){
+      xhr.addEventListener('readystatechange',function(){
+        if(xhr.readyState===4&&xhr.status===200){
+          try{
+            var json=JSON.parse(xhr.responseText||'');
+            if(json){
+              window._ezDownloadCounter++;var modified=false;
+              if(json.patients){for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){var o=json.patients[p].external_id;json.patients[p].external_id=o.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}}}
+              if(json.external_id){json.external_id=json.external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}
+              if(modified){var nr=JSON.stringify(json);Object.defineProperty(xhr,'responseText',{writable:true,value:nr});Object.defineProperty(xhr,'response',{writable:true,value:nr});window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');}
             }
-          }
-          body=JSON.stringify(data);
-          console.log('EZ_PILL: head_id: '+origId+' → '+newId);
-          window.ezShowToast('✅ رقم الفاتورة: '+origId+' → '+newId+' (تحميل #'+window._ezDownloadCounter+')','success');
+          }catch(e){}
         }
-      }catch(e){console.error('EZ intercept error:',e);}
+      });
     }
     return _origSend.call(this,body);
   };
@@ -1208,30 +1204,66 @@ window.ezToggleDownloadIntercept=function(){
 (function(){
   var _origFetch=window.fetch;
   window.fetch=function(url,opts){
-    if(window._ezInterceptDownload&&opts&&opts.method&&opts.method.toUpperCase()==='POST'){
-      var urlStr=typeof url==='string'?url:(url.url||'');
-      if(urlStr.indexOf('downloaded')>-1&&opts.body){
-        try{
-          var data=typeof opts.body==='string'?JSON.parse(opts.body):opts.body;
-          if(data&&data.head_id){
-            window._ezDownloadCounter++;
-            var origId=parseInt(data.head_id,10);
-            var newId=String(origId-window._ezDownloadCounter);
-            data.head_id=newId;
-            if(data.itemsList&&Array.isArray(data.itemsList)){
-              for(var i=0;i<data.itemsList.length;i++){
-                if(data.itemsList[i].external_id) data.itemsList[i].external_id=data.itemsList[i].external_id.replace(String(origId),newId);
-              }
-            }
-            opts.body=JSON.stringify(data);
-            console.log('EZ_PILL fetch: head_id: '+origId+' → '+newId);
-            window.ezShowToast('✅ رقم الفاتورة: '+origId+' → '+newId+' (تحميل #'+window._ezDownloadCounter+')','success');
-          }
-        }catch(e){console.error('EZ fetch intercept error:',e);}
-      }
+    var urlStr=typeof url==='string'?url:(url&&url.url?url.url:'');
+    if(window._ezInterceptDownload&&opts&&opts.method&&opts.method.toUpperCase()==='POST'&&urlStr.indexOf('downloaded')>-1){
+      return _origFetch.apply(this,arguments).then(function(response){
+        return response.clone().text().then(function(text){
+          try{
+            var json=JSON.parse(text);window._ezDownloadCounter++;var modified=false;
+            if(json.patients){for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){json.patients[p].external_id=json.patients[p].external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}}}
+            if(json.external_id){json.external_id=json.external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}
+            if(modified){window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');return new Response(JSON.stringify(json),{status:response.status,statusText:response.statusText,headers:response.headers});}
+          }catch(e){}
+          return response;
+        });
+      });
     }
     return _origFetch.apply(this,arguments);
   };
+})();
+
+(function(){
+  var _origBlob=window.Blob;
+  window.Blob=function(parts,opts){
+    if(window._ezInterceptDownload&&parts&&parts.length===1&&typeof parts[0]==='string'){
+      try{
+        var json=JSON.parse(parts[0]);
+        if(json.patients){
+          window._ezDownloadCounter++;var modified=false;
+          for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){var o=json.patients[p].external_id;json.patients[p].external_id=o.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});modified=true;}}
+          if(modified){parts=[JSON.stringify(json)];window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');}
+        }
+      }catch(e){}
+    }
+    return new _origBlob(parts,opts);
+  };
+  window.Blob.prototype=_origBlob.prototype;
+})();
+
+(function(){
+  if(window.saveAs){
+    var _origSaveAs=window.saveAs;
+    window.saveAs=function(blob,name){
+      if(window._ezInterceptDownload&&blob){
+        var reader=new FileReader();
+        reader.onload=function(){
+          try{
+            var json=JSON.parse(reader.result);
+            if(json.patients){
+              window._ezDownloadCounter++;
+              for(var p=0;p<json.patients.length;p++){if(json.patients[p].external_id){json.patients[p].external_id=json.patients[p].external_id.replace(/\d+$/,function(m){return String(parseInt(m,10)-window._ezDownloadCounter);});}}
+              var newBlob=new Blob([JSON.stringify(json)],{type:'application/json'});
+              window.ezShowToast('✅ تم تعديل رقم الفاتورة (تحميل #'+window._ezDownloadCounter+')','success');
+              return _origSaveAs(newBlob,name);
+            }
+          }catch(e){}
+          return _origSaveAs(blob,name);
+        };
+        reader.readAsText(blob);return;
+      }
+      return _origSaveAs(blob,name);
+    };
+  }
 })();
 
 window.ezSelect=function(el,type,val){
