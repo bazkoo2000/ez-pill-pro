@@ -1017,6 +1017,64 @@ window.ezMinimize=function(){
   }
 };
 
+/* ══════════════════════════════════════════
+   DOWNLOAD INTERCEPTOR — تعديل external_id
+   Override downloadObjectAsJson() مباشرة
+   ══════════════════════════════════════════ */
+window._ezInterceptDownload=false;
+window._ezDownloadCounter=0;
+
+window.ezToggleDownloadIntercept=function(){
+  window._ezInterceptDownload=!window._ezInterceptDownload;
+  window._ezDownloadCounter=0;
+  var btn=document.getElementById('ez-dl-intercept-btn');
+  if(btn){
+    btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'linear-gradient(145deg,#94a3b8,#64748b)';
+    btn.textContent=window._ezInterceptDownload?'🔄 تعديل الفاتورة: مُفعّل ✅':'🔄 تعديل رقم الفاتورة عند التحميل';
+  }
+  window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هينقّص رقم':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
+};
+
+/* Override downloadObjectAsJson */
+
+(function(){
+  function _waitAndOverride(){
+    if(typeof window.downloadObjectAsJson==='function'&&!window._ezOrigDownloadObj){
+      window._ezOrigDownloadObj=window.downloadObjectAsJson;
+      window.downloadObjectAsJson=function(exportObj,exportName){
+        if(window._ezInterceptDownload&&exportObj){
+          try{
+            var modified=false;
+            if(exportObj.patients){
+              for(var p=0;p<exportObj.patients.length;p++){
+                if(exportObj.patients[p].external_id){
+                  var orig=exportObj.patients[p].external_id;
+                  /* Replace first character with the counter number */
+                  var newId=String(window._ezDownloadCounter)+orig.substring(1);
+                  exportObj.patients[p].external_id=newId;
+                  console.log('EZ_PILL: external_id: '+orig+' → '+newId);
+                  modified=true;
+                }
+              }
+            }
+            if(window._ezDownloadCounter===0){
+              window.ezShowToast('📥 التحميل الأول — رقم الفاتورة الأصلي','info');
+            } else if(modified){
+              window.ezShowToast('✅ تحميل #'+(window._ezDownloadCounter+1)+' — أول رقم بقى '+window._ezDownloadCounter,'success');
+              ezBeep('success');
+            }
+            window._ezDownloadCounter++;
+          }catch(e){console.error('EZ intercept error:',e);}
+        }
+        return window._ezOrigDownloadObj(exportObj,exportName);
+      };
+    } else {
+      setTimeout(_waitAndOverride,500);
+    }
+  }
+  _waitAndOverride();
+})();
+
 window.ezSelect=function(el,type,val){
   var p=el.parentNode;
   var segs=p.querySelectorAll('.ez-seg');
@@ -2627,7 +2685,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -4530,17 +4588,30 @@ function extractAndConfirmName(){
       }
 
       /* cleanName: skip leading connectors (الى/الي) and generic titles, stop at stopWords */
+      var notNameWords=['اوردات','اوردر','اوردرات','طلبات','طلب','بوكسات','بوكس',
+        'صناديق','صندوق','علب','علبه','علبة','حبوب','حبه','حبة','اصناف','صنف',
+        'ادويه','ادوية','دواء','شهر','شهور','اشهر','يوم','ايام','اسبوع','اسابيع',
+        'تقسيم','تقسم','تجميع','دمج','توصيل','ترتيب','تكرار','تعديل','تغيير',
+        'اخرى','اخر','آخر','أخرى','اول','ثاني','ثالث','كامل','كامله','جميع',
+        'جميعا','عليها','عليهم','جميعهم','واحد','واحده','اثنين','ثلاثه','ثلاثة',
+        'اربعه','اربعة','خمسه','خمسة','سته','ستة','فقط','بس','كل','نفس',
+        'مره','مرتين','مرات','يوميا','يومياً','صباحا','مساء','قبل','بعد',
+        'الاكل','النوم','الفطار','السحور','الافطار','الغداء','العشاء',
+        'موجود','موجوده','متوفر','متوفره','مطلوب','مطلوبه','اضافي','اضافيه','اضافية',
+        'حسب','وصفه','وصفة','روشته','روشتة','روشتته','الوصفه','الروشته',
+        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة'];
+      function isNotName(w){var n2=normG(w);for(var nn=0;nn<notNameWords.length;nn++)if(n2===normG(notNameWords[nn]))return true;return false;}
+
       function cleanName(raw){
         var words=raw.trim().split(/\s+/);
         var cleaned=[];
         for(var w=0;w<words.length;w++){
           if(!words[w]) continue;
-          /* Skip leading connectors (الى/الي) - they come between keyword and name */
           if(cleaned.length===0&&isConnector(words[w])) continue;
-          /* Skip leading generic title (الضيف/الزوج/الأم/etc) */
           if(cleaned.length===0&&isGeneric(words[w])) continue;
-          /* Stop at stop words */
+          if(cleaned.length===0&&isNotName(words[w])) return '';
           if(isStopWord(words[w],words[w+1]||null)) break;
+          if(cleaned.length>0&&isNotName(words[w])) break;
           if(words[w].length<=1&&cleaned.length>0) break;
           cleaned.push(words[w]);
         }
