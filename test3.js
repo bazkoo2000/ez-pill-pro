@@ -2,216 +2,283 @@
 'use strict';
 
 /* ══════════════════════════════════════════
-   EZ TOOLS v1.4 — Glass Morphism
-   ══════════════════════════════════════════ */
+   EZ TOOLS v1.5 — iOS Native
+   ══════════════════════════════════════════ */
 
 var PID='ez-tools-main';
 var old=document.getElementById(PID);if(old){old.remove();return}
 
 var SECRET='101093';
+var activeTab='orders';
 
 /* ─── Loader ─── */
 function loadTool(url,name,closePanel){
-  if(closePanel){var pp=document.getElementById(PID);if(pp)pp.remove()}
-  var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
-  fetch(full).then(function(r){
-    if(!r.ok)throw new Error(r.status);
-    return r.text();
-  }).then(function(code){
-    try{new Function(code)()}catch(e){alert('خطأ في '+name+': '+e.message)}
-  }).catch(function(err){
-    try{
-      var x=new XMLHttpRequest();
-      x.open('GET',full,true);
-      x.onload=function(){if(x.status===200){try{new Function(x.responseText)()}catch(e){alert('خطأ في '+name+': '+e.message)}}else{alert('فشل تحميل '+name)}};
-      x.onerror=function(){alert('فشل تحميل '+name)};
-      x.send();
-    }catch(e2){alert('فشل تحميل '+name)}
-  });
+  if(closePanel){var pp=document.getElementById(PID);if(pp)pp.remove()}
+  var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
+  fetch(full).then(function(r){
+    if(!r.ok)throw new Error(r.status);
+    return r.text();
+  }).then(function(code){
+    try{new Function(code)()}catch(e){alert('خطأ في '+name+': '+e.message)}
+  }).catch(function(err){
+    try{
+      var x=new XMLHttpRequest();
+      x.open('GET',full,true);
+      x.onload=function(){if(x.status===200){try{new Function(x.responseText)()}catch(e){alert('خطأ في '+name+': '+e.message)}}else{alert('فشل تحميل '+name)}};
+      x.onerror=function(){alert('فشل تحميل '+name)};
+      x.send();
+    }catch(e2){alert('فشل تحميل '+name)}
+  });
 }
 
 /* ─── Password ─── */
 function checkPass(name,cb){
-  var pass=prompt('🔒 أدخل الرقم السري لـ '+name+':');
-  if(pass===null)return;
-  if(pass===SECRET){cb()}
-  else{alert('❌ الرقم السري غلط')}
+  var pass=prompt('🔒 أدخل الرقم السري لـ '+name+':');
+  if(pass===null)return;
+  if(pass===SECRET){cb()}
+  else{alert('❌ الرقم السري غلط')}
 }
 
 /* ─── Safe Download (silent) ─── */
 function safeDownload(){
-  try{
-    var pname=(document.getElementById('pname')||{}).value||'';
-    var mobile=(document.getElementById('mobile')||{}).value||'';
-    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
-    if(!pname||!mobile)return;if(!inv)return;
-    var treats=[];var rows=document.querySelectorAll('table.styled-table tr');
-    for(var r=1;r<rows.length;r++){
-      var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;
-      function gv(td){if(!td)return'';var inp=td.querySelector('input,textarea');if(inp)return inp.value.trim();var sel=td.querySelector('select');if(sel){var o=sel.options[sel.selectedIndex];return o?o.text.trim():''}return td.textContent.trim()}
-      var code=gv(tds[1]);if(!code||code.length<3)continue;
-      var every=gv(tds[6])||'';var mins=1440;
-      if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;
-      var st=gv(tds[7])||'09:00';
-      if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}
-      if(!st||st.length<3)st='09:00';
-      function fd(dd){if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}return dd}
-      var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));
-      if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;
-      treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]});
-    }
-    if(!treats.length)return;
-    downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv);
-  }catch(e){}
+  try{
+    var pname=(document.getElementById('pname')||{}).value||'';
+    var mobile=(document.getElementById('mobile')||{}).value||'';
+    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
+    if(!pname||!mobile)return;if(!inv)return;
+    var treats=[];var rows=document.querySelectorAll('table.styled-table tr');
+    for(var r=1;r<rows.length;r++){
+      var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;
+      function gv(td){if(!td)return'';var inp=td.querySelector('input,textarea');if(inp)return inp.value.trim();var sel=td.querySelector('select');if(sel){var o=sel.options[sel.selectedIndex];return o?o.text.trim():''}return td.textContent.trim()}
+      var code=gv(tds[1]);if(!code||code.length<3)continue;
+      var every=gv(tds[6])||'';var mins=1440;
+      if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;
+      var st=gv(tds[7])||'09:00';
+      if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}
+      if(!st||st.length<3)st='09:00';
+      function fd(dd){if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}return dd}
+      var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));
+      if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;
+      treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]});
+    }
+    if(!treats.length)return;
+    downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv);
+  }catch(e){}
 }
 
 /* ─── CSS ─── */
 if(!document.getElementById('ez-tools-css')){
-  var css=document.createElement('style');css.id='ez-tools-css';
-  css.textContent=
-    '@keyframes ezSlideIn{from{opacity:0;transform:translateY(-20px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}'+
-    '@keyframes ezShine{0%{background-position:200% center}100%{background-position:-200% center}}'+
-    '#'+PID+'{position:fixed;top:14px;right:14px;z-index:999999;width:370px;border-radius:24px;overflow:hidden;'+
-      'background:rgba(255,255,255,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);'+
-      'border:1px solid rgba(255,255,255,0.45);'+
-      'box-shadow:0 20px 60px rgba(0,0,0,0.08),0 0 0 1px rgba(255,255,255,0.5) inset;'+
-      'font-family:Segoe UI,Cairo,Tahoma,sans-serif;animation:ezSlideIn 0.45s cubic-bezier(0.16,1,0.3,1);direction:rtl}'+
-    '#'+PID+' .eztb{width:100%;padding:13px 16px;border:1px solid rgba(255,255,255,0.5);border-radius:16px;'+
-      'background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);'+
-      'cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#334155;'+
-      'display:flex;align-items:center;gap:12px;transition:all 0.25s;text-align:right;direction:rtl;box-sizing:border-box}'+
-    '#'+PID+' .eztb:hover{background:rgba(255,255,255,0.85);border-color:#c7d2fe;'+
-      'transform:translateY(-2px);box-shadow:0 8px 24px rgba(102,126,234,0.12),0 0 0 1px rgba(99,102,241,0.08)}'+
-    '#'+PID+' .eztb:active{transform:translateY(0);box-shadow:0 2px 8px rgba(102,126,234,0.08) inset}'+
-    '#'+PID+' .ezic{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;'+
-      'border:1px solid rgba(255,255,255,0.6);box-shadow:0 2px 8px rgba(0,0,0,0.04)}'+
-    '#'+PID+' .ez-sep{height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.15),transparent);margin:4px 0}'+
-    '#'+PID+' .ez-lock{font-size:13px;color:#c7d2fe;filter:drop-shadow(0 1px 2px rgba(99,102,241,0.2))}'+
-    '#'+PID+' .ez-arrow{font-size:13px;color:#d1d5db;transition:transform 0.2s}'+
-    '#'+PID+' .eztb:hover .ez-arrow{transform:translateX(-3px);color:#a5b4fc}';
-  document.head.appendChild(css);
+  var css=document.createElement('style');css.id='ez-tools-css';
+  css.textContent=
+    '@keyframes ezSlideIn{from{opacity:0;transform:translateY(-18px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}'+
+    '@keyframes ezFadeTab{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}'+
+
+    '#'+PID+'{position:fixed;top:14px;right:14px;z-index:999999;width:380px;border-radius:22px;overflow:hidden;'+
+      'background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);'+
+      'border:1px solid rgba(255,255,255,0.5);'+
+      'box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);'+
+      'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif;'+
+      'animation:ezSlideIn 0.4s cubic-bezier(0.16,1,0.3,1);direction:rtl}'+
+
+    '#'+PID+' .ez-seg{display:flex;gap:2px;padding:3px;margin:0 16px 10px;border-radius:10px;background:rgba(0,0,0,0.05)}'+
+    '#'+PID+' .ez-seg-btn{flex:1;padding:8px 4px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;'+
+      'font-size:12px;font-weight:700;color:#9ca3af;background:transparent;transition:all 0.25s;direction:rtl}'+
+    '#'+PID+' .ez-seg-btn.active{background:#fff;color:#1f2937;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 0 0 0.5px rgba(0,0,0,0.04)}'+
+
+    '#'+PID+' .ez-group{background:#fff;border-radius:14px;margin:0 16px 12px;overflow:hidden;'+
+      'box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}'+
+
+    '#'+PID+' .ez-item{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;'+
+      'transition:background 0.15s;border-bottom:0.5px solid #f3f4f6;direction:rtl}'+
+    '#'+PID+' .ez-item:last-child{border-bottom:none}'+
+    '#'+PID+' .ez-item:hover{background:#f9fafb}'+
+    '#'+PID+' .ez-item:active{background:#f3f4f6}'+
+
+    '#'+PID+' .ez-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;'+
+      'justify-content:center;font-size:17px;flex-shrink:0}'+
+
+    '#'+PID+' .ez-tab-content{animation:ezFadeTab 0.25s ease}';
+
+  document.head.appendChild(css);
 }
 
 /* ─── Panel ─── */
 var p=document.createElement('div');p.id=PID;
 
 p.innerHTML=
-/* ── Header ── */
-'<div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:24px 24px 20px;position:relative;overflow:hidden">'+
-  '<div style="position:absolute;top:-40%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(255,255,255,0.12),transparent 70%);border-radius:50%"></div>'+
-  '<div style="position:absolute;bottom:-60%;left:-10%;width:160px;height:160px;background:radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%);border-radius:50%"></div>'+
-  '<div style="display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1">'+
-    '<div style="display:flex;align-items:center;gap:12px">'+
-      '<div style="width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;box-shadow:0 4px 16px rgba(0,0,0,0.1)">EZ</div>'+
-      '<div>'+
-        '<div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.3px;text-shadow:0 2px 8px rgba(0,0,0,0.15)">EZ Tools</div>'+
-        '<div style="font-size:10px;color:rgba(255,255,255,0.7);font-weight:600">v1.4 — Glass Edition</div>'+
-      '</div>'+
-    '</div>'+
-    '<button id="ez-t-close" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.12);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:rgba(255,255,255,0.8);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s" onmouseover="this.style.background=\'rgba(239,68,68,0.3)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'rgba(255,255,255,0.12)\';this.style.color=\'rgba(255,255,255,0.8)\'">×</button>'+
-  '</div>'+
+/* ── Status Bar ── */
+'<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+
+  '<div style="display:flex;align-items:center;gap:10px">'+
+    '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">EZ</div>'+
+    '<div>'+
+      '<div style="font-size:15px;font-weight:800;color:#1f2937;letter-spacing:-0.2px">EZ Tools</div>'+
+      '<div style="font-size:10px;color:#9ca3af;font-weight:600">v1.5 — iOS Edition</div>'+
+    '</div>'+
+  '</div>'+
+  '<div style="display:flex;align-items:center;gap:8px">'+
+    '<div style="display:flex;align-items:center;gap:4px">'+
+      '<div style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.4)"></div>'+
+      '<span style="font-size:10px;color:#9ca3af;font-weight:600">متصل</span>'+
+    '</div>'+
+    '<button id="ez-t-close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:inherit" onmouseover="this.style.background=\'rgba(239,68,68,0.1)\';this.style.color=\'#ef4444\'" onmouseout="this.style.background=\'rgba(0,0,0,0.06)\';this.style.color=\'#9ca3af\'">×</button>'+
+  '</div>'+
 '</div>'+
 
-/* ── Body ── */
-'<div style="padding:18px 20px 6px;display:flex;flex-direction:column;gap:8px">'+
+/* ── Segment Control ── */
+'<div class="ez-seg" id="ez-seg">'+
+  '<button class="ez-seg-btn active" data-tab="orders">📋 الطلبات</button>'+
+  '<button class="ez-seg-btn" data-tab="tools">🛠️ الأدوات</button>'+
+  '<button class="ez-seg-btn" data-tab="export">📤 تصدير</button>'+
+'</div>'+
 
-  '<button class="eztb" id="ez-t-search">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#faf5ff,#f3e8ff)">🔍</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">بحث الطلبات</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">فحص وفتح الطلبات تلقائياً</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
+/* ── Tab: الطلبات ── */
+'<div id="ez-tab-orders" class="ez-tab-content">'+
+  '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-search">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff)">🔍</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">بحث الطلبات</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">فحص وفتح الطلبات تلقائياً</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-close-orders">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#fee2e2,#fce7f3)">📝</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">تقفيل الطلبات</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">تسليم وتصدير الطلبات المجهزة</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-radar">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#dcfce7,#d1fae5)">📡</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">البحث الشامل</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Radar — بحث متقدم</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+  '</div>'+
+'</div>'+
 
-  '<button class="eztb" id="ez-t-close-orders">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#fef2f2,#fce7f3)">📝</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">تقفيل الطلبات</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">اغلاق وتصدير الطلبات</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
+/* ── Tab: الأدوات ── */
+'<div id="ez-tab-tools" class="ez-tab-content" style="display:none">'+
+  '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-add">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#dbeafe,#e0e7ff)">➕</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">إضافة صنف</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">إضافة دواء من ملف Excel/CSV</div>'+
+      '</div>'+
+      '<span style="font-size:13px">🔒</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-editor">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Nahdi Editor</div>'+
+      '</div>'+
+      '<span style="font-size:13px">🔒</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-fareye">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">FarEye Injector</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+  '</div>'+
+'</div>'+
 
-  '<button class="eztb" id="ez-t-add">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">➕</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">إضافة صنف</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">إضافة دواء من ملف Excel/CSV</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
-
-  '<button class="eztb" id="ez-t-editor">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#fefce8,#fef3c7)">✏️</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">تعديل للطباعه</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">Nahdi Editor</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
-
-  '<button class="eztb" id="ez-t-radar">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7)">📡</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">البحث الشامل</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">Radar — بحث متقدم</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
-
-  '<button class="eztb" id="ez-t-fareye">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#fdf4ff,#f5d0fe)">🚀</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">FarEye</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">FarEye Injector</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
-
-  '<div class="ez-sep"></div>'+
-
-  '<button class="eztb" id="ez-t-dl">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5)">📥</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">تحميل الملف</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">تحميل صامت بدون رسائل</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
-
-  '<button class="eztb" id="ez-t-pr">'+
-    '<div class="ezic" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe)">🖨️</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b;font-size:13px">طباعة Print Summary</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">Print Summary</div></div>'+
-    '<span class="ez-arrow">◂</span>'+
-  '</button>'+
-
+/* ── Tab: تصدير ── */
+'<div id="ez-tab-export" class="ez-tab-content" style="display:none">'+
+  '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-dl">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">📥</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">تحميل الملف</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">تحميل صامت بدون رسائل</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-pr">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🖨️</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">طباعة الملخص</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Print Summary</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+  '</div>'+
 '</div>'+
 
 /* ── Footer ── */
-'<div style="padding:10px 24px 14px;text-align:center;border-top:1px solid rgba(99,102,241,0.08);margin-top:4px">'+
-  '<div style="font-size:9px;color:#a5b4fc;font-weight:700;letter-spacing:1px">EZ TOOLS v1.4 — DEVELOPED BY ALI EL-BAZ</div>'+
+'<div style="padding:8px 20px 14px;text-align:center">'+
+  '<div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v1.5 — DEVELOPED BY ALI EL-BAZ</div>'+
 '</div>';
 
 document.body.appendChild(p);
 
+/* ═══ TAB SWITCHING ═══ */
+var segBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+for(var si=0;si<segBtns.length;si++){
+  segBtns[si].addEventListener('click',function(){
+    var tab=this.getAttribute('data-tab');
+    /* Update buttons */
+    var allBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+    for(var j=0;j<allBtns.length;j++){allBtns[j].classList.remove('active')}
+    this.classList.add('active');
+    /* Show/hide tabs */
+    var tabs=['orders','tools','export'];
+    for(var k=0;k<tabs.length;k++){
+      var el=document.getElementById('ez-tab-'+tabs[k]);
+      if(el){
+        if(tabs[k]===tab){el.style.display='block';el.style.animation='ezFadeTab 0.25s ease'}
+        else{el.style.display='none'}
+      }
+    }
+    activeTab=tab;
+  });
+}
+
 /* ═══ EVENTS ═══ */
 
+/* Close */
 document.getElementById('ez-t-close').onclick=function(){
-  p.style.transition='all 0.3s cubic-bezier(0.4,0,1,1)';
-  p.style.opacity='0';p.style.transform='translateY(-20px) scale(0.95)';
-  setTimeout(function(){p.remove()},300);
+  p.style.transition='all 0.3s cubic-bezier(0.4,0,1,1)';
+  p.style.opacity='0';p.style.transform='translateY(-18px) scale(0.97)';
+  setTimeout(function(){p.remove()},300);
 };
 
+/* Tab: الطلبات */
 document.getElementById('ez-t-search').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث الطلبات',true);
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث الطلبات',true);
 };
-
 document.getElementById('ez-t-close-orders').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات',true);
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات',true);
 };
-
-document.getElementById('ez-t-add').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
-};
-
-document.getElementById('ez-t-editor').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل للطباعه',true);
-};
-
 document.getElementById('ez-t-radar').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);
 };
 
+/* Tab: الأدوات */
+document.getElementById('ez-t-add').onclick=function(){
+  checkPass('إضافة صنف',function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
+  });
+};
+document.getElementById('ez-t-editor').onclick=function(){
+  checkPass('تعديل الطباعة',function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);
+  });
+};
 document.getElementById('ez-t-fareye').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);
+  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);
 };
 
-document.getElementById('ez-t-dl').onclick=function(){
-  safeDownload();
-};
-
-document.getElementById('ez-t-pr').onclick=function(){
-  if(typeof printsum==='function'){printsum()}
-};
+/* Tab: تصدير */
+document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
+document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}};
 
 })();
