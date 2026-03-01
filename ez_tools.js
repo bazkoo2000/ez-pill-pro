@@ -2,13 +2,16 @@
 'use strict';
 
 /* ══════════════════════════════════════════
-   EZ TOOLS v1.4 — Lightweight Launcher
+   EZ TOOLS v1.5 — iOS Native
    ══════════════════════════════════════════ */
 
 var PID='ez-tools-main';
 var old=document.getElementById(PID);if(old){old.remove();return}
 
-/* ─── Loader: fetch from GitHub and execute ─── */
+var SECRET='101093';
+var activeTab='orders';
+
+/* ─── Loader ─── */
 function loadTool(url,name,closePanel){
   if(closePanel){var pp=document.getElementById(PID);if(pp)pp.remove()}
   var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
@@ -18,7 +21,6 @@ function loadTool(url,name,closePanel){
   }).then(function(code){
     try{new Function(code)()}catch(e){alert('خطأ في '+name+': '+e.message)}
   }).catch(function(err){
-    /* fallback XMLHttpRequest */
     try{
       var x=new XMLHttpRequest();
       x.open('GET',full,true);
@@ -29,14 +31,21 @@ function loadTool(url,name,closePanel){
   });
 }
 
-/* ─── Safe Download (inline) ─── */
+/* ─── Password ─── */
+function checkPass(name,cb){
+  var pass=prompt('🔒 أدخل الرقم السري لـ '+name+':');
+  if(pass===null)return;
+  if(pass===SECRET){cb()}
+  else{alert('❌ الرقم السري غلط')}
+}
+
+/* ─── Safe Download (silent) ─── */
 function safeDownload(){
   try{
     var pname=(document.getElementById('pname')||{}).value||'';
     var mobile=(document.getElementById('mobile')||{}).value||'';
     var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
-    if(!pname||!mobile){alert('الاسم أو الموبايل فاضي');return}
-    if(!inv){alert('رقم الفاتورة مش موجود');return}
+    if(!pname||!mobile)return;if(!inv)return;
     var treats=[];var rows=document.querySelectorAll('table.styled-table tr');
     for(var r=1;r<rows.length;r++){
       var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;
@@ -52,153 +61,224 @@ function safeDownload(){
       if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;
       treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]});
     }
-    if(!treats.length){alert('مفيش أصناف');return}
+    if(!treats.length)return;
     downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv);
-  }catch(e){alert('خطأ: '+e.message)}
+  }catch(e){}
 }
 
 /* ─── CSS ─── */
 if(!document.getElementById('ez-tools-css')){
   var css=document.createElement('style');css.id='ez-tools-css';
   css.textContent=
-    '@keyframes ezIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}'+
-    '#'+PID+' .eztb{width:100%;padding:14px 16px;border:1px solid #edf0f7;border-radius:14px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#334155;display:flex;align-items:center;gap:12px;transition:all 0.2s;text-align:right;direction:rtl}'+
-    '#'+PID+' .eztb:hover{border-color:#c7d2fe;background:#f8f9ff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,0.08)}'+
-    '#'+PID+' .ezic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}'+
-    '#'+PID+' .ez-sep{height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);margin:6px 0}';
+    '@keyframes ezSlideIn{from{opacity:0;transform:translateY(-18px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}'+
+    '@keyframes ezFadeTab{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}'+
+
+    '#'+PID+'{position:fixed;top:14px;right:14px;z-index:999999;width:380px;border-radius:22px;overflow:hidden;'+
+      'background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);'+
+      'border:1px solid rgba(255,255,255,0.5);'+
+      'box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);'+
+      'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif;'+
+      'animation:ezSlideIn 0.4s cubic-bezier(0.16,1,0.3,1);direction:rtl}'+
+
+    '#'+PID+' .ez-seg{display:flex;gap:2px;padding:3px;margin:0 16px 10px;border-radius:10px;background:rgba(0,0,0,0.05)}'+
+    '#'+PID+' .ez-seg-btn{flex:1;padding:8px 4px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;'+
+      'font-size:12px;font-weight:700;color:#9ca3af;background:transparent;transition:all 0.25s;direction:rtl}'+
+    '#'+PID+' .ez-seg-btn.active{background:#fff;color:#1f2937;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 0 0 0.5px rgba(0,0,0,0.04)}'+
+
+    '#'+PID+' .ez-group{background:#fff;border-radius:14px;margin:0 16px 12px;overflow:hidden;'+
+      'box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}'+
+
+    '#'+PID+' .ez-item{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;'+
+      'transition:background 0.15s;border-bottom:0.5px solid #f3f4f6;direction:rtl}'+
+    '#'+PID+' .ez-item:last-child{border-bottom:none}'+
+    '#'+PID+' .ez-item:hover{background:#f9fafb}'+
+    '#'+PID+' .ez-item:active{background:#f3f4f6}'+
+
+    '#'+PID+' .ez-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;'+
+      'justify-content:center;font-size:17px;flex-shrink:0}'+
+
+    '#'+PID+' .ez-tab-content{animation:ezFadeTab 0.25s ease}';
+
   document.head.appendChild(css);
 }
 
 /* ─── Panel ─── */
 var p=document.createElement('div');p.id=PID;
-p.style.cssText='position:fixed;top:14px;right:14px;z-index:999999;width:350px;background:#fff;border-radius:20px;overflow:visible;box-shadow:0 12px 40px rgba(15,23,42,0.08),0 0 0 1px rgba(99,102,241,0.06);font-family:Segoe UI,Cairo,Tahoma,sans-serif;animation:ezIn 0.35s ease;direction:rtl';
 
 p.innerHTML=
-/* Header */
-'<div style="background:linear-gradient(135deg,#fafbff,#eef2ff);padding:18px 20px 14px;border-bottom:1px solid #edf0f7;border-radius:20px 20px 0 0">'+
-  '<div style="display:flex;align-items:center;justify-content:space-between">'+
-    '<div style="display:flex;align-items:center;gap:10px">'+
-      '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#a5b4fc,#818cf8);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:900;box-shadow:0 4px 14px rgba(129,140,248,0.25)">EZ</div>'+
-      '<div><div style="font-size:16px;font-weight:900;color:#312e81">EZ Tools</div><div style="font-size:10px;color:#a5b4fc;font-weight:600">v1.4 — أدوات مساعدة</div></div>'+
+/* ── Status Bar ── */
+'<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+
+  '<div style="display:flex;align-items:center;gap:10px">'+
+    '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">EZ</div>'+
+    '<div>'+
+      '<div style="font-size:15px;font-weight:800;color:#1f2937;letter-spacing:-0.2px">EZ Tools</div>'+
+      '<div style="font-size:10px;color:#9ca3af;font-weight:600">v1.5 — iOS Edition</div>'+
     '</div>'+
-    '<button id="ez-t-close" style="width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#94a3b8;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#94a3b8\'">×</button>'+
+  '</div>'+
+  '<div style="display:flex;align-items:center;gap:8px">'+
+    '<div style="display:flex;align-items:center;gap:4px">'+
+      '<div style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.4)"></div>'+
+      '<span style="font-size:10px;color:#9ca3af;font-weight:600">متصل</span>'+
+    '</div>'+
+    '<button id="ez-t-close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:inherit" onmouseover="this.style.background=\'rgba(239,68,68,0.1)\';this.style.color=\'#ef4444\'" onmouseout="this.style.background=\'rgba(0,0,0,0.06)\';this.style.color=\'#9ca3af\'">×</button>'+
   '</div>'+
 '</div>'+
 
-/* Tools */
-'<div id="ez-tools-body" style="padding:14px 16px 6px;display:flex;flex-direction:column;gap:8px">'+
-
-  /* 1: بحث الطلبات */
-  '<button class="eztb" id="ez-t-search">'+
-    '<div class="ezic" style="background:#faf5ff;color:#a855f7">🔍</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">بحث الطلبات</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">فحص وفتح الطلبات تلقائياً</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
-  /* 2: تقفيل الطلبات */
-  '<button class="eztb" id="ez-t-close-orders">'+
-    '<div class="ezic" style="background:#fef2f2;color:#ef4444">📝</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">تقفيل الطلبات</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">تسليم وتصدير الطلبات المجهزة</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
-  /* 3: إضافة صنف */
-  '<button class="eztb" id="ez-t-add">'+
-    '<div class="ezic" style="background:#eff6ff;color:#60a5fa">➕</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">إضافة صنف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">إضافة دواء من ملف Excel/CSV</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
-  /* 4: تعديل الطباعة */
-  '<button class="eztb" id="ez-t-editor">'+
-    '<div class="ezic" style="background:#fefce8;color:#eab308">✏️</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">تعديل الطباعة</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Nahdi Editor</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
-  /* 5: البحث الشامل */
-  '<button class="eztb" id="ez-t-radar">'+
-    '<div class="ezic" style="background:#f0fdf4;color:#22c55e">📡</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">البحث الشامل</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Radar — بحث متقدم</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
-  /* 6: FarEye */
-  '<button class="eztb" id="ez-t-fareye">'+
-    '<div class="ezic" style="background:#fdf4ff;color:#d946ef">🚀</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">FarEye</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">FarEye Injector</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
-  /* ─── Separator ─── */
-  '<div class="ez-sep"></div>'+
-
-  /* 7: تحميل الملف */
-  '<button class="eztb" id="ez-t-dl">'+
-    '<div class="ezic" style="background:#ecfdf5;color:#34d399">📥</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">تحميل الملف</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">بدون مسح البيانات</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
-  /* 8: طباعة الملخص */
-  '<button class="eztb" id="ez-t-pr">'+
-    '<div class="ezic" style="background:#f0f9ff;color:#38bdf8">🖨️</div>'+
-    '<div style="flex:1"><div style="font-weight:800;color:#1e293b">طباعة الملخص</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">Print Summary</div></div>'+
-    '<span style="color:#d1d5db">◂</span>'+
-  '</button>'+
-
+/* ── Segment Control ── */
+'<div class="ez-seg" id="ez-seg">'+
+  '<button class="ez-seg-btn active" data-tab="orders">📋 الطلبات</button>'+
+  '<button class="ez-seg-btn" data-tab="tools">🛠️ الأدوات</button>'+
+  '<button class="ez-seg-btn" data-tab="export">📤 تصدير</button>'+
 '</div>'+
 
-/* Footer */
-'<div style="padding:8px 20px 10px;text-align:center;border-top:1px solid #f1f5f9;margin-top:2px">'+
-  '<div style="font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1px">EZ TOOLS v1.4 — DEVELOPED BY ALI EL-BAZ</div>'+
+/* ── Tab: الطلبات ── */
+'<div id="ez-tab-orders" class="ez-tab-content">'+
+  '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-search">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff)">🔍</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">بحث الطلبات</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">فحص وفتح الطلبات تلقائياً</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-close-orders">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#fee2e2,#fce7f3)">📝</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">تقفيل الطلبات</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">تسليم وتصدير الطلبات المجهزة</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-radar">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#dcfce7,#d1fae5)">📡</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">البحث الشامل</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Radar — بحث متقدم</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+  '</div>'+
+'</div>'+
+
+/* ── Tab: الأدوات ── */
+'<div id="ez-tab-tools" class="ez-tab-content" style="display:none">'+
+  '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-add">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#dbeafe,#e0e7ff)">➕</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">إضافة صنف</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">إضافة دواء من ملف Excel/CSV</div>'+
+      '</div>'+
+      '<span style="font-size:13px">🔒</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-editor">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Nahdi Editor</div>'+
+      '</div>'+
+      '<span style="font-size:13px">🔒</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-fareye">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">FarEye Injector</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+  '</div>'+
+'</div>'+
+
+/* ── Tab: تصدير ── */
+'<div id="ez-tab-export" class="ez-tab-content" style="display:none">'+
+  '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-dl">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">📥</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">تحميل الملف</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">تحميل صامت بدون رسائل</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+    '<div class="ez-item" id="ez-t-pr">'+
+      '<div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🖨️</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:700;color:#1f2937">طباعة الملخص</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Print Summary</div>'+
+      '</div>'+
+      '<span style="color:#d1d5db;font-size:16px">‹</span>'+
+    '</div>'+
+  '</div>'+
+'</div>'+
+
+/* ── Footer ── */
+'<div style="padding:8px 20px 14px;text-align:center">'+
+  '<div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v1.5 — DEVELOPED BY ALI EL-BAZ</div>'+
 '</div>';
 
 document.body.appendChild(p);
 
+/* ═══ TAB SWITCHING ═══ */
+var segBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+for(var si=0;si<segBtns.length;si++){
+  segBtns[si].addEventListener('click',function(){
+    var tab=this.getAttribute('data-tab');
+    /* Update buttons */
+    var allBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+    for(var j=0;j<allBtns.length;j++){allBtns[j].classList.remove('active')}
+    this.classList.add('active');
+    /* Show/hide tabs */
+    var tabs=['orders','tools','export'];
+    for(var k=0;k<tabs.length;k++){
+      var el=document.getElementById('ez-tab-'+tabs[k]);
+      if(el){
+        if(tabs[k]===tab){el.style.display='block';el.style.animation='ezFadeTab 0.25s ease'}
+        else{el.style.display='none'}
+      }
+    }
+    activeTab=tab;
+  });
+}
+
 /* ═══ EVENTS ═══ */
 
-/* Close panel */
-document.getElementById('ez-t-close').onclick=function(){p.remove()};
+/* Close */
+document.getElementById('ez-t-close').onclick=function(){
+  p.style.transition='all 0.3s cubic-bezier(0.4,0,1,1)';
+  p.style.opacity='0';p.style.transform='translateY(-18px) scale(0.97)';
+  setTimeout(function(){p.remove()},300);
+};
 
-/* 1: بحث الطلبات */
+/* Tab: الطلبات */
 document.getElementById('ez-t-search').onclick=function(){
   loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث الطلبات',true);
 };
-
-/* 2: تقفيل الطلبات */
 document.getElementById('ez-t-close-orders').onclick=function(){
   loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات',true);
 };
-
-/* 3: إضافة صنف */
-document.getElementById('ez-t-add').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
-};
-
-/* 4: تعديل الطباعة */
-document.getElementById('ez-t-editor').onclick=function(){
-  loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);
-};
-
-/* 5: البحث الشامل */
 document.getElementById('ez-t-radar').onclick=function(){
   loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);
 };
 
-/* 6: FarEye */
+/* Tab: الأدوات */
+document.getElementById('ez-t-add').onclick=function(){
+  checkPass('إضافة صنف',function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
+  });
+};
+document.getElementById('ez-t-editor').onclick=function(){
+  checkPass('تعديل الطباعة',function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);
+  });
+};
 document.getElementById('ez-t-fareye').onclick=function(){
   loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);
 };
 
-/* 7: تحميل الملف */
-document.getElementById('ez-t-dl').onclick=function(){
-  safeDownload();
-};
-
-/* 8: طباعة الملخص */
-document.getElementById('ez-t-pr').onclick=function(){
-  if(typeof printsum==='function'){printsum()}else{alert('فانكشن الطباعة مش موجودة')}
-};
+/* Tab: تصدير */
+document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
+document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}};
 
 })();
