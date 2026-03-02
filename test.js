@@ -558,7 +558,7 @@ function ramadanMapNote(note){
   /* قبل الأكل / before meal → قبل الفطار */
   if(/قبل\s*(الاكل|الأكل|الوجبات)|before\s*(meal|food)|ac\b/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد الأكل / after meal → بعد الفطار */
-  if(/بعد\s*(الاكل|الأكل|الوجبات)|مع\s*(الاكل|الأكل|الوجبات)|after\s*(meal|food)|with\s*(meal|food)|pc\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  if(/بعد\s*(الاكل|الأكل|الوجبات)|after\s*(meal|food)|pc\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
   return null;
 }
 
@@ -1113,9 +1113,13 @@ window.ezShowDoses=function(){
   function cleanN(txt){
     if(!txt)return'';
     var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
-    var a=/(.*?)أيام/;var e=/(.*?)days/i;
-    if(a.test(c)) c=c.replace(a,'').replace(/^\s*-\s*/,'').trim();
-    else if(e.test(c)) c=c.replace(e,'').replace(/^\s*-\s*/,'').trim();
+    c=c.replace(/\d*\s*(Tablets?|Capsules?|undefined|Caps?|Tab)\s*every\s*\d+\s*Hrs?\s*(for\s*)?\d*\s*days?\d*/gi,'');
+    c=c.replace(/\bfor\s*\d+\s*days?\d*/gi,'');
+    c=c.replace(/\bevery\s*\d+\s*Hrs?\b/gi,'');
+    c=c.replace(/لمد[ةه]?\s*\d+\s*([اأ]يام|يوم)\d*/g,'');
+    c=c.replace(/\d+\s*([اأ]يام|يوم)\d*/g,'');
+    c=c.replace(/كل\s*\d+\s*ساع[ةهات]*/g,'');
+    c=c.replace(/^\s*[-–—]\s*/,'');
     if(/^\s*[\da-zA-Z]/.test(c)&&/[\u0600-\u06FF]/.test(c)){var idx=c.search(/[\u0600-\u06FF]/);if(idx>0) c=c.substring(idx);}
     return c.replace(/\s+/g,' ').trim();
   }
@@ -2578,11 +2582,18 @@ function _ezColorDupRows(tb){
 function cleanNote(txt){
   if(!txt) return '';
   var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
-  /* Step 1: Strip system-generated English prefix up to "أيام" or "days" boundary */
-  var a=/(.*?)أيام/;var e=/(.*?)days/i;
-  if(a.test(c)) c=c.replace(a,'').replace(/^\s*-\s*/,'').trim();
-  else if(e.test(c)) c=c.replace(e,'').replace(/^\s*-\s*/,'').trim();
-  /* Step 2: If still starts with English/digits and has Arabic text after, strip to first Arabic char */
+  /* Step 1: Strip system pattern "1 Tablets every 24 Hrs for 30 days1" */
+  c=c.replace(/\d*\s*(Tablets?|Capsules?|undefined|Caps?|Tab)\s*every\s*\d+\s*Hrs?\s*(for\s*)?\d*\s*days?\d*/gi,'');
+  /* Step 2: Strip English duration fragments */
+  c=c.replace(/\bfor\s*\d+\s*days?\d*/gi,'');
+  c=c.replace(/\bevery\s*\d+\s*Hrs?\b/gi,'');
+  /* Step 3: Strip Arabic duration */
+  c=c.replace(/لمد[ةه]?\s*\d+\s*([اأ]يام|يوم)\d*/g,'');
+  c=c.replace(/\d+\s*([اأ]يام|يوم)\d*/g,'');
+  /* Step 4: Strip Arabic hourly */
+  c=c.replace(/كل\s*\d+\s*ساع[ةهات]*/g,'');
+  c=c.replace(/^\s*[-–—]\s*/,'');
+  /* Step 5: If starts with English/digits and has Arabic text after, strip to first Arabic char */
   if(/^\s*[\da-zA-Z]/.test(c)&&/[\u0600-\u06FF]/.test(c)){
     var idx=c.search(/[\u0600-\u06FF]/);
     if(idx>0) c=c.substring(idx);
@@ -2719,9 +2730,9 @@ function smartDoseRecognizer(note){
 
   /* ── Step 1: Detect meal/time keywords ── */
   /* In non-Ramadan mode: سحور = عشاء (dinner), فطار/افطار = فطار (breakfast) */
-  res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار/i.test(s);
-  res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء/i.test(s);
-  res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|سحور|السحور|سحر/i.test(s);
+  res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار|مع\s*(ال)?(فطار|فطور|افطار)/i.test(s);
+  res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|مع\s*(ال)?(غدا|غداء|غذا|غذاء)/i.test(s);
+  res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|سحور|السحور|سحر|مع\s*(ال)?(عشا|عشاء)/i.test(s);
   res.hasM=/\b(morning|am|morn|a\.m)\b|صباح|الصباح|صبح/i.test(s);
   res.hasN=/\b(noon|midday)\b|ظهر|الظهر/i.test(s);
   res.hasA=/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/i.test(s);
@@ -2752,7 +2763,7 @@ function smartDoseRecognizer(note){
   if(/بعد\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*بعد\s*(الاكل|الاكل)|after\s*meals?\s*twice/i.test(s)){res.count=2;return res;}
 
   if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;res.isBefore=true;return res;}
-  if(/(^|\s)(بعد\s*(الاكل|الأكل|الوجبه?)|مع\s*(الاكل|الأكل|الوجبه?)|after\s*(meal|food)\b|with\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
+  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
   if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
 
   /* ── Step 5: Count from detected meal/time keywords ── */
@@ -2795,7 +2806,7 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار|مع.*فطر|مع.*فطار|مع.*فطور|مع.*افطار|مع.*اكل|مع.*أكل|with.*meal|with.*food|with.*breakfast/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'}];
+  var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
