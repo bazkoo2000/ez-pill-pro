@@ -103,14 +103,92 @@
   function debounce(fn,d){let t;return function(){clearTimeout(t);t=setTimeout(fn,d)}}
 
   panel.addEventListener('click',e=>{if(panel.classList.contains('ali-minimized')){panel.classList.remove('ali-minimized');e.stopPropagation()}});
-  document.getElementById('ali_close').addEventListener('click',e=>{e.stopPropagation();panel.style.transition='all 0.3s';panel.style.opacity='0';panel.style.transform='translateX(40px) scale(0.97)';setTimeout(()=>panel.remove(),300)});
+  
+  // تحسين إدارة الذاكرة عند الإغلاق
+  document.getElementById('ali_close').addEventListener('click',e=>{
+    e.stopPropagation();
+    panel.style.transition='all 0.3s';
+    panel.style.opacity='0';
+    panel.style.transform='translateX(40px) scale(0.97)';
+    setTimeout(()=>{
+      panel.remove();
+      state.savedRows=[];
+      state.visitedSet.clear();
+      state.htmlBuffer='';
+    },300);
+  });
+  
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
   function processData(data){let orders=[];try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}if(!orders||orders.length===0)return;for(let i=0;i<orders.length;i++){const item=orders[i];const inv=item.Invoice||'';const onl=item.onlineNumber||'';const src=item.source||'StorePaid';const hid=item.head_id||'';const typee=item.typee!==undefined?item.typee:'';if(inv.length>=5&&inv.startsWith('0')&&!state.visitedSet.has(inv)){state.visitedSet.add(inv);let st='other';let raw=String(item.status||item.Status||item.order_status||item.OrderStatus||'').toLowerCase().replace(/<[^>]*>?/gm,'').trim();if(raw.includes('packed'))st='packed';else if(raw.includes('received'))st='received';else{let cs=JSON.stringify(item).toLowerCase();if(cs.includes('"packed"'))st='packed';else if(cs.includes('"received"'))st='received'}const bg=st==='received'?'rgba(34,197,94,0.06)':(st==='packed'?'rgba(245,158,11,0.06)':'transparent');state.htmlBuffer+=`<tr class="fast-row" id="row_${esc(inv)}" style="background:${bg}" data-inv="${esc(inv)}" data-onl="${esc(onl)}" data-src="${esc(src)}" data-hid="${esc(hid)}"><td style="padding:12px 8px"><span class="ali-link">${esc(inv)}</span></td><td style="padding:12px 8px">${esc(onl)}</td><td style="padding:12px 8px">${esc(item.guestName||'')}</td><td style="padding:12px 8px">${esc(item.guestMobile||item.mobile||'')}</td><td style="padding:12px 8px">${esc(item.payment_method||'Cash')}</td><td style="padding:12px 8px">${esc(item.created_at||item.Created_Time||'')}</td><td id="st_${esc(inv)}" style="padding:12px 8px">${esc(st)}</td><td style="padding:12px 8px">${esc(src)}</td></tr>`;state.savedRows.push({id:inv,onl:onl,st:st,typee:typee,guestName:item.guestName||'',guestMobile:item.guestMobile||item.mobile||'',src:src,hid:hid})}}}
 
-  async function scanAllPages(){state.isProcessing=true;const fill=document.getElementById('p-fill');const baseUrl=window.location.origin+"/ez_pill_web/";const currentStatus='packed';setStatus('جاري الاتصال بقاعدة البيانات...','working');let maxPages=parseInt(document.getElementById('p_lim').value)||1;state.savedRows=[];state.visitedSet.clear();state.htmlBuffer='';try{const res1=await fetch(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:1,searchby:''})});const data1=await res1.json();if(data1.total_orders){const et=parseInt(data1.total_orders)||0;if(et>0){maxPages=Math.ceil(et/10);document.getElementById('p_lim').value=maxPages}}processData(data1);updateStats();if(fill)fill.style.width=((1/maxPages)*100)+'%';const fp=[];for(let i=2;i<=maxPages;i++){fp.push(fetch(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:i,searchby:''})}).then(r=>r.json()).then(data=>{processData(data);updateStats()}).catch(err=>{console.warn('فشل صفحة '+i,err)}))}await Promise.all(fp);if(fill)fill.style.width='100%'}catch(err){console.error(err);setStatus('خطأ في الاتصال بالخادم','error');showToast('فشل الاتصال بالخادم','error');state.isProcessing=false;return}finishScan()}
+  // تحسين الاتصال بالسيرفر (Batch Fetching) للسرعة والاستقرار
+  async function scanAllPages(){
+    state.isProcessing=true;
+    const fill=document.getElementById('p-fill');
+    const baseUrl=window.location.origin+"/ez_pill_web/";
+    const currentStatus='packed';
+    setStatus('جاري الاتصال بقاعدة البيانات...','working');
+    let maxPages=parseInt(document.getElementById('p_lim').value)||1;
+    state.savedRows=[];state.visitedSet.clear();state.htmlBuffer='';
+    try {
+      const res1=await fetch(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:1,searchby:''})});
+      const data1=await res1.json();
+      if(data1.total_orders){const et=parseInt(data1.total_orders)||0;if(et>0){maxPages=Math.ceil(et/10);document.getElementById('p_lim').value=maxPages}}
+      processData(data1);updateStats();
+      if(fill) fill.style.width=((1/maxPages)*100)+'%';
+      
+      const BATCH_SIZE = 5;
+      for (let i = 2; i <= maxPages; i += BATCH_SIZE) {
+        const batch = [];
+        for (let j = i; j < i + BATCH_SIZE && j <= maxPages; j++) {
+          batch.push(
+            fetch(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:j,searchby:''})})
+            .then(r=>r.json()).then(data=>{processData(data);updateStats()})
+            .catch(err=>{console.warn('فشل صفحة '+j,err)})
+          );
+        }
+        await Promise.all(batch);
+        if(fill) fill.style.width=((Math.min(i+BATCH_SIZE-1, maxPages)/maxPages)*100)+'%';
+        if(i + BATCH_SIZE <= maxPages) await sleep(250); 
+      }
+    } catch(err) {
+      console.error(err);setStatus('خطأ في الاتصال بالخادم','error');showToast('فشل الاتصال بالخادم','error');state.isProcessing=false;return;
+    }
+    finishScan();
+  }
 
-  function finishScan(){state.isProcessing=false;const tables=document.querySelectorAll('table');let target=tables[0];if(target){for(const t of tables)if(t.innerText.length>target.innerText.length)target=t;const tbody=target.querySelector('tbody')||target;tbody.innerHTML=state.htmlBuffer;tbody.addEventListener('click',e=>{const link=e.target.closest('.ali-link');if(!link)return;const row=link.closest('tr[data-inv]');if(!row)return;const inv=row.dataset.inv;const onl=row.dataset.onl;const src=row.dataset.src;const hid=row.dataset.hid;if(inv&&typeof getDetails==='function')getDetails(onl,inv,src,hid)})}
+  function finishScan(){
+    state.isProcessing=false;
+    const tables=document.querySelectorAll('table');
+    let target=tables[0];
+    if(target){
+      for(const t of tables) if(t.innerText.length>target.innerText.length) target=t;
+      const tbody=target.querySelector('tbody')||target;
+      tbody.innerHTML=state.htmlBuffer;
+      
+      // تحسين سرعة البحث (DOM Caching)
+      state.savedRows.forEach(r => {
+        r.node = document.getElementById('row_' + esc(r.id));
+      });
+
+      // حل مشكلة فتح الطلب (Capture Phase & stopPropagation)
+      tbody.addEventListener('click', e => {
+        const tr = e.target.closest('tr[data-inv]');
+        if (tr) {
+          e.stopPropagation(); // إيقاف أي حدث قادم من نظام الموقع الأصلي
+          const link = e.target.closest('.ali-link');
+          if (link) {
+            const inv = tr.dataset.inv;
+            const onl = tr.dataset.onl;
+            const src = tr.dataset.src;
+            const hid = tr.dataset.hid;
+            if (inv && typeof getDetails === 'function') getDetails(onl, inv, src, hid);
+          }
+        }
+      }, true); 
+    }
+    
     let recCount=0;state.savedRows.forEach(r=>{if(r.st==='received')recCount++});
     setStatus(`اكتملت العملية: تم حصر ${state.savedRows.length} سجل`,'done');showToast(`اكتمل الحصر: ${state.savedRows.length} سجل`,'success');
 
@@ -139,7 +217,6 @@
       <button id="ali_btn_export" class="ios-btn ios-warn" style="margin-bottom:8px">📦 تصدير بيانات الطلبات (Packed)</button>
       <button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 إعادة فحص البيانات</button>`;
 
-    // Search Logic
     const sI=document.getElementById('ali_sI'), sO=document.getElementById('ali_sO'), sc=document.getElementById('ali_search_count'), ob=document.getElementById('ali_btn_open');
     let cm=[];
     function fr(){
@@ -150,8 +227,10 @@
         const mi=is!==''&&rw.id.startsWith(is);
         const mo=os!==''&&rw.onl.toLowerCase().includes(os);
         const s=hf?(mi||mo):true;
-        const rowEl=document.getElementById('row_'+rw.id);
-        if(rowEl) rowEl.style.display=s?'':'none';
+        
+        // استخدام العناصر المخزنة لسرعة فائقة
+        if(rw.node) rw.node.style.display=s?'':'none';
+        
         if(s){sh++; if(hf)cm.push(rw);}
       }
       sc.innerText=`عرض ${sh} من ${state.savedRows.length} نتيجة`;
@@ -194,7 +273,6 @@
       ob.disabled=false; ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`; fr();
     });
 
-    // Deliver
     document.getElementById('ali_btn_deliver_silent').addEventListener('click',async()=>{
       const list=state.savedRows.filter(r=>r.st==='received');const count=parseInt(document.getElementById('ali_open_count').value)||list.length;const toD=list.slice(0,count);
       if(!toD.length){showToast('لا توجد سجلات مطابقة','warning');return}
@@ -203,11 +281,10 @@
       const btn=document.getElementById('ali_btn_deliver_silent');btn.disabled=true;btn.style.opacity='0.7';
       let sc=0;const dUrl=window.location.origin+'/ez_pill_web/getEZPill_Details/updatetoDeliver';
       for(let i=0;i<toD.length;i++){const it=toD[i];btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري (${i+1}/${toD.length})...`;
-        try{const params=new URLSearchParams();params.append('invoice_num',it.id);params.append('patienName',it.guestName);params.append('mobile',it.guestMobile);const r=await fetch(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});if(r.ok){sc++;it.st='processed';const rowEl=document.getElementById('row_'+it.id);if(rowEl){rowEl.style.background='rgba(0,0,0,0.03)';rowEl.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl)stEl.innerText='processed'}}}catch(e){console.warn('فشل:',it.id,e)}updateStats();await sleep(150)}
+        try{const params=new URLSearchParams();params.append('invoice_num',it.id);params.append('patienName',it.guestName);params.append('mobile',it.guestMobile);const r=await fetch(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});if(r.ok){sc++;it.st='processed';if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl)stEl.innerText='processed'}}}catch(e){console.warn('فشل:',it.id,e)}updateStats();await sleep(150)}
       await showDialog({icon:'🎉',title:'اكتمل التنفيذ',desc:'تم معالجة أوامر التسليم بنجاح',badges:[{text:'✅ نجح: '+sc,active:true},{text:'❌ فشل: '+(toD.length-sc),active:(toD.length-sc)>0}],info:[{label:'تم تسليمه',value:sc,color:IOS.success},{label:'من إجمالي',value:toD.length,color:IOS.accent}],buttons:[{text:'👍 تمام',value:'ok',primary:true}]});
       showToast(`تم تنفيذ ${sc} سجل`,'success');btn.innerHTML='✅ اكتمل التنفيذ';btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false});
 
-    // Export
     document.getElementById('ali_btn_export').addEventListener('click',async()=>{
       const ri=sI.value.trim(); const os=sO.value.trim().toLowerCase(); const hf=ri!==''||os!=='';
       const targetList=hf?cm:state.savedRows;
@@ -217,7 +294,6 @@
       if(res.action!=='confirm')return;
       const nf=Math.ceil(pr.length/MAX_PER_FILE);for(let i=0;i<nf;i++){const chunk=pr.slice(i*MAX_PER_FILE,Math.min((i+1)*MAX_PER_FILE,pr.length));const content=chunk.map(r=>r.onl).join('\n');const blob=new Blob([content],{type:'text/plain'});const url=URL.createObjectURL(blob);setTimeout(()=>{const a=document.createElement('a');a.href=url;a.download='Data_Export_'+(i+1)+'.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},i*500)}showToast(`تم تصدير ${nf} ملف`,'success')});
 
-    // Sync
     document.getElementById('ali_btn_sync').addEventListener('click',async function(){
       if(state.isProcessing){showToast('العملية جارية — انتظر!','warning');return}
       const sb=this;const oc=state.savedRows.length;
