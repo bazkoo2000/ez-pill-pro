@@ -1,4 +1,4 @@
-javascript:(function(){
+(function(){
   'use strict';
   const PANEL_ID='ali_sys_v5';const VERSION='5.4';
   if(document.getElementById(PANEL_ID)){document.getElementById(PANEL_ID).remove();return}
