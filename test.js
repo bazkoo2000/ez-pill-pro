@@ -28,7 +28,8 @@
     });
   }
 
-  const styleEl=document.createElement('style');styleEl.innerHTML=`
+  const styleEl=document.createElement('style');styleEl.id='ali-pro-css';
+  styleEl.innerHTML=`
     @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.97)}to{opacity:1;transform:translateX(0) scale(1)}}
     @keyframes aliPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
     @keyframes aliSpin{to{transform:rotate(360deg)}}
@@ -37,17 +38,30 @@
     @keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
     @keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}
     @keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}
-    #${PANEL_ID}{position:fixed;top:14px;right:14px;width:400px;max-height:92vh;background:${IOS.bg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:22px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);z-index:999999;font-family:${IOS.font};direction:rtl;color:${IOS.text};overflow:hidden;transition:all 0.4s;animation:aliSlideIn 0.5s cubic-bezier(0.16,1,0.3,1)}
+    #${PANEL_ID}{position:fixed;top:14px;right:14px;width:380px;max-height:92vh;background:${IOS.bg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:22px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);z-index:9999999;font-family:${IOS.font};direction:rtl;color:${IOS.text};overflow:hidden;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.5s cubic-bezier(0.16,1,0.3,1)}
     #${PANEL_ID}.ali-minimized{width:56px!important;height:56px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;box-shadow:0 8px 24px rgba(99,102,241,0.3)!important;animation:aliPulse 2s infinite;overflow:hidden}
     #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
     #${PANEL_ID}.ali-minimized::after{content:"📝";font-size:22px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    #${PANEL_ID} .ios-grp{background:${IOS.card};border-radius:14px;overflow:hidden;box-shadow:${IOS.shadow};margin-bottom:12px}
+    #${PANEL_ID} .ios-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:0.5px solid #f3f4f6;transition:background 0.15s}
+    #${PANEL_ID} .ios-item:last-child{border-bottom:none}
+    #${PANEL_ID} .ios-item:hover{background:#f9fafb}
+    #${PANEL_ID} .ios-btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:14px;font-family:${IOS.font};transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+    #${PANEL_ID} .ios-btn:active{transform:scale(0.98);opacity:0.9}
+    #${PANEL_ID} .ios-primary{background:${IOS.accent};color:white}
+    #${PANEL_ID} .ios-success{background:${IOS.success};color:white}
+    #${PANEL_ID} .ios-error{background:${IOS.error};color:white}
+    #${PANEL_ID} .ios-warn{background:${IOS.warn};color:white}
+    #${PANEL_ID} .ios-ghost{background:rgba(0,0,0,0.03);color:${IOS.muted}}
+    #${PANEL_ID} .ios-input{width:100%;padding:12px 16px;border:none;border-radius:12px;font-size:14px;font-family:${IOS.font};outline:none;background:rgba(0,0,0,0.03);color:${IOS.text};transition:all 0.2s;font-weight:600;box-sizing:border-box}
+    #${PANEL_ID} .ios-input:focus{background:rgba(99,102,241,0.04);box-shadow:0 0 0 2px rgba(99,102,241,0.15)}
+    #${PANEL_ID} .ios-input.match{background:rgba(34,197,94,0.04);box-shadow:0 0 0 2px rgba(34,197,94,0.15)}
+    #${PANEL_ID} .ios-input.nomatch{background:rgba(239,68,68,0.04);box-shadow:0 0 0 2px rgba(239,68,68,0.15)}
     .fast-row{border-bottom:0.5px solid #f3f4f6;transition:background 0.15s}
     .fast-row:hover{background:#f9fafb}
     .ali-link{color:${IOS.accent};text-decoration:underline;font-weight:bold;cursor:pointer}
-    .ios-input:focus{background:rgba(99,102,241,0.04);box-shadow:0 0 0 2px rgba(99,102,241,0.15)}
-    .ios-input.match{background:rgba(34,197,94,0.04);box-shadow:0 0 0 2px rgba(34,197,94,0.15)}
-    .ios-input.nomatch{background:rgba(239,68,68,0.04);box-shadow:0 0 0 2px rgba(239,68,68,0.15)}
-  `;document.head.appendChild(styleEl);
+  `;
+  document.head.appendChild(styleEl);
 
   const panel=document.createElement('div');panel.id=PANEL_ID;
   panel.innerHTML=`<div class="ali-inner">
@@ -63,20 +77,20 @@
     </div>
     <div style="padding:10px 16px;overflow-y:auto;max-height:calc(92vh - 60px)" id="ali_body">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
-        <div style="background:${IOS.card};border-radius:14px;padding:10px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:16px;margin-bottom:3px">📥</div><div id="stat_rec" style="font-size:20px;font-weight:900;color:#22c55e">0</div><div style="font-size:8px;color:${IOS.muted};font-weight:700">Received</div></div>
-        <div style="background:${IOS.card};border-radius:14px;padding:10px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:16px;margin-bottom:3px">📦</div><div id="stat_pack" style="font-size:20px;font-weight:900;color:#f59e0b">0</div><div style="font-size:8px;color:${IOS.muted};font-weight:700">Packed</div></div>
-        <div style="background:${IOS.card};border-radius:14px;padding:10px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:16px;margin-bottom:3px">✅</div><div id="stat_done" style="font-size:20px;font-weight:900;color:#3b82f6">0</div><div style="font-size:8px;color:${IOS.muted};font-weight:700">المنجز</div></div>
-        <div style="background:${IOS.card};border-radius:14px;padding:10px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:16px;margin-bottom:3px">📊</div><div id="stat_total" style="font-size:20px;font-weight:900;color:#8b5cf6">0</div><div style="font-size:8px;color:${IOS.muted};font-weight:700">إجمالي</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📥</div><div id="stat_rec" style="font-size:20px;font-weight:900;color:#22c55e">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">Received</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📦</div><div id="stat_pack" style="font-size:20px;font-weight:900;color:#f59e0b">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">Packed</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">✅</div><div id="stat_done" style="font-size:20px;font-weight:900;color:#3b82f6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">المنجز</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📊</div><div id="stat_total" style="font-size:20px;font-weight:900;color:#8b5cf6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">إجمالي</div></div>
       </div>
-      <div style="background:${IOS.card};border-radius:14px;padding:14px 16px;box-shadow:${IOS.shadow};margin-bottom:12px">
+      <div class="ios-grp" style="padding:14px 16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="font-size:13px;font-weight:700">📄 نطاق الفحص</span>
-          <input type="number" id="p_lim" value="${defaultPages}" min="1" style="width:60px;padding:8px;border:none;border-radius:10px;text-align:center;font-size:15px;font-weight:900;color:${IOS.accent};background:rgba(0,0,0,0.03);outline:none;font-family:${IOS.font}">
+          <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:${IOS.muted};font-weight:600">صفحة</span><input type="number" id="p_lim" value="${defaultPages}" min="1" class="ios-input" style="width:60px;padding:8px;text-align:center;font-size:15px;font-weight:900;color:${IOS.accent}"></div>
         </div>
         <div style="height:6px;background:rgba(0,0,0,0.04);border-radius:6px;overflow:hidden"><div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:6px;transition:width 0.2s"></div></div>
       </div>
       <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.06);color:#22c55e"><span>✅</span><span>النظام في وضع الاستعداد</span></div>
-      <div id="ali_dynamic_area"><button id="ali_start" style="width:100%;padding:16px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:15px;font-family:${IOS.font};background:${IOS.accent};color:white;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s">🚀 بدء عملية البحث والاستعلام</button></div>
+      <div id="ali_dynamic_area"><button id="ali_start" class="ios-btn ios-primary" style="font-size:15px;padding:16px">🚀 بدء عملية البحث والاستعلام</button></div>
       <div style="text-align:center;padding:12px 0 4px;font-size:9px;color:${IOS.muted};font-weight:700;letter-spacing:0.5px">DEVELOPED BY على الباز</div>
     </div>
   </div>`;
@@ -103,25 +117,29 @@
     const da=document.getElementById('ali_dynamic_area');
     da.innerHTML=`
       <div style="background:rgba(99,102,241,0.06);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:${IOS.accent};font-weight:700;text-align:center">✅ تم تفعيل الروابط المباشرة لفتح تفاصيل الطلبات</div>
-      <div style="background:${IOS.card};border-radius:14px;padding:14px 16px;box-shadow:${IOS.shadow};margin-bottom:10px">
+      
+      <div class="ios-grp" style="padding:14px 16px">
         <div style="position:relative;margin-bottom:8px">
           <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:900;color:${IOS.muted};pointer-events:none;font-family:monospace">0</span>
-          <input type="text" id="ali_sI" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="width:100%;padding:12px 16px;padding-left:30px;border:none;border-radius:12px;font-size:14px;font-family:${IOS.font};outline:none;background:rgba(0,0,0,0.03);color:${IOS.text};transition:all 0.2s;font-weight:600;box-sizing:border-box;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace">
+          <input type="text" id="ali_sI" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="padding-left:30px;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace">
         </div>
         <div style="position:relative">
           <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none">🔗</span>
-          <input type="text" id="ali_sO" class="ios-input" placeholder="بحث برقم الطلب (ERX)..." style="width:100%;padding:12px 16px;padding-right:36px;border:none;border-radius:12px;font-size:14px;font-family:${IOS.font};outline:none;background:rgba(0,0,0,0.03);color:${IOS.text};transition:all 0.2s;font-weight:600;box-sizing:border-box;direction:rtl">
+          <input type="text" id="ali_sO" class="ios-input" placeholder="بحث برقم الطلب (ERX)..." style="padding-right:36px;direction:rtl">
         </div>
       </div>
+      
       <div id="ali_search_count" style="font-size:11px;color:${IOS.muted};text-align:center;font-weight:600;padding:2px 0 10px">عرض ${state.savedRows.length} من ${state.savedRows.length} نتيجة</div>
-      <button id="ali_btn_open" style="width:100%;padding:14px;border:none;border-radius:12px;cursor:not-allowed;font-weight:800;font-size:14px;font-family:${IOS.font};background:${IOS.success};color:white;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;margin-bottom:8px;opacity:0.7">⚡ ابحث أولاً ثم افتح المطابق</button>
-      <div style="background:${IOS.card};border-radius:14px;padding:14px 16px;box-shadow:${IOS.shadow};margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+      <button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button>
+      
+      <div class="ios-grp" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700">الطلبات القابلة للتسليم:</span>
-        <input type="number" id="ali_open_count" value="${recCount}" style="width:56px;padding:8px;border:none;border-radius:10px;text-align:center;font-size:16px;font-weight:900;color:${IOS.error};background:rgba(0,0,0,0.03);outline:none;font-family:${IOS.font}" onfocus="this.value=''">
+        <input type="number" id="ali_open_count" value="${recCount}" class="ios-input" style="width:60px;padding:8px;text-align:center;font-size:15px;font-weight:900;color:${IOS.error}" onfocus="this.value=''">
       </div>
-      <button id="ali_btn_deliver_silent" style="width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:14px;font-family:${IOS.font};background:${IOS.error};color:white;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;margin-bottom:8px">📝 تنفيذ أوامر التسليم (Received)</button>
-      <button id="ali_btn_export" style="width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:14px;font-family:${IOS.font};background:${IOS.warn};color:white;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;margin-bottom:8px">📦 تصدير بيانات الطلبات (Packed)</button>
-      <button id="ali_btn_sync" style="width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-weight:700;font-size:13px;font-family:${IOS.font};background:rgba(0,0,0,0.03);color:${IOS.muted};display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s">🔄 إعادة فحص البيانات</button>`;
+      
+      <button id="ali_btn_deliver_silent" class="ios-btn ios-error" style="margin-bottom:8px">📝 تنفيذ أوامر التسليم (Received)</button>
+      <button id="ali_btn_export" class="ios-btn ios-warn" style="margin-bottom:8px">📦 تصدير بيانات الطلبات (Packed)</button>
+      <button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 إعادة فحص البيانات</button>`;
 
     // Search Logic
     const sI=document.getElementById('ali_sI'), sO=document.getElementById('ali_sO'), sc=document.getElementById('ali_search_count'), ob=document.getElementById('ali_btn_open');
