@@ -558,7 +558,7 @@ function ramadanMapNote(note){
   /* قبل الأكل / before meal → قبل الفطار */
   if(/قبل\s*(الاكل|الأكل|الوجبات)|before\s*(meal|food)|ac\b/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد الأكل / after meal → بعد الفطار */
-  if(/بعد\s*(الاكل|الأكل|الوجبات)|after\s*(meal|food)|pc\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  if(/بعد\s*(الاكل|الأكل|الوجبات)|مع\s*(الاكل|الأكل|الوجبات)|after\s*(meal|food)|with\s*(meal|food)|pc\b/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
   return null;
 }
 
@@ -2752,7 +2752,7 @@ function smartDoseRecognizer(note){
   if(/بعد\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*بعد\s*(الاكل|الاكل)|after\s*meals?\s*twice/i.test(s)){res.count=2;return res;}
 
   if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;res.isBefore=true;return res;}
-  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
+  if(/(^|\s)(بعد\s*(الاكل|الأكل|الوجبه?)|مع\s*(الاكل|الأكل|الوجبه?)|after\s*(meal|food)\b|with\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
   if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
 
   /* ── Step 5: Count from detected meal/time keywords ── */
@@ -2795,7 +2795,7 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'}];
+  var rules=[{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار|مع.*فطر|مع.*فطار|مع.*فطور|مع.*افطار|مع.*اكل|مع.*أكل|with.*meal|with.*food|with.*breakfast/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
