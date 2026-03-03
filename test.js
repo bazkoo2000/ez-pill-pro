@@ -14,8 +14,8 @@ javascript:(function(){
   const style=d.createElement('style');style.id='baz-style';
   style.innerHTML=`
     #baz-ui,#baz-ui *{box-sizing:border-box;margin:0;padding:0}
-    #baz-ui{position:fixed;width:420px;max-width:96vw;background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);z-index:999999;border-radius:22px;direction:rtl;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Cairo,Helvetica,sans-serif;max-height:88vh;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);overflow:hidden}
-    #baz-ui.minimized #baz-body{display:none}#baz-ui.minimized{max-height:unset}
+    #baz-ui{position:fixed;width:460px;max-width:96vw;background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);z-index:999999;border-radius:22px;direction:rtl;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Cairo,Helvetica,sans-serif;max-height:88vh;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);overflow:hidden}
+    #baz-ui.minimized #baz-body{display:none}#baz-ui.minimized{max-height:unset;width:420px}
     #baz-ui #baz-header{padding:14px 20px 6px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;flex-shrink:0}
     #baz-ui #baz-header:active{cursor:grabbing}
     #baz-ui .hdr-left{display:flex;align-items:center;gap:10px}
@@ -59,22 +59,26 @@ javascript:(function(){
     #baz-ui .btn-open{background:#6366f1;color:white;padding:8px 16px;border:none;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
     #baz-ui .btn-open:active{transform:scale(0.98);opacity:0.9}
     #baz-ui #baz-cards{display:flex;flex-direction:column;gap:8px}
-    #baz-ui .result-card{background:#fff;border-radius:14px;padding:12px 14px;transition:all .15s;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}
-    #baz-ui .result-card::before{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;border-radius:0 14px 14px 0;background:var(--card-color,#6366f1)}
+    
+    /* تعديلات الكروت وعرض البيانات الكاملة */
+    #baz-ui .result-card{background:#fff;border-radius:14px;padding:14px 16px;transition:all .15s;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}
+    #baz-ui .result-card::before{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;border-radius:0 14px 14px 0;background:var(--card-color,#6366f1)}
     #baz-ui .result-card:hover{background:#f9fafb;transform:translateX(-2px)}
     #baz-ui .result-card.opened{opacity:0.35}
-    #baz-ui .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    #baz-ui .card-order{font-size:13px;font-weight:800;color:#1f2937}
-    #baz-ui .card-status{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(99,102,241,0.06);color:var(--card-color,#6366f1)}
-    #baz-ui .card-info{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-    #baz-ui .info-item{display:flex;flex-direction:column;gap:2px}
-    #baz-ui .info-lbl{font-size:10px;color:#d1d5db;font-weight:600}
-    #baz-ui .info-val{font-size:12px;color:#6b7280;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    #baz-ui .card-bottom{display:flex;justify-content:space-between;align-items:center}
-    #baz-ui .card-invoice{font-size:11px;color:#d1d5db;font-family:monospace}
-    #baz-ui .card-open-btn{text-decoration:none;background:rgba(99,102,241,0.06);color:#6366f1;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;transition:all .15s;font-family:inherit}
-    #baz-ui .card-open-btn:hover{background:#6366f1;color:white}
-    #baz-ui .card-opened-lbl{font-size:11px;color:#d1d5db}
+    #baz-ui .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.04)}
+    #baz-ui .card-idx{background:rgba(99,102,241,0.08);color:#6366f1;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:800;margin-left:8px}
+    #baz-ui .card-order{font-size:14px;font-weight:800;color:#1f2937}
+    #baz-ui .card-status{font-size:10px;font-weight:800;padding:4px 10px;border-radius:8px;background:rgba(99,102,241,0.06);color:var(--card-color,#6366f1);letter-spacing:0.3px}
+    #baz-ui .card-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    #baz-ui .info-item{display:flex;flex-direction:column;gap:3px}
+    #baz-ui .info-lbl{font-size:10px;color:#9ca3af;font-weight:700}
+    #baz-ui .info-val{font-size:13px;color:#374151;font-weight:800;line-height:1.4;word-break:break-word}
+    #baz-ui .card-bottom{display:flex;justify-content:space-between;align-items:flex-end;padding-top:10px;border-top:1px dashed rgba(0,0,0,0.06)}
+    #baz-ui .card-invoice{font-size:11px;color:#6b7280;font-weight:700;font-family:monospace;letter-spacing:0.5px}
+    #baz-ui .card-date{font-size:10px;color:#9ca3af;font-weight:600;margin-top:4px}
+    #baz-ui .card-open-btn{text-decoration:none;background:rgba(99,102,241,0.08);color:#6366f1;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;transition:all .15s;font-family:inherit}
+    #baz-ui .card-open-btn:hover{background:#6366f1;color:white;box-shadow:0 4px 12px rgba(99,102,241,0.2)}
+    #baz-ui .card-opened-lbl{font-size:11px;color:#9ca3af;font-weight:700;padding:8px 0}
     #baz-ui .empty-state{text-align:center;padding:32px 20px;color:#d1d5db}
     #baz-ui .empty-icon{font-size:32px;margin-bottom:8px}
     #baz-ui .empty-text{font-size:13px;font-weight:600}
@@ -85,7 +89,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14 — Lightning & Unified ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.3 — Full Data & Lightning ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -139,12 +143,37 @@ javascript:(function(){
   const setLoading=(on)=>{d.getElementById('baz-spinner').style.display=on?'block':'none';d.getElementById('baz-run-all').disabled=on;const cb=d.getElementById('baz-cancel');cb.style.display=on?'flex':'none'};
   const updateOpenPanel=()=>{const rem=links.filter(l=>!openedLinks.has(l.key));d.getElementById('stat-total').textContent=links.length;d.getElementById('stat-opened').textContent=openedLinks.size;d.getElementById('stat-remain').textContent=rem.length;const ce=d.getElementById('baz-open-count');ce.max=rem.length;ce.value=Math.min(parseInt(ce.value)||10,rem.length||1)};
 
-  const addCard=(item,info)=>{
+  const addCard=(item,info,index)=>{
     const url=BASE_URL+`getEZPill_Details?onlineNumber=${encodeURIComponent((item.onlineNumber||'').replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(item.Invoice||'')}&typee=${encodeURIComponent(item.typee||'')}&head_id=${encodeURIComponent(item.head_id||'')}`;
     links.push({url,key:(item.Invoice||'')+':'+(item.onlineNumber||'')});
-    const card=d.createElement('div');card.className='result-card';card.id='card-'+links.length;card.style.setProperty('--card-color',info.color);
-    card.innerHTML=`<div class="card-top"><span class="card-order">${esc(item.onlineNumber||'—')}</span><span class="card-status" style="background:${info.color}15; color:${info.color}">${esc(info.label)}</span></div><div class="card-info"><div class="info-item"><span class="info-lbl">الضيف</span><span class="info-val">${esc(item.guestName||'—')}</span></div><div class="info-item"><span class="info-lbl">الموبايل</span><span class="info-val">${esc(item.guestMobile||item.mobile||'—')}</span></div></div><div class="card-bottom"><span class="card-invoice">${esc(item.Invoice||'')}</span><a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a></div>`;
-    d.getElementById('baz-cards').appendChild(card)};
+    const card=d.createElement('div');card.className='result-card';card.id='card-'+links.length;
+    card.style.setProperty('--card-color',info.color);
+    
+    // تنسيق التاريخ والوقت ليظهر بشكل جميل
+    let dateStr = item.created_at || item.Created_Time || item.createdAt || item.date || '—';
+    
+    card.innerHTML=`
+      <div class="card-top">
+        <div style="display:flex; align-items:center;">
+          <span class="card-idx">#${index}</span>
+          <span class="card-order">${esc(item.onlineNumber||'—')}</span>
+        </div>
+        <span class="card-status" style="background:${info.color}15; color:${info.color}">${esc(info.label)}</span>
+      </div>
+      <div class="card-info">
+        <div class="info-item"><span class="info-lbl">الضيف</span><span class="info-val">${esc(item.guestName||'—')}</span></div>
+        <div class="info-item"><span class="info-lbl">الموبايل</span><span class="info-val" style="direction:ltr; text-align:right">${esc(item.guestMobile||item.mobile||'—')}</span></div>
+      </div>
+      <div class="card-bottom">
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <span class="card-invoice" title="رقم الفاتورة">🧾 ${esc(item.Invoice||'—')}</span>
+          <span class="card-date" title="تاريخ ووقت الإنشاء">🕒 ${esc(dateStr)}</span>
+        </div>
+        <a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a>
+      </div>
+    `;
+    d.getElementById('baz-cards').appendChild(card);
+  };
 
   const runSearch=async(statusKeys)=>{
     const q=getQuery();const searchValue=getSearchValue(q);const st=d.getElementById('baz-st');const cards=d.getElementById('baz-cards');const panel=d.getElementById('baz-open-panel');
@@ -153,6 +182,8 @@ javascript:(function(){
     let count=0;let seen=new Set();
     
     st.innerHTML=`جاري البحث <b>بسرعة البرق...</b> ⚡`;
+
+    let allResults = [];
 
     const fetchPromises = statusKeys.map(async (status) => {
       if(cancelSearch) return;
@@ -178,7 +209,6 @@ javascript:(function(){
             seen.add(key);
             count++;
 
-            // استخراج الحالة الحقيقية من بيانات الطلب
             let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
             if(!raw) {
               let cs = JSON.stringify(item).toLowerCase();
@@ -196,7 +226,7 @@ javascript:(function(){
             else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
             else if(raw.includes('new')) actualInfo = STATUSES['new'];
 
-            addCard(item, actualInfo);
+            allResults.push({ item: item, info: actualInfo });
           });
         }
       } catch(err) {
@@ -205,6 +235,28 @@ javascript:(function(){
     });
 
     await Promise.all(fetchPromises);
+
+    // الترتيب من الأقدم إلى الأحدث
+    allResults.sort((a, b) => {
+      const getMs = (obj) => {
+        let s = obj.created_at || obj.Created_Time || obj.createdAt || obj.date || '';
+        if(!s) return 0;
+        let t = new Date(s).getTime();
+        if(!isNaN(t)) return t;
+        let parts = s.split('|');
+        if(parts.length === 2) {
+          t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
+          if(!isNaN(t)) return t;
+        }
+        return 0;
+      };
+      return getMs(a.item) - getMs(b.item);
+    });
+
+    // طباعة الطلبات بعد الترتيب مع إعطائها رقم تسلسلي
+    allResults.forEach((res, index) => {
+      addCard(res.item, res.info, index + 1);
+    });
 
     setLoading(false);
     if(cancelSearch){st.innerHTML=`<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`}
