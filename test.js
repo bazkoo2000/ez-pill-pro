@@ -522,6 +522,12 @@ function ramadanMapNote(note){
   }
 
   /* ── CRITICAL: Check Suhoor BEFORE dinner mapping ── */
+  /* ── "مع" = "بعد" unified logic (مع الوجبة = بعد الوجبة) ── */
+  if(/مع\s*(ال)?(سحور|سحر)/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  if(/مع\s*(ال)?(فطار|فطور|افطار)/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  if(/مع\s*(ال)?(عشا|عشاء)/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  if(/مع\s*(ال)?(غدا|غداء|غذا|غذاء)/i.test(note)) return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
+  if(/مع\s*(ال)?(اكل|أكل|وجب)/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
   /* قبل السحور / before suhoor */
   if(/قبل.*سحور|قبل.*سحر|before.*suhoor|before.*sahoor|before.*sahor/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
   /* بعد السحور / after suhoor */
@@ -3146,7 +3152,18 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         /* SMART FALLBACK: try multiple methods to understand the note */
         if(!noteMapR){
           var twResult=getTimeFromWords(fn_str);
-          if(twResult && twResult.time!==NORMAL_TIMES.defaultTime){
+          /* CRITICAL FIX: Check explicit Ramadan meal keywords BEFORE hour-based mapping.
+             فطار = iftar (19:00) NOT breakfast→suhoor. سحور = suhoor (04:00) NOT dinner→iftar. */
+          var _exFutur2=/فطار|فطور|افطار|iftar|breakfast/i.test(fn_str);
+          var _exSuhoor2=/سحور|سحر|suhoor|sahoor/i.test(fn_str);
+          var _exDinner2=/عشا|عشاء|dinner|asha/i.test(fn_str);
+          if(_exSuhoor2){
+            noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+          } else if(_exFutur2){
+            noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+          } else if(_exDinner2){
+            noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+          } else if(twResult && twResult.time!==NORMAL_TIMES.defaultTime){
             var h2=parseInt(twResult.time.split(':')[0]);
             var meal2,lbl_ar2,lbl_en2,tm2;
             if(h2>=5&&h2<10){meal2='afterSuhoor';lbl_ar2='بعد السحور';lbl_en2='After Suhoor';tm2=RAMADAN_TIMES.afterSuhoor;}
@@ -3158,7 +3175,14 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           }
         }
         if(!noteMapR && (doseRec.hasB||doseRec.hasL||doseRec.hasD||doseRec.hasM||doseRec.hasN||doseRec.hasA||doseRec.hasE||doseRec.hasBed||doseRec.hasEmpty)){
-          if(doseRec.hasB||doseRec.hasM||doseRec.hasEmpty) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+          /* CRITICAL FIX: Check explicit Ramadan keywords before generic hasB/hasD mapping */
+          var _hasExplicitFutur=/فطار|فطور|افطار|iftar|breakfast/i.test(fn_str);
+          var _hasExplicitSuhoor=/سحور|سحر|suhoor|sahoor/i.test(fn_str);
+          var _hasExplicitDinner=/عشا|عشاء|dinner|asha/i.test(fn_str);
+          if(_hasExplicitSuhoor) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+          else if(_hasExplicitFutur) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+          else if(_hasExplicitDinner) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+          else if(doseRec.hasB||doseRec.hasM||doseRec.hasEmpty) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
           else if(doseRec.hasL||doseRec.hasN||doseRec.hasA) noteMapR={meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
           else if(doseRec.hasD||doseRec.hasE) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
           else if(doseRec.hasBed) noteMapR={meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
