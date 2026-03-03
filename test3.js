@@ -85,7 +85,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14 — Lightning & Unified ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.1 — Sorted & Unified ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -97,8 +97,7 @@ javascript:(function(){
         <div class="fields-grid">
           <div class="field-group"><span class="field-label">رقم الفاتورة</span><div class="field-row"><input class="baz-input" id="f-invoice" placeholder="INV-12345"></div></div>
           <div class="field-group"><span class="field-label">رقم الطلب</span><div class="field-row"><span class="field-prefix">ERX</span><input class="baz-input" id="f-order" placeholder="أرقام فقط"></div></div>
-          <div class="field-group"><span class="field-label">اسم الضيف</span><div class="field-row"><input class="baz-input" id="f-name" placeholder="اسم العميل"></div></div>
-          <div class="field-group"><span class="field-label">موبايل الضيف</span><div class="field-row"><input class="baz-input" id="f-mobile" placeholder="05xxxxxxxx"></div></div>
+          <div class="field-group" style="grid-column: 1 / -1;"><span class="field-label">موبايل الضيف</span><div class="field-row"><input class="baz-input" id="f-mobile" placeholder="05xxxxxxxx"></div></div>
         </div>
         <div style="display:flex; gap:8px;" id="baz-btn-grid">
           <button id="baz-run-all" class="baz-btn btn-ready" style="flex:1; font-size:14px; padding:12px;">🔍 بحث شامل في كل الحالات</button>
@@ -123,8 +122,20 @@ javascript:(function(){
   d.addEventListener('mousemove',(e)=>{if(!isDragging)return;let x=Math.max(0,Math.min(window.innerWidth-ui.offsetWidth,e.clientX-dragX));let y=Math.max(0,Math.min(window.innerHeight-ui.offsetHeight,e.clientY-dragY));ui.style.left=x+'px';ui.style.top=y+'px'});
   d.addEventListener('mouseup',()=>{isDragging=false});
 
-  const getQuery=()=>({inv:d.getElementById('f-invoice').value.trim(),ord:d.getElementById('f-order').value.trim(),name:d.getElementById('f-name').value.trim(),mob:d.getElementById('f-mobile').value.trim()});
-  const getSearchValue=(q)=>q.mob||q.inv||q.ord||q.name||'';
+  const getQuery=()=>{
+    let ord = d.getElementById('f-order').value.trim();
+    if(ord) {
+      ord = ord.replace(/^ERX/i, '');
+      ord = 'ERX' + ord;
+    }
+    return {
+      inv: d.getElementById('f-invoice').value.trim(),
+      ord: ord,
+      mob: d.getElementById('f-mobile').value.trim()
+    };
+  };
+
+  const getSearchValue=(q)=>q.mob||q.inv||q.ord||'';
   const setLoading=(on)=>{d.getElementById('baz-spinner').style.display=on?'block':'none';d.getElementById('baz-run-all').disabled=on;const cb=d.getElementById('baz-cancel');cb.style.display=on?'flex':'none'};
   const updateOpenPanel=()=>{const rem=links.filter(l=>!openedLinks.has(l.key));d.getElementById('stat-total').textContent=links.length;d.getElementById('stat-opened').textContent=openedLinks.size;d.getElementById('stat-remain').textContent=rem.length;const ce=d.getElementById('baz-open-count');ce.max=rem.length;ce.value=Math.min(parseInt(ce.value)||10,rem.length||1)};
 
@@ -142,6 +153,8 @@ javascript:(function(){
     let count=0;let seen=new Set();
     
     st.innerHTML=`جاري البحث <b>بسرعة البرق...</b> ⚡`;
+
+    let allResults = []; // لتخزين النتائج بهدف ترتيبها
 
     const fetchPromises = statusKeys.map(async (status) => {
       if(cancelSearch) return;
@@ -166,7 +179,26 @@ javascript:(function(){
             if (seen.has(key)) return;
             seen.add(key);
             count++;
-            addCard(item, info);
+
+            let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+            if(!raw) {
+              let cs = JSON.stringify(item).toLowerCase();
+              if(cs.includes('"delivered"')) raw = 'delivered';
+              else if(cs.includes('"packed"')) raw = 'packed';
+              else if(cs.includes('"ready to pack"') || cs.includes('"received"')) raw = 'readypack';
+              else if(cs.includes('"cancelled"')) raw = 'cancelled';
+              else if(cs.includes('"new"')) raw = 'new';
+            }
+            
+            let actualInfo = info;
+            if(raw.includes('delivered')) actualInfo = STATUSES['delivered'];
+            else if(raw.includes('packed')) actualInfo = STATUSES['packed'];
+            else if(raw.includes('ready') || raw.includes('received')) actualInfo = STATUSES['readypack'];
+            else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
+            else if(raw.includes('new')) actualInfo = STATUSES['new'];
+
+            // إضافة الطلب إلى المصفوفة بدلاً من طباعته مباشرة
+            allResults.push({ item: item, info: actualInfo });
           });
         }
       } catch(err) {
@@ -175,6 +207,28 @@ javascript:(function(){
     });
 
     await Promise.all(fetchPromises);
+
+    // ترتيب الطلبات من الأقدم إلى الأحدث 
+    allResults.sort((a, b) => {
+      const getMs = (obj) => {
+        let s = obj.created_at || obj.Created_Time || obj.createdAt || obj.date || '';
+        if(!s) return 0;
+        let t = new Date(s).getTime();
+        if(!isNaN(t)) return t;
+        let parts = s.split('|');
+        if(parts.length === 2) {
+          t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
+          if(!isNaN(t)) return t;
+        }
+        return 0;
+      };
+      return getMs(a.item) - getMs(b.item);
+    });
+
+    // طباعة الطلبات بعد ترتيبها
+    allResults.forEach(res => {
+      addCard(res.item, res.info);
+    });
 
     setLoading(false);
     if(cancelSearch){st.innerHTML=`<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`}
@@ -194,7 +248,6 @@ javascript:(function(){
   d.getElementById('baz-min').onclick=()=>{isMinimized=!isMinimized;ui.classList.toggle('minimized',isMinimized);d.getElementById('baz-min').innerHTML=isMinimized?'+':'−'};
   d.getElementById('baz-close').onclick=()=>{ui.remove();d.getElementById('baz-style')&&d.getElementById('baz-style').remove()};
   
-  // زر البحث الشامل يشمل الـ 5 حالات
   d.getElementById('baz-run-all').onclick=()=>runSearch(['new', 'readypack', 'packed', 'delivered', 'cancelled']);
   d.getElementById('baz-cancel').onclick=()=>{cancelSearch=true};
   d.getElementById('baz-do-open').onclick=openResults;
