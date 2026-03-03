@@ -58,16 +58,20 @@ javascript:(function(){
     #baz-ui .open-count-input:focus{box-shadow:0 0 0 2px rgba(99,102,241,0.15)}
     #baz-ui .btn-open{background:#6366f1;color:white;padding:8px 16px;border:none;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
     #baz-ui .btn-open:active{transform:scale(0.98);opacity:0.9}
-    #baz-ui #baz-cards{display:flex;flex-direction:column;gap:8px}
     
-    /* تعديلات الكروت لعرض البيانات الكاملة */
+    /* CSS Order Counter */
+    #baz-ui #baz-cards{display:flex;flex-direction:column;gap:8px; counter-reset: baz-counter;}
+    
     #baz-ui .result-card{background:#fff;border-radius:14px;padding:14px 16px;transition:all .15s;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}
     #baz-ui .result-card::before{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;border-radius:0 14px 14px 0;background:var(--card-color,#6366f1)}
     #baz-ui .result-card:hover{background:#f9fafb;transform:translateX(-2px)}
     #baz-ui .result-card.opened{opacity:0.35}
     #baz-ui .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.04)}
+    
+    #baz-ui .card-idx::after { counter-increment: baz-counter; content: "#" counter(baz-counter); }
     #baz-ui .card-idx{background:rgba(99,102,241,0.08);color:#6366f1;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:800;margin-left:8px}
-    #baz-ui .card-order{font-size:14px;font-weight:800;color:#1f2937}
+    
+    #baz-ui .card-order{font-size:14px;font-weight:800;color:#1f2937;font-family:monospace;}
     #baz-ui .card-status{font-size:10px;font-weight:800;padding:4px 10px;border-radius:8px;background:rgba(99,102,241,0.06);color:var(--card-color,#6366f1);letter-spacing:0.3px}
     #baz-ui .card-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
     #baz-ui .info-item{display:flex;flex-direction:column;gap:3px}
@@ -89,7 +93,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.4 — Flawless Data ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v15.1 — Pure Speed & Sorted ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -143,37 +147,27 @@ javascript:(function(){
   const setLoading=(on)=>{d.getElementById('baz-spinner').style.display=on?'block':'none';d.getElementById('baz-run-all').disabled=on;const cb=d.getElementById('baz-cancel');cb.style.display=on?'flex':'none'};
   const updateOpenPanel=()=>{const rem=links.filter(l=>!openedLinks.has(l.key));d.getElementById('stat-total').textContent=links.length;d.getElementById('stat-opened').textContent=openedLinks.size;d.getElementById('stat-remain').textContent=rem.length;const ce=d.getElementById('baz-open-count');ce.max=rem.length;ce.value=Math.min(parseInt(ce.value)||10,rem.length||1)};
 
-  // دالة الاستخراج الذكي للبيانات
-  const safeExtract = (obj, keys) => {
-      for (let i = 0; i < keys.length; i++) {
-          let val = obj[keys[i]];
-          if (val !== undefined && val !== null) {
-              let strVal = String(val).trim();
-              let upper = strVal.toUpperCase();
-              if (strVal !== '' && upper !== 'NA' && upper !== 'NULL' && upper !== 'UNDEFINED') {
-                  return strVal;
-              }
-          }
-      }
-      return null;
-  };
+  const addCard=(item,info,orderVal)=>{
+    const url=BASE_URL+`getEZPill_Details?onlineNumber=${encodeURIComponent((item.onlineNumber||'').replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(item.Invoice||'')}&typee=${encodeURIComponent(item.typee||'')}&head_id=${encodeURIComponent(item.head_id||'')}`;
+    links.push({url,key:(item.Invoice||'')+':'+(item.onlineNumber||'')});
+    
+    // استخراج مباشر وسريع جدا للبيانات
+    let guestName = item.guestName || item.customer_firstname || '—';
+    let guestMob = item.guestMobile || item.mobile || item.telephone || '—';
+    let dateRaw = item.created_at || item.Created_Time || item.createdAt || '—';
+    let erx = item.onlineNumber || '—';
+    let invoice = item.Invoice || '—';
 
-  const addCard=(res, index)=>{
-    const { item, info, erx, invoice, guestName, guestMob, dateRaw } = res;
-    
-    const url=BASE_URL+`getEZPill_Details?onlineNumber=${encodeURIComponent(erx.replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(invoice)}&typee=${encodeURIComponent(item.typee||'')}&head_id=${encodeURIComponent(item.head_id||'')}`;
-    links.push({url,key:invoice+':'+erx});
-    
     const card=d.createElement('div');
     card.className='result-card';
     card.id='card-'+links.length;
     card.style.setProperty('--card-color',info.color);
+    card.style.order = orderVal; 
     
     card.innerHTML=`
       <div class="card-top">
         <div style="display:flex; align-items:center;">
-          <span class="card-idx">#${index}</span>
-          <span class="card-order">${esc(erx)}</span>
+          <span class="card-idx"></span> <span class="card-order">${esc(erx)}</span>
         </div>
         <span class="card-status" style="background:${info.color}15; color:${info.color}">${esc(info.label)}</span>
       </div>
@@ -200,8 +194,6 @@ javascript:(function(){
     
     st.innerHTML=`جاري البحث <b>بسرعة البرق...</b> ⚡`;
 
-    let allResults = [];
-
     const fetchPromises = statusKeys.map(async (status) => {
       if(cancelSearch) return;
       const info = STATUSES[status];
@@ -221,72 +213,44 @@ javascript:(function(){
         
         if (Array.isArray(orders) && orders.length > 0) {
           orders.forEach(item => {
-            // الاستخراج القوي لرقم الطلب
-            let erx = safeExtract(item, ['onlineNumber', 'online_number', 'Order_Number', 'orderNumber', 'increment_id']);
-            if (!erx || !erx.toUpperCase().includes('ERX')) {
-                let vals = Object.values(item);
-                for(let v of vals) {
-                    if (typeof v === 'string' && v.toUpperCase().includes('ERX')) { erx = v; break; }
-                }
-            }
-            if (!erx) erx = 'NA';
-
-            // الاستخراج القوي للفاتورة والاسم والموبايل
-            let invoice = safeExtract(item, ['Invoice', 'invoice_id', 'invoice_number']) || '—';
-            let guestName = safeExtract(item, ['guestName', 'guest_name', 'customer_firstname']) || '—';
-            let guestMob = safeExtract(item, ['guestMobile', 'mobile', 'telephone']) || '—';
-
-            // الاستخراج القوي للتاريخ والوقت
-            let dateRaw = safeExtract(item, ['created_at', 'Created_Time', 'createdAt', 'date', 'Date', 'createdDate']);
-            if (!dateRaw) {
-                 let vals = Object.values(item);
-                 for(let v of vals) {
-                     if (typeof v === 'string' && v.length > 5 && v.length < 30 && /\d/.test(v) && (v.includes('202') || v.includes('AM') || v.includes('PM') || v.includes(':'))) { 
-                         dateRaw = v; break; 
-                     }
-                 }
-            }
-            if (!dateRaw) dateRaw = '—';
-
-            let t = 0;
-            if(dateRaw !== '—') {
-              t = new Date(dateRaw).getTime();
-              if(isNaN(t) && dateRaw.includes('|')) {
-                let parts = dateRaw.split('|');
-                t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
-              }
-            }
-            if (isNaN(t)) t = 0;
-
-            const key = invoice + ':' + erx;
-            if (!invoice && erx === 'NA') return;
+            const key = (item.Invoice || '') + ':' + (item.onlineNumber || '');
             if (seen.has(key)) return;
             seen.add(key);
             count++;
 
-            // الاستخراج الدقيق للحالة من بيانات الطلب
-            let raw = safeExtract(item, ['status', 'Status', 'order_status', 'OrderStatus']);
-            if (!raw) {
+            // استخراج الحالة الحقيقية من بيانات الطلب
+            let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+            if(!raw) {
               let cs = JSON.stringify(item).toLowerCase();
               if(cs.includes('"delivered"')) raw = 'delivered';
               else if(cs.includes('"packed"')) raw = 'packed';
               else if(cs.includes('"ready to pack"') || cs.includes('"received"')) raw = 'readypack';
               else if(cs.includes('"cancelled"')) raw = 'cancelled';
               else if(cs.includes('"new"')) raw = 'new';
-            } else {
-              raw = raw.toLowerCase().replace(/<[^>]*>?/gm, '').trim();
             }
             
             let actualInfo = info;
-            if(raw) {
-                if(raw.includes('delivered')) actualInfo = STATUSES['delivered'];
-                else if(raw.includes('packed')) actualInfo = STATUSES['packed'];
-                else if(raw.includes('ready') || raw.includes('received')) actualInfo = STATUSES['readypack'];
-                else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
-                else if(raw.includes('new')) actualInfo = STATUSES['new'];
-            }
+            if(raw.includes('delivered')) actualInfo = STATUSES['delivered'];
+            else if(raw.includes('packed')) actualInfo = STATUSES['packed'];
+            else if(raw.includes('ready') || raw.includes('received')) actualInfo = STATUSES['readypack'];
+            else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
+            else if(raw.includes('new')) actualInfo = STATUSES['new'];
 
-            allResults.push({ item, info: actualInfo, erx, invoice, guestName, guestMob, dateRaw, t });
+            // استخراج التاريخ لترتيب البطاقات باستخدام CSS Order
+            let s = item.created_at || item.Created_Time || item.createdAt || item.date || '';
+            let t = 0;
+            if(s) {
+              t = new Date(s).getTime();
+              if(isNaN(t) && s.includes('|')) {
+                let parts = s.split('|');
+                t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
+              }
+            }
+            // إعطاء الطلبات التي لا تحتوي على تاريخ رقماً كبيراً لتظل في النهاية
+            let orderVal = (isNaN(t) || t === 0) ? 2000000000 : Math.floor(t / 1000);
+
+            // طباعة البطاقة فوراً، والـ CSS سيتولى ترتيبها بصرياً!
+            addCard(item, actualInfo, orderVal);
           });
         }
       } catch(err) {
@@ -295,14 +259,6 @@ javascript:(function(){
     });
 
     await Promise.all(fetchPromises);
-
-    // الترتيب السريع من الأقدم للأحدث بناءً على الوقت المستخرج
-    allResults.sort((a, b) => a.t - b.t);
-
-    // طباعة الكروت مرتبة ومرقمة
-    allResults.forEach((res, index) => {
-      addCard(res, index + 1);
-    });
 
     setLoading(false);
     if(cancelSearch){st.innerHTML=`<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`}
