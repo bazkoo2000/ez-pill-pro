@@ -85,7 +85,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.1 — Sorted & Unified ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.2 — Sorted & Lightning ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -139,10 +139,13 @@ javascript:(function(){
   const setLoading=(on)=>{d.getElementById('baz-spinner').style.display=on?'block':'none';d.getElementById('baz-run-all').disabled=on;const cb=d.getElementById('baz-cancel');cb.style.display=on?'flex':'none'};
   const updateOpenPanel=()=>{const rem=links.filter(l=>!openedLinks.has(l.key));d.getElementById('stat-total').textContent=links.length;d.getElementById('stat-opened').textContent=openedLinks.size;d.getElementById('stat-remain').textContent=rem.length;const ce=d.getElementById('baz-open-count');ce.max=rem.length;ce.value=Math.min(parseInt(ce.value)||10,rem.length||1)};
 
-  const addCard=(item,info)=>{
+  // دالة الإضافة تم تعديلها لتستقبل قيمة CSS order
+  const addCard=(item,info,orderVal)=>{
     const url=BASE_URL+`getEZPill_Details?onlineNumber=${encodeURIComponent((item.onlineNumber||'').replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(item.Invoice||'')}&typee=${encodeURIComponent(item.typee||'')}&head_id=${encodeURIComponent(item.head_id||'')}`;
     links.push({url,key:(item.Invoice||'')+':'+(item.onlineNumber||'')});
-    const card=d.createElement('div');card.className='result-card';card.id='card-'+links.length;card.style.setProperty('--card-color',info.color);
+    const card=d.createElement('div');card.className='result-card';card.id='card-'+links.length;
+    card.style.setProperty('--card-color',info.color);
+    card.style.order = orderVal; // هنا يكمن السحر: ترتيب بصري مباشر بواسطة المتصفح
     card.innerHTML=`<div class="card-top"><span class="card-order">${esc(item.onlineNumber||'—')}</span><span class="card-status" style="background:${info.color}15; color:${info.color}">${esc(info.label)}</span></div><div class="card-info"><div class="info-item"><span class="info-lbl">الضيف</span><span class="info-val">${esc(item.guestName||'—')}</span></div><div class="info-item"><span class="info-lbl">الموبايل</span><span class="info-val">${esc(item.guestMobile||item.mobile||'—')}</span></div></div><div class="card-bottom"><span class="card-invoice">${esc(item.Invoice||'')}</span><a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a></div>`;
     d.getElementById('baz-cards').appendChild(card)};
 
@@ -153,8 +156,6 @@ javascript:(function(){
     let count=0;let seen=new Set();
     
     st.innerHTML=`جاري البحث <b>بسرعة البرق...</b> ⚡`;
-
-    let allResults = []; // لتخزين النتائج بهدف ترتيبها
 
     const fetchPromises = statusKeys.map(async (status) => {
       if(cancelSearch) return;
@@ -180,6 +181,7 @@ javascript:(function(){
             seen.add(key);
             count++;
 
+            // استخراج الحالة الحقيقية من بيانات الطلب
             let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
             if(!raw) {
               let cs = JSON.stringify(item).toLowerCase();
@@ -197,8 +199,21 @@ javascript:(function(){
             else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
             else if(raw.includes('new')) actualInfo = STATUSES['new'];
 
-            // إضافة الطلب إلى المصفوفة بدلاً من طباعته مباشرة
-            allResults.push({ item: item, info: actualInfo });
+            // استخراج التاريخ لترتيب البطاقات باستخدام CSS Order
+            let s = item.created_at || item.Created_Time || item.createdAt || item.date || '';
+            let t = 0;
+            if(s) {
+              t = new Date(s).getTime();
+              if(isNaN(t) && s.includes('|')) {
+                let parts = s.split('|');
+                t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
+              }
+            }
+            // إعطاء الطلبات التي لا تحتوي على تاريخ رقماً كبيراً لتظل في النهاية
+            let orderVal = (isNaN(t) || t === 0) ? 2000000000 : Math.floor(t / 1000);
+
+            // طباعة البطاقة فوراً، والـ CSS سيتولى ترتيبها بصرياً!
+            addCard(item, actualInfo, orderVal);
           });
         }
       } catch(err) {
@@ -207,28 +222,6 @@ javascript:(function(){
     });
 
     await Promise.all(fetchPromises);
-
-    // ترتيب الطلبات من الأقدم إلى الأحدث 
-    allResults.sort((a, b) => {
-      const getMs = (obj) => {
-        let s = obj.created_at || obj.Created_Time || obj.createdAt || obj.date || '';
-        if(!s) return 0;
-        let t = new Date(s).getTime();
-        if(!isNaN(t)) return t;
-        let parts = s.split('|');
-        if(parts.length === 2) {
-          t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
-          if(!isNaN(t)) return t;
-        }
-        return 0;
-      };
-      return getMs(a.item) - getMs(b.item);
-    });
-
-    // طباعة الطلبات بعد ترتيبها
-    allResults.forEach(res => {
-      addCard(res.item, res.info);
-    });
 
     setLoading(false);
     if(cancelSearch){st.innerHTML=`<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`}
