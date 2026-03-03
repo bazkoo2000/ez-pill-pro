@@ -88,7 +88,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.6 — Flawless Fast Data ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.7 — Real Lightning Speed ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -146,7 +146,10 @@ javascript:(function(){
     const { item, info, erx, invoice, guestName, guestMob, dateRaw } = res;
     
     const url=BASE_URL+`getEZPill_Details?onlineNumber=${encodeURIComponent(erx.replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(invoice)}&typee=${encodeURIComponent(item.typee||'')}&head_id=${encodeURIComponent(item.head_id||'')}`;
-    links.push({url,key:invoice+':'+erx});
+    
+    // مفتاح الربط للفتح
+    let linkKey = invoice + ':' + erx + ':' + (item.entity_id || Math.random());
+    links.push({url, key: linkKey});
     
     const card=d.createElement('div');
     card.className='result-card';
@@ -204,34 +207,17 @@ javascript:(function(){
         try { orders = JSON.parse(data.orders_list) } catch (_) { orders = data.orders_list }
         
         if (Array.isArray(orders) && orders.length > 0) {
-          orders.forEach((item, objIndex) => {
-            
-            // استخراج سريع وخفيف للبيانات 
-            let erx = item.onlineNumber || item.online_number || item.Order_Number || item.orderNumber || item.increment_id || item.CUST_ID || '';
-            let invoice = item.Invoice || item.invoice_id || item.invoice_number || item.invoice_num || '';
+          orders.forEach(item => {
+            // استخراج سريع وخاطف O(1)
+            let erx = item.onlineNumber || item.online_number || item.Order_Number || item.orderNumber || item.increment_id || item.CUST_ID || '—';
+            let invoice = item.Invoice || item.invoice_id || item.invoice_number || item.invoice_num || '—';
             let guestName = item.guestName || item.guest_name || item.customer_firstname || item['Guest Name'] || '—';
             let guestMob = item.guestMobile || item.mobile || item.telephone || item.phone || '—';
             let dateRaw = item.created_at || item.Created_Time || item.createdAt || item.date || item.Date || item.createdDate || item['Created At'] || '—';
 
-            // إذا لم نجد ERX بشكل مباشر، نقوم ببحث سريع في النصوص فقط
-            if (!erx) {
-                for(let k in item) {
-                    if(typeof item[k] === 'string' && item[k].toUpperCase().includes('ERX')) {
-                        erx = item[k]; break;
-                    }
-                }
-            }
-
-            if (!erx) erx = '—';
-            if (!invoice) invoice = '—';
-
-            // مفتاح فريد لمنع مشكلة حذف البيانات المفقودة
-            let key;
-            if (erx !== '—' || invoice !== '—') {
-                key = invoice + ':' + erx;
-            } else {
-                key = 'unknown:' + objIndex + ':' + Math.random(); 
-            }
+            // توليد مفتاح فريد جداً لضمان عدم حذف أي طلب حتى لو كانت بياناته مفقودة (NA)
+            let uniqueId = item.entity_id || item.id || (Math.random().toString(36).substring(2));
+            const key = invoice + ':' + erx + ':' + uniqueId;
             
             if (seen.has(key)) return;
             seen.add(key);
@@ -248,7 +234,7 @@ javascript:(function(){
             }
             if (isNaN(t)) t = 0;
 
-            // تحديد حالة الطلب بشكل دقيق جداً
+            // تحديد حالة الطلب بشكل دقيق ومباشر
             let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || item['Current Flow'] || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
             if (!raw) {
               let cs = JSON.stringify(item).toLowerCase();
