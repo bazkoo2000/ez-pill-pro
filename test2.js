@@ -88,7 +88,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.5 — Hyper Fast ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.6 — Flawless Fast Data ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -204,19 +204,40 @@ javascript:(function(){
         try { orders = JSON.parse(data.orders_list) } catch (_) { orders = data.orders_list }
         
         if (Array.isArray(orders) && orders.length > 0) {
-          orders.forEach(item => {
-            const erx = item.onlineNumber || item.online_number || item.Order_Number || item.orderNumber || item.increment_id || 'NA';
-            const invoice = item.Invoice || item.invoice_id || item.invoice_number || 'NA';
-            const key = invoice + ':' + erx;
+          orders.forEach((item, objIndex) => {
+            
+            // استخراج سريع وخفيف للبيانات 
+            let erx = item.onlineNumber || item.online_number || item.Order_Number || item.orderNumber || item.increment_id || item.CUST_ID || '';
+            let invoice = item.Invoice || item.invoice_id || item.invoice_number || item.invoice_num || '';
+            let guestName = item.guestName || item.guest_name || item.customer_firstname || item['Guest Name'] || '—';
+            let guestMob = item.guestMobile || item.mobile || item.telephone || item.phone || '—';
+            let dateRaw = item.created_at || item.Created_Time || item.createdAt || item.date || item.Date || item.createdDate || item['Created At'] || '—';
+
+            // إذا لم نجد ERX بشكل مباشر، نقوم ببحث سريع في النصوص فقط
+            if (!erx) {
+                for(let k in item) {
+                    if(typeof item[k] === 'string' && item[k].toUpperCase().includes('ERX')) {
+                        erx = item[k]; break;
+                    }
+                }
+            }
+
+            if (!erx) erx = '—';
+            if (!invoice) invoice = '—';
+
+            // مفتاح فريد لمنع مشكلة حذف البيانات المفقودة
+            let key;
+            if (erx !== '—' || invoice !== '—') {
+                key = invoice + ':' + erx;
+            } else {
+                key = 'unknown:' + objIndex + ':' + Math.random(); 
+            }
             
             if (seen.has(key)) return;
             seen.add(key);
             count++;
 
-            const guestName = item.guestName || item.guest_name || item.customer_firstname || '—';
-            const guestMob = item.guestMobile || item.mobile || item.telephone || '—';
-            const dateRaw = item.created_at || item.Created_Time || item.createdAt || item.date || item.Date || item.createdDate || '—';
-
+            // استخراج الوقت لغرض الترتيب
             let t = 0;
             if(dateRaw !== '—') {
               t = new Date(dateRaw).getTime();
@@ -227,12 +248,22 @@ javascript:(function(){
             }
             if (isNaN(t)) t = 0;
 
-            let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+            // تحديد حالة الطلب بشكل دقيق جداً
+            let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || item['Current Flow'] || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
+            if (!raw) {
+              let cs = JSON.stringify(item).toLowerCase();
+              if(cs.includes('"delivered"')) raw = 'delivered';
+              else if(cs.includes('"packed"')) raw = 'packed';
+              else if(cs.includes('"ready to pack"') || cs.includes('"received"')) raw = 'readypack';
+              else if(cs.includes('"cancelled"')) raw = 'cancelled';
+              else if(cs.includes('"new"')) raw = 'new';
+            }
+            
             let actualInfo = info;
             if(raw) {
                 if(raw.includes('delivered')) actualInfo = STATUSES['delivered'];
                 else if(raw.includes('packed')) actualInfo = STATUSES['packed'];
-                else if(raw.includes('ready') || raw.includes('received')) actualInfo = STATUSES['readypack'];
+                else if(raw.includes('ready') || raw.includes('received') || raw.includes('waiting')) actualInfo = STATUSES['readypack'];
                 else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
                 else if(raw.includes('new')) actualInfo = STATUSES['new'];
             }
@@ -247,7 +278,7 @@ javascript:(function(){
 
     await Promise.all(fetchPromises);
 
-    // ترتيب فوري من الأقدم للأحدث
+    // ترتيب سريع جداً من الأقدم للأحدث
     allResults.sort((a, b) => a.t - b.t);
 
     // طباعة الكروت مرتبة ومرقمة
