@@ -92,7 +92,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v14.8 — Flawless Fast Data ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v15.2 — Ghost Filter & Perfect URL ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -130,14 +130,10 @@ javascript:(function(){
   d.addEventListener('mouseup',()=>{isDragging=false});
 
   const getQuery=()=>{
-    let ord = d.getElementById('f-order').value.trim();
-    if(ord) {
-      ord = ord.replace(/^ERX/i, '');
-      ord = 'ERX' + ord;
-    }
+    // إرسال البيانات كما يكتبها المستخدم بدون تعديل لضمان نجاح البحث في السيرفر
     return {
       inv: d.getElementById('f-invoice').value.trim(),
-      ord: ord,
+      ord: d.getElementById('f-order').value.trim(),
       mob: d.getElementById('f-mobile').value.trim()
     };
   };
@@ -146,22 +142,20 @@ javascript:(function(){
   const setLoading=(on)=>{d.getElementById('baz-spinner').style.display=on?'block':'none';d.getElementById('baz-run-all').disabled=on;const cb=d.getElementById('baz-cancel');cb.style.display=on?'flex':'none'};
   const updateOpenPanel=()=>{const rem=links.filter(l=>!openedLinks.has(l.key));d.getElementById('stat-total').textContent=links.length;d.getElementById('stat-opened').textContent=openedLinks.size;d.getElementById('stat-remain').textContent=rem.length;const ce=d.getElementById('baz-open-count');ce.max=rem.length;ce.value=Math.min(parseInt(ce.value)||10,rem.length||1)};
 
-  // دالة الطباعة تستقبل البيانات المستخرجة بشكل مباشر وصحيح
-  const addCard = (res) => {
+  const addCard=(res, index, displayErx)=>{
     const { item, info, erx, invoice, guestName, guestMob, dateRaw, t } = res;
     
-    // إعطاء ترتيب Flexbox Order بناءً على الثواني من الأقدم للأحدث
     let orderVal = (isNaN(t) || t === 0) ? 2000000000 : Math.floor(t / 1000);
 
-    // تنظيف البيانات قبل وضعها في الرابط لتجنب الـ NA
-    let cleanErx = (erx === '—' || erx === 'NA') ? '' : String(erx).replace(/ERX/gi, '');
-    let cleanInv = (invoice === '—' || invoice === 'NA') ? '' : String(invoice);
+    // تنظيف البيانات للرابط لضمان فتحه بشكل سليم
+    let cleanErx = String(erx).replace(/ERX/gi,'');
+    if (cleanErx === '—') cleanErx = '';
+    let cleanInv = String(invoice);
+    if (cleanInv === '—') cleanInv = '';
 
-    const url = BASE_URL + `getEZPill_Details?onlineNumber=${encodeURIComponent(cleanErx)}&Invoice=${encodeURIComponent(cleanInv)}&typee=${encodeURIComponent(item.typee || '')}&head_id=${encodeURIComponent(item.head_id || '')}`;
+    const url = BASE_URL + `getEZPill_Details?onlineNumber=${encodeURIComponent(cleanErx)}&Invoice=${encodeURIComponent(cleanInv)}&typee=${encodeURIComponent(item.typee || 'StorePaid')}&head_id=${encodeURIComponent(item.head_id || '')}`;
     
-    // مفتاح فريد لضمان الفتح المتعدد
-    let linkKey = cleanInv + ':' + cleanErx + ':' + (item.entity_id || Math.random());
-    links.push({url, key: linkKey});
+    links.push({url, key: invoice + ':' + erx});
     
     const card=d.createElement('div');
     card.className='result-card';
@@ -172,7 +166,8 @@ javascript:(function(){
     card.innerHTML=`
       <div class="card-top">
         <div style="display:flex; align-items:center;">
-          <span class="card-idx"></span> <span class="card-order">${esc(erx)}</span>
+          <span class="card-idx"></span> 
+          <span class="card-order">${esc(displayErx)}</span>
         </div>
         <span class="card-status" style="background:${info.color}15; color:${info.color}">${esc(info.label)}</span>
       </div>
@@ -195,9 +190,10 @@ javascript:(function(){
     const q=getQuery();const searchValue=getSearchValue(q);const st=d.getElementById('baz-st');const cards=d.getElementById('baz-cards');const panel=d.getElementById('baz-open-panel');
     if(!searchValue){st.innerHTML='<span class="err">⚠️ أدخل قيمة بحث أولاً</span>';return}
     cards.innerHTML='';panel.style.display='none';links=[];openedLinks=new Set();cancelSearch=false;setLoading(true);
-    let count=0;let seen=new Set();
     
     st.innerHTML=`جاري البحث <b>بسرعة البرق...</b> ⚡`;
+
+    let resultsMap = new Map(); // استخدام Map لتصفية التكرارات بذكاء
 
     const fetchPromises = statusKeys.map(async (status) => {
       if(cancelSearch) return;
@@ -218,20 +214,18 @@ javascript:(function(){
         
         if (Array.isArray(orders) && orders.length > 0) {
           orders.forEach(item => {
-            // استخراج مباشر وخفيف جدا لضمان السرعة مع تغطية الاحتمالات
-            let erx = item.onlineNumber || item.OnlineNumber || item.online_number || item.Order_Number || item.order_number || item.orderNumber || item.increment_id || item.CUST_ID || item.ERX || item.erx || '—';
-            let invoice = item.Invoice || item.invoice || item.invoice_id || item.invoice_number || item.invoice_num || '—';
-            let guestName = item.guestName || item.GuestName || item.guest_name || item.customer_firstname || item['Guest Name'] || '—';
-            let guestMob = item.guestMobile || item.GuestMobile || item.mobile || item.telephone || item.phone || '—';
-            let dateRaw = item.created_at || item.Created_Time || item.createdAt || item.date || item.Date || item.createdDate || item.Order_Date || '—';
+            // استخراج سريع وخاطف
+            let erx = item.onlineNumber || item.Order_Number || item.increment_id || item.CUST_ID || item.ERX || item.erx || '';
+            if (String(erx).toUpperCase() === 'NA' || String(erx).trim() === '') erx = '—';
 
-            // مفتاح قوي لمنع التكرار (نتخطى فقط لو الفاتورة والطلب فاضيين تماماً)
-            let uniqueId = item.entity_id || item.id || (Math.random().toString(36).substring(2));
-            let key = invoice + ':' + erx + ':' + uniqueId;
-            
-            if (seen.has(key)) return;
-            seen.add(key);
-            count++;
+            let invoice = item.Invoice || item.invoice_id || item.invoice_number || '';
+            if (String(invoice).toUpperCase() === 'NA' || String(invoice).trim() === '') invoice = '—';
+
+            if (erx === '—' && invoice === '—') return; // تجاهل الأسطر الفارغة تماماً
+
+            let guestName = item.guestName || item.customer_firstname || '—';
+            let guestMob = item.guestMobile || item.mobile || item.telephone || '—';
+            let dateRaw = item.created_at || item.Created_Time || item.createdAt || item.date || '—';
 
             let t = 0;
             if(dateRaw !== '—') {
@@ -243,18 +237,27 @@ javascript:(function(){
             }
             if (isNaN(t)) t = 0;
 
-            let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || item['Current Flow'] || '').toLowerCase().trim();
+            let raw = String(item.status || item.Status || item.order_status || '').toLowerCase().trim();
             let actualInfo = info;
             if(raw) {
                 if(raw.includes('delivered')) actualInfo = STATUSES['delivered'];
                 else if(raw.includes('packed')) actualInfo = STATUSES['packed'];
-                else if(raw.includes('ready') || raw.includes('received') || raw.includes('waiting')) actualInfo = STATUSES['readypack'];
+                else if(raw.includes('ready') || raw.includes('received')) actualInfo = STATUSES['readypack'];
                 else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
                 else if(raw.includes('new')) actualInfo = STATUSES['new'];
             }
 
-            // طباعة فورية، والـ CSS يتولى الترتيب الزمني بسلاسة
-            addCard({ item, info: actualInfo, erx, invoice, guestName, guestMob, dateRaw, t });
+            // نظام تصفية الأشباح الذكي: 
+            // إذا كان نفس الطلب موجود، نأخذ النسخة التي تحتوي على ERX والتي لم يتم إلغاؤها
+            let key = (invoice !== '—') ? invoice : erx;
+            let currentScore = (erx !== '—' ? 2 : 0) + (actualInfo.label !== 'Cancelled' ? 1 : 0);
+
+            if (resultsMap.has(key)) {
+                let existing = resultsMap.get(key);
+                if (currentScore <= existing.score) return; // احتفظ بالنسخة الأفضل
+            }
+
+            resultsMap.set(key, { item, info: actualInfo, erx, invoice, guestName, guestMob, dateRaw, t, score: currentScore });
           });
         }
       } catch(err) {
@@ -264,9 +267,20 @@ javascript:(function(){
 
     await Promise.all(fetchPromises);
 
+    let allResults = Array.from(resultsMap.values());
+    allResults.sort((a, b) => a.t - b.t);
+
+    allResults.forEach((res, index) => {
+      let displayErx = res.erx;
+      if (displayErx !== '—' && !displayErx.toUpperCase().startsWith('ERX')) {
+          displayErx = 'ERX' + displayErx;
+      }
+      addCard(res, index + 1, displayErx);
+    });
+
     setLoading(false);
-    if(cancelSearch){st.innerHTML=`<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`}
-    else if(count>0){st.innerHTML=`✅ اكتمل بسرعة البرق — <b>${count}</b> نتيجة`;panel.style.display='block';updateOpenPanel()}
+    if(cancelSearch){st.innerHTML=`<span class="err">⛔ تم الإلغاء</span> — <b>${allResults.length}</b> نتيجة`}
+    else if(allResults.length>0){st.innerHTML=`✅ اكتمل بسرعة البرق — <b>${allResults.length}</b> نتيجة`;panel.style.display='block';updateOpenPanel()}
     else{cards.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">لم نجد نتائج لـ "${esc(searchValue)}"</div></div>`;st.innerHTML=''}
   };
 
