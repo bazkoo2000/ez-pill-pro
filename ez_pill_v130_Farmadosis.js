@@ -4586,6 +4586,8 @@ function extractAndConfirmName(){
       if(!text||text.length<5) return null;
       /* Normalize newlines to spaces */
       var s=text.trim().replace(/\r?\n/g,' ');
+      /* Strip parentheses/brackets so names inside become visible to patterns */
+      s=s.replace(/[()[\]{}«»]/g,' ').replace(/\s+/g,' ').trim();
 
       /* Generic title words - NOT actual names */
       var genericWords=['الضيف','الضيفه','الضيفة','ضيف','ضيفه','ضيفة',
