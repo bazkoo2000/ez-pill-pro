@@ -443,7 +443,7 @@ var weeklyInjections=(function(){var base=_defaultWeeklyInjections.slice();if(cu
 var NORMAL_TIMES=(function(){var base={};for(var k in _defaultNormalTimes)base[k]=_defaultNormalTimes[k];if(customConfig.normalTimes){for(var k in customConfig.normalTimes)base[k]=customConfig.normalTimes[k];}return base;})();
 
 /* Code-specific start times (used when note is empty/unrecognized instead of default 9:00) */
-var _defaultCodeStartTimes={'100010652':{time:'21:00',every:24},'100010812':{time:'21:00',every:24},'100016077':{time:'21:00',every:24},'100016106':{time:'21:00',every:24},'100016851':{time:'21:00',every:24},'100027091':{time:'21:00',every:24},'100030493':{time:'09:00',every:12},'100033601':{time:'21:00',every:24},'100633972':{time:'14:00',every:24},'100634019':{time:'14:00',every:24},'100726280':{time:'14:00',every:24},'100954004':{time:'21:00',every:24},'100957942':{time:'09:00',every:12},'101148979':{time:'21:00',every:24},'101225081':{time:'21:00',every:24},'101281201':{time:'21:00',every:24},'101284188':{time:'21:00',every:24},'101859640':{time:'14:00',every:24},'102073622':{time:'21:00',every:24},'102073631':{time:'21:00',every:24},'102782795':{time:'21:00',every:24},'102792782':{time:'09:00',every:12},'102988654':{time:'09:00',every:12},'103008671':{time:'21:00',every:24},'103069617':{time:'21:00',every:24},'103079621':{time:'09:00',every:12},'103243857':{time:'14:00',every:24},'103340593':{time:'21:00',every:24},'103344851':{time:'21:00',every:24},'103344869':{time:'21:00',every:24},'103350804':{time:'09:00',every:12},'103483965':{time:'21:00',every:24},'103683617':{time:'21:00',every:24},'100010812100010812':{time:'21:00',every:24}};
+var _defaultCodeStartTimes={'100010652':{time:'21:00',every:24},'100010812':{time:'21:00',every:24},'100016077':{time:'21:00',every:24},'100016106':{time:'21:00',every:24},'100016851':{time:'21:00',every:24},'100027091':{time:'21:00',every:24},'100030493':{time:'09:00',every:12},'100033601':{time:'21:00',every:24},'100633972':{time:'14:00',every:24},'100634019':{time:'14:00',every:24},'100726280':{time:'14:00',every:24},'100954004':{time:'21:00',every:24},'100957942':{time:'09:00',every:12},'101148979':{time:'21:00',every:24},'101225081':{time:'21:00',every:24},'101281201':{time:'21:00',every:24},'101284188':{time:'21:00',every:24},'101859640':{time:'14:00',every:24},'102073622':{time:'21:00',every:24},'102073631':{time:'21:00',every:24},'102782795':{time:'21:00',every:24},'102792782':{time:'09:00',every:12},'102988654':{time:'09:00',every:12},'103008671':{time:'21:00',every:24},'103069617':{time:'21:00',every:24},'103079621':{time:'09:00',every:12},'103243857':{time:'14:00',every:24},'103340593':{time:'21:00',every:24},'103344851':{time:'21:00',every:24},'103344869':{time:'21:00',every:24},'103350804':{time:'09:00',every:12},'103483965':{time:'21:00',every:24},'103683617':{time:'21:00',every:24},'100010812100010812':{time:'21:00',every:24},'100005052':{time:'14:00',every:24},'100022733':{time:'21:00',every:24},'100023875':{time:'21:00',every:24},'100029564':{time:'21:00',every:24},'100033803':{time:'09:00',every:12},'100615256':{time:'21:00',every:24},'101078974':{time:'21:00',every:24}};
 var CODE_START_TIMES=(function(){var base={};var k;for(k in _defaultCodeStartTimes){var dv=_defaultCodeStartTimes[k];if(typeof dv==='string')base[k]={time:dv,every:24};else base[k]=dv;}if(customConfig.codeStartTimes){for(k in customConfig.codeStartTimes){var v=customConfig.codeStartTimes[k];if(typeof v==='string')base[k]={time:v,every:24};else base[k]=v;}}return base;})();
 
 /* ══════════════════════════════════════════
@@ -485,6 +485,11 @@ function _ezRamadanToday(){
 /* Map normal meal words to Ramadan equivalents */
 function ramadanMapNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+
+  /* ── PRIORITY: بعد الغداء / after lunch → بعد التراويح - يجب التحقق أولاً قبل أي قواعد مخصصة ── */
+  /* هذا الـ check لازم يكون قبل customTimeRules لأنها بتلتقط "الغداء" وتحوله لـ 14:00 وبيضيع */
+  if(/بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء|after.*lun|after.*lunch/i.test(note))
+    return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
 
   /* ── Check custom Ramadan keywords FIRST ── */
   if(customConfig.customRamadanRules){
@@ -2411,8 +2416,15 @@ window.ezRamadanToNormal=function(){
       if(evi>=0&&tds[evi]){var evInp=tds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
     }
 
-    /* ── size: في إلغاء رمضان الكل يأخذ normalDays (حتى الأكواد المخصصة) ── */
-    if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=normalDays;fire(sInp);}}
+    /* ── size: الأكواد المخصصة (fixedSize) تأخذ fixedSize - ramLeft، الباقي يأخذ normalDays ── */
+    var _revertSize=normalDays;
+    if(ci>=0&&tds[ci]){
+      var _rvCode=get(tds[ci]).trim().replace(/\D/g,'');
+      if(_rvCode&&fixedSizeCodes&&fixedSizeCodes[_rvCode]){
+        _revertSize=Math.max(0,fixedSizeCodes[_rvCode]-ramLeft);
+      }
+    }
+    if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=_revertSize;fire(sInp);}}
     /* ── تواريخ ── */
     if(sdi>=0&&tds[sdi]){var sdInp=tds[sdi].querySelector("input[type='date']");if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
     if(ei>=0&&tds[ei]){var eInp=tds[ei].querySelector('input');if(eInp){eInp.value=normalEndDate;fire(eInp);}}
@@ -2436,6 +2448,18 @@ window.ezRamadanToNormal=function(){
     Object.keys(groups).forEach(function(code){
       var g=groups[code];
       if(g.length<2) return;
+      /* FIX: رتّب الصفوف بالوقت المحوّل بحيث الفطار (09:00) يجي قبل العشاء (21:00)
+         بعد التحويل، صف الفطار وقته 09:00 وصف العشاء وقته 21:00
+         لو مش مرتبهم صح، master هيكون صف العشاء وهيكتب start_time=21:00 (غلط) */
+      g.sort(function(ra,rb){
+        var tdsa=ra.querySelectorAll('td');var tdsb=rb.querySelectorAll('td');
+        var getT=function(tds2){
+          if(ti>=0&&tds2[ti]){var inp=tds2[ti].querySelector("input[type='time']");if(inp&&inp.value)return inp.value;}
+          return '99:99';
+        };
+        var ta=getT(tdsa),tb2=getT(tdsb);
+        return ta<tb2?-1:ta>tb2?1:0;
+      });
       /* أخذ أول صف كـ master */
       var master=g[0],mtds=master.querySelectorAll('td');
 
@@ -3425,9 +3449,20 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         /* Fixed code breaking: override to 28 if non-fixed items have 28 */
         if(_rd.hasFixedSize&&_has28NonFixed){
           var _fixedVal=fixedSizeCodes[_rd.itemCode];
-          if(_fixedVal>28){
+          /* 56/60 = BID packs (28×2 or 30×2) → don't break to 28, choose correct BID size */
+          if(_fixedVal===56||_fixedVal===60){
+            _rd.fixedSizeBreak=_has28NonFixed?56:60;
+            console.log('PACK BID: code '+_rd.itemCode+' fixed='+_fixedVal+' → BID size='+_rd.fixedSizeBreak);
+          } else if(_fixedVal>28){
             _rd.fixedSizeBreak=28;
             console.log('PACK BREAK: code '+_rd.itemCode+' fixed='+_fixedVal+' → override to 28');
+          }
+        }
+        /* 56/60 without 28 policy → use 60 (30×2) */
+        if(_rd.hasFixedSize&&!_has28NonFixed){
+          var _fixedVal2=fixedSizeCodes[_rd.itemCode];
+          if(_fixedVal2===56||_fixedVal2===60){
+            _rd.fixedSizeBreak=60;
           }
         }
       }
@@ -3489,7 +3524,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
       /* ── NORMAL MODE (original logic) ── */
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
-      if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
+      if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}/* 56/60 BID default: no clear dose → force every=12, start=09:00 */var _origFixedVal=fixedSizeCodes[rd.itemCode];if((_origFixedVal===56||_origFixedVal===60)&&dose_fix.count<=1&&!isE12_fix&&rd.timesPerDay<=1){setEvry(tds_nodes[ei_main],'12');setTime(r_node,'09:00');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;if(rd.daysOverrideQty&&rd.daysOverrideQty>0){setSize(qc2,rd.daysOverrideQty);}else{setSize(qc2,cv2*m);}}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
