@@ -2038,10 +2038,14 @@ window.ezRamadanSplit=function(){
   /* نستخدم القيمة المحفوظة من الدايلوج الرئيسي مباشرة */
   var daysLeft=window._rmDaysLeft||null;
   if(!daysLeft||daysLeft<1||daysLeft>30){
-    var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
+    /* Auto-detect from fstartDate */
+    var _fsd2=(document.querySelector('#fstartDate')||{}).value||'';
+    var autoD=_ezRamadanDaysLeft(_fsd2);
+    if(autoD>0){daysLeft=autoD;window._rmDaysLeft=daysLeft;}
+    else{var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
     if(!v||v<1||v>30){window.ezShowToast('❌ رقم غير صحيح','error');return;}
     daysLeft=v;
-    window._rmDaysLeft=daysLeft;
+    window._rmDaysLeft=daysLeft;}
   }
   window._ezApplyRamadanSplit(daysLeft);
 };
@@ -2161,27 +2165,27 @@ window._ezApplyRamadanSplit=function(daysLeft){
 
       /* بعد الفطار → بعد الفطار عادي 09:00 */
       if(origNote.indexOf('بعد الفطار')>-1||origNote.indexOf('After Iftar')>-1){
-        newNote=origNote.replace('⚡ ','').replace('بعد الفطار','بعد الفطار').replace('After Iftar','After Breakfast');
+        newNote=origNote.replace(/⚡\s*/g,'').replace('بعد الفطار','بعد الفطار').replace('After Iftar','After Breakfast');
         newTime=NORMAL_TIMES.afterBreakfast||'09:00';
       }
       /* قبل الفطار → قبل الفطار عادي */
       else if(origNote.indexOf('قبل الفطار')>-1||origNote.indexOf('Before Iftar')>-1){
-        newNote=origNote.replace('⚡ ','').replace('قبل الفطار','قبل الفطار').replace('Before Iftar','Before Breakfast');
+        newNote=origNote.replace(/⚡\s*/g,'').replace('قبل الفطار','قبل الفطار').replace('Before Iftar','Before Breakfast');
         newTime=NORMAL_TIMES.beforeBreakfast||'08:00';
       }
       /* بعد السحور → بعد العشاء 21:00 */
       else if(origNote.indexOf('بعد السحور')>-1||origNote.indexOf('After Suhoor')>-1){
-        newNote=origNote.replace('⚡ ','').replace('⚡ بعد السحور','بعد العشاء').replace('بعد السحور','بعد العشاء').replace('After Suhoor','After Dinner');
+        newNote=origNote.replace(/⚡\s*/g,'').replace('بعد السحور','بعد العشاء').replace('After Suhoor','After Dinner');
         newTime=NORMAL_TIMES.afterDinner||'21:00';
       }
       /* قبل السحور → قبل العشاء 20:00 */
       else if(origNote.indexOf('قبل السحور')>-1||origNote.indexOf('Before Suhoor')>-1){
-        newNote=origNote.replace('⚡ ','').replace('⚡ قبل السحور','قبل العشاء').replace('قبل السحور','قبل العشاء').replace('Before Suhoor','Before Dinner');
+        newNote=origNote.replace(/⚡\s*/g,'').replace('قبل السحور','قبل العشاء').replace('Before Suhoor','Before Dinner');
         newTime=NORMAL_TIMES.beforeDinner||'20:00';
       }
       /* بعد التراويح → بعد الغداء 14:00 */
       else if(origNote.indexOf('بعد التراويح')>-1||origNote.indexOf('After Tarawih')>-1){
-        newNote=origNote.replace('⚡ ','').replace('⚡ بعد التراويح','بعد الغداء').replace('بعد التراويح','بعد الغداء').replace('After Tarawih','After Lunch');
+        newNote=origNote.replace(/⚡\s*/g,'').replace('بعد التراويح','بعد الغداء').replace('After Tarawih','After Lunch');
         newTime=NORMAL_TIMES.afterLunch||'14:00';
       }
 
@@ -2252,9 +2256,12 @@ window.ezRamadanToNormal=function(){
   /* الأيام الباقية في رمضان */
   var daysLeft=window._rmDaysLeft||null;
   if(!daysLeft||daysLeft<1||daysLeft>30){
-    var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
+    var _fsd3=(document.querySelector('#fstartDate')||{}).value||'';
+    var autoD2=_ezRamadanDaysLeft(_fsd3);
+    if(autoD2>0){daysLeft=autoD2;window._rmDaysLeft=daysLeft;}
+    else{var v=parseInt(prompt('🌙 باقي كام يوم في رمضان؟ (1-30)','15'));
     if(!v||v<1||v>30){window.ezShowToast('❌ رقم غير صحيح','error');return;}
-    daysLeft=v; window._rmDaysLeft=daysLeft;
+    daysLeft=v; window._rmDaysLeft=daysLeft;}
   }
 
   /* إجمالي الأيام من الإعداد الأصلي */
@@ -2329,8 +2336,15 @@ window.ezRamadanToNormal=function(){
       if(evi>=0&&tds[evi]){var evInp=tds[evi].querySelector('input,select');if(evInp){evInp.value=newEvry;fire(evInp);}}
     }
 
-    /* ── size: في إلغاء رمضان الكل يأخذ normalDays (حتى الأكواد المخصصة) ── */
-    if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=normalDays;fire(sInp);}}
+    /* ── size: الأكواد المخصصة (fixedSize) تأخذ fixedSize - ramLeft، الباقي يأخذ normalDays ── */
+    var _revertSize=normalDays;
+    if(ci>=0&&tds[ci]){
+      var _rvCode=get(tds[ci]).trim().replace(/\D/g,'');
+      if(_rvCode&&fixedSizeCodes&&fixedSizeCodes[_rvCode]){
+        _revertSize=Math.max(0,fixedSizeCodes[_rvCode]-ramLeft);
+      }
+    }
+    if(si>=0&&tds[si]){var sInp=tds[si].querySelector('input,textarea');if(sInp){sInp.value=_revertSize;fire(sInp);}}
     /* ── تواريخ ── */
     if(sdi>=0&&tds[sdi]){var sdInp=tds[sdi].querySelector("input[type='date']");if(sdInp){sdInp.value=normalStartDate;fire(sdInp);}}
     if(ei>=0&&tds[ei]){var eInp=tds[ei].querySelector('input');if(eInp){eInp.value=normalEndDate;fire(eInp);}}
@@ -3348,9 +3362,20 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         /* Fixed code breaking: override to 28 if non-fixed items have 28 */
         if(_rd.hasFixedSize&&_has28NonFixed){
           var _fixedVal=fixedSizeCodes[_rd.itemCode];
-          if(_fixedVal>28){
+          /* 56/60 = BID packs (28×2 or 30×2) → don't break to 28, choose correct BID size */
+          if(_fixedVal===56||_fixedVal===60){
+            _rd.fixedSizeBreak=_has28NonFixed?56:60;
+            console.log('PACK BID: code '+_rd.itemCode+' fixed='+_fixedVal+' → BID size='+_rd.fixedSizeBreak);
+          } else if(_fixedVal>28){
             _rd.fixedSizeBreak=28;
             console.log('PACK BREAK: code '+_rd.itemCode+' fixed='+_fixedVal+' → override to 28');
+          }
+        }
+        /* 56/60 without 28 policy → use 60 (30×2) */
+        if(_rd.hasFixedSize&&!_has28NonFixed){
+          var _fixedVal2=fixedSizeCodes[_rd.itemCode];
+          if(_fixedVal2===56||_fixedVal2===60){
+            _rd.fixedSizeBreak=60;
           }
         }
       }
@@ -3413,7 +3438,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
       /* ── NORMAL MODE (original logic) ── */
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
-      if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
+      if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}/* 56/60 BID default: no clear dose → force every=12, start=09:00 */var _origFixedVal=fixedSizeCodes[rd.itemCode];if((_origFixedVal===56||_origFixedVal===60)&&dose_fix.count<=1&&!isE12_fix&&rd.timesPerDay<=1){setEvry(tds_nodes[ei_main],'12');setTime(r_node,'09:00');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;if(rd.daysOverrideQty&&rd.daysOverrideQty>0){setSize(qc2,rd.daysOverrideQty);}else{setSize(qc2,cv2*m);}}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
