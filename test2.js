@@ -92,7 +92,7 @@ javascript:(function(){
     <div id="baz-header">
       <div class="hdr-left">
         <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v15.2 — Ghost Filter & Perfect URL ⚡</span></div>
+        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v16.0 — Ghost Filter & Perfect URL ⚡</span></div>
       </div>
       <div class="hdr-btns">
         <button class="hdr-btn" id="baz-min">−</button>
@@ -130,10 +130,15 @@ javascript:(function(){
   d.addEventListener('mouseup',()=>{isDragging=false});
 
   const getQuery=()=>{
-    // إرسال البيانات كما يكتبها المستخدم بدون تعديل لضمان نجاح البحث في السيرفر
+    let ord = d.getElementById('f-order').value.trim();
+    if(ord) {
+      // إضافة ERX تلقائياً لضمان استجابة السيرفر
+      ord = ord.replace(/^ERX/i, '');
+      ord = 'ERX' + ord;
+    }
     return {
       inv: d.getElementById('f-invoice').value.trim(),
-      ord: d.getElementById('f-order').value.trim(),
+      ord: ord,
       mob: d.getElementById('f-mobile').value.trim()
     };
   };
@@ -142,50 +147,6 @@ javascript:(function(){
   const setLoading=(on)=>{d.getElementById('baz-spinner').style.display=on?'block':'none';d.getElementById('baz-run-all').disabled=on;const cb=d.getElementById('baz-cancel');cb.style.display=on?'flex':'none'};
   const updateOpenPanel=()=>{const rem=links.filter(l=>!openedLinks.has(l.key));d.getElementById('stat-total').textContent=links.length;d.getElementById('stat-opened').textContent=openedLinks.size;d.getElementById('stat-remain').textContent=rem.length;const ce=d.getElementById('baz-open-count');ce.max=rem.length;ce.value=Math.min(parseInt(ce.value)||10,rem.length||1)};
 
-  const addCard=(res, index, displayErx)=>{
-    const { item, info, erx, invoice, guestName, guestMob, dateRaw, t } = res;
-    
-    let orderVal = (isNaN(t) || t === 0) ? 2000000000 : Math.floor(t / 1000);
-
-    // تنظيف البيانات للرابط لضمان فتحه بشكل سليم
-    let cleanErx = String(erx).replace(/ERX/gi,'');
-    if (cleanErx === '—') cleanErx = '';
-    let cleanInv = String(invoice);
-    if (cleanInv === '—') cleanInv = '';
-
-    const url = BASE_URL + `getEZPill_Details?onlineNumber=${encodeURIComponent(cleanErx)}&Invoice=${encodeURIComponent(cleanInv)}&typee=${encodeURIComponent(item.typee || 'StorePaid')}&head_id=${encodeURIComponent(item.head_id || '')}`;
-    
-    links.push({url, key: invoice + ':' + erx});
-    
-    const card=d.createElement('div');
-    card.className='result-card';
-    card.id='card-'+links.length;
-    card.style.setProperty('--card-color',info.color);
-    card.style.order = orderVal; 
-    
-    card.innerHTML=`
-      <div class="card-top">
-        <div style="display:flex; align-items:center;">
-          <span class="card-idx"></span> 
-          <span class="card-order">${esc(displayErx)}</span>
-        </div>
-        <span class="card-status" style="background:${info.color}15; color:${info.color}">${esc(info.label)}</span>
-      </div>
-      <div class="card-info">
-        <div class="info-item"><span class="info-lbl">الضيف</span><span class="info-val">${esc(guestName)}</span></div>
-        <div class="info-item"><span class="info-lbl">الموبايل</span><span class="info-val" style="direction:ltr; text-align:right">${esc(guestMob)}</span></div>
-      </div>
-      <div class="card-bottom">
-        <div style="display:flex; flex-direction:column; gap:3px;">
-          <span class="card-invoice" title="رقم الفاتورة">🧾 ${esc(invoice)}</span>
-          <span class="card-date" title="تاريخ ووقت الإنشاء">🕒 ${esc(dateRaw)}</span>
-        </div>
-        <a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a>
-      </div>
-    `;
-    d.getElementById('baz-cards').appendChild(card);
-  };
-
   const runSearch=async(statusKeys)=>{
     const q=getQuery();const searchValue=getSearchValue(q);const st=d.getElementById('baz-st');const cards=d.getElementById('baz-cards');const panel=d.getElementById('baz-open-panel');
     if(!searchValue){st.innerHTML='<span class="err">⚠️ أدخل قيمة بحث أولاً</span>';return}
@@ -193,7 +154,7 @@ javascript:(function(){
     
     st.innerHTML=`جاري البحث <b>بسرعة البرق...</b> ⚡`;
 
-    let resultsMap = new Map(); // استخدام Map لتصفية التكرارات بذكاء
+    let resultsMap = new Map();
 
     const fetchPromises = statusKeys.map(async (status) => {
       if(cancelSearch) return;
@@ -214,28 +175,20 @@ javascript:(function(){
         
         if (Array.isArray(orders) && orders.length > 0) {
           orders.forEach(item => {
-            // استخراج سريع وخاطف
+            // استخراج فوري بدون تضييع وقت
             let erx = item.onlineNumber || item.Order_Number || item.increment_id || item.CUST_ID || item.ERX || item.erx || '';
-            if (String(erx).toUpperCase() === 'NA' || String(erx).trim() === '') erx = '—';
-
             let invoice = item.Invoice || item.invoice_id || item.invoice_number || '';
-            if (String(invoice).toUpperCase() === 'NA' || String(invoice).trim() === '') invoice = '—';
 
-            if (erx === '—' && invoice === '—') return; // تجاهل الأسطر الفارغة تماماً
+            if (String(erx).toUpperCase() === 'NA') erx = '';
+            if (String(invoice).toUpperCase() === 'NA') invoice = '';
 
-            let guestName = item.guestName || item.customer_firstname || '—';
-            let guestMob = item.guestMobile || item.mobile || item.telephone || '—';
-            let dateRaw = item.created_at || item.Created_Time || item.createdAt || item.date || '—';
+            let cleanErx = String(erx).replace(/ERX/gi, '').trim();
+            let cleanInv = String(invoice).trim();
 
-            let t = 0;
-            if(dateRaw !== '—') {
-              t = new Date(dateRaw).getTime();
-              if(isNaN(t) && dateRaw.includes('|')) {
-                let parts = dateRaw.split('|');
-                t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
-              }
-            }
-            if (isNaN(t)) t = 0;
+            if (!cleanErx && !cleanInv) return; // تخطي الطلبات الفارغة
+
+            // مفتاح التصفية الموحد للفاتورة
+            let uniqueKey = cleanInv || cleanErx;
 
             let raw = String(item.status || item.Status || item.order_status || '').toLowerCase().trim();
             let actualInfo = info;
@@ -247,17 +200,31 @@ javascript:(function(){
                 else if(raw.includes('new')) actualInfo = STATUSES['new'];
             }
 
-            // نظام تصفية الأشباح الذكي: 
-            // إذا كان نفس الطلب موجود، نأخذ النسخة التي تحتوي على ERX والتي لم يتم إلغاؤها
-            let key = (invoice !== '—') ? invoice : erx;
-            let currentScore = (erx !== '—' ? 2 : 0) + (actualInfo.label !== 'Cancelled' ? 1 : 0);
+            // نظام نقاط لفلترة الطلبات المكررة (الأولوية للبيانات المكتملة وغير الملغية)
+            let score = 0;
+            if (cleanErx) score += 2;
+            if (cleanInv) score += 2;
+            if (actualInfo.label !== 'Cancelled') score += 10;
 
-            if (resultsMap.has(key)) {
-                let existing = resultsMap.get(key);
-                if (currentScore <= existing.score) return; // احتفظ بالنسخة الأفضل
+            if (resultsMap.has(uniqueKey)) {
+                if (score <= resultsMap.get(uniqueKey).score) return; // احتفظ بالأفضل دائماً
             }
 
-            resultsMap.set(key, { item, info: actualInfo, erx, invoice, guestName, guestMob, dateRaw, t, score: currentScore });
+            let dateRaw = item.created_at || item.Created_Time || item.createdAt || item.date || '—';
+            let t = 0;
+            if(dateRaw !== '—') {
+              let dt = new Date(dateRaw).getTime();
+              if(isNaN(dt) && dateRaw.includes('|')) {
+                let parts = dateRaw.split('|');
+                dt = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
+              }
+              t = isNaN(dt) ? 0 : dt;
+            }
+
+            let guestName = item.guestName || item.customer_firstname || '—';
+            let guestMob = item.guestMobile || item.mobile || item.telephone || '—';
+
+            resultsMap.set(uniqueKey, { item, info: actualInfo, cleanErx, cleanInv, guestName, guestMob, dateRaw, t, score });
           });
         }
       } catch(err) {
@@ -271,11 +238,46 @@ javascript:(function(){
     allResults.sort((a, b) => a.t - b.t);
 
     allResults.forEach((res, index) => {
-      let displayErx = res.erx;
-      if (displayErx !== '—' && !displayErx.toUpperCase().startsWith('ERX')) {
-          displayErx = 'ERX' + displayErx;
-      }
-      addCard(res, index + 1, displayErx);
+      let orderVal = (res.t === 0) ? 2000000000 : Math.floor(res.t / 1000);
+
+      // ترميم البيانات الناقصة من البحث الأصلي لضمان نجاح فتح الرابط
+      let passErx = res.cleanErx || (q.ord ? q.ord.replace(/ERX/gi, '') : '');
+      let passInv = res.cleanInv || q.inv || '';
+
+      let displayErx = res.cleanErx ? ('ERX' + res.cleanErx) : (q.ord ? q.ord : '—');
+      let displayInv = res.cleanInv ? res.cleanInv : (q.inv ? q.inv : '—');
+
+      const url = BASE_URL + `getEZPill_Details?onlineNumber=${encodeURIComponent(passErx)}&Invoice=${encodeURIComponent(passInv)}&typee=${encodeURIComponent(res.item.typee || 'StorePaid')}&head_id=${encodeURIComponent(res.item.head_id || '')}`;
+
+      links.push({url, key: displayInv + ':' + displayErx});
+
+      const card=d.createElement('div');
+      card.className='result-card';
+      card.id='card-'+links.length;
+      card.style.setProperty('--card-color',res.info.color);
+      card.style.order = orderVal;
+
+      card.innerHTML=`
+        <div class="card-top">
+          <div style="display:flex; align-items:center;">
+            <span class="card-idx"></span>
+            <span class="card-order">${esc(displayErx)}</span>
+          </div>
+          <span class="card-status" style="background:${res.info.color}15; color:${res.info.color}">${esc(res.info.label)}</span>
+        </div>
+        <div class="card-info">
+          <div class="info-item"><span class="info-lbl">الضيف</span><span class="info-val">${esc(res.guestName)}</span></div>
+          <div class="info-item"><span class="info-lbl">الموبايل</span><span class="info-val" style="direction:ltr; text-align:right">${esc(res.guestMob)}</span></div>
+        </div>
+        <div class="card-bottom">
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <span class="card-invoice" title="رقم الفاتورة">🧾 ${esc(displayInv)}</span>
+            <span class="card-date" title="تاريخ ووقت الإنشاء">🕒 ${esc(res.dateRaw)}</span>
+          </div>
+          <a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a>
+        </div>
+      `;
+      cards.appendChild(card);
     });
 
     setLoading(false);
