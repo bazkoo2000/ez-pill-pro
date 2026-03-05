@@ -1,4 +1,4 @@
-(function(){
+javascript:(function(){
 'use strict';
 
 var PID='ez-tools-main';
@@ -36,21 +36,16 @@ function loadTool(url,name,closePanel){
   if(closePanel){var pp=document.getElementById(PID);if(pp)pp.style.display='none'}
   var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
   fetch(full).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(code){
-    try{new Function(code)();watchToolClose()}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}
+    try{new Function(code)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}
   }).catch(function(){
-    try{var x=new XMLHttpRequest();x.open('GET',full,true);x.onload=function(){if(x.status===200){try{new Function(x.responseText)();watchToolClose()}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}}else{alert('فشل تحميل '+name);showPanel()}};x.onerror=function(){alert('فشل تحميل '+name);showPanel()};x.send()}catch(e2){alert('فشل تحميل '+name);showPanel()}
+    try{var x=new XMLHttpRequest();x.open('GET',full,true);x.onload=function(){if(x.status===200){try{new Function(x.responseText)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}}else{alert('فشل تحميل '+name);showPanel()}};x.onerror=function(){alert('فشل تحميل '+name);showPanel()};x.send()}catch(e2){alert('فشل تحميل '+name);showPanel()}
   });
 }
 
+/* تم تعطيل وظيفة المراقبة بناءً على طلبك لإنهاء دور الدايلوج بعد فتح الأداة */
 var watchTimer=null;
 function watchToolClose(){
-  var toolIds=['ali_sys_v4','ali_sys_v5','nahdi_baz_panel','baz-ui','fareye-panel'];
-  if(watchTimer)clearInterval(watchTimer);
-  watchTimer=setInterval(function(){
-    var found=false;for(var i=0;i<toolIds.length;i++){if(document.getElementById(toolIds[i])){found=true;break}}
-    if(!found){clearInterval(watchTimer);watchTimer=null;setTimeout(showPanel,250)}
-  },400);
-  setTimeout(function(){if(watchTimer){clearInterval(watchTimer);watchTimer=null}},600000);
+  /* تم إيقاف محتوى هذه الوظيفة لمنع عودة الدايلوج الرئيسي */
 }
 
 function showPanel(){var pp=document.getElementById(PID);if(pp){pp.style.display='block';pp.style.animation='ezSlideIn 0.35s cubic-bezier(0.16,1,0.3,1)'}}
