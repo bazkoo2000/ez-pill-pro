@@ -3239,15 +3239,22 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
-    /* ── Auto-open dialog if notes say 3-month split ── */
+    /* ── Auto-open dialog if notes say 3-month / 3-boxes split ── */
     var _autoPostNote=false;
     try{
-      var _noteInputs=document.querySelectorAll('input[type="text"],textarea');
-      for(var _ni=0;_ni<_noteInputs.length;_ni++){
-        var _nv=(_noteInputs[_ni].value||'').trim();
-        if(_nv.length>10&&/ثلاث(ه)?\s*(اشهر|أشهر|شهور|شهر)|3\s*(اشهر|أشهر|شهور|شهر)|ثلاث.*صندوق|ثلاث.*بوكس|3.*صناديق|3.*بوكسات/i.test(_nv)){_autoPostNote=true;break;}
+      var _3mRegex=/ثلاث(ه)?\s*(اشهر|أشهر|شهور|شهر)|3\s*(اشهر|أشهر|شهور|شهر)|ثلاث.*صندوق|ثلاث.*بوكس|3.*صناديق|3.*بوكسات|لثلاث|ل3\s*(شهر|اشهر)/i;
+      /* Priority: direct id lookup */
+      var _pnDirect=document.getElementById('epresNotes');
+      if(_pnDirect&&_3mRegex.test((_pnDirect.value||'').trim())){_autoPostNote=true;}
+      /* Fallback: scan ALL editable fields */
+      if(!_autoPostNote){
+        var _noteAll=document.querySelectorAll('input,textarea,[contenteditable]');
+        for(var _ni=0;_ni<_noteAll.length;_ni++){
+          var _nv=((_noteAll[_ni].tagName==='INPUT'||_noteAll[_ni].tagName==='TEXTAREA')?(_noteAll[_ni].value||''):(_noteAll[_ni].textContent||'')).trim();
+          if(_nv.length>8&&_3mRegex.test(_nv)){_autoPostNote=true;break;}
+        }
       }
-    }catch(e){}
+    }catch(e){console.log('EZ 3m check:',e);}
     if(showPostDialog||ramadanMode||_autoPostNote)showPostProcessDialog();
     /* Ramadan mode notification */
     if(ramadanMode){
