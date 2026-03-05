@@ -1591,6 +1591,10 @@ window.ezSubmit=function(){
       }
     }
 
+    /* ── Capture Prescription Notes BEFORE dialog removal ── */
+    var _pnEl=document.getElementById('epresNotes');
+    window._ezSavedPrescNote=_pnEl?(_pnEl.value||'').trim():'';
+
     d.remove();
     var loader=document.createElement('div');
     loader.id='ez-loader';
@@ -3242,18 +3246,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     /* ── Auto-open dialog if notes say 3-month / 3-boxes split ── */
     var _autoPostNote=false;
     try{
-      var _3mRegex=/ثلاث(ه)?\s*(اشهر|أشهر|شهور|شهر)|3\s*(اشهر|أشهر|شهور|شهر)|ثلاث.*صندوق|ثلاث.*بوكس|3.*صناديق|3.*بوكسات|لثلاث|ل3\s*(شهر|اشهر)/i;
-      /* Priority: direct id lookup */
-      var _pnDirect=document.getElementById('epresNotes');
-      if(_pnDirect&&_3mRegex.test((_pnDirect.value||'').trim())){_autoPostNote=true;}
-      /* Fallback: scan ALL editable fields */
-      if(!_autoPostNote){
-        var _noteAll=document.querySelectorAll('input,textarea,[contenteditable]');
-        for(var _ni=0;_ni<_noteAll.length;_ni++){
-          var _nv=((_noteAll[_ni].tagName==='INPUT'||_noteAll[_ni].tagName==='TEXTAREA')?(_noteAll[_ni].value||''):(_noteAll[_ni].textContent||'')).trim();
-          if(_nv.length>8&&_3mRegex.test(_nv)){_autoPostNote=true;break;}
-        }
-      }
+      var _3mRegex=/ثلاث(ه)?\s*(اشهر|أشهر|شهور|شهر)|3\s*(اشهر|أشهر|شهور|شهر)|لثلاث\s*(اشهر|أشهر|شهور|شهر)|تقسيم.*ثلاث|ثلاث.*صندوق|ثلاث.*بوكس|3.*صناديق|3.*بوكسات/i;
+      /* Use pre-captured value (read before EZ dialog was removed) */
+      var _savedNote=window._ezSavedPrescNote||'';
+      if(_savedNote.length>3&&_3mRegex.test(_savedNote)){_autoPostNote=true;}
     }catch(e){console.log('EZ 3m check:',e);}
     if(showPostDialog||ramadanMode||_autoPostNote)showPostProcessDialog();
     /* Ramadan mode notification */
