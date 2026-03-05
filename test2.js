@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='140.5';
+var APP_VERSION='140.6';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,13 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '140.6':{
+    title:'🔗 دالة التكرار — الأوقات من NORMAL_TIMES مباشرةً',
+    features:[
+      {icon:'🔗',text:'getMealTimesFromNote بقت تقرأ الأوقات من NORMAL_TIMES بدل أرقام ثابتة — كل كود بيستخدم أوقاته الخاصة'},
+      {icon:'⚙️',text:'helper جديد _timeStrToH لتحويل "HH:MM" لرقم ساعة للحساب الصحيح للفرق بين الجرعات'}
+    ]
+  },
   '140.5':{
     title:'🕐 دالة التكرار — دعم كلمات الوقت كاملة',
     features:[
@@ -2520,30 +2527,31 @@ function getCodeAwareTime(timeResult,itemCode){
 }
 
 /* ── Helper: استخرج الأوقات الفعلية من الـ note بناءً على الكلمات ── */
+/* ── تحويل "HH:MM" → ساعة كرقم عشري ── */
+function _timeStrToH(t){var p=(t||'').split(':');return parseInt(p[0]||0)+(parseInt(p[1]||0)/60);}
+
+/* ── استخرج الأوقات الفعلية من الـ note — الأوقات من NORMAL_TIMES مباشرةً ── */
 function getMealTimesFromNote(note){
+  var NT=NORMAL_TIMES;
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
-  /* isBefore = true فقط لو في "قبل" بدون "بعد" — الحالات المختلطة بتتعامل per-meal */
   var isBefore=/قبل/i.test(s)&&!/بعد/i.test(s);
-  /* ── وجبات ── */
   var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
   var hasL=/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/i.test(s);
   var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
   var hasBed=/نوم|النوم|bed|sleep/i.test(s);
-  /* ── كلمات وقت (بس لو مفيش وجبة بنفس الوقت لتفادي التكرار) ── */
-  var hasM=/صباح|الصباح|صبح|morning/i.test(s)&&!hasB;  /* صباح ≈ فطار = 9:00 */
-  var hasN=/ظهر|الظهر|noon|midday/i.test(s)&&!hasL;    /* ظهر  ≈ غدا  = 12:00 */
-  var hasA=/عصر|العصر|asr|afternoon/i.test(s);          /* عصر  = 15:00 */
-  var hasE=/مساء|مسا|المساء|المسا|evening/i.test(s)&&!hasD&&!hasBed; /* مساء ≈ عشا = 21:00 */
+  var hasM=/صباح|الصباح|صبح|morning/i.test(s)&&!hasB;
+  var hasN=/ظهر|الظهر|noon|midday/i.test(s)&&!hasL;
+  var hasA=/عصر|العصر|asr|afternoon/i.test(s);
+  var hasE=/مساء|مسا|المساء|المسا|evening/i.test(s)&&!hasD&&!hasBed;
   var times=[];
-  if(hasB) times.push(isBefore?8:9);
-  if(hasL) times.push(isBefore?13:14);
-  if(hasD) times.push(isBefore?20:21);
-  if(hasBed) times.push(22);
-  if(hasM) times.push(9);
-  if(hasN) times.push(12);
-  if(hasA) times.push(15);
-  if(hasE) times.push(21);
-  /* إزالة التكرار (مثلاً: صباح=9 + بعد فطار=9 → 9 مرة واحدة) */
+  if(hasB) times.push(_timeStrToH(isBefore?NT.beforeBreakfast:NT.afterBreakfast));
+  if(hasL) times.push(_timeStrToH(isBefore?NT.beforeLunch:NT.afterLunch));
+  if(hasD) times.push(_timeStrToH(isBefore?NT.beforeDinner:NT.afterDinner));
+  if(hasBed) times.push(_timeStrToH(NT.bed));
+  if(hasM) times.push(_timeStrToH(NT.morning));
+  if(hasN) times.push(_timeStrToH(NT.noon));
+  if(hasA) times.push(_timeStrToH(NT.afternoon));
+  if(hasE) times.push(_timeStrToH(NT.evening));
   times=times.filter(function(v,i,a){return a.indexOf(v)===i;});
   times.sort(function(a,b){return a-b;});
   return times;
