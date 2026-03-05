@@ -1,7 +1,7 @@
 javascript:(function(){
 var old=document.getElementById('nahdi_baz_panel');if(old)old.remove();
 var oldStyle=document.getElementById('nahdi_baz_styles');if(oldStyle)oldStyle.remove();
-var d=document,db=[],editOn=false,dragOn=false,selI=null,selImg=null,dragEl=null,dragOX=0,dragOY=0,panelCollapsed=false;
+var d=document,db=[],editOn=false,dragOn=false,delRowOn=false,selI=null,selImg=null,dragEl=null,dragOX=0,dragOY=0,panelCollapsed=false;
 
 var css=d.createElement('style');css.id='nahdi_baz_styles';
 css.textContent=`
@@ -72,28 +72,29 @@ function findT(){var ts=Array.from(d.querySelectorAll('table')).filter(function(
 var ui=d.createElement('div');ui.id='nahdi_baz_panel';
 ui.innerHTML=
 '<div class="nbp-header" id="nbp_header">'+
-  '<div class="nbp-logo"><div class="nbp-logo-icon">✏️</div><div><div class="nbp-title">Nahdi Editor</div><div class="nbp-ver">v2.3 — iOS Edition</div></div></div>'+
-  '<div class="nbp-actions"><div class="nbp-act-btn" id="nbp_min">−</div><div class="nbp-act-btn" id="nbp_cls" style="background:rgba(239,68,68,0.08);color:#ef4444">✕</div></div>'+
+  ' <div class="nbp-logo"><div class="nbp-logo-icon">✏️</div><div><div class="nbp-title">Nahdi Editor</div><div class="nbp-ver">v2.3 — iOS Edition</div></div></div>'+
+  ' <div class="nbp-actions"><div class="nbp-act-btn" id="nbp_min">−</div><div class="nbp-act-btn" id="nbp_cls" style="background:rgba(239,68,68,0.08);color:#ef4444">✕</div></div>'+
 '</div>'+
 '<div class="nbp-fab" id="nbp_fab">✏️</div>'+
 '<div class="nbp-body" id="nbp_body">'+
-  '<div class="nbp-grp"><div class="nbp-grp-title">أدوات التحرير</div>'+
-    '<div class="nbp-item" id="nbp_edit" style="position:relative"><div class="nbp-item-icon" style="background:rgba(99,102,241,0.06)">✏️</div><div class="nbp-item-text">تفعيل التعديل الحر</div><span class="nbp-item-arrow">‹</span></div>'+
-    '<div class="nbp-item" id="nbp_drag" style="position:relative"><div class="nbp-item-icon" style="background:rgba(139,92,246,0.06)">🔀</div><div class="nbp-item-text">تحريك العناصر</div><span class="nbp-item-arrow">‹</span></div>'+
-  '</div>'+
-  '<div class="nbp-grp"><div class="nbp-grp-title">عناصر الصفحة</div>'+
-    '<div class="nbp-item" id="nbp_qr"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">🗑️</div><div class="nbp-item-text">حذف الباركود والتذكير</div><span class="nbp-item-arrow">‹</span></div>'+
-  '</div>'+
-  '<div class="nbp-grp"><div class="nbp-grp-title">إدارة الأصناف</div>'+
-    '<label class="nbp-item" id="nbp_csv_label" for="nbp_csv"><div class="nbp-item-icon" style="background:rgba(34,197,94,0.06)">📁</div><div class="nbp-item-text">رفع ملف الأصناف (CSV)</div><span class="nbp-item-arrow">‹</span></label>'+
-    '<input type="file" id="nbp_csv" accept=".csv" style="display:none">'+
-    '<div style="padding:0 16px"><input type="text" class="nbp-search" id="nbp_search" placeholder="🔍 بحث بالاسم أو الكود..."><div class="nbp-results" id="nbp_results"></div></div>'+
-    '<label class="nbp-item" id="nbp_img_label" for="nbp_img" style="display:none"><div class="nbp-item-icon" style="background:rgba(59,130,246,0.06)">🖼️</div><div class="nbp-item-text">رفع صورة الصنف (اختياري)</div><span class="nbp-item-arrow">‹</span></label>'+
-    '<input type="file" id="nbp_img" accept="image/*" style="display:none">'+
-    '<div class="nbp-img-preview" id="nbp_img_preview" style="margin:0 16px"><img id="nbp_img_thumb" src="" alt=""></div>'+
-    '<div class="nbp-item" id="nbp_inject" style="display:none"><div class="nbp-item-icon" style="background:rgba(245,158,11,0.06)">✅</div><div class="nbp-item-text" style="color:#f59e0b;font-weight:800">حقن الصنف في الجدول</div><span class="nbp-item-arrow" style="color:#f59e0b">‹</span></div>'+
-  '</div>'+
-  '<div style="text-align:center;padding:10px 0 4px;font-size:9px;color:#9ca3af;font-weight:700;letter-spacing:0.5px">DEVELOPED BY ALI EL-BAZ</div>'+
+  ' <div class="nbp-grp"><div class="nbp-grp-title">أدوات التحرير</div>'+
+    ' <div class="nbp-item" id="nbp_edit" style="position:relative"><div class="nbp-item-icon" style="background:rgba(99,102,241,0.06)">✏️</div><div class="nbp-item-text">تفعيل التعديل الحر</div><span class="nbp-item-arrow">‹</span></div>'+
+    ' <div class="nbp-item" id="nbp_drag" style="position:relative"><div class="nbp-item-icon" style="background:rgba(139,92,246,0.06)">🔀</div><div class="nbp-item-text">تحريك العناصر</div><span class="nbp-item-arrow">‹</span></div>'+
+    ' <div class="nbp-item" id="nbp_del_row" style="position:relative"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">✖️</div><div class="nbp-item-text">حذف صفوف الجدول</div><span class="nbp-item-arrow">‹</span></div>'+
+  ' </div>'+
+  ' <div class="nbp-grp"><div class="nbp-grp-title">عناصر الصفحة</div>'+
+    ' <div class="nbp-item" id="nbp_qr"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">🗑️</div><div class="nbp-item-text">حذف الباركود والتذكير</div><span class="nbp-item-arrow">‹</span></div>'+
+  ' </div>'+
+  ' <div class="nbp-grp"><div class="nbp-grp-title">إدارة الأصناف</div>'+
+    ' <label class="nbp-item" id="nbp_csv_label" for="nbp_csv"><div class="nbp-item-icon" style="background:rgba(34,197,94,0.06)">📁</div><div class="nbp-item-text">رفع ملف الأصناف (CSV)</div><span class="nbp-item-arrow">‹</span></label>'+
+    ' <input type="file" id="nbp_csv" accept=".csv" style="display:none">'+
+    ' <div style="padding:0 16px"><input type="text" class="nbp-search" id="nbp_search" placeholder="🔍 بحث بالاسم أو الكود..."><div class="nbp-results" id="nbp_results"></div></div>'+
+    ' <label class="nbp-item" id="nbp_img_label" for="nbp_img" style="display:none"><div class="nbp-item-icon" style="background:rgba(59,130,246,0.06)">🖼️</div><div class="nbp-item-text">رفع صورة الصنف (اختياري)</div><span class="nbp-item-arrow">‹</span></label>'+
+    ' <input type="file" id="nbp_img" accept="image/*" style="display:none">'+
+    ' <div class="nbp-img-preview" id="nbp_img_preview" style="margin:0 16px"><img id="nbp_img_thumb" src="" alt=""></div>'+
+    ' <div class="nbp-item" id="nbp_inject" style="display:none"><div class="nbp-item-icon" style="background:rgba(245,158,11,0.06)">✅</div><div class="nbp-item-text" style="color:#f59e0b;font-weight:800">حقن الصنف في الجدول</div><span class="nbp-item-arrow" style="color:#f59e0b">‹</span></div>'+
+  ' </div>'+
+  ' <div style="text-align:center;padding:10px 0 4px;font-size:9px;color:#9ca3af;font-weight:700;letter-spacing:0.5px">DEVELOPED BY ALI EL-BAZ</div>'+
 '</div>';
 d.body.appendChild(ui);requestAnimationFrame(function(){requestAnimationFrame(function(){ui.classList.add('show')})});
 
@@ -125,6 +126,25 @@ d.getElementById('nbp_drag').onclick=function(){
   dragOn=!dragOn;var el=this;
   if(dragOn){el.classList.add('drag-active');el.querySelector('.nbp-item-text').textContent='إيقاف تحريك العناصر';var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-green';el.appendChild(dot);d.addEventListener('mouseover',onDragOver,true);d.addEventListener('mouseout',onDragOut,true);d.addEventListener('mousedown',onDragDown,true);d.addEventListener('mousemove',onDragMove,true);d.addEventListener('mouseup',onDragUp,true);toast('وضع التحريك: امسك أي عنصر وحرّكه','info')}
   else{el.classList.remove('drag-active');el.querySelector('.nbp-item-text').textContent='تحريك العناصر';var dot=el.querySelector('.nbp-dot');if(dot)dot.remove();d.removeEventListener('mouseover',onDragOver,true);d.removeEventListener('mouseout',onDragOut,true);d.removeEventListener('mousedown',onDragDown,true);d.removeEventListener('mousemove',onDragMove,true);d.removeEventListener('mouseup',onDragUp,true);if(dragHover){dragHover.classList.remove('nbp-drag-outline');dragHover=null}toast('تم إيقاف وضع التحريك','success')}};
+
+function onRowOver(e){var r=e.target.closest('tr');if(!r||r.closest('#nahdi_baz_panel'))return;r.style.outline='2px solid #ef4444';r.style.cursor='pointer';r.title='اضغط للحذف'}
+function onRowOut(e){var r=e.target.closest('tr');if(r)r.style.outline=''}
+function onRowClick(e){var r=e.target.closest('tr');if(!r||r.closest('#nahdi_baz_panel'))return;e.preventDefault();e.stopPropagation();r.remove();toast('تم حذف الصف بنجاح','success')}
+
+d.getElementById('nbp_del_row').onclick=function(){
+  delRowOn=!delRowOn;var el=this;
+  if(delRowOn){
+    el.classList.add('active');el.querySelector('.nbp-item-text').textContent='إيقاف حذف الصفوف';
+    var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-red';el.appendChild(dot);
+    d.addEventListener('mouseover',onRowOver,true);d.addEventListener('mouseout',onRowOut,true);d.addEventListener('click',onRowClick,true);
+    toast('وضع الحذف: اضغط على أي صف في الجدول لحذفه','info');
+  } else {
+    el.classList.remove('active');el.querySelector('.nbp-item-text').textContent='حذف صفوف الجدول';
+    var dot=el.querySelector('.nbp-dot');if(dot)dot.remove();
+    d.removeEventListener('mouseover',onRowOver,true);d.removeEventListener('mouseout',onRowOut,true);d.removeEventListener('click',onRowClick,true);
+    toast('تم إيقاف وضع الحذف','success');
+  }
+};
 
 d.getElementById('nbp_qr').onclick=function(){
   var rm=false;var qr=d.getElementById('qrcode'),qa=d.getElementById('qr_ar'),qe=d.getElementById('qr_en');var qi=d.querySelector('img[src*="qr"],canvas,.qr-code,svg[class*="qr"]');
