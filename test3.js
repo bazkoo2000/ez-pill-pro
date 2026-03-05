@@ -1559,6 +1559,17 @@ window.ezSubmit=function(){
     var autoDuration=document.getElementById('auto-duration')?document.getElementById('auto-duration').checked:true;
     var showWarningsFlag=document.getElementById('show-warnings')?document.getElementById('show-warnings').checked:true;
     var showPostDialog=document.getElementById('show-post-dialog')?document.getElementById('show-post-dialog').checked:false;
+    /* ── Force showPostDialog if notes mention 3-month/3-box split ── */
+    if(!showPostDialog){
+      try{
+        var _pn3m=(document.getElementById('epresNotes')||{value:''}).value||'';
+        if(/ثلاث(ه)?\s*(اشهر|أشهر|شهور|شهر)|3\s*(اشهر|أشهر|شهور|شهر)|لثلاث|تقسيم.*ثلاث|ثلاث.*صندوق|3.*صناديق/i.test(_pn3m)){
+          showPostDialog=true;
+          var _cb=document.getElementById('show-post-dialog');
+          if(_cb){_cb.checked=true;}
+        }
+      }catch(e){}
+    }
     var ramadanMode=document.getElementById('ramadan-mode')?document.getElementById('ramadan-mode').checked:false;
     /* Read and save ramadan days remaining */
     if(ramadanMode){
