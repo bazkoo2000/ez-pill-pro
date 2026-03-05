@@ -1,4 +1,4 @@
-javascript:(function(){
+(function(){
 var APP_VERSION='140.7';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
@@ -4824,6 +4824,4 @@ function extractAndConfirmName(){
       });
     }
   }
-})();
-
 })();
