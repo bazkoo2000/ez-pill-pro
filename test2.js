@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='140.7';
+var APP_VERSION='140.8';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -9,7 +9,7 @@ var APP_NAME='EZ_Pill Farmadosis';
    ══════════════════════════════════════════ */
 var CHANGELOG={
   '140.7':{
-    title:'🖨️ تجميع للطباعة — زر مستقل',
+    title:'v140.8 — زر الفاتورة + تفعيل الدايلوج تلقائي',
     features:[
       {icon:'🖨️',text:'زر "تجميع للطباعة" بقى مستقل — مش مرتبط بزر الشهر التالي'},
       {icon:'📅',text:'ضغطت شهرين؟ التجميع على شهرين. ضغطت 3؟ التجميع على 3 — تلقائي'},
@@ -810,6 +810,57 @@ var originalStartDate='';
 var duplicatedRows=[];
 var duplicatedCount=0;
 
+/* ── Invoice Download Intercept ── */
+window._ezInterceptDownload=false;
+window._ezDownloadCounter=0;
+
+window.ezToggleDownloadIntercept=function(){
+  window._ezInterceptDownload=!window._ezInterceptDownload;
+  window._ezDownloadCounter=0;
+  var btn=document.getElementById('ez-dl-intercept-btn');
+  if(btn){
+    btn.style.background=window._ezInterceptDownload?'linear-gradient(145deg,#10b981,#059669)':'linear-gradient(145deg,#94a3b8,#64748b)';
+    btn.textContent=window._ezInterceptDownload?'🔄 تعديل الفاتورة: مُفعّل ✅':'🔄 تعديل رقم الفاتورة عند التحميل';
+  }
+  window.ezShowToast(window._ezInterceptDownload?'✅ تعديل رقم الفاتورة مُفعّل — كل تحميل هينقّص رقم':'⏸️ تعديل رقم الفاتورة مُعطّل',window._ezInterceptDownload?'success':'info');
+};
+
+(function(){
+  function _waitAndOverride(){
+    if(typeof window.downloadObjectAsJson==='function'&&!window._ezOrigDownloadObj){
+      window._ezOrigDownloadObj=window.downloadObjectAsJson;
+      window.downloadObjectAsJson=function(exportObj,exportName){
+        if(window._ezInterceptDownload&&exportObj){
+          try{
+            var modified=false;
+            if(exportObj.patients){
+              for(var p=0;p<exportObj.patients.length;p++){
+                if(exportObj.patients[p].external_id){
+                  var orig=exportObj.patients[p].external_id;
+                  var newId=String(window._ezDownloadCounter)+orig.substring(1);
+                  exportObj.patients[p].external_id=newId;
+                  modified=true;
+                }
+              }
+            }
+            if(window._ezDownloadCounter===0){
+              window.ezShowToast('📥 التحميل الأول — رقم الفاتورة الأصلي','info');
+            } else if(modified){
+              window.ezShowToast('✅ تحميل #'+(window._ezDownloadCounter+1)+' — أول رقم بقى '+window._ezDownloadCounter,'success');
+              ezBeep('success');
+            }
+            window._ezDownloadCounter++;
+          }catch(e){console.error('EZ intercept error:',e);}
+        }
+        return window._ezOrigDownloadObj(exportObj,exportName);
+      };
+    } else {
+      setTimeout(_waitAndOverride,500);
+    }
+  }
+  _waitAndOverride();
+})();
+
 /* ══════════════════════════════════════════
    SHARED UTILITY FUNCTIONS (Single Source)
    ══════════════════════════════════════════ */
@@ -1539,6 +1590,10 @@ window.ezSubmit=function(){
         return;
       }
     }
+
+    /* ── Capture Prescription Notes BEFORE dialog removal ── */
+    var _pnEl=document.getElementById('epresNotes');
+    window._ezSavedPrescNote=_pnEl?(_pnEl.value||'').trim():'';
 
     d.remove();
     var loader=document.createElement('div');
@@ -2411,7 +2466,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'<button id=\"ez-collect-btn\" onclick=\"window.ezCollectForPrint()\" style=\"width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0\" onmouseover=\"this.style.transform=\\'translateY(-2px)\\'\" onmouseout=\"this.style.transform=\\'translateY(0)\\'\">🖨️ تجميع للطباعة</button>+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button>'+'<button id="ez-collect-btn" onclick="window.ezCollectForPrint()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🖨️ تجميع للطباعة</button>'+'<button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -3188,7 +3243,15 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
-    if(showPostDialog||ramadanMode)showPostProcessDialog();
+    /* ── Auto-open dialog if notes say 3-month / 3-boxes split ── */
+    var _autoPostNote=false;
+    try{
+      var _3mRegex=/ثلاث(ه)?\s*(اشهر|أشهر|شهور|شهر)|3\s*(اشهر|أشهر|شهور|شهر)|لثلاث\s*(اشهر|أشهر|شهور|شهر)|تقسيم.*ثلاث|ثلاث.*صندوق|ثلاث.*بوكس|3.*صناديق|3.*بوكسات/i;
+      /* Use pre-captured value (read before EZ dialog was removed) */
+      var _savedNote=window._ezSavedPrescNote||'';
+      if(_savedNote.length>3&&_3mRegex.test(_savedNote)){_autoPostNote=true;}
+    }catch(e){console.log('EZ 3m check:',e);}
+    if(showPostDialog||ramadanMode||_autoPostNote)showPostProcessDialog();
     /* Ramadan mode notification */
     if(ramadanMode){
       var rmBadge=document.createElement('div');
@@ -3255,7 +3318,7 @@ function detectPackagingInstructions(){
     var notesText='';
     for(var i=0;i<inputs.length;i++){
       var v=(inputs[i].value||'').trim();
-      if(v.length>30&&/[\u0600-\u06FF]/.test(v)&&(/ضيف|توصيل|صيدل|دمج|بوكس|صندوق|شهر/i.test(v))){notesText=v;break;}
+      if(v.length>30&&/[\u0600-\u06FF]/.test(v)&&(/ضيف|توصيل|صيدل|دمج|بوكس|صندوق|شهر|سابا|الحرمين/i.test(v))){notesText=v;break;}
       var attrs=(inputs[i].name||'')+(inputs[i].id||'')+(inputs[i].placeholder||'');
       if(/presc.*note|prescription.*note/i.test(attrs)&&v.length>10){notesText=v;break;}
     }
@@ -3354,6 +3417,41 @@ function detectPackagingInstructions(){
             title:'كل شهر في صندوق منفصل',
             detail:'المطلوب '+(monthCount?monthCount+' صناديق - صندوق لكل شهر':'تقسيم الأدوية لصناديق منفصلة - صندوق لكل شهر'),
             action:'تأكد من فصل أدوية كل شهر في بوكس منفصل عند التجهيز'
+          };
+          break;
+        }
+      }
+    }
+
+    /* ── Pattern 3: DELIVERY to pharmacy ── */
+    if(!detected){
+      var deliveryPatterns=[
+        /توصيل.*صيدلي/i,
+        /يوصل.*صيدلي/i,
+        /صيدلي.*سابا/i,
+        /سابا.*الحرمين/i,
+        /صيدلي.*الحرمين/i,
+        /توصيل.*سابا/i,
+        /توصيل.*الحرمين/i,
+        /على\s*صيدلي/i,
+        /ارسال.*صيدلي/i,
+        /يرسل.*صيدلي/i
+      ];
+      var pharmacyName='';
+      var sabaMatch=s.match(/سابا\s*(الحرمين)?/i);
+      if(sabaMatch) pharmacyName='صيدلية سابا الحرمين';
+      if(!pharmacyName){var pharmMatch=s.match(/صيدلي\w*\s+([\u0600-\u06FF\s]{3,20})/i);if(pharmMatch)pharmacyName='صيدلية '+pharmMatch[1].trim();}
+      for(var p3=0;p3<deliveryPatterns.length;p3++){
+        if(deliveryPatterns[p3].test(s)){
+          detected={
+            type:'delivery',
+            icon:'🚚',
+            color:'#3b82f6',
+            colorLight:'rgba(59,130,246,0.06)',
+            colorBorder:'rgba(59,130,246,0.15)',
+            title:'توصيل'+(pharmacyName?' على '+pharmacyName:''),
+            detail:'المطلوب توصيل الطلب'+(pharmacyName?' إلى '+pharmacyName:''),
+            action:'تأكد من تسجيل عنوان التوصيل والصيدلية المطلوبة'
           };
           break;
         }
