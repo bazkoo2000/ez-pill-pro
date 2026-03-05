@@ -1612,9 +1612,21 @@ window.ezSubmit=function(){
     loader.innerHTML='<div style="display:flex;align-items:center;gap:14px"><div class="ez-loader-spinner"></div><div class="ez-loader-text">'+(ramadanMode?'🌙 جاري المعالجة (وضع رمضان)...':'جاري المعالجة...')+'</div></div><div style="margin-top:14px;height:4px;background:rgba(129,140,248,0.1);border-radius:4px;overflow:hidden"><div style="height:100%;width:60%;background:linear-gradient(90deg,#6366f1,#818cf8,#6366f1);background-size:200% 100%;animation:barShift 1.5s ease infinite;border-radius:4px"></div></div>';
     loader.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.97);backdrop-filter:blur(40px);padding:30px 50px;border-radius:24px;box-shadow:0 30px 80px rgba(99,102,241,0.12),0 0 0 1px rgba(129,140,248,0.08);z-index:99998;text-align:center;font-family:Cairo,sans-serif;min-width:260px;animation:dialogEnter 0.4s ease';
     document.body.appendChild(loader);
+    var _forcePost=(function(){
+      try{var n=(document.getElementById('epresNotes')||{value:''}).value||'';return /ثلاث(ه)?\s*(اشهر|أشهر|شهور|شهر)|3\s*(اشهر|أشهر|شهور|شهر)|لثلاث|تقسيم.*ثلاث|ثلاث.*صندوق|3.*صناديق/i.test(n);}catch(e){return false;}
+    })();
     setTimeout(function(){
       if(loader) loader.remove();
       processTable(m,t,autoDuration,showWarningsFlag,showPostDialog,ramadanMode);
+      if(_forcePost){
+        var _fpTimer=setInterval(function(){
+          if(!document.getElementById('ez-post-dialog')){
+            clearInterval(_fpTimer);
+            try{showPostProcessDialog();}catch(e){}
+          }else{clearInterval(_fpTimer);}
+        },200);
+        setTimeout(function(){clearInterval(_fpTimer);},5000);
+      }
     },800);
   } catch(e){
     alert("خطأ: "+e.message);
@@ -3546,7 +3558,7 @@ s_style.textContent='\
 .ez-seg.active{background:#3b82f6;color:#fff}\
 .ez-tog-grid{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;display:grid;grid-template-columns:1fr 1fr;gap:8px}\
 .ez-tog-btn{padding:12px 14px;border-radius:14px;border:none;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s;text-align:right;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.02);outline:2px solid transparent}\
-.ez-tog-btn.on{outline:2px solid var(--tc,#3b82f6)25}\
+.ez-tog-btn.on{outline:2.5px solid var(--tc,#3b82f6);background:rgba(59,130,246,0.07);box-shadow:0 0 0 4px rgba(59,130,246,0.08)}\
 .ez-tog-btn .ez-tog-icon{font-size:16px;flex-shrink:0}\
 .ez-tog-btn .ez-tog-lbl{font-size:12px;font-weight:800;color:#94a3b8;flex:1;transition:color 0.2s}\
 .ez-tog-btn.on .ez-tog-lbl{color:var(--tc,#3b82f6)}\
