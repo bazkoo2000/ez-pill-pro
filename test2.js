@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='140.3';
+var APP_VERSION='140.4';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '140.4':{
+    title:'🛠️ إصلاحات التكرار والكميات الذكية',
+    features:[
+      {icon:'✍️',text:'إصلاح: الحفاظ على النص الأصلي للملاحظات (Notes) كما هو دون أي تغيير تلقائي'},
+      {icon:'🔄',text:'إصلاح جذري: الحفاظ على "قبل" و "بعد" لكل وجبة بشكل مستقل عند التقسيم في كافة الأوضاع'},
+      {icon:'💊',text:'إصلاح: مضاعفة الحجم (Size) عند وجود "حبتين" أصبحت مرة واحدة فقط (CalculatedDays × Dose)'},
+      {icon:'⏰',text:'تحسين: "قبل النوم" تظل جرعة مستقلة (22:00) وتحافظ على وصفها الدقيق'}
+    ]
+  },
   '140.3':{
     title:'📅 تحذير أيام ذكي — Qty تلقائي + تطبيق على الكل',
     features:[
@@ -478,9 +487,12 @@ function _ezRamadanToday(){
 function ramadanMapNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
 
-  /* ── PRIORITY: بعد الغداء / after lunch → بعد التراويح - يجب التحقق أولاً قبل أي قواعد مخصصة ── */
-  /* هذا الـ check لازم يكون قبل customTimeRules لأنها بتلتقط "الغداء" وتحوله لـ 14:00 وبيضيع */
-  if(/بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء|after.*lun|after.*lunch/i.test(note))
+  /* ── PRIORITY: قبل الغداء / before lunch → قبل الفطار ── */
+  if(/قبل.*(غدا|غداء|غذا|غذاء|lunch)/i.test(note))
+    return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+
+  /* ── PRIORITY: بعد الغداء / after lunch → بعد التراويح ── */
+  if(/بعد.*(غدا|غداء|غذا|غذاء|lunch)/i.test(note))
     return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
 
   /* ── Check custom Ramadan keywords FIRST ── */
@@ -541,9 +553,9 @@ function ramadanMapNote(note){
 
   /* ── Map dinner → Suhoor (NOT Iftar) ── */
   /* قبل العشاء / before dinner → قبل السحور */
-  if(/قبل.*عشا|قبل.*عشو|قبل.*عشاء|before.*din|before.*sup|before.*dinner|before.*asha/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
+  if(/قبل.*(عشا|عشو|عشاء|dinner|asha)/i.test(note)) return {meal:'beforeSuhoor',label_ar:'قبل السحور',label_en:'Before Suhoor',time:RAMADAN_TIMES.beforeSuhoor};
   /* بعد العشاء / after dinner → بعد السحور */
-  if(/بعد.*عشا|بعد.*عشو|بعد.*عشاء|after.*din|after.*sup|after.*dinner|after.*asha/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
+  if(/بعد.*(عشا|عشو|عشاء|dinner|asha)/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   if(/بعد.*سحور|بعد.*سحر|after.*suhoor|after.*sahoor|after.*sahor/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   /* قبل الفطار / before iftar (explicit) */
   if(/قبل.*فطار|قبل.*فطر|قبل.*فطور|قبل.*افطار|before.*iftar|before.*bre/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
@@ -2601,23 +2613,13 @@ function _ezColorDupRows(tb){
 
 function cleanNote(txt){
   if(!txt) return '';
-  var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
-  /* Step 1: Strip system pattern "1 Tablets every 24 Hrs for 30 days1" */
+  /* CRITICAL: Keep original text as much as possible, only strip technical system strings */
+  var c=txt.toString();
+  /* Strip system pattern "1 Tablets every 24 Hrs for 30 days1" */
   c=c.replace(/\d*\s*(Tablets?|Capsules?|undefined|Caps?|Tab)\s*every\s*\d+\s*Hrs?\s*(for\s*)?\d*\s*days?\d*/gi,'');
-  /* Step 2: Strip English duration fragments */
-  c=c.replace(/\bfor\s*\d+\s*days?\d*/gi,'');
-  c=c.replace(/\bevery\s*\d+\s*Hrs?\b/gi,'');
-  /* Step 3: Strip Arabic duration */
-  c=c.replace(/لمد[ةه]?\s*\d+\s*([اأ]يام|يوم)\d*/g,'');
-  c=c.replace(/\d+\s*([اأ]يام|يوم)\d*/g,'');
-  /* Step 4: Strip Arabic hourly */
-  c=c.replace(/كل\s*\d+\s*ساع[ةهات]*/g,'');
-  c=c.replace(/^\s*[-–—]\s*/,'');
-  /* Step 5: If starts with English/digits and has Arabic text after, strip to first Arabic char */
-  if(/^\s*[\da-zA-Z]/.test(c)&&/[\u0600-\u06FF]/.test(c)){
-    var idx=c.search(/[\u0600-\u06FF]/);
-    if(idx>0) c=c.substring(idx);
-  }
+  /* Strip English/Arabic duration fragments only if they are clearly system-generated at the end */
+  c=c.replace(/\bfor\s*\d+\s*days?\d*$/gi,'');
+  c=c.replace(/لمد[ةه]?\s*\d+\s*([اأ]يام|يوم)\d*$/g,'');
   return c.replace(/\s+/g,' ').trim();
 }
 
@@ -2797,6 +2799,7 @@ function smartDoseRecognizer(note){
   var pairDual=/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
   if(mealCount===2||pairDual.test(s)){res.count=2;return res;}
   if(res.hasEmpty&&res.hasBed){res.count=2;return res;}
+  if(res.hasB&&res.hasBed){res.count=2;return res;}
   if(res.hasBed&&mealCount===0){res.count=1;return res;}
   if(res.hasEmpty&&mealCount===0){res.count=1;return res;}
   if(/\b(يوميا|daily)\b/i.test(s)&&!res.rawFrequency){res.count=1;return res;}
@@ -2850,12 +2853,14 @@ function getMealTimesFromNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
   var isBefore=/قبل/i.test(s);
   var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
-  var hasL=/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/i.test(s);
+  var hasL=/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغداء|lunch/i.test(s);
   var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
+  var hasBed=/نوم|sleep|bed|hs/i.test(s);
   var times=[];
   if(hasB) times.push(isBefore?8:9);
   if(hasL) times.push(isBefore?13:14);
   if(hasD) times.push(isBefore?20:21);
+  if(hasBed) times.push(22);
   times.sort(function(a,b){return a-b;});
   return times;
 }
@@ -2960,6 +2965,17 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var p=ni.isBefore?(isEn?'Before ':'قبل '):(isEn?'After ':'بعد ');
     var bf=isEn?'Breakfast':'الفطار';var ln=isEn?'Lunch':'الغداء';var dn=isEn?'Dinner':'العشاء';
     var m_lbl=isEn?'Morning':'صباحا';var n_lbl=isEn?'Noon':'ظهرا';var a_lbl=isEn?'Afternoon':'عصرا';var e_lbl=isEn?'Evening':'مساءا';
+    var bed_lbl=isEn?'Bed':'النوم';
+    
+    /* CRITICAL FIX: Determine prefix for EACH meal individually based on the original note */
+    function getMealPrefix(mealKeyword, defaultPrefix) {
+      var s = (on || '').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+      var beforePat = new RegExp('قبل\\s*.*' + mealKeyword + '|' + mealKeyword + '.*\\s*قبل', 'i');
+      var afterPat = new RegExp('بعد\\s*.*' + mealKeyword + '|' + mealKeyword + '.*\\s*بعد', 'i');
+      if (beforePat.test(s)) return isEn ? 'Before ' : 'قبل ';
+      if (afterPat.test(s)) return isEn ? 'After ' : 'بعد ';
+      return defaultPrefix;
+    }
     var calcQ=1;if(qi>=0){var cur=parseInt(get(tds[qi]))||1;calcQ=cur;}
     var dupRows=[];var meals=[];
     if(ni.type==='two'){
@@ -2973,9 +2989,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1='12:00';n2=e_lbl;t2='21:30';meals=['الظهر','المساء'];}
       else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';meals=['الصباح','العصر'];}
       else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1='15:00';n2=e_lbl;t2='21:30';meals=['العصر','المساء'];}
-      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
-      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1='13:00';n2=p+dn;t2='20:00';}else{n1=p+ln;t1='14:00';n2=p+dn;t2='21:00';}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){n1=getMealPrefix('فطار|breakfast', p)+bf;t1=(n1.indexOf('قبل')>-1||n1.indexOf('Before')>-1)?'08:00':'09:00';n2=getMealPrefix('غدا|lunch', p)+ln;t2=(n2.indexOf('قبل')>-1||n2.indexOf('Before')>-1)?'13:00':'14:00';meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
+      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){n1=getMealPrefix('غدا|lunch', p)+ln;t1=(n1.indexOf('قبل')>-1||n1.indexOf('Before')>-1)?'13:00':'14:00';n2=getMealPrefix('عشا|dinner', p)+dn;t2=(n2.indexOf('قبل')>-1||n2.indexOf('Before')>-1)?'20:00':'21:00';meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasBed){n1=getMealPrefix('فطار|breakfast', p)+bf;t1=(n1.indexOf('قبل')>-1||n1.indexOf('Before')>-1)?'08:00':'09:00';n2=getMealPrefix('نوم|bed', (isEn?'Before ':'قبل '))+bed_lbl;t2='22:00';meals=isEn?['Breakfast','Bed']:['الفطار','النوم'];}
+      else{n1=getMealPrefix('فطار|breakfast', p)+bf;t1=(n1.indexOf('قبل')>-1||n1.indexOf('Before')>-1)?'08:00':'09:00';n2=getMealPrefix('عشا|dinner', p)+dn;t2=(n2.indexOf('قبل')>-1||n2.indexOf('Before')>-1)?'20:00':'21:00';meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
     } else if(ni.type==='three'){
@@ -2987,7 +3004,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
       var n1='',t1='',n2='',t2='',n3='',t3='';
       if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';n3=e_lbl;t3='21:30';meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
+      else{
+        n1=getMealPrefix('فطار|breakfast', p)+bf;t1=(n1.indexOf('قبل')>-1||n1.indexOf('Before')>-1)?'08:00':'09:00';
+        n2=getMealPrefix('غدا|lunch', p)+ln;t2=(n2.indexOf('قبل')>-1||n2.indexOf('Before')>-1)?'13:00':'14:00';
+        n3=getMealPrefix('عشا|dinner', p)+dn;t3=(n3.indexOf('قبل')>-1||n3.indexOf('Before')>-1)?'20:00':'21:00';
+        meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];
+      }
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
     } else if(ni.type==='q6h'){
@@ -3135,11 +3157,13 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ti_main>=0){var tiInp=tds_nodes[ti_main].querySelector('input');if(tiInp)tiInp.style.width='100px';}
     if(ei_main>=0){var eiInp=tds_nodes[ei_main].querySelector('input,select');if(eiInp)eiInp.style.width='90px';}
     if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
-    var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
-    if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
+    var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;
+    /* CRITICAL: Do NOT overwrite the user's original note in the UI yet. Use it for analysis only. */
+    var cn_str=cleanNote(nt_str);
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
-    if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
-    var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
+    if(processedCodes[itemCode])processedCodes[itemCode].note=nt_str;
+    var fn_str=nt_str; /* Use original note for processing to preserve 'before/after' */
+    var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
     var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);var h_s=!!(itemCode&&weeklyInjections.indexOf(itemCode)>-1);
 
     /* ── RAMADAN MODE OVERRIDES ── */
@@ -3441,16 +3465,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}/* 56/60 BID default: no clear dose → force every=12, start=09:00 */var _origFixedVal=fixedSizeCodes[rd.itemCode];if((_origFixedVal===56||_origFixedVal===60)&&dose_fix.count<=1&&!isE12_fix&&rd.timesPerDay<=1){setEvry(tds_nodes[ei_main],'12');setTime(r_node,'09:00');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;if(rd.daysOverrideQty&&rd.daysOverrideQty>0){setSize(qc2,rd.daysOverrideQty);}else{setSize(qc2,cv2*m);}}
-      var doseInfo=smartDoseRecognizer(rd.note);// ★ Smart pack-based frequency when note is empty
-if((!rd.note||rd.note.trim().length<3)&&rd.itemName){
-  var _inferPack=_extractPackFromName(rd.itemName);
-  if(_inferPack){
-    var _inferTPD=Math.round(_inferPack/30);
-    if(_inferTPD===2){doseInfo.count=2;rd.timesPerDay=2;}
-    else if(_inferTPD===3){doseInfo.count=3;rd.timesPerDay=3;}
-    else if(_inferTPD===4){doseInfo.count=4;rd.timesPerDay=4;}
-  }
-}var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
+      var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
       /* Apply unrecognized_dose warning overrides if user set them */
       if(rd.unrecognizedTime){tm2_obj={time:rd.unrecognizedTime,isUnrecognized:false};}
       if(rd.unrecognizedEvery){rd.hourlyInfo={hasInterval:true,hours:rd.unrecognizedEvery,timesPerDay:Math.floor(24/rd.unrecognizedEvery)};}
@@ -3458,12 +3473,14 @@ if((!rd.note||rd.note.trim().length<3)&&rd.itemName){
       if(is48h){setEvry(tds_nodes[ei_main],'48');var mult2=doseMultiplier;if(doseInfo.count>=2)setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*mult2));else setSize(tds_nodes[si_main],Math.ceil((rd.calculatedSize*mult2)/2));setTime(r_node,tm2_obj.time);continue;}
       var finalTPD=rd.timesPerDay;if(rd.hourlyInfo.hasInterval)finalTPD=rd.hourlyInfo.timesPerDay;
       var isE12=/كل\s*12|12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(doseInfo.hasB&&doseInfo.hasD)||(doseInfo.hasM&&doseInfo.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);
-      if(finalTPD>=6){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*6));setEvry(tds_nodes[ei_main],'4');}
-      else if(finalTPD===4){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*4));setEvry(tds_nodes[ei_main],'6');}
-      else if(isE12||finalTPD===2){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*2));setEvry(tds_nodes[ei_main],'12');setTime(r_node,tm2_obj.time);}
-      else if(doseInfo.count===3||finalTPD===3){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*3));setEvry(tds_nodes[ei_main],'8');}
-      else if(doseInfo.count===2){setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier*2));setEvry(tds_nodes[ei_main],'12');setTime(r_node,tm2_obj.time);}
-      else{setSize(tds_nodes[si_main],Math.ceil(rd.calculatedSize*doseMultiplier));setEvry(tds_nodes[ei_main],'24');}
+      /* FIX: Size should be (CalculatedDays * DoseMultiplier). DO NOT multiply by frequency again if it's already in calculatedSize */
+      var baseSize = rd.calculatedSize;
+      if(finalTPD>=6){setSize(tds_nodes[si_main],Math.ceil(baseSize*doseMultiplier));setEvry(tds_nodes[ei_main],'4');}
+      else if(finalTPD===4){setSize(tds_nodes[si_main],Math.ceil(baseSize*doseMultiplier));setEvry(tds_nodes[ei_main],'6');}
+      else if(isE12||finalTPD===2){setSize(tds_nodes[si_main],Math.ceil(baseSize*doseMultiplier));setEvry(tds_nodes[ei_main],'12');setTime(r_node,tm2_obj.time);}
+      else if(doseInfo.count===3||finalTPD===3){setSize(tds_nodes[si_main],Math.ceil(baseSize*doseMultiplier));setEvry(tds_nodes[ei_main],'8');}
+      else if(doseInfo.count===2){setSize(tds_nodes[si_main],Math.ceil(baseSize*doseMultiplier));setEvry(tds_nodes[ei_main],'12');setTime(r_node,tm2_obj.time);}
+      else{setSize(tds_nodes[si_main],Math.ceil(baseSize*doseMultiplier));setEvry(tds_nodes[ei_main],'24');}
       /* Apply size override from unrecognized_dose warning */
       if(rd.unrecognizedSize&&rd.unrecognizedSize>0){setSize(tds_nodes[si_main],rd.unrecognizedSize);}
       if(di_main>=0)setDose(tds_nodes[di_main],doseMultiplier>=1?doseMultiplier:1);
