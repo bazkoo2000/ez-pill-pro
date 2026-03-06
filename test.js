@@ -235,24 +235,35 @@ async function _ezGeminiParse(noteText){
 /* Batch: parse multiple notes at once (more efficient) */
 async function _ezGeminiBatch(notes){
   var key=_ezGetGeminiKey();
-  if(!key||notes.length===0) return [];
+  if(!key||notes.length===0){console.log('🤖 Batch: no key or empty notes');return [];}
+  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini...');
   var prompt=_GEMINI_PROMPT+'\n\nParse ALL of these notes. Return a JSON ARRAY with one object per note, in the same order:\n';
   for(var i=0;i<notes.length;i++) prompt+=(i+1)+'. "'+notes[i]+'"\n';
-  try{
-    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[{text:prompt}]}],
-        generationConfig:{temperature:0.1,maxOutputTokens:1000}
-      })
-    });
-    if(!resp.ok) return [];
-    var data=await resp.json();
-    var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
-    text=text.replace(/```json|```/g,'').trim();
-    return JSON.parse(text);
-  }catch(e){console.warn('Gemini batch error:',e);return [];}
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key;
+  console.log('🤖 URL:',url.substring(0,80)+'...');
+  var resp=await fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      contents:[{parts:[{text:prompt}]}],
+      generationConfig:{temperature:0.1,maxOutputTokens:1000}
+    })
+  });
+  console.log('🤖 Response status:',resp.status,resp.statusText);
+  if(!resp.ok){
+    var errText=await resp.text();
+    console.error('🤖 API Error:',errText);
+    throw new Error('Gemini API '+resp.status+': '+errText.substring(0,100));
+  }
+  var data=await resp.json();
+  console.log('🤖 Raw response:',JSON.stringify(data).substring(0,200));
+  var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
+  console.log('🤖 Extracted text:',text);
+  text=text.replace(/```json|```/g,'').trim();
+  var parsed=JSON.parse(text);
+  /* If single note sent, Gemini might return object instead of array */
+  if(!Array.isArray(parsed)) parsed=[parsed];
+  return parsed;
 }
 
 /* UI: Setup Gemini key (called from settings) */
@@ -304,6 +315,33 @@ window.ezSetupGemini=function(){
     overlay.remove();
   });
   foot.appendChild(secBtn);
+  /* Test button */
+  var testBtn=document.createElement('button');
+  testBtn.textContent='🧪 اختبار الاتصال';
+  testBtn.style.cssText='width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
+  testBtn.addEventListener('click',function(){
+    var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
+    if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
+    testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+testKey,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'Parse this dose: "twice daily after meals". Return ONLY JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:200}})
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(data){
+      var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
+      testBtn.textContent='✅ الاتصال ناجح!';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';
+      window.ezShowToast('✅ جيميناي يعمل! الرد: '+text.substring(0,60),'success');
+      console.log('🤖 Test response:',text);
+    }).catch(function(err){
+      testBtn.textContent='❌ فشل: '+err.message;testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';
+      window.ezShowToast('❌ خطأ: '+err.message,'error');
+      console.error('🤖 Test error:',err);
+    });
+  });
+  body.appendChild(testBtn);
   card.appendChild(foot);
   overlay.appendChild(card);
   overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
@@ -3315,8 +3353,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       _geminiIdxMap.push(_gi);
     }
   }
+  console.log('🤖 Gemini: '+_geminiNotes.length+' unrecognized notes, key='+(!!_ezGetGeminiKey()));
+  if(_geminiNotes.length>0){console.log('🤖 Notes:',_geminiNotes);}
   if(_geminiNotes.length>0&&_ezGetGeminiKey()){
+    window.ezShowToast('🤖 جاري تحليل '+_geminiNotes.length+' جرعة بالذكاء الاصطناعي...','info');
     _ezGeminiBatch(_geminiNotes).then(function(results){
+      console.log('🤖 Gemini response:',results);
       if(results&&results.length>0){
         var resolved=0;
         for(var _r=0;_r<results.length&&_r<_geminiIdxMap.length;_r++){
@@ -3336,7 +3378,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
       /* Now show remaining warnings */
       if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
-    }).catch(function(){
+    }).catch(function(err){
+      console.error('🤖 Gemini ERROR:',err);
+      window.ezShowToast('🤖 خطأ في جيميناي: '+(err.message||err),'error');
       if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
     });
   } else {
