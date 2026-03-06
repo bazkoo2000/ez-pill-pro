@@ -1957,28 +1957,15 @@ window.ezNextMonth=function(){
         var sInput=r.querySelectorAll('td')[si]?r.querySelectorAll('td')[si].querySelector('input,textarea'):null;
         if(sInput) fireEv(sInput);
       });
-      btn.innerHTML=(monthCounter===1)?'📅 الشهر الثالث':'🖨️ تجميع للطباعة';
+      btn.innerHTML='📅 الشهر الثالث';
       btn.style.background=(monthCounter===1)?'linear-gradient(135deg, #818cf8, #6366f1)':'linear-gradient(135deg, #10b981, #059669)';
       btn.style.color='#fff';
       btn.setAttribute('data-step',String(monthCounter+1));
     }
-  } else if(monthCounter===3){
-    if(originalStartDate){sDateElem.value=originalStartDate;fireEv(sDateElem);}
-    rows.forEach(function(r,ix){
-      if(ix===0)return;
-      var tds=r.querySelectorAll('td');
-      if(qi>=0&&tds.length>qi){
-        var qInput=tds[qi].querySelector('input,textarea');
-        if(qInput){qInput.value='3';fireEv(qInput);}
-        else tds[qi].textContent='3';
-      }
-      if(tds.length>si){
-        var sInput=tds[si].querySelector('input,textarea');
-        if(sInput) fireEv(sInput);
-      }
-    });
-    btn.innerHTML='✅ تم التجميع بنجاح';
-    btn.style.background='linear-gradient(135deg, #10b981, #059669)';
+  } else if(monthCounter>=3){
+    /* الشهر الثالث وصلنا - نوقف الزر */
+    btn.innerHTML='✅ تم عرض 3 شهور';
+    btn.style.background='linear-gradient(135deg, #94a3b8, #64748b)';
     btn.style.color='#fff';
     btn.disabled=true;
   }
@@ -2784,6 +2771,13 @@ function smartDoseRecognizer(note){
     .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .replace(/\s+/g,' ').trim();
+  /* FIX v141: Strip duration phrases BEFORE frequency detection
+     "3 شهور" / "3 اشهر" / "30 يوم" = duration, NOT frequency
+     Without this, "بعد الاكل 3 شهور" gets detected as 3 times */
+  s=s.replace(/\d+\s*(شهر|شهور|اشهر|شهرين|month|months)/gi,'')
+    .replace(/\d+\s*(يوم|ايام|اسبوع|اسابيع|day|days|week|weeks)/gi,'')
+    .replace(/لمد[ةه]?\s*\d+/gi,'')
+    .replace(/\s+/g,' ').trim();
   var res={count:1,hasB:false,hasL:false,hasD:false,isBefore:false,hasM:false,hasN:false,hasA:false,hasE:false,hasBed:false,hasEmpty:false,language:'arabic',confidence:'high',rawFrequency:null};
   res.language=detectLanguage(raw);
 
@@ -3190,7 +3184,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ei_main>=0){var eiInp=tds_nodes[ei_main].querySelector('input,select');if(eiInp)eiInp.style.width='90px';}
     if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
-    if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
+    /* FIX v141: لا تنظف خانة النوت — اترك النص الأصلي كما هو للمراجعة */
+    /* التنظيف يتم داخلياً فقط للتحليل — الحقل يبقى بالنص الكامل */
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
     if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
     var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
@@ -4518,6 +4513,7 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
+    <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
@@ -4572,7 +4568,6 @@ d_box.innerHTML='\
 </div>\
 <div class="ez-actions">\
     <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
-    <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
     <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
     <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
