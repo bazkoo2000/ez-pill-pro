@@ -258,27 +258,57 @@ async function _ezGeminiBatch(notes){
 /* UI: Setup Gemini key (called from settings) */
 window.ezSetupGemini=function(){
   var current=_ezGetGeminiKey();
-  var masked=current?('•'.repeat(20)+current.slice(-6)):'لم يتم التعيين';
+  var masked=current?String.fromCharCode(8226).repeat(20)+current.slice(-6):'لم يتم التعيين';
+  var statusColor=current?'#059669':'#dc2626';
+  var statusText=current?'✅ مفعّل':'❌ غير مفعّل';
   var overlay=document.createElement('div');
   overlay.id='ez-gemini-setup';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
-  overlay.innerHTML='<div style="width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)">'
-    +'<div style="padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px">'
-    +'<div style="font-size:24px">🤖</div>'
-    +'<div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div>'
-    +'<div style="font-size:10px;font-weight:700;color:#64748b">جيميناي — لفهم الجرعات غير المعروفة</div></div></div>'
-    +'<div style="padding:16px 22px;direction:rtl">'
-    +'<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">الحالة: <b style="color:'+(current?'#059669':'#dc2626')+'">'+(current?'✅ مفعّل':'❌ غير مفعّل')+'</b></div>'
-    +'<div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:8px">'+masked+'</div>'
-    +'<input id="ez-gemini-key-input" type="password" placeholder="الصق مفتاح Gemini API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px" />'
-    +'<div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">🔒 المفتاح يُحفظ في متصفحك فقط. لا يتم إرسال أي بيانات شخصية — فقط نص الجرعة.<br>📎 احصل على مفتاح مجاني من <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">Google AI Studio</a></div>'
-    +'</div>'
-    +'<div style="padding:10px 22px 16px;display:flex;gap:8px">'
-    +'<button onclick="var k=document.getElementById(\'ez-gemini-key-input\').value.trim();if(k){_ezSetGeminiKey(k);window.ezShowToast(\'✅ تم حفظ مفتاح جيميناي\',\'success\');document.getElementById(\'ez-gemini-setup\').remove();}else{window.ezShowToast(\'❌ ادخل المفتاح\',\'error\');}" style="flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)">💾 حفظ</button>'
-    +'<button onclick="'+(current?'_ezSetGeminiKey(\'\');window.ezShowToast(\'تم حذف المفتاح\',\'info\');document.getElementById(\'ez-gemini-setup\').remove();':'document.getElementById(\'ez-gemini-setup\').remove();')+'" style="height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff">'+(current?'🗑️ حذف':'إلغاء')+'</button>'
-    +'</div></div>';
+  var card=document.createElement('div');
+  card.style.cssText='width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
+  /* Header */
+  var hdr=document.createElement('div');
+  hdr.style.cssText='padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
+  hdr.innerHTML='<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">جيميناي — لفهم الجرعات غير المعروفة</div></div>';
+  card.appendChild(hdr);
+  /* Body */
+  var body=document.createElement('div');
+  body.style.cssText='padding:16px 22px;direction:rtl';
+  body.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">الحالة: <b style="color:'+statusColor+'">'+statusText+'</b></div><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:8px">'+masked+'</div>';
+  var inp=document.createElement('input');
+  inp.id='ez-gemini-key-input';inp.type='password';inp.placeholder='الصق مفتاح Gemini API هنا';
+  inp.style.cssText='width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box';
+  body.appendChild(inp);
+  var info=document.createElement('div');
+  info.style.cssText='font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px';
+  info.innerHTML='🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>';
+  body.appendChild(info);
+  card.appendChild(body);
+  /* Buttons */
+  var foot=document.createElement('div');
+  foot.style.cssText='padding:10px 22px 16px;display:flex;gap:8px';
+  var saveBtn=document.createElement('button');
+  saveBtn.textContent='💾 حفظ';
+  saveBtn.style.cssText='flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
+  saveBtn.addEventListener('click',function(){
+    var k=document.getElementById('ez-gemini-key-input').value.trim();
+    if(k){_ezSetGeminiKey(k);window.ezShowToast('✅ تم حفظ مفتاح جيميناي','success');overlay.remove();}
+    else{window.ezShowToast('❌ ادخل المفتاح','error');}
+  });
+  foot.appendChild(saveBtn);
+  var secBtn=document.createElement('button');
+  secBtn.textContent=current?'🗑️ حذف':'إلغاء';
+  secBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
+  secBtn.addEventListener('click',function(){
+    if(current){_ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');}
+    overlay.remove();
+  });
+  foot.appendChild(secBtn);
+  card.appendChild(foot);
+  overlay.appendChild(card);
   overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
   document.body.appendChild(overlay);
+  inp.focus();
 };
 
 var _defaultFixedSizeCodes={
