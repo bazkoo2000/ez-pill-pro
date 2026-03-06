@@ -3,6 +3,9 @@ var old=document.getElementById('nahdi_baz_panel');if(old)old.remove();
 var oldStyle=document.getElementById('nahdi_baz_styles');if(oldStyle)oldStyle.remove();
 var d=document,db=[],editOn=false,dragOn=false,delRowOn=false,selI=null,selImg=null,dragEl=null,dragOX=0,dragOY=0,panelCollapsed=false;
 
+/* مصفوفة حفظ العمليات للتراجع */
+var undoStack = [];
+
 var css=d.createElement('style');css.id='nahdi_baz_styles';
 css.textContent=`
 #nahdi_baz_panel *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Cairo,Helvetica,sans-serif;}
@@ -69,32 +72,59 @@ d.head.appendChild(css);
 function toast(msg,type){var t=d.createElement('div');t.className='nbp-toast '+type;t.textContent=msg;d.body.appendChild(t);requestAnimationFrame(function(){requestAnimationFrame(function(){t.classList.add('show')})});setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove()},350)},2200)}
 function findT(){var ts=Array.from(d.querySelectorAll('table')).filter(function(t){return/Item Name|اسم الصنف/i.test(t.innerText)});return ts[0]||d.getElementsByTagName('table')[0]}
 
+/* وظيفة التراجع العامة */
+function performUndo() {
+  if (undoStack.length === 0) {
+    toast('لا يوجد عمليات للتراجع عنها', 'error');
+    return;
+  }
+  var lastAction = undoStack.pop();
+  
+  if (lastAction.type === 'remove') {
+    lastAction.parent.insertBefore(lastAction.element, lastAction.nextSibling);
+    toast('تم استعادة العنصر المحذوف', 'success');
+  } else if (lastAction.type === 'move') {
+    lastAction.element.style.position = lastAction.oldStyle.position;
+    lastAction.element.style.left = lastAction.oldStyle.left;
+    lastAction.element.style.top = lastAction.oldStyle.top;
+    toast('تم التراجع عن التحريك', 'success');
+  } else if (lastAction.type === 'inject') {
+    lastAction.element.remove();
+    toast('تم التراجع عن الإضافة', 'success');
+  } else if (lastAction.type === 'multi-remove') {
+    lastAction.items.forEach(function(item) {
+      item.parent.insertBefore(item.element, item.nextSibling);
+    });
+    toast('تم استعادة العناصر المحذوفة', 'success');
+  }
+}
+
 var ui=d.createElement('div');ui.id='nahdi_baz_panel';
 ui.innerHTML=
 '<div class="nbp-header" id="nbp_header">'+
-  ' <div class="nbp-logo"><div class="nbp-logo-icon">✏️</div><div><div class="nbp-title">Nahdi Editor</div><div class="nbp-ver">v2.3 — iOS Edition</div></div></div>'+
-  ' <div class="nbp-actions"><div class="nbp-act-btn" id="nbp_min">−</div><div class="nbp-act-btn" id="nbp_cls" style="background:rgba(239,68,68,0.08);color:#ef4444">✕</div></div>'+
+  ' <div class="nbp-logo"><div class="nbp-logo-icon">✏️</div><div><div class="nbp-title">Nahdi Editor</div><div class="nbp-ver">v2.3 — iOS Edition</div></div></div>'+
+  ' <div class="nbp-actions"><div class="nbp-act-btn" id="nbp_undo" title="تراجع">↩️</div><div class="nbp-act-btn" id="nbp_min">−</div><div class="nbp-act-btn" id="nbp_cls" style="background:rgba(239,68,68,0.08);color:#ef4444">✕</div></div>'+
 '</div>'+
 '<div class="nbp-fab" id="nbp_fab">✏️</div>'+
 '<div class="nbp-body" id="nbp_body">'+
-  ' <div class="nbp-grp"><div class="nbp-grp-title">أدوات التحرير</div>'+
-    ' <div class="nbp-item" id="nbp_edit" style="position:relative"><div class="nbp-item-icon" style="background:rgba(99,102,241,0.06)">✏️</div><div class="nbp-item-text">تفعيل التعديل الحر</div><span class="nbp-item-arrow">‹</span></div>'+
-    ' <div class="nbp-item" id="nbp_drag" style="position:relative"><div class="nbp-item-icon" style="background:rgba(139,92,246,0.06)">🔀</div><div class="nbp-item-text">تحريك العناصر</div><span class="nbp-item-arrow">‹</span></div>'+
-    ' <div class="nbp-item" id="nbp_del_row" style="position:relative"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">✖️</div><div class="nbp-item-text">حذف صفوف الجدول</div><span class="nbp-item-arrow">‹</span></div>'+
-  ' </div>'+
-  ' <div class="nbp-grp"><div class="nbp-grp-title">عناصر الصفحة</div>'+
-    ' <div class="nbp-item" id="nbp_qr"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">🗑️</div><div class="nbp-item-text">حذف الباركود والتذكير</div><span class="nbp-item-arrow">‹</span></div>'+
-  ' </div>'+
-  ' <div class="nbp-grp"><div class="nbp-grp-title">إدارة الأصناف</div>'+
-    ' <label class="nbp-item" id="nbp_csv_label" for="nbp_csv"><div class="nbp-item-icon" style="background:rgba(34,197,94,0.06)">📁</div><div class="nbp-item-text">رفع ملف الأصناف (CSV)</div><span class="nbp-item-arrow">‹</span></label>'+
-    ' <input type="file" id="nbp_csv" accept=".csv" style="display:none">'+
-    ' <div style="padding:0 16px"><input type="text" class="nbp-search" id="nbp_search" placeholder="🔍 بحث بالاسم أو الكود..."><div class="nbp-results" id="nbp_results"></div></div>'+
-    ' <label class="nbp-item" id="nbp_img_label" for="nbp_img" style="display:none"><div class="nbp-item-icon" style="background:rgba(59,130,246,0.06)">🖼️</div><div class="nbp-item-text">رفع صورة الصنف (اختياري)</div><span class="nbp-item-arrow">‹</span></label>'+
-    ' <input type="file" id="nbp_img" accept="image/*" style="display:none">'+
-    ' <div class="nbp-img-preview" id="nbp_img_preview" style="margin:0 16px"><img id="nbp_img_thumb" src="" alt=""></div>'+
-    ' <div class="nbp-item" id="nbp_inject" style="display:none"><div class="nbp-item-icon" style="background:rgba(245,158,11,0.06)">✅</div><div class="nbp-item-text" style="color:#f59e0b;font-weight:800">حقن الصنف في الجدول</div><span class="nbp-item-arrow" style="color:#f59e0b">‹</span></div>'+
-  ' </div>'+
-  ' <div style="text-align:center;padding:10px 0 4px;font-size:9px;color:#9ca3af;font-weight:700;letter-spacing:0.5px">DEVELOPED BY ALI EL-BAZ</div>'+
+  ' <div class="nbp-grp"><div class="nbp-grp-title">أدوات التحرير</div>'+
+    ' <div class="nbp-item" id="nbp_edit" style="position:relative"><div class="nbp-item-icon" style="background:rgba(99,102,241,0.06)">✏️</div><div class="nbp-item-text">تفعيل التعديل الحر</div><span class="nbp-item-arrow">‹</span></div>'+
+    ' <div class="nbp-item" id="nbp_drag" style="position:relative"><div class="nbp-item-icon" style="background:rgba(139,92,246,0.06)">🔀</div><div class="nbp-item-text">تحريك العناصر</div><span class="nbp-item-arrow">‹</span></div>'+
+    ' <div class="nbp-item" id="nbp_del_row" style="position:relative"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">✖️</div><div class="nbp-item-text">حذف صفوف الجدول</div><span class="nbp-item-arrow">‹</span></div>'+
+  ' </div>'+
+  ' <div class="nbp-grp"><div class="nbp-grp-title">عناصر الصفحة</div>'+
+    ' <div class="nbp-item" id="nbp_qr"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">🗑️</div><div class="nbp-item-text">حذف الباركود والتذكير</div><span class="nbp-item-arrow">‹</span></div>'+
+  ' </div>'+
+  ' <div class="nbp-grp"><div class="nbp-grp-title">إدارة الأصناف</div>'+
+    ' <label class="nbp-item" id="nbp_csv_label" for="nbp_csv"><div class="nbp-item-icon" style="background:rgba(34,197,94,0.06)">📁</div><div class="nbp-item-text">رفع ملف الأصناف (CSV)</div><span class="nbp-item-arrow">‹</span></label>'+
+    ' <input type="file" id="nbp_csv" accept=".csv" style="display:none">'+
+    ' <div style="padding:0 16px"><input type="text" class="nbp-search" id="nbp_search" placeholder="🔍 بحث بالاسم أو الكود..."><div class="nbp-results" id="nbp_results"></div></div>'+
+    ' <label class="nbp-item" id="nbp_img_label" for="nbp_img" style="display:none"><div class="nbp-item-icon" style="background:rgba(59,130,246,0.06)">🖼️</div><div class="nbp-item-text">رفع صورة الصنف (اختياري)</div><span class="nbp-item-arrow">‹</span></label>'+
+    ' <input type="file" id="nbp_img" accept="image/*" style="display:none">'+
+    ' <div class="nbp-img-preview" id="nbp_img_preview" style="margin:0 16px"><img id="nbp_img_thumb" src="" alt=""></div>'+
+    ' <div class="nbp-item" id="nbp_inject" style="display:none"><div class="nbp-item-icon" style="background:rgba(245,158,11,0.06)">✅</div><div class="nbp-item-text" style="color:#f59e0b;font-weight:800">حقن الصنف في الجدول</div><span class="nbp-item-arrow" style="color:#f59e0b">‹</span></div>'+
+  ' </div>'+
+  ' <div style="text-align:center;padding:10px 0 4px;font-size:9px;color:#9ca3af;font-weight:700;letter-spacing:0.5px">DEVELOPED BY ALI EL-BAZ</div>'+
 '</div>';
 d.body.appendChild(ui);requestAnimationFrame(function(){requestAnimationFrame(function(){ui.classList.add('show')})});
 
@@ -106,87 +136,120 @@ d.addEventListener('mousemove',function(e){if(panDrag){panCurX=e.clientX;panCurY
 d.addEventListener('mouseup',function(){if(panDrag){panDrag=false;hdr.classList.remove('grabbing');ui.style.transition='opacity .35s ease,transform .35s ease,width .3s ease,border-radius .3s ease';if(panRAF){cancelAnimationFrame(panRAF);panRAF=null}}});
 
 d.getElementById('nbp_cls').onclick=function(){ui.style.transition='opacity .3s,transform .3s';ui.classList.remove('show');ui.style.transform='translateY(-10px) scale(.95)';setTimeout(function(){ui.remove();css.remove()},300)};
+d.getElementById('nbp_undo').onclick=performUndo;
 d.getElementById('nbp_min').onclick=function(){if(panelCollapsed)return;var body=d.getElementById('nbp_body'),fab=d.getElementById('nbp_fab');body.style.display='none';fab.style.display='flex';ui.style.width='52px';ui.style.borderRadius='50%';ui.style.overflow='hidden';hdr.style.display='none';panelCollapsed=true};
 d.getElementById('nbp_fab').onclick=function(){var body=d.getElementById('nbp_body'),fab=d.getElementById('nbp_fab');body.style.display='block';fab.style.display='none';ui.style.width='340px';ui.style.borderRadius='22px';ui.style.overflow='visible';hdr.style.display='flex';panelCollapsed=false};
 
 d.getElementById('nbp_edit').onclick=function(){
-  editOn=!editOn;d.body.contentEditable=editOn;
-  var el=this;if(editOn){el.classList.add('active');el.querySelector('.nbp-item-text').textContent='إيقاف التعديل الحر';var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-red';el.appendChild(dot)}else{el.classList.remove('active');el.querySelector('.nbp-item-text').textContent='تفعيل التعديل الحر';var dot=el.querySelector('.nbp-dot');if(dot)dot.remove()}
-  ui.contentEditable='false';toast(editOn?'تم تفعيل التعديل الحر':'تم إيقاف التعديل',editOn?'info':'success')};
+  editOn=!editOn;d.body.contentEditable=editOn;
+  var el=this;if(editOn){el.classList.add('active');el.querySelector('.nbp-item-text').textContent='إيقاف التعديل الحر';var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-red';el.appendChild(dot)}else{el.classList.remove('active');el.querySelector('.nbp-item-text').textContent='تفعيل التعديل الحر';var dot=el.querySelector('.nbp-dot');if(dot)dot.remove()}
+  ui.contentEditable='false';toast(editOn?'تم تفعيل التعديل الحر':'تم إيقاف التعديل',editOn?'info':'success')};
 
-var dragHover=null,elDragRAF=null,elCurX=0,elCurY=0;
+var dragHover=null,elDragRAF=null,elCurX=0,elCurY=0,oldDragStyle={};
 function elAnimate(){if(!dragEl){elDragRAF=null;return}dragEl.style.left=(elCurX-dragOX)+'px';dragEl.style.top=(elCurY-dragOY)+'px';elDragRAF=requestAnimationFrame(elAnimate)}
 function onDragOver(e){var el=e.target;if(el.closest('#nahdi_baz_panel'))return;if(dragHover&&dragHover!==el)dragHover.classList.remove('nbp-drag-outline');el.classList.add('nbp-drag-outline');dragHover=el}
 function onDragOut(e){if(e.target.classList)e.target.classList.remove('nbp-drag-outline')}
-function onDragDown(e){var el=e.target;if(el.closest('#nahdi_baz_panel'))return;e.preventDefault();e.stopPropagation();dragEl=el;el.classList.add('nbp-drag-active');el.classList.remove('nbp-drag-outline');if(!el.style.position||el.style.position==='static')el.style.position='relative';var cx=parseFloat(el.style.left)||0,cy=parseFloat(el.style.top)||0;dragOX=e.clientX-cx;dragOY=e.clientY-cy;elCurX=e.clientX;elCurY=e.clientY;if(!elDragRAF)elDragRAF=requestAnimationFrame(elAnimate)}
+function onDragDown(e){var el=e.target;if(el.closest('#nahdi_baz_panel'))return;e.preventDefault();e.stopPropagation();dragEl=el;
+  /* حفظ الموقع القديم للتراجع */
+  oldDragStyle = { position: el.style.position, left: el.style.left, top: el.style.top };
+  el.classList.add('nbp-drag-active');el.classList.remove('nbp-drag-outline');if(!el.style.position||el.style.position==='static')el.style.position='relative';var cx=parseFloat(el.style.left)||0,cy=parseFloat(el.style.top)||0;dragOX=e.clientX-cx;dragOY=e.clientY-cy;elCurX=e.clientX;elCurY=e.clientY;if(!elDragRAF)elDragRAF=requestAnimationFrame(elAnimate)}
 function onDragMove(e){if(dragEl){e.preventDefault();elCurX=e.clientX;elCurY=e.clientY}}
-function onDragUp(){if(dragEl){dragEl.classList.remove('nbp-drag-active');dragEl=null;if(elDragRAF){cancelAnimationFrame(elDragRAF);elDragRAF=null}}}
+function onDragUp(){if(dragEl){
+  undoStack.push({ type: 'move', element: dragEl, oldStyle: oldDragStyle });
+  dragEl.classList.remove('nbp-drag-active');dragEl=null;if(elDragRAF){cancelAnimationFrame(elDragRAF);elDragRAF=null}}}
 
 d.getElementById('nbp_drag').onclick=function(){
-  dragOn=!dragOn;var el=this;
-  if(dragOn){el.classList.add('drag-active');el.querySelector('.nbp-item-text').textContent='إيقاف تحريك العناصر';var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-green';el.appendChild(dot);d.addEventListener('mouseover',onDragOver,true);d.addEventListener('mouseout',onDragOut,true);d.addEventListener('mousedown',onDragDown,true);d.addEventListener('mousemove',onDragMove,true);d.addEventListener('mouseup',onDragUp,true);toast('وضع التحريك: امسك أي عنصر وحرّكه','info')}
-  else{el.classList.remove('drag-active');el.querySelector('.nbp-item-text').textContent='تحريك العناصر';var dot=el.querySelector('.nbp-dot');if(dot)dot.remove();d.removeEventListener('mouseover',onDragOver,true);d.removeEventListener('mouseout',onDragOut,true);d.removeEventListener('mousedown',onDragDown,true);d.removeEventListener('mousemove',onDragMove,true);d.removeEventListener('mouseup',onDragUp,true);if(dragHover){dragHover.classList.remove('nbp-drag-outline');dragHover=null}toast('تم إيقاف وضع التحريك','success')}};
+  dragOn=!dragOn;var el=this;
+  if(dragOn){el.classList.add('drag-active');el.querySelector('.nbp-item-text').textContent='إيقاف تحريك العناصر';var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-green';el.appendChild(dot);d.addEventListener('mouseover',onDragOver,true);d.addEventListener('mouseout',onDragOut,true);d.addEventListener('mousedown',onDragDown,true);d.addEventListener('mousemove',onDragMove,true);d.addEventListener('mouseup',onDragUp,true);toast('وضع التحريك: امسك أي عنصر وحرّكه','info')}
+  else{el.classList.remove('drag-active');el.querySelector('.nbp-item-text').textContent='تحريك العناصر';var dot=el.querySelector('.nbp-dot');if(dot)dot.remove();d.removeEventListener('mouseover',onDragOver,true);d.removeEventListener('mouseout',onDragOut,true);d.removeEventListener('mousedown',onDragDown,true);d.removeEventListener('mousemove',onDragMove,true);d.removeEventListener('mouseup',onDragUp,true);if(dragHover){dragHover.classList.remove('nbp-drag-outline');dragHover=null}toast('تم إيقاف وضع التحريك','success')}};
 
 function onRowOver(e){var r=e.target.closest('tr');if(!r||r.closest('#nahdi_baz_panel'))return;r.style.outline='2px solid #ef4444';r.style.cursor='pointer';r.title='اضغط للحذف'}
 function onRowOut(e){var r=e.target.closest('tr');if(r)r.style.outline=''}
-function onRowClick(e){var r=e.target.closest('tr');if(!r||r.closest('#nahdi_baz_panel'))return;e.preventDefault();e.stopPropagation();r.remove();toast('تم حذف الصف بنجاح','success')}
+function onRowClick(e){var r=e.target.closest('tr');if(!r||r.closest('#nahdi_baz_panel'))return;e.preventDefault();e.stopPropagation();
+  /* حفظ قبل الحذف للتراجع */
+  undoStack.push({ type: 'remove', element: r, parent: r.parentNode, nextSibling: r.nextSibling });
+  r.remove();toast('تم حذف الصف بنجاح','success')}
 
 d.getElementById('nbp_del_row').onclick=function(){
-  delRowOn=!delRowOn;var el=this;
-  if(delRowOn){
-    el.classList.add('active');el.querySelector('.nbp-item-text').textContent='إيقاف حذف الصفوف';
-    var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-red';el.appendChild(dot);
-    d.addEventListener('mouseover',onRowOver,true);d.addEventListener('mouseout',onRowOut,true);d.addEventListener('click',onRowClick,true);
-    toast('وضع الحذف: اضغط على أي صف في الجدول لحذفه','info');
-  } else {
-    el.classList.remove('active');el.querySelector('.nbp-item-text').textContent='حذف صفوف الجدول';
-    var dot=el.querySelector('.nbp-dot');if(dot)dot.remove();
-    d.removeEventListener('mouseover',onRowOver,true);d.removeEventListener('mouseout',onRowOut,true);d.removeEventListener('click',onRowClick,true);
-    toast('تم إيقاف وضع الحذف','success');
-  }
+  delRowOn=!delRowOn;var el=this;
+  if(delRowOn){
+    el.classList.add('active');el.querySelector('.nbp-item-text').textContent='إيقاف حذف الصفوف';
+    var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-red';el.appendChild(dot);
+    d.addEventListener('mouseover',onRowOver,true);d.addEventListener('mouseout',onRowOut,true);d.addEventListener('click',onRowClick,true);
+    toast('وضع الحذف: اضغط على أي صف في الجدول لحذفه','info');
+  } else {
+    el.classList.remove('active');el.querySelector('.nbp-item-text').textContent='حذف صفوف الجدول';
+    var dot=el.querySelector('.nbp-dot');if(dot)dot.remove();
+    d.removeEventListener('mouseover',onRowOver,true);d.removeEventListener('mouseout',onRowOut,true);d.removeEventListener('click',onRowClick,true);
+    toast('تم إيقاف وضع الحذف','success');
+  }
 };
 
 d.getElementById('nbp_qr').onclick=function(){
-  var rm=false;var qr=d.getElementById('qrcode'),qa=d.getElementById('qr_ar'),qe=d.getElementById('qr_en');var qi=d.querySelector('img[src*="qr"],canvas,.qr-code,svg[class*="qr"]');
-  if(qr){qr.remove();rm=true}if(qa){qa.remove();rm=true}if(qe){qe.remove();rm=true}if(qi&&qi.parentNode){qi.remove();rm=true}
-  d.querySelectorAll('label,span,p,div').forEach(function(el){if(el.closest('#nahdi_baz_panel'))return;if(/امسح لادارة تذكير الجرعات|Scan to control your dose reminders/i.test(el.textContent.trim())){el.remove();rm=true}});
-  if(rm){toast('تم حذف الباركود ونص التذكير','success');this.classList.add('disabled');this.querySelector('.nbp-item-text').textContent='✓ تم الحذف'}
-  else{toast('لم يتم العثور على باركود','error')}};
+  var removedItems=[];
+  var qr=d.getElementById('qrcode'),qa=d.getElementById('qr_ar'),qe=d.getElementById('qr_en');
+  var qi=d.querySelector('img[src*="qr"],canvas,.qr-code,svg[class*="qr"]');
+  
+  [qr, qa, qe, qi].forEach(function(el){
+    if(el && el.parentNode) {
+      removedItems.push({ element: el, parent: el.parentNode, nextSibling: el.nextSibling });
+      el.remove();
+    }
+  });
+
+  d.querySelectorAll('label,span,p,div').forEach(function(el){
+    if(el.closest('#nahdi_baz_panel'))return;
+    if(/امسح لادارة تذكير الجرعات|Scan to control your dose reminders/i.test(el.textContent.trim())){
+      removedItems.push({ element: el, parent: el.parentNode, nextSibling: el.nextSibling });
+      el.remove();
+    }
+  });
+
+  if(removedItems.length > 0){
+    undoStack.push({ type: 'multi-remove', items: removedItems });
+    toast('تم حذف الباركود ونص التذكير','success');
+    this.classList.add('disabled');this.querySelector('.nbp-item-text').textContent='✓ تم الحذف';
+  } else {
+    toast('لم يتم العثور على باركود','error');
+  }
+};
 
 d.getElementById('nbp_csv').onchange=function(e){
-  var r=new FileReader();r.onload=function(){
-    var text=this.result,lines=text.split(/\r?\n/).filter(function(l){return l.trim()});
-    var sep=lines[0].includes('\t')?'\t':(lines[0].split(';').length>lines[0].split(',').length?';':',');
-    var head=lines[0].split(sep).map(function(h){return h.toLowerCase().trim()});
-    var iN=head.findIndex(function(h){return h.includes('name')||h.includes('اسم')});
-    var iC=head.findIndex(function(h){return h.includes('code')||h.includes('كود')});
-    iN=iN<0?0:iN;iC=iC<0?1:iC;
-    db=lines.slice(1).map(function(l){var c=l.split(sep);return{code:(c[iC]||'').replace(/"/g,'').trim(),name:(c[iN]||'').replace(/"/g,'').trim()}}).filter(function(i){return i.name});
-    d.getElementById('nbp_search').style.display='block';
-    var label=d.getElementById('nbp_csv_label');label.querySelector('.nbp-item-text').textContent='✅ تم تحميل '+db.length+' صنف';label.classList.add('loaded');
-    toast('تم تحميل '+db.length+' صنف بنجاح','success');
-  };r.readAsText(e.target.files[0])};
+  var r=new FileReader();r.onload=function(){
+    var text=this.result,lines=text.split(/\r?\n/).filter(function(l){return l.trim()});
+    var sep=lines[0].includes('\t')?'\t':(lines[0].split(';').length>lines[0].split(',').length?';':',');
+    var head=lines[0].split(sep).map(function(h){return h.toLowerCase().trim()});
+    var iN=head.findIndex(function(h){return h.includes('name')||h.includes('اسم')});
+    var iC=head.findIndex(function(h){return h.includes('code')||h.includes('كود')});
+    iN=iN<0?0:iN;iC=iC<0?1:iC;
+    db=lines.slice(1).map(function(l){var c=l.split(sep);return{code:(c[iC]||'').replace(/"/g,'').trim(),name:(c[iN]||'').replace(/"/g,'').trim()}}).filter(function(i){return i.name});
+    d.getElementById('nbp_search').style.display='block';
+    var label=d.getElementById('nbp_csv_label');label.querySelector('.nbp-item-text').textContent='✅ تم تحميل '+db.length+' صنف';label.classList.add('loaded');
+    toast('تم تحميل '+db.length+' صنف بنجاح','success');
+  };r.readAsText(e.target.files[0])};
 
 d.getElementById('nbp_search').oninput=function(){
-  var q=this.value.toLowerCase(),res=d.getElementById('nbp_results');res.innerHTML='';
-  if(q.length<2){res.style.display='none';return}
-  var m=db.filter(function(i){return i.name.toLowerCase().includes(q)||i.code.includes(q)}).slice(0,10);
-  m.forEach(function(i){var v=d.createElement('div');v.className='nbp-result-item';v.innerHTML='<b>'+i.name+'</b><small>Code: '+i.code+'</small>';
-    v.onclick=function(){selI=i;d.getElementById('nbp_search').value=i.name;res.style.display='none';d.getElementById('nbp_inject').style.display='flex';d.getElementById('nbp_img_label').style.display='flex'};res.appendChild(v)});
-  res.style.display=m.length?'block':'none'};
+  var q=this.value.toLowerCase(),res=d.getElementById('nbp_results');res.innerHTML='';
+  if(q.length<2){res.style.display='none';return}
+  var m=db.filter(function(i){return i.name.toLowerCase().includes(q)||i.code.includes(q)}).slice(0,10);
+  m.forEach(function(i){var v=d.createElement('div');v.className='nbp-result-item';v.innerHTML='<b>'+i.name+'</b><small>Code: '+i.code+'</small>';
+    v.onclick=function(){selI=i;d.getElementById('nbp_search').value=i.name;res.style.display='none';d.getElementById('nbp_inject').style.display='flex';d.getElementById('nbp_img_label').style.display='flex'};res.appendChild(v)});
+  res.style.display=m.length?'block':'none'};
 
 d.getElementById('nbp_img').onchange=function(e){
-  var file=e.target.files[0];if(!file)return;var r=new FileReader();
-  r.onload=function(){selImg=this.result;var label=d.getElementById('nbp_img_label');label.querySelector('.nbp-item-text').textContent='✅ تم رفع الصورة';label.classList.add('loaded');var preview=d.getElementById('nbp_img_preview');d.getElementById('nbp_img_thumb').src=selImg;preview.style.display='block';toast('تم رفع الصورة بنجاح','success')};
-  r.readAsDataURL(file)};
+  var file=e.target.files[0];if(!file)return;var r=new FileReader();
+  r.onload=function(){selImg=this.result;var label=d.getElementById('nbp_img_label');label.querySelector('.nbp-item-text').textContent='✅ تم رفع الصورة';label.classList.add('loaded');var preview=d.getElementById('nbp_img_preview');d.getElementById('nbp_img_thumb').src=selImg;preview.style.display='block';toast('تم رفع الصورة بنجاح','success')};
+  r.readAsDataURL(file)};
 
 d.getElementById('nbp_inject').onclick=function(){
-  if(!selI)return;var t=findT(),b=t.querySelector('tbody')||t,rows=b.querySelectorAll('tr');
-  if(rows.length<1){toast('خطأ: لم يتم العثور على صفوف','error');return}
-  var lr=rows[rows.length-1],nr=lr.cloneNode(true),tds=nr.querySelectorAll('td');
-  if(tds.length>=2){var im=tds[0].querySelector('img');if(im){if(selImg){im.src=selImg;im.style.width='70px'}else{im.removeAttribute('src');im.style.width='70px';im.alt='—'}}else{tds[0].innerText=selI.code}tds[1].innerText=selI.name;for(var i=2;i<tds.length;i++)tds[i].innerText='-'}
-  b.appendChild(nr);nr.style.animation='nbpSlideIn .25s ease';
-  var hadImg=!!selImg;
-  d.getElementById('nbp_search').value='';d.getElementById('nbp_inject').style.display='none';d.getElementById('nbp_img_label').style.display='none';d.getElementById('nbp_img_label').classList.remove('loaded');d.getElementById('nbp_img_label').querySelector('.nbp-item-text').textContent='رفع صورة الصنف (اختياري)';d.getElementById('nbp_img_preview').style.display='none';d.getElementById('nbp_img_thumb').src='';d.getElementById('nbp_img').value='';selI=null;selImg=null;
-  toast(hadImg?'تم حقن الصنف مع الصورة ✅':'تم حقن الصنف بنجاح','success')};
+  if(!selI)return;var t=findT(),b=t.querySelector('tbody')||t,rows=b.querySelectorAll('tr');
+  if(rows.length<1){toast('خطأ: لم يتم العثور على صفوف','error');return}
+  var lr=rows[rows.length-1],nr=lr.cloneNode(true),tds=nr.querySelectorAll('td');
+  if(tds.length>=2){var im=tds[0].querySelector('img');if(im){if(selImg){im.src=selImg;im.style.width='70px'}else{im.removeAttribute('src');im.style.width='70px';im.alt='—'}}else{tds[0].innerText=selI.code}tds[1].innerText=selI.name;for(var i=2;i<tds.length;i++)tds[i].innerText='-'}
+  b.appendChild(nr);nr.style.animation='nbpSlideIn .25s ease';
+  /* حفظ للحقن للتراجع */
+  undoStack.push({ type: 'inject', element: nr });
+  var hadImg=!!selImg;
+  d.getElementById('nbp_search').value='';d.getElementById('nbp_inject').style.display='none';d.getElementById('nbp_img_label').style.display='none';d.getElementById('nbp_img_label').classList.remove('loaded');d.getElementById('nbp_img_label').querySelector('.nbp-item-text').textContent='رفع صورة الصنف (اختياري)';d.getElementById('nbp_img_preview').style.display='none';d.getElementById('nbp_img_thumb').src='';d.getElementById('nbp_img').value='';selI=null;selImg=null;
+  toast(hadImg?'تم حقن الصنف مع الصورة ✅':'تم حقن الصنف بنجاح','success')};
 })();
