@@ -8,7 +8,6 @@ dash.innerHTML=`
 <style>
 #nahdi-dash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;overflow-y:auto;overflow-x:hidden;}
 #nahdi-dash *{box-sizing:border-box;margin:0;padding:0;}
-
 .nx-header{background:linear-gradient(135deg,#003d7a,#0057a8,#0070d4);color:#fff;padding:20px 24px;position:sticky;top:0;z-index:10;box-shadow:0 4px 20px rgba(0,57,122,.25);}
 .nx-htop{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 .nx-title{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700;}
@@ -24,36 +23,26 @@ dash.innerHTML=`
 .nx-pfill.run::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:nxshim 1.5s infinite;}
 @keyframes nxshim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 .nx-plbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;opacity:.85;}
-
-/* ═══ Controls - BIGGER ═══ */
 .nx-ctrl{padding:16px 24px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#fff;border-bottom:1px solid #e2e8f0;}
 .nx-ctrl label{font-size:15px;color:#4a5568;font-weight:600;}
 .nx-ctrl input[type=number]{width:90px;padding:12px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:16px;font-weight:700;text-align:center;outline:none;transition:all .2s;}
 .nx-ctrl input[type=number]:focus{border-color:#0057a8;box-shadow:0 0 0 3px #e8f0fe;}
 .nx-ctrl select{padding:12px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:16px;font-weight:600;outline:none;background:#fff;cursor:pointer;min-width:100px;}
-.nx-ctrl select:focus{border-color:#0057a8;}
-
-/* ═══ Buttons - MUCH BIGGER ═══ */
-.nx-btn{padding:14px 32px;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;min-height:50px;letter-spacing:.3px;}
+.nx-btn{padding:14px 32px;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;min-height:50px;}
 .nx-go{background:#0057a8;color:#fff;box-shadow:0 4px 12px rgba(0,87,168,.35);}
-.nx-go:hover{background:#004690;transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,87,168,.4);}
+.nx-go:hover{background:#004690;transform:translateY(-2px);}
 .nx-go:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none;transform:none;}
 .nx-stop{background:#e74c3c;color:#fff;display:none;box-shadow:0 4px 12px rgba(231,76,60,.3);}
-.nx-stop:hover{background:#c0392b;transform:translateY(-2px);}
+.nx-stop:hover{background:#c0392b;}
 .nx-csv{background:#00b894;color:#fff;margin-right:auto;box-shadow:0 4px 12px rgba(0,184,148,.3);}
 .nx-csv:hover{background:#00a884;transform:translateY(-2px);}
 .nx-csv:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none;transform:none;}
-
 .nx-search{flex:1;max-width:280px;margin-right:auto;position:relative;}
-.nx-search input{width:100%;padding:12px 14px 12px 38px;border:2px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none;transition:all .2s;}
-.nx-search input:focus{border-color:#0057a8;box-shadow:0 0 0 3px #e8f0fe;}
+.nx-search input{width:100%;padding:12px 14px 12px 38px;border:2px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none;}
+.nx-search input:focus{border-color:#0057a8;}
 .nx-search .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:#6b7280;}
-
-/* ═══ Speed indicator ═══ */
-.nx-speed{font-size:12px;color:#6b7280;padding:6px 24px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:none;align-items:center;gap:8px;}
-.nx-speed .tag{background:#e8f0fe;color:#0057a8;padding:3px 8px;border-radius:5px;font-weight:600;}
-
-/* ═══ Table ═══ */
+.nx-speed{font-size:13px;color:#6b7280;padding:8px 24px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:none;align-items:center;gap:8px;}
+.nx-speed .tag{background:#e8f0fe;color:#0057a8;padding:4px 10px;border-radius:6px;font-weight:600;font-size:12px;}
 .nx-tbl-wrap{margin:8px 24px 24px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid #e2e8f0;overflow:hidden;}
 .nx-tbl{width:100%;border-collapse:collapse;}
 .nx-tbl thead th{background:#f8fafc;padding:14px 16px;font-size:13px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;text-align:right;position:sticky;top:0;}
@@ -67,8 +56,8 @@ dash.innerHTML=`
 .nx-code{display:inline-block;background:#e8f0fe;color:#0057a8;padding:3px 10px;border-radius:6px;font-weight:700;font-size:13px;font-family:'Courier New',monospace;}
 .nx-name{font-weight:600;font-size:15px;}
 .nx-addr{color:#6b7280;font-size:13px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.nx-map{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#e8f5e9;color:#2e7d32;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:all .2s;}
-.nx-map:hover{background:#c8e6c9;transform:translateY(-1px);}
+.nx-map{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#e8f5e9;color:#2e7d32;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;}
+.nx-map:hover{background:#c8e6c9;}
 .nx-nomap{color:#ccc;font-size:13px;}
 .nx-empty{text-align:center;padding:60px 20px;color:#6b7280;}
 .nx-empty .ei{font-size:48px;margin-bottom:14px;}
@@ -76,16 +65,17 @@ dash.innerHTML=`
 .nx-scan{display:none;align-items:center;gap:8px;font-size:14px;color:rgba(255,255,255,.85);}
 .nx-dot{width:9px;height:9px;background:#6ff5c0;border-radius:50%;animation:nxpls 1s infinite;}
 @keyframes nxpls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.nx-retry{color:#f59e0b;font-size:12px;margin-right:8px;}
 </style>
 
 <div class="nx-header">
   <div class="nx-htop">
-    <div class="nx-title">🏥 مستخرج فروع النهدي v5</div>
-    <div class="nx-scan" id="nxScan"><span class="nx-dot"></span><span id="nxCurCode">...</span></div>
+    <div class="nx-title">🏥 مستخرج فروع النهدي v6</div>
+    <div class="nx-scan" id="nxScan"><span class="nx-dot"></span><span id="nxCurCode">...</span><span class="nx-retry" id="nxRetry"></span></div>
     <button class="nx-close" id="nxClose" title="إغلاق">✕</button>
   </div>
   <div class="nx-stats">
-    <div class="nx-st s1"><div class="lb">✅ فروع جدة</div><div class="vl" id="nxF">0</div></div>
+    <div class="nx-st s1"><div class="lb">✅ تم العثور</div><div class="vl" id="nxF">0</div></div>
     <div class="nx-st s2"><div class="lb">📊 تم الفحص</div><div class="vl" id="nxS">0</div></div>
     <div class="nx-st s3"><div class="lb">⏭️ مدن أخرى</div><div class="vl" id="nxSk">0</div></div>
     <div class="nx-st s4"><div class="lb">📭 فارغ</div><div class="vl" id="nxE">0</div></div>
@@ -96,8 +86,8 @@ dash.innerHTML=`
 </div>
 
 <div class="nx-ctrl">
-  <label>من:</label><input type="number" id="nxStart" value="1000" min="1">
-  <label>إلى:</label><input type="number" id="nxEnd" value="3000" min="1">
+  <label>من:</label><input type="number" id="nxStart" value="5000" min="1">
+  <label>إلى:</label><input type="number" id="nxEnd" value="10000" min="1">
   <label>المدينة:</label>
   <select id="nxCity">
     <option value="جدة">جدة</option><option value="الرياض">الرياض</option><option value="مكة">مكة</option>
@@ -107,11 +97,12 @@ dash.innerHTML=`
   <button class="nx-btn nx-stop" id="nxStp">⏹ إيقاف</button>
   <div class="nx-search"><span class="ico">🔍</span><input type="text" id="nxQ" placeholder="بحث في النتائج..." oninput="window._nxFilter()"></div>
   <button class="nx-btn nx-csv" id="nxDl" disabled>📥 تحميل CSV</button>
+  <button class="nx-btn" id="nxRestore" style="background:#f59e0b;color:#fff;padding:14px 20px;display:none;" title="استعادة آخر نسخة احتياطية">♻️ استعادة</button>
 </div>
 
 <div class="nx-speed" id="nxSpeed">
   <span>⚡</span>
-  <span>السرعة التلقائية — يتخطى النطاقات الفارغة بذكاء</span>
+  <span id="nxSpeedTxt">السرعة التلقائية</span>
   <span class="tag" id="nxSkipTag">عادي</span>
 </div>
 
@@ -129,6 +120,12 @@ let running=false,stop=false,results=[],seen=new Set();
 let st={s:0,f:0,sk:0,e:0},t0,timer,ifr;
 
 document.getElementById('nxClose').onclick=function(){
+    /* 🛡️ حماية من الإغلاق بالغلط */
+    if(results.length>0){
+        const ok=confirm('⚠️ عندك '+results.length+' صيدلية!\n\nاضغط "موافق" → يحمّل CSV ويقفل\nاضغط "إلغاء" → يرجع');
+        if(!ok)return;
+        dlCSV();
+    }
     stop=true;if(ifr){ifr.remove();ifr=null;}clearInterval(timer);dash.remove();
 };
 
@@ -168,34 +165,132 @@ window._nxFilter=function(){
     document.querySelectorAll('#nxBody tr').forEach(function(r){r.style.display=r.dataset.q.includes(q)?'':'none';});
 };
 
-function loadPg(url){
-    return new Promise(function(res){
-        let done=false;
-        function fin(){if(!done){done=true;ifr.removeEventListener('load',onL);setTimeout(res,300);}}
-        function onL(){fin();}
-        ifr.addEventListener('load',onL);
-        ifr.src=url;
-        setTimeout(fin,2500);
+/* ═══════════════════════════════════════
+   🔧 v6 FIX: Smart page loader
+   - Waits for ACTUAL content (not just load event)
+   - Polls for Store Code text in page
+   - Retries up to 3 times with increasing wait
+═══════════════════════════════════════ */
+function waitForContent(doc, timeout){
+    return new Promise(function(resolve){
+        const start=Date.now();
+        function check(){
+            try{
+                const text=doc.body?doc.body.innerText:'';
+                /* الصفحة فيها بيانات لو ظهر "Store Code" أو "Store Name" */
+                if(text.includes('Store Code') || text.includes('Store Name')){
+                    resolve(true);
+                    return;
+                }
+                /* أو لو الصفحة فيها جدول بخلايا كافية */
+                if(doc.querySelectorAll('td').length > 5){
+                    resolve(true);
+                    return;
+                }
+            }catch(e){}
+            if(Date.now()-start > timeout){
+                resolve(false);
+                return;
+            }
+            setTimeout(check, 200);
+        }
+        check();
     });
 }
 
+function loadPage(url){
+    return new Promise(function(res){
+        let done=false;
+        function fin(){ if(!done){done=true; ifr.removeEventListener('load',onL); res();} }
+        function onL(){ setTimeout(fin, 300); }
+        ifr.addEventListener('load',onL);
+        ifr.src=url;
+        setTimeout(fin, 5000);
+    });
+}
+
+/* ═══ Extract with better selectors ═══ */
 function extract(doc){
     try{
         const cells=Array.from(doc.querySelectorAll('td'));
-        if(!cells.length)return null;
+        if(cells.length < 3) return null;
         let d={storeCode:'',storeName:'',storeAddress:'',googleMapsURL:'',city:''};
+
         for(let c of cells){
             let t=c.innerText.trim();
-            if(t.includes('Store Code'))d.storeCode=t.split(':').slice(1).join(':').trim();
-            if(t.includes('Store Name'))d.storeName=t.split(':').slice(1).join(':').trim();
-            if(t.includes('Store Address'))d.storeAddress=t.split(':').slice(1).join(':').trim();
-            if(t.includes('City'))d.city=t.split(':').slice(1).join(':').trim();
+            /* أدق: نبحث عن الحقل في نفس الخلية أو الخلية اللي بعدها */
+            if(t.includes('Store Code')){
+                let val=t.split(':').slice(1).join(':').trim();
+                /* لو القيمة في خلية منفصلة */
+                if(!val && c.nextElementSibling) val=c.nextElementSibling.innerText.trim();
+                if(val) d.storeCode=val;
+            }
+            if(t.includes('Store Name')){
+                let val=t.split(':').slice(1).join(':').trim();
+                if(!val && c.nextElementSibling) val=c.nextElementSibling.innerText.trim();
+                if(val) d.storeName=val;
+            }
+            if(t.includes('Store Address')){
+                let val=t.split(':').slice(1).join(':').trim();
+                if(!val && c.nextElementSibling) val=c.nextElementSibling.innerText.trim();
+                if(val) d.storeAddress=val;
+            }
+            if(t.match(/^City\s*:/)){
+                let val=t.split(':').slice(1).join(':').trim();
+                if(!val && c.nextElementSibling) val=c.nextElementSibling.innerText.trim();
+                if(val) d.city=val;
+            }
         }
+
         /* Multi-method URL extraction */
         const links=Array.from(doc.querySelectorAll('a'));
-        for(let a of links){let h=a.href||a.getAttribute('href')||'';if(h.match(/google.*map|goo\.gl|maps\.app/i)){d.googleMapsURL=h;break;}}
-        if(!d.googleMapsURL){const els=doc.querySelectorAll('[onclick]');for(let e of els){let o=e.getAttribute('onclick')||'';let m=o.match(/https?:\/\/[^\s'"]+(?:google|goo\.gl|maps)[^\s'"]*/i);if(m){d.googleMapsURL=m[0];break;}}}
-        if(!d.googleMapsURL){let h=doc.body.innerHTML;let ps=[/https?:\/\/(?:www\.)?google\.[a-z.]+\/maps[^\s"'<>]*/gi,/https?:\/\/maps\.google\.[a-z.]+[^\s"'<>]*/gi,/https?:\/\/goo\.gl\/maps\/[^\s"'<>]*/gi,/https?:\/\/maps\.app\.goo\.gl\/[^\s"'<>]*/gi];for(let p of ps){let m=h.match(p);if(m){d.googleMapsURL=m[0];break;}}}
+        for(let a of links){
+            let h=a.href||a.getAttribute('href')||'';
+            if(h.match(/google.*map|goo\.gl|maps\.app/i)){d.googleMapsURL=h;break;}
+        }
+        if(!d.googleMapsURL){
+            const els=doc.querySelectorAll('[onclick]');
+            for(let e of els){
+                let o=e.getAttribute('onclick')||'';
+                let m=o.match(/https?:\/\/[^\s'"]+(?:google|goo\.gl|maps)[^\s'"]*/i);
+                if(m){d.googleMapsURL=m[0];break;}
+            }
+        }
+        if(!d.googleMapsURL){
+            let h=doc.body.innerHTML;
+            let ps=[
+                /https?:\/\/(?:www\.)?google\.[a-z.]+\/maps[^\s"'<>]*/gi,
+                /https?:\/\/maps\.google\.[a-z.]+[^\s"'<>]*/gi,
+                /https?:\/\/goo\.gl\/maps\/[^\s"'<>]*/gi,
+                /https?:\/\/maps\.app\.goo\.gl\/[^\s"'<>]*/gi
+            ];
+            for(let p of ps){let m=h.match(p);if(m){d.googleMapsURL=m[0];break;}}
+        }
+
+        /* ═══ استخراج الرابط من Store Location URL row ═══ */
+        if(!d.googleMapsURL){
+            for(let c of cells){
+                let t=c.innerText.trim();
+                if(t.includes('Store Location URL') || t.includes('Location')){
+                    /* الرابط ممكن يكون في نفس الخلية أو الخلية اللي بعدها */
+                    let searchCell = c.nextElementSibling || c;
+                    let link = searchCell.querySelector('a');
+                    if(link){
+                        let h=link.href||link.getAttribute('href')||'';
+                        if(h && h!=='#') d.googleMapsURL=h;
+                    }
+                    /* أو في الخلية نفسها */
+                    if(!d.googleMapsURL){
+                        link = c.querySelector('a');
+                        if(link){
+                            let h=link.href||link.getAttribute('href')||'';
+                            if(h && h!=='#') d.googleMapsURL=h;
+                        }
+                    }
+                }
+            }
+        }
+
         return d;
     }catch(e){return null;}
 }
@@ -215,11 +310,39 @@ function dlCSV(){
 
 document.getElementById('nxDl').onclick=dlCSV;
 
+/* 🛡️ زر استعادة النسخة الاحتياطية */
+document.getElementById('nxRestore').onclick=function(){
+    try{
+        const backup=JSON.parse(localStorage.getItem('nahdi_backup'));
+        if(backup && backup.results && backup.results.length>0){
+            const ok=confirm('♻️ تم العثور على نسخة احتياطية!\n\n'+backup.results.length+' صيدلية\nتاريخ: '+backup.time+'\n\nاستعادة؟');
+            if(!ok)return;
+            results=backup.results;
+            seen=new Set(results.map(function(r){return r.storeCode;}));
+            st.f=results.length;
+            document.getElementById('nxF').textContent=st.f;
+            document.getElementById('nxBody').innerHTML='';
+            document.getElementById('nxEmpty').style.display='none';
+            results.forEach(function(d,i){addRow(d,i+1);});
+            document.getElementById('nxDl').disabled=false;
+            alert('✅ تم استعادة '+results.length+' صيدلية!');
+        }else{
+            alert('❌ لا توجد نسخة احتياطية');
+        }
+    }catch(e){alert('❌ خطأ في الاستعادة');}
+};
+
+/* فحص وجود نسخة احتياطية عند الفتح */
+try{
+    const bk=JSON.parse(localStorage.getItem('nahdi_backup'));
+    if(bk && bk.results && bk.results.length>0){
+        document.getElementById('nxRestore').style.display='inline-flex';
+    }
+}catch(e){}
+
 /* ═══════════════════════════════════════
-   🚀 Main extraction with SMART SKIP
-   - Tracks consecutive empty pages
-   - Speeds up through empty ranges
-   - Slows down when stores are found
+   🚀 Main extraction v6
+   KEY FIX: 3-attempt retry with content verification
 ═══════════════════════════════════════ */
 document.getElementById('nxGo').onclick=async function(){
     if(running)return;
@@ -228,6 +351,19 @@ document.getElementById('nxGo').onclick=async function(){
     const city=document.getElementById('nxCity').value;
     if(isNaN(startId)||isNaN(endId)||startId>endId){alert('⚠️ تأكد من صحة النطاق');return;}
 
+    /* ═══ 🛡️ v7 FIX: حماية البيانات قبل البدء من جديد ═══ */
+    if(results.length>0){
+        const choice=confirm(
+            '⚠️ عندك '+results.length+' صيدلية محفوظة!\n\n'+
+            '• اضغط "موافق" → يحمّل CSV أولاً ثم يبدأ بحث جديد\n'+
+            '• اضغط "إلغاء" → يرجع بدون ما يمسح شيء'
+        );
+        if(!choice)return;
+        /* تحميل CSV تلقائي قبل المسح */
+        dlCSV();
+        await new Promise(function(r){setTimeout(r,1000);}); /* انتظار التحميل */
+    }
+
     running=true;stop=false;results=[];seen=new Set();st={s:0,f:0,sk:0,e:0};
     document.getElementById('nxBody').innerHTML='';
     document.getElementById('nxEmpty').innerHTML='<div class="ei">⏳</div><p>جاري الاستخراج...</p>';
@@ -235,7 +371,7 @@ document.getElementById('nxGo').onclick=async function(){
     document.getElementById('nxGo').style.display='none';
     document.getElementById('nxStp').style.display='inline-flex';
     document.getElementById('nxStp').disabled=false;
-    document.getElementById('nxStp').textContent='⏹ إيقاف';
+    document.getElementById('nxStp').innerHTML='⏹ إيقاف';
     document.getElementById('nxDl').disabled=true;
     document.getElementById('nxStart').disabled=true;
     document.getElementById('nxEnd').disabled=true;
@@ -251,52 +387,63 @@ document.getElementById('nxGo').onclick=async function(){
     timer=setInterval(upTime,1000);
 
     const BASE="https://rtlapps.nahdi.sa/ssp/StoreDashboradOnline.asp?StoreCode=";
-
-    /* ═══ Smart skip logic ═══ */
+    const MAX_RETRIES=3;
     let consecutiveEmpty=0;
-    let waitTime=1200;
-    const MIN_WAIT=800;
-    const MAX_WAIT=1500;
-    const FAST_WAIT=300;
 
     for(let i=startId;i<=endId;i++){
         if(stop)break;
         st.s++;
         document.getElementById('nxCurCode').textContent='كود: '+i;
+        document.getElementById('nxRetry').textContent='';
         upStats();
 
-        /* ═══ Smart speed adjustment ═══ */
-        if(consecutiveEmpty>=20){
-            /* 20+ empty in a row = very fast scan */
-            waitTime=FAST_WAIT;
-            document.getElementById('nxSkipTag').textContent='⚡ سريع جداً';
-            document.getElementById('nxSkipTag').style.background='#fef3c7';
-            document.getElementById('nxSkipTag').style.color='#d97706';
-        }else if(consecutiveEmpty>=10){
-            waitTime=MIN_WAIT;
-            document.getElementById('nxSkipTag').textContent='🏃 سريع';
-            document.getElementById('nxSkipTag').style.background='#e8f0fe';
-            document.getElementById('nxSkipTag').style.color='#0057a8';
+        /* ═══ Speed control ═══ */
+        let speedTag=document.getElementById('nxSkipTag');
+        if(consecutiveEmpty>=30){
+            speedTag.textContent='⚡⚡ أقصى سرعة';
+            speedTag.style.background='#fef3c7';speedTag.style.color='#d97706';
+        }else if(consecutiveEmpty>=15){
+            speedTag.textContent='⚡ سريع';
+            speedTag.style.background='#e8f0fe';speedTag.style.color='#0057a8';
         }else{
-            waitTime=MAX_WAIT;
-            document.getElementById('nxSkipTag').textContent='عادي';
-            document.getElementById('nxSkipTag').style.background='#e8f0fe';
-            document.getElementById('nxSkipTag').style.color='#0057a8';
+            speedTag.textContent='عادي';
+            speedTag.style.background='#e8f0fe';speedTag.style.color='#0057a8';
         }
 
-        await loadPg(BASE+i);
+        let data=null;
+        let foundContent=false;
 
-        /* Extra wait based on speed mode */
-        if(waitTime>FAST_WAIT){
-            await new Promise(function(r){setTimeout(r,waitTime-300);});
+        /* ═══ v6 FIX: محاولات متعددة مع التحقق من المحتوى ═══ */
+        for(let attempt=1;attempt<=MAX_RETRIES;attempt++){
+            if(stop)break;
+
+            await loadPage(BASE+i);
+
+            let doc;
+            try{doc=ifr.contentDocument||ifr.contentWindow.document;}catch(ex){continue;}
+
+            /* انتظار ظهور المحتوى الفعلي */
+            let waitTime = consecutiveEmpty>=30 ? 1500 : consecutiveEmpty>=15 ? 2500 : 3500;
+            foundContent = await waitForContent(doc, waitTime);
+
+            if(foundContent){
+                data=extract(doc);
+                if(data && data.storeCode){
+                    break; /* نجح! */
+                }
+            }
+
+            /* لو ما نجح، نعيد المحاولة */
+            if(attempt < MAX_RETRIES){
+                document.getElementById('nxRetry').textContent='🔄 محاولة '+(attempt+1);
+                await new Promise(function(r){setTimeout(r,500);});
+            }
         }
 
-        let doc;
-        try{doc=ifr.contentDocument||ifr.contentWindow.document;}catch(ex){st.e++;consecutiveEmpty++;continue;}
+        document.getElementById('nxRetry').textContent='';
 
-        const data=extract(doc);
-
-        if(!data||!data.storeName){
+        /* ═══ تقييم النتيجة ═══ */
+        if(!data || !data.storeName || !data.storeCode){
             st.e++;
             consecutiveEmpty++;
             continue;
@@ -304,20 +451,22 @@ document.getElementById('nxGo').onclick=async function(){
 
         let ec=data.storeCode.trim(),rc=String(i);
 
-        /* Ghost page detection */
-        if(ec&&ec!==rc){
+        /* Ghost page: الصفحة رجعت كود مختلف */
+        if(ec && ec!==rc){
             st.e++;
             consecutiveEmpty++;
             continue;
         }
 
+        /* تكرار */
         if(seen.has(ec)){consecutiveEmpty++;continue;}
         seen.add(ec);
 
-        /* Reset consecutive empty counter - found a real store! */
+        /* ✅ فرع حقيقي! Reset counter */
         consecutiveEmpty=0;
 
-        if(city&&!data.city.includes(city)){
+        /* فلتر المدينة */
+        if(city && !data.city.includes(city)){
             st.sk++;
             continue;
         }
@@ -328,6 +477,11 @@ document.getElementById('nxGo').onclick=async function(){
         upStats();
         addRow(data,st.f);
         document.getElementById('nxDl').disabled=false;
+
+        /* 🛡️ حفظ احتياطي تلقائي كل 5 فروع */
+        if(results.length%5===0){
+            try{localStorage.setItem('nahdi_backup',JSON.stringify({results:results,time:new Date().toISOString()}));}catch(e){}
+        }
     }
 
     /* ═══ Cleanup ═══ */
@@ -345,12 +499,17 @@ document.getElementById('nxGo').onclick=async function(){
     if(!results.length){
         document.getElementById('nxEmpty').innerHTML='<div class="ei">😕</div><p>لم يتم العثور على فروع في النطاق المحدد</p>';
         document.getElementById('nxEmpty').style.display='block';
+    }else{
+        /* 🛡️ حفظ نهائي تلقائي */
+        try{localStorage.setItem('nahdi_backup',JSON.stringify({results:results,time:new Date().toISOString()}));}catch(e){}
+        /* تحميل CSV تلقائي عند الانتهاء */
+        dlCSV();
     }
 };
 
 document.getElementById('nxStp').onclick=function(){
     stop=true;
-    document.getElementById('nxStp').textContent='⏳ جاري الإيقاف...';
+    document.getElementById('nxStp').innerHTML='⏳ جاري الإيقاف...';
     document.getElementById('nxStp').disabled=true;
 };
 
