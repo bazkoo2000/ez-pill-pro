@@ -1033,7 +1033,6 @@ window.ezPreviewAlerts=function(){
   /* ── Scan Prescription Notes field for rich info ── */
   var prescNote='';
   var pnField=document.getElementById('epresNotes');
-  if(!pnField){var allFields=document.querySelectorAll('textarea,input[type="text"]');for(var fi=0;fi<allFields.length;fi++){var fv=(allFields[fi].value||'').trim();if(fv.length>20&&/[\u0600-\u06FF]/.test(fv)&&(/ضيف|اسم|توصيل|صيدل|بوكس|ترتيب/i.test(fv))){pnField=allFields[fi];break;}}}
   if(pnField) prescNote=(pnField.value||'').trim();
   if(prescNote){
     /* Show the raw prescription note */
@@ -2768,15 +2767,18 @@ function scanForDuplicateNotes(){
 
 /* Scan prescription notes for "ترتيب على X بوكسات" requests */
 function scanForBoxesRequest(){
-  var fields=document.querySelectorAll('textarea,input[type="text"]');
-  for(var i=0;i<fields.length;i++){
-    var v=(fields[i].value||'').trim();
-    if(v.length>15&&/[\u0600-\u06FF]/.test(v)){
-      if(/بوكس|بكس|box/i.test(v)&&/ترتيب|تقسيم|توزيع|تجهيز/i.test(v)) return true;
-      if(/\d+\s*(اشهر|شهور|شهر).*\d+\s*(بوكس|بكس|box)/i.test(v)) return true;
-      if(/\d+\s*(بوكس|بكس|box).*\d+\s*(اشهر|شهور|شهر)/i.test(v)) return true;
-    }
-  }
+  /* فقط في ملاحظات الروشتة #epresNotes — مش نوتات الأدوية */
+  var pn=document.getElementById('epresNotes');
+  if(!pn) return false;
+  var v=(pn.value||'').trim();
+  if(v.length<10) return false;
+  /* لازم كلمة تقسيم/ترتيب/توزيع + بوكس/صندوق */
+  if(/بوكس|بكس|صندوق|صناديق|box/i.test(v)&&/ترتيب|تقسيم|توزيع|تجهيز|منفصل|كل شهر/i.test(v)) return true;
+  /* أو: رقم شهور + رقم بوكسات في نفس الجملة */
+  if(/\d+\s*(اشهر|شهور|شهر).*\d+\s*(بوكس|بكس|box|صندوق)/i.test(v)) return true;
+  if(/\d+\s*(بوكس|بكس|box|صندوق).*\d+\s*(اشهر|شهور|شهر)/i.test(v)) return true;
+  /* كل شهر في بوكس / كل شهر منفصل */
+  if(/كل\s*شهر\s*(في|فى|ب)?\s*(بوكس|صندوق|منفصل)/i.test(v)) return true;
   return false;
 }
 
@@ -4390,18 +4392,8 @@ document.body.appendChild(d_box);
 /* Async: فحص الجدول بعد ظهور الدايلوج مباشرة */
 setTimeout(function(){
   try{
-    /* فحص التقسيم — فقط في ملاحظات الروشتة، مش نوتات الأدوية */
+    /* فحص التقسيم — scanForDuplicateNotes يفحص الصفوف + #epresNotes فقط */
     var _dupCheck=scanForDuplicateNotes();
-    if(!_dupCheck){
-      var _pnFields2=document.querySelectorAll('textarea,input[type="text"]');
-      for(var _pf2=0;_pf2<_pnFields2.length;_pf2++){
-        /* تجاهل الحقول داخل الجدول (نوتات الأدوية) */
-        if(_pnFields2[_pf2].closest('table')) continue;
-        var _pfv2=(_pnFields2[_pf2].value||'').trim();
-        /* لازم يكون فيه كلمة تقسيم/ترتيب/دمج/بوكس/صندوق + طول كافي */
-        if(_pfv2.length>15&&/تقسيم|تقسم|ترتيب|دمج|بوكس|صندوق|صناديق/i.test(_pfv2)){_dupCheck=true;break;}
-      }
-    }
     if(_dupCheck){
       var _togBtn=document.querySelector('.ez-tog-btn[style*="6366f1"]');
       var _togCb=document.getElementById('show-post-dialog');
@@ -4443,30 +4435,8 @@ function extractAndConfirmName(){
   try{
     /* Find Prescription Notes field */
     function findNotesField(){
-      /* Direct ID match for known field */
-      var directNotes=document.getElementById('epresNotes');
-      if(directNotes) return directNotes;
-      var inputs=document.querySelectorAll('input[type="text"],textarea');
-      for(var i=0;i<inputs.length;i++){
-        var lbl=null;
-        /* Check associated label */
-        if(inputs[i].id){lbl=document.querySelector('label[for="'+inputs[i].id+'"]');}
-        if(!lbl){var prev=inputs[i].previousElementSibling;if(prev) lbl=prev;}
-        if(!lbl){var parent=inputs[i].parentElement;if(parent){var spans=parent.querySelectorAll('label,span,b,strong,td');for(var j=0;j<spans.length;j++){var st=spans[j].textContent.toLowerCase();if(st.indexOf('prescription')>-1||st.indexOf('note')>-1){lbl=spans[j];break;}}}}
-        if(lbl){
-          var lt=(lbl.textContent||'').toLowerCase();
-          if(lt.indexOf('prescription')>-1&&lt.indexOf('note')>-1) return inputs[i];
-        }
-        /* Check by name/id/placeholder */
-        var attrs=(inputs[i].name||'')+(inputs[i].id||'')+(inputs[i].placeholder||'');
-        if(/presc.*note|prescription.*note/i.test(attrs)) return inputs[i];
-      }
-      /* Last resort: large text input with Arabic content */
-      for(var i=0;i<inputs.length;i++){
-        var v=inputs[i].value||'';
-        if(v.length>30&&/[\u0600-\u06FF]/.test(v)&&(/ضيف|اسم|توصيل|صيدل/i.test(v))) return inputs[i];
-      }
-      return null;
+      /* حصراً: فقط #epresNotes — لا تبحث في أي حقل آخر */
+      return document.getElementById('epresNotes')||null;
     }
 
     /* Extract name from text - v3 (radical fix: handles تغيير اسم الضيف الى + connector words) */
@@ -4495,11 +4465,12 @@ function extractAndConfirmName(){
       var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
         'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
         'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة',
-        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في'];
+        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في','واضافه','واضافة','واضاف','ويوجد','يوجد'];
 
       /* على as preposition: only when followed by known location/object word */
       var alaStopNext=['الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
-        'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب'];
+        'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب',
+        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون','الشنطه','الشنطة'];
 
       function isStopWord(word,nextWord){
         /* على: stop ONLY when followed by a known object/location (preposition context) */
@@ -4525,7 +4496,7 @@ function extractAndConfirmName(){
         'موجود','موجوده','متوفر','متوفره','مطلوب','مطلوبه','اضافي','اضافيه','اضافية',
         'حسب','وصفه','وصفة','روشته','روشتة','روشتته','الوصفه','الروشته',
         'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة'];
-      function isNotName(w){var n2=normG(w);for(var nn=0;nn<notNameWords.length;nn++)if(n2===normG(notNameWords[nn]))return true;return false;}
+      function isNotName(w){var n2=normG(w);var n2bare=n2.replace(/^ال/,'');for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}return false;}
 
       function cleanName(raw){
         var words=raw.trim().split(/\s+/);
