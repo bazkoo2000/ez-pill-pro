@@ -216,7 +216,7 @@ async function _ezGeminiParse(noteText){
   var key=_ezGetGeminiKey();
   if(!key) return null;
   try{
-    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
+    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+key,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -236,24 +236,24 @@ async function _ezGeminiParse(noteText){
 async function _ezGeminiBatch(notes){
   var key=_ezGetGeminiKey();
   if(!key||notes.length===0){console.log('🤖 Batch: no key or empty notes');return [];}
-  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini...');
+  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: flash-lite)...');
   var prompt=_GEMINI_PROMPT+'\n\nParse ALL of these notes. Return a JSON ARRAY with one object per note, in the same order:\n';
   for(var i=0;i<notes.length;i++) prompt+=(i+1)+'. "'+notes[i]+'"\n';
-  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key;
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+key;
   console.log('🤖 URL:',url.substring(0,80)+'...');
-  var resp=await fetch(url,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      contents:[{parts:[{text:prompt}]}],
-      generationConfig:{temperature:0.1,maxOutputTokens:1000}
-    })
-  });
-  console.log('🤖 Response status:',resp.status,resp.statusText);
-  if(!resp.ok){
-    var errText=await resp.text();
+  var _body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1000}});
+  var resp=null;
+  /* Retry up to 2 times with delay if rate limited (429) */
+  for(var _retry=0;_retry<3;_retry++){
+    resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:_body});
+    console.log('🤖 Attempt '+(_retry+1)+': status='+resp.status);
+    if(resp.status!==429) break;
+    if(_retry<2){console.log('🤖 Rate limited, waiting 3s...');await new Promise(function(r){setTimeout(r,3000)});}
+  }
+  if(!resp||!resp.ok){
+    var errText=resp?await resp.text():'No response';
     console.error('🤖 API Error:',errText);
-    throw new Error('Gemini API '+resp.status+': '+errText.substring(0,100));
+    throw new Error('Gemini API '+(resp?resp.status:'?')+': '+(errText||'').substring(0,100));
   }
   var data=await resp.json();
   console.log('🤖 Raw response:',JSON.stringify(data).substring(0,200));
@@ -323,7 +323,7 @@ window.ezSetupGemini=function(){
     var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
     if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
     testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+testKey,{
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+testKey,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:'Parse this dose: "twice daily after meals". Return ONLY JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:200}})
