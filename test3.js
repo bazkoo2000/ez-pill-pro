@@ -21,203 +21,6 @@ var CHANGELOG={
       {icon:'⚡',text:'تفعيل تلقائي للخيارات عند اكتشاف طلب تقسيم'},
       {icon:'🖨️',text:'زر تجميع للطباعة مرن: شهر / شهرين / ثلاثة'}
     ]
-  },
-  '140.3':{
-    title:'📅 تحذير أيام ذكي — Qty تلقائي + تطبيق على الكل',
-    features:[
-      {icon:'🧠',text:'الكود يفهم: 30=شهر(qty1) / 60=شهرين(qty2) / 90=ثلاثة(qty3) ويقترح التعديل'},
-      {icon:'📦',text:'تعديل Qty تلقائي مع Size حسب الأيام المختارة (28 أو 30)'},
-      {icon:'🔢',text:'زر "تطبيق على الكل" ذكي — كل صنف ياخد الـ Qty الصح بتاعه'},
-      {icon:'✅',text:'زر "تطبيق التعديلات" بدل "تم المراجعة" — كل حاجة بتأكيدك'},
-      {icon:'💾',text:'حفظ ولصق النوتات بين التابات — احفظ من القديم والصق في الجديد'},
-      {icon:'🔴',text:'الصنف المختلف في الأيام يتعلّم بإطار أحمر ويطلع فوق'}
-    ]
-  },
-  '140.2':{
-    title:'🔄 تنبيه حجم العبوة ديناميكي — بيرجع تلقائياً',
-    features:[
-      {icon:'🔄',text:'التنبيه دلوقتي reactive — لو صححت لـ 28 وبعدين رجعت 30 التنبيه بيرجع تلقائياً'},
-      {icon:'👁️',text:'MutationObserver بيراقب تغيير الأيام في أي وقت ويعيد رسم التنبيه'}
-    ]
-  },
-  '140.1':{
-    title:'🍽️ دعم الغذاء/الغذا كبديل للغداء',
-    features:[
-      {icon:'🍽️',text:'إضافة: الغذاء / الغذا / الغذاء = نفس الغداء في كل الأماكن'},
-      {icon:'✅',text:'بعد الغذاء → 14:00 | قبل الغذاء → 13:00'},
-      {icon:'✅',text:'بعد الغذا والعشا → تكرار صح زي بعد الغدا والعشا'}
-    ]
-  },
-  '140.0':{
-    title:'🧠 تكرار ذكي بمبدأ الأوقات — مش حالات مخصصة',
-    features:[
-      {icon:'🧠',text:'مبدأ جديد: التكرار يتقرر بناءً على انتظام الفروق بين الأوقات الفعلية'},
-      {icon:'✅',text:'مرتين: لو الـ gap مش 12h بالظبط → تكرار (مثال: بعد الفطار والغدا = 9,14 → gap=5h → تكرار)'},
-      {icon:'✅',text:'مرتين بالانتظام: فطار+عشا=9,21 (gap=12h) أو قبل فطار+عشا=8,20 (gap=12h) → مفيش تكرار'},
-      {icon:'✅',text:'3 مرات: لو أي فرق بين الأوقات مختلف → تكرار (بعد الفطار+الغدا+العشا = 9,14,21 → gaps 5h,7h → تكرار)'},
-      {icon:'🔧',text:'إصلاح: قبل الغدا والعشا / بعد الغدا والعشا / قبل الفطار والغدا كانت بتتجاهل التكرار'}
-    ]
-  },
-  '139.6':{
-    title:'📦 كسر قاعدة الأكواد المخصصة + علبة 14 = 14 يوم + إصلاح نوتات رمضان',
-    features:[
-      {icon:'📦',text:'علبة 14 واحدة → Size يتكتب 14 مباشرة (مش يتساوى مع الدايلوج)'},
-      {icon:'⚡',text:'كسر الكود المخصص: لو صنف عادي 28 حبة مع كود ثابت 30 → الثابت ينزل 28'},
-      {icon:'🔒',text:'الكسر فقط لو العدد الأقل = 28 (14 أو أقل لا يكسر)'},
-      {icon:'🔒',text:'ثابت مع ثابت لا يكسر — فقط عادي مع ثابت'},
-      {icon:'🐛',text:'إصلاح: إلغاء رمضان كان يكرر النوت "بعد الفطار والعشا" مرتين'},
-      {icon:'✅',text:'تفكيك النوتات المدمجة قبل إعادة الدمج لمنع التكرار'}
-    ]
-  },
-  '139.5':{
-    title:'💊 تنبيه علب 14 حبة — علبة واحدة أو علبتين؟ ✅',
-    features:[
-      {icon:'🔍',text:'اكتشاف أصناف 14 حبة تلقائياً من اسم الدواء'},
-      {icon:'💡',text:'تنبيه داخل الدايلوج: كم علبة في الطلب علبة واحدة = 14 يوم — علبتين = 28 يوم'},
-      {icon:'✅',text:'لو اخترت علبتين يتعامل معها كـ 28 يوم تلقائياً'},
-      {icon:'🚫',text:'يمنع بدء المعالجة إذا لم تختر لكل صنف 14 حبة'}
-    ]
-  },
-  '136.10':{
-    title:'3 إصلاحات: التراويح + ترتيب الدمج + تنبيه البوكسات ✅',
-    features:[
-      {icon:'🌙',text:'إصلاح: "بعد الغداء" بتتحول لـ "بعد التراويح" صح - تحركنا الـ check قبل أي قواعد مخصصة'},
-      {icon:'🔄',text:'إصلاح: دمج الجرعات مرتين بيعمل "بعد الفطار والعشاء" صح - الترتيب بالوقت (09:00 قبل 21:00)'},
-      {icon:'📦',text:'إصلاح: تنبيه "3 بوكسات" بيشتغل لأي عدد بوكسات في الملاحظات'},
-      {icon:'📝',text:'أمثلة: "ترتيب على 3 بوكسات" / "في 2 بوكس" / "ثلاث بوكسات" كلها بتطلع التنبيه'}
-    ]
-  },
-  '136.11':{
-    title:'رمضان: qty=1 أثناء رمضان + دمج النوتات بعد الإلغاء ✅',
-    features:[
-      {icon:'🐛',text:'إصلاح: qty كانت بتتضرب في عدد الشهور أثناء رمضان (3شهور → qty=3 × size=25 = 75 غلط!)'},
-      {icon:'✅',text:'qty يبقى 1 طول فترة رمضان - عدد الشهور محفوظ في _rmMVal'},
-      {icon:'📝',text:'لما تلغي رمضان: النوتات بتتدمج - "بعد الفطار"+"بعد العشاء" → "بعد الفطار والعشاء"'},
-      {icon:'🔢',text:'الحساب الصح: 3شهور×30يوم=90 - 25رمضان = 65 يوم عادي بـ size=65/130/195'},
-      {icon:'📅',text:'#fstartDate يتحدث لأول يوم بعد رمضان بعد الإلغاء'}
-    ]
-  },
-  '136.10':{
-    title:'إصلاح "إلغاء جرعات رمضان" - الكميات والتاريخ ✅',
-    features:[
-      {icon:'🐛',text:'إصلاح: size بعد الإلغاء كانت = 65 بدل 130 للأدوية مرتين/اليوم'},
-      {icon:'✅',text:'الإصلاح: totalSize = عدد الجرعات × normalDays (مرتين = 65×2=130)'},
-      {icon:'🕐',text:'إصلاح: every بعد الدمج = 12 للمرتين، 8 للثلاث، 6 للأربع'},
-      {icon:'📅',text:'إصلاح: #fstartDate يتحدث لأول يوم بعد انتهاء رمضان'},
-      {icon:'🌙',text:'التحويل الصح: قبل الفطار→8 | بعد الفطار→9 | قبل السحور→20 | بعد السحور→21 | تراويح→14'}
-    ]
-  },
-  '136.9':{
-    title:'إصلاح زر "إلغاء جرعات رمضان" 🌙↩️✅',
-    features:[
-      {icon:'🐛',text:'إصلاح: زر "إلغاء جرعات رمضان" كان مش شغال بسبب ReferenceError في startDateStr'},
-      {icon:'✅',text:'الإصلاح: تعريف startDateStr و addDays قبل استخدامهم'},
-      {icon:'🔄',text:'إصلاح: الكود الآن يشتغل على الجدول الحالي مباشرة (مش يرجع للـ snapshot الفاضي)'},
-      {icon:'🌙',text:'التحويل: قبل الفطار→8 | بعد الفطار→9 | قبل السحور→20 | بعد السحور→21 | التراويح→14'},
-      {icon:'🔁',text:'دمج الصفوف المكررة بنفس الكود بعد الإلغاء تلقائياً'}
-    ]
-  },
-  '136.6':{
-    title:'إصلاح جرعة "كل 12 ساعة بعد الاكل" وتحذيرات ذكية ⚠️✅',
-    features:[
-      {icon:'✅',text:'إصلاح: "بعد الاكل / after meal / pc" معروف الآن → وقت 09:00'},
-      {icon:'🧠',text:'تحذير ذكي: يعرض الجرعة المكتوبة لكل صنف غير مفهوم'},
-      {icon:'✏️',text:'تعديل مباشر من التحذير: Size + Every + Start Time لكل صنف'},
-      {icon:'🔁',text:'تطبيق التعديلات فورياً على الصنف المحدد'}
-    ]
-  },
-  '136.5':{
-    title:'تصدير واستيراد الإعدادات 📤📥',
-    features:[
-      {icon:'📤',text:'تصدير الإعدادات: يحفظ كل الإعدادات في ملف JSON'},
-      {icon:'📥',text:'استيراد الإعدادات: يرجّع الإعدادات من ملف محفوظ'},
-      {icon:'🛡️',text:'حماية الإعدادات من ضياع الكاش أو مسح المتصفح'},
-      {icon:'💡',text:'نصيحة: صدّر الإعدادات بعد كل تعديل واحتفظ بالملف'}
-    ]
-  },
-  '136.4':{
-    title:'أوقات وتكرار مخصص للأكواد 🕐',
-    features:[
-      {icon:'🕐',text:'تاب جديد "أوقات الأكواد" في الإعدادات المحمية'},
-      {icon:'💊',text:'تعيين وقت بدء + تكرار (every) لكل كود صنف'},
-      {icon:'🔁',text:'مثال: كود معين → 08:00 + كل 12 ساعة (مرتين)'},
-      {icon:'⏰',text:'نوت فاضي → يستخدم إعدادات الكود بدل الافتراضي'},
-      {icon:'⚠️',text:'نوت مش مفهوم → تحذير عادي (مش بيستخدم إعدادات الكود)'}
-    ]
-  },
-  '136.3':{
-    title:'إصلاح الأوقات والتحذيرات 🕐⚠️',
-    features:[
-      {icon:'🕐',text:'إصلاح: "قبل الأكل مرتين" → 8:00 (كان 9:00)'},
-      {icon:'🍽️',text:'إضافة: "قبل/بعد الغذاء" و "الغداء" → 13:00/14:00'},
-      {icon:'⚠️',text:'تحذير للجرعات غير المفهومة'},
-      {icon:'📝',text:'النوت الفاضي → وقت افتراضي 9:00'}
-    ]
-  },
-  '136.2':{
-    title:'تصليح حساب تواريخ رمضان النهائي 🌙✅',
-    features:[
-      {icon:'✅',text:'إصلاح التعارض بين الدالتين في حساب التواريخ'},
-      {icon:'📅',text:'الفطار: لا تزيد شيء (15→16 تم بالفعل) = يوم 16 ✓'},
-      {icon:'🌙',text:'السحور: تزيد يوم واحد فقط (16+1) = يوم 17 ✓'}
-    ]
-  },
-  '136.0':{
-    title:'وضع رمضان + لوحة إعدادات 🌙⚙️',
-    features:[
-      {icon:'🌙',text:'سويتش وضع رمضان - تحويل الجرعات لأوقات الفطار والسحور'},
-      {icon:'🕌',text:'4 أوقات رمضان: قبل الفطار · بعد الفطار · قبل السحور · بعد السحور'},
-      {icon:'⚙️',text:'لوحة إعدادات مفتوحة - تعديل الأوقات والأكواد'},
-      {icon:'💊',text:'إضافة/تعديل/حذف أكواد الأصناف ذات الحجم الثابت'},
-      {icon:'🗓️',text:'إدارة أكواد الجرعات الأسبوعية'},
-      {icon:'⏰',text:'تخصيص جميع أوقات الجرعات (عادية + رمضان)'},
-      {icon:'💾',text:'جميع التعديلات تُحفظ في المتصفح وتبقى حتى بعد الإغلاق'}
-    ]
-  },
-  '135.0':{
-    title:'تصميم جديد بالكامل 🎨',
-    features:[
-      {icon:'✨',text:'دايلوج جديد بتصميم Glassmorphism مع تأثيرات Shimmer'},
-      {icon:'📅',text:'أزرار الأشهر بوصف عربي (شهر / شهرين / ٣ شهور)'},
-      {icon:'🔘',text:'Toggles ذكية بتنور لما تتفعّل'},
-      {icon:'⚡',text:'زرار المعالجة بتأثير Pulse + progress bar جديد'},
-      {icon:'🛡️',text:'Functions موحدة + Column Aliases لحماية من تغيير الأعمدة'},
-      {icon:'🔍',text:'Error handling واضح - بيقولك إيه العمود الناقص بالاسم'},
-      {icon:'🔁',text:'تنبيه الأصناف المكررة في نفس الطلب'}
-    ]
-  },
-  '134.0':{
-    title:'تحديث ذكي ⚡',
-    features:[
-      {icon:'💾',text:'حفظ الإعدادات تلقائياً - الأشهر والأيام والخيارات تترجع زي ما سبتها'},
-      {icon:'🔁',text:'تنبيه التكرار - لو نفس الصنف موجود أكتر من مرة في الطلب'},
-      {icon:'📊',text:'ملخص الطلب - إحصائيات كاملة بعد المعالجة'},
-      {icon:'🌙',text:'الوضع الليلي (Dark Mode) - للشغل بالليل'},
-      {icon:'🔔',text:'أصوات تنبيه ذكية - تختلف حسب نوع التنبيه'}
-    ]
-  },
-  '133.0':{
-    title:'تحديث ذكي 🧠',
-    features:[
-      {icon:'👤',text:'استخلاص اسم الضيف/المريض من Prescription Notes تلقائياً'},
-      {icon:'⚠️',text:'نظام تحذيرات جديد بالكامل - لكل تحذير زرار تطبيق أو تجاهل'},
-      {icon:'💊',text:'اكتشاف الجرعة المزدوجة (2 Undefined/tablets) مع تغيير Dose وتضاعف Size'},
-      {icon:'🔍',text:'بحث ذكي في Import Invoice بالفاتورة أو ERX'},
-      {icon:'🛡️',text:'حماية الفاتورة الحالية من الاستيراد المكرر'},
-      {icon:'📋',text:'زرار تصغير لدايلوج خيارات إضافية'},
-      {icon:'📦',text:'اكتشاف تعليمات التغليف: دمج بوكس واحد أو كل شهر بصندوق منفصل'},
-      {icon:'🎉',text:'شاشة What\'s New تظهر مرة واحدة مع كل تحديث'}
-    ]
-  },
-  '132.0':{
-    title:'تحديث رئيسي 🎉',
-    features:[
-      {icon:'🎨',text:'واجهة Dialog جديدة بتصميم احترافي'},
-      {icon:'💊',text:'دعم كل 6 ساعات (Q6H) → صفين × 12 ساعة'},
-      {icon:'📋',text:'جدول جرعات محسن مع تعليم أصناف التكرار ⚡'},
-      {icon:'🌐',text:'اكتشاف لغة الجرعات وضبط Patient Language'},
-      {icon:'🖌️',text:'تنسيق احترافي للصفحة والأزرار والجداول'}
-    ]
   }
 };
 
@@ -4567,7 +4370,7 @@ d_box.innerHTML='\
   <div id="ez-rm-card" style="display:'+(_rm?'block':'none')+';background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:14px;padding:10px 14px;direction:rtl;border:1.5px solid rgba(251,191,36,0.18)">\
     <div style="display:flex;align-items:center;gap:6px;width:100%">\
       <span style="font-size:11px;font-weight:800;color:#92400e">باقي</span>\
-      <input type="number" id="ez-rm-days-left" min="1" max="30" value="" placeholder="?" onclick="this.select()" style="flex:1;text-align:center;padding:6px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:16px;font-weight:900;font-family:Cairo,sans-serif;color:#92400e;background:rgba(255,255,255,0.7)" />\
+      <input type="number" id="ez-rm-days-left" min="1" max="30" value="'+(_rmToday.inRamadan?(_rmAutoLeft||_rmTodayLeft):'')+'" placeholder="?" onclick="this.select()" style="flex:1;text-align:center;padding:6px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:16px;font-weight:900;font-family:Cairo,sans-serif;color:#92400e;background:rgba(255,255,255,0.7)" />\
       <span style="font-size:11px;font-weight:800;color:#92400e">يوم</span>\
     </div>\
     '+(_rmToday.inRamadan?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+(_rmAutoLeft||_rmTodayLeft)+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:8px;font-size:10px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+(_rmAutoLeft||_rmTodayLeft)+'</strong> يوم 👆</div>':(!_rmToday.inRamadan?'<div style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:9px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان لم يبدأ بعد</div>':''))+'\
@@ -4584,9 +4387,27 @@ d_box.innerHTML='\
 <div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
 
 document.body.appendChild(d_box);
-/* Dark mode removed */
-/* 📦 Scan pack sizes and show warning */
-try{_renderPackWarningBanner();}catch(e){console.error('PACK ERROR:',e);alert('Pack error: '+e.message);}
+/* Async: فحص الجدول بعد ظهور الدايلوج مباشرة */
+setTimeout(function(){
+  try{
+    /* فحص التقسيم */
+    var _dupCheck=scanForDuplicateNotes();
+    if(!_dupCheck){
+      var _pnFields2=document.querySelectorAll('textarea,input[type="text"]');
+      for(var _pf2=0;_pf2<_pnFields2.length;_pf2++){
+        var _pfv2=(_pnFields2[_pf2].value||'').trim();
+        if(_pfv2.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv2)){_dupCheck=true;break;}
+      }
+    }
+    if(_dupCheck){
+      var _togBtn=document.querySelector('.ez-tog-btn[style*="6366f1"]');
+      var _togCb=document.getElementById('show-post-dialog');
+      if(_togBtn&&_togCb&&!_togCb.checked){_togCb.checked=true;_togBtn.classList.add('on');}
+    }
+    /* تنبيهات حجم العبوة */
+    _renderPackWarningBanner();
+  }catch(e){console.warn('EZ scan:',e);}
+},50);
 /* Observer: راقب data-t و data-m وأعد رسم التنبيه تلقائياً */
 (function(){var _dlgBox=document.getElementById('ez-dialog-box');if(!_dlgBox)return;var _packObs=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){if(muts[i].attributeName==='data-t'||muts[i].attributeName==='data-m'){try{_renderPackWarningBanner();}catch(e){}break;}}});_packObs.observe(_dlgBox,{attributes:true,attributeFilter:['data-t','data-m']});})();
 /* Pulse effect on primary button */
@@ -4610,8 +4431,7 @@ makeDraggable(d_box);
     });
   }
 })();
-beautifyPage();
-showWhatsNew();
+setTimeout(function(){beautifyPage();showWhatsNew();},100);
 
 /* ══════════════════════════════════════════
    NAME EXTRACTION FROM PRESCRIPTION NOTES
