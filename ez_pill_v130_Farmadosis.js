@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='140.3';
+var APP_VERSION='141.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,201 +8,18 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
-  '140.3':{
-    title:'📅 تحذير أيام ذكي — Qty تلقائي + تطبيق على الكل',
+  '141.0':{
+    title:'🔧 إصلاحات منطقية + تحسينات واجهة المستخدم',
     features:[
-      {icon:'🧠',text:'الكود يفهم: 30=شهر(qty1) / 60=شهرين(qty2) / 90=ثلاثة(qty3) ويقترح التعديل'},
-      {icon:'📦',text:'تعديل Qty تلقائي مع Size حسب الأيام المختارة (28 أو 30)'},
-      {icon:'🔢',text:'زر "تطبيق على الكل" ذكي — كل صنف ياخد الـ Qty الصح بتاعه'},
-      {icon:'✅',text:'زر "تطبيق التعديلات" بدل "تم المراجعة" — كل حاجة بتأكيدك'},
-      {icon:'💾',text:'حفظ ولصق النوتات بين التابات — احفظ من القديم والصق في الجديد'},
-      {icon:'🔴',text:'الصنف المختلف في الأيام يتعلّم بإطار أحمر ويطلع فوق'}
-    ]
-  },
-  '140.2':{
-    title:'🔄 تنبيه حجم العبوة ديناميكي — بيرجع تلقائياً',
-    features:[
-      {icon:'🔄',text:'التنبيه دلوقتي reactive — لو صححت لـ 28 وبعدين رجعت 30 التنبيه بيرجع تلقائياً'},
-      {icon:'👁️',text:'MutationObserver بيراقب تغيير الأيام في أي وقت ويعيد رسم التنبيه'}
-    ]
-  },
-  '140.1':{
-    title:'🍽️ دعم الغذاء/الغذا كبديل للغداء',
-    features:[
-      {icon:'🍽️',text:'إضافة: الغذاء / الغذا / الغذاء = نفس الغداء في كل الأماكن'},
-      {icon:'✅',text:'بعد الغذاء → 14:00 | قبل الغذاء → 13:00'},
-      {icon:'✅',text:'بعد الغذا والعشا → تكرار صح زي بعد الغدا والعشا'}
-    ]
-  },
-  '140.0':{
-    title:'🧠 تكرار ذكي بمبدأ الأوقات — مش حالات مخصصة',
-    features:[
-      {icon:'🧠',text:'مبدأ جديد: التكرار يتقرر بناءً على انتظام الفروق بين الأوقات الفعلية'},
-      {icon:'✅',text:'مرتين: لو الـ gap مش 12h بالظبط → تكرار (مثال: بعد الفطار والغدا = 9,14 → gap=5h → تكرار)'},
-      {icon:'✅',text:'مرتين بالانتظام: فطار+عشا=9,21 (gap=12h) أو قبل فطار+عشا=8,20 (gap=12h) → مفيش تكرار'},
-      {icon:'✅',text:'3 مرات: لو أي فرق بين الأوقات مختلف → تكرار (بعد الفطار+الغدا+العشا = 9,14,21 → gaps 5h,7h → تكرار)'},
-      {icon:'🔧',text:'إصلاح: قبل الغدا والعشا / بعد الغدا والعشا / قبل الفطار والغدا كانت بتتجاهل التكرار'}
-    ]
-  },
-  '138.6':{
-    title:'📦 كسر قاعدة الأكواد المخصصة + علبة 14 = 14 يوم + إصلاح نوتات رمضان',
-    features:[
-      {icon:'📦',text:'علبة 14 واحدة → Size يتكتب 14 مباشرة (مش يتساوى مع الدايلوج)'},
-      {icon:'⚡',text:'كسر الكود المخصص: لو صنف عادي 28 حبة مع كود ثابت 30 → الثابت ينزل 28'},
-      {icon:'🔒',text:'الكسر فقط لو العدد الأقل = 28 (14 أو أقل لا يكسر)'},
-      {icon:'🔒',text:'ثابت مع ثابت لا يكسر — فقط عادي مع ثابت'},
-      {icon:'🐛',text:'إصلاح: إلغاء رمضان كان يكرر النوت "بعد الفطار والعشا" مرتين'},
-      {icon:'✅',text:'تفكيك النوتات المدمجة قبل إعادة الدمج لمنع التكرار'}
-    ]
-  },
-  '138.5':{
-    title:'💊 تنبيه علب 14 حبة — علبة واحدة أو علبتين؟ ✅',
-    features:[
-      {icon:'🔍',text:'اكتشاف أصناف 14 حبة تلقائياً من اسم الدواء'},
-      {icon:'💡',text:'تنبيه داخل الدايلوج: كم علبة في الطلب علبة واحدة = 14 يوم — علبتين = 28 يوم'},
-      {icon:'✅',text:'لو اخترت علبتين يتعامل معها كـ 28 يوم تلقائياً'},
-      {icon:'🚫',text:'يمنع بدء المعالجة إذا لم تختر لكل صنف 14 حبة'}
-    ]
-  },
-  '136.10':{
-    title:'3 إصلاحات: التراويح + ترتيب الدمج + تنبيه البوكسات ✅',
-    features:[
-      {icon:'🌙',text:'إصلاح: "بعد الغداء" بتتحول لـ "بعد التراويح" صح - تحركنا الـ check قبل أي قواعد مخصصة'},
-      {icon:'🔄',text:'إصلاح: دمج الجرعات مرتين بيعمل "بعد الفطار والعشاء" صح - الترتيب بالوقت (09:00 قبل 21:00)'},
-      {icon:'📦',text:'إصلاح: تنبيه "3 بوكسات" بيشتغل لأي عدد بوكسات في الملاحظات'},
-      {icon:'📝',text:'أمثلة: "ترتيب على 3 بوكسات" / "في 2 بوكس" / "ثلاث بوكسات" كلها بتطلع التنبيه'}
-    ]
-  },
-  '136.9':{
-    title:'رمضان: qty=1 أثناء رمضان + دمج النوتات بعد الإلغاء ✅',
-    features:[
-      {icon:'🐛',text:'إصلاح: qty كانت بتتضرب في عدد الشهور أثناء رمضان (3شهور → qty=3 × size=25 = 75 غلط!)'},
-      {icon:'✅',text:'qty يبقى 1 طول فترة رمضان - عدد الشهور محفوظ في _rmMVal'},
-      {icon:'📝',text:'لما تلغي رمضان: النوتات بتتدمج - "بعد الفطار"+"بعد العشاء" → "بعد الفطار والعشاء"'},
-      {icon:'🔢',text:'الحساب الصح: 3شهور×30يوم=90 - 25رمضان = 65 يوم عادي بـ size=65/130/195'},
-      {icon:'📅',text:'#fstartDate يتحدث لأول يوم بعد رمضان بعد الإلغاء'}
-    ]
-  },
-  '136.8':{
-    title:'إصلاح "إلغاء جرعات رمضان" - الكميات والتاريخ ✅',
-    features:[
-      {icon:'🐛',text:'إصلاح: size بعد الإلغاء كانت = 65 بدل 130 للأدوية مرتين/اليوم'},
-      {icon:'✅',text:'الإصلاح: totalSize = عدد الجرعات × normalDays (مرتين = 65×2=130)'},
-      {icon:'🕐',text:'إصلاح: every بعد الدمج = 12 للمرتين، 8 للثلاث، 6 للأربع'},
-      {icon:'📅',text:'إصلاح: #fstartDate يتحدث لأول يوم بعد انتهاء رمضان'},
-      {icon:'🌙',text:'التحويل الصح: قبل الفطار→8 | بعد الفطار→9 | قبل السحور→20 | بعد السحور→21 | تراويح→14'}
-    ]
-  },
-  '136.7':{
-    title:'إصلاح زر "إلغاء جرعات رمضان" 🌙↩️✅',
-    features:[
-      {icon:'🐛',text:'إصلاح: زر "إلغاء جرعات رمضان" كان مش شغال بسبب ReferenceError في startDateStr'},
-      {icon:'✅',text:'الإصلاح: تعريف startDateStr و addDays قبل استخدامهم'},
-      {icon:'🔄',text:'إصلاح: الكود الآن يشتغل على الجدول الحالي مباشرة (مش يرجع للـ snapshot الفاضي)'},
-      {icon:'🌙',text:'التحويل: قبل الفطار→8 | بعد الفطار→9 | قبل السحور→20 | بعد السحور→21 | التراويح→14'},
-      {icon:'🔁',text:'دمج الصفوف المكررة بنفس الكود بعد الإلغاء تلقائياً'}
-    ]
-  },
-  '136.6':{
-    title:'إصلاح جرعة "كل 12 ساعة بعد الاكل" وتحذيرات ذكية ⚠️✅',
-    features:[
-      {icon:'✅',text:'إصلاح: "بعد الاكل / after meal / pc" معروف الآن → وقت 09:00'},
-      {icon:'🧠',text:'تحذير ذكي: يعرض الجرعة المكتوبة لكل صنف غير مفهوم'},
-      {icon:'✏️',text:'تعديل مباشر من التحذير: Size + Every + Start Time لكل صنف'},
-      {icon:'🔁',text:'تطبيق التعديلات فورياً على الصنف المحدد'}
-    ]
-  },
-  '136.5':{
-    title:'تصدير واستيراد الإعدادات 📤📥',
-    features:[
-      {icon:'📤',text:'تصدير الإعدادات: يحفظ كل الإعدادات في ملف JSON'},
-      {icon:'📥',text:'استيراد الإعدادات: يرجّع الإعدادات من ملف محفوظ'},
-      {icon:'🛡️',text:'حماية الإعدادات من ضياع الكاش أو مسح المتصفح'},
-      {icon:'💡',text:'نصيحة: صدّر الإعدادات بعد كل تعديل واحتفظ بالملف'}
-    ]
-  },
-  '136.4':{
-    title:'أوقات وتكرار مخصص للأكواد 🕐',
-    features:[
-      {icon:'🕐',text:'تاب جديد "أوقات الأكواد" في الإعدادات المحمية'},
-      {icon:'💊',text:'تعيين وقت بدء + تكرار (every) لكل كود صنف'},
-      {icon:'🔁',text:'مثال: كود معين → 08:00 + كل 12 ساعة (مرتين)'},
-      {icon:'⏰',text:'نوت فاضي → يستخدم إعدادات الكود بدل الافتراضي'},
-      {icon:'⚠️',text:'نوت مش مفهوم → تحذير عادي (مش بيستخدم إعدادات الكود)'}
-    ]
-  },
-  '136.3':{
-    title:'إصلاح الأوقات والتحذيرات 🕐⚠️',
-    features:[
-      {icon:'🕐',text:'إصلاح: "قبل الأكل مرتين" → 8:00 (كان 9:00)'},
-      {icon:'🍽️',text:'إضافة: "قبل/بعد الغذاء" و "الغداء" → 13:00/14:00'},
-      {icon:'⚠️',text:'تحذير للجرعات غير المفهومة'},
-      {icon:'📝',text:'النوت الفاضي → وقت افتراضي 9:00'}
-    ]
-  },
-  '136.2':{
-    title:'تصليح حساب تواريخ رمضان النهائي 🌙✅',
-    features:[
-      {icon:'✅',text:'إصلاح التعارض بين الدالتين في حساب التواريخ'},
-      {icon:'📅',text:'الفطار: لا تزيد شيء (15→16 تم بالفعل) = يوم 16 ✓'},
-      {icon:'🌙',text:'السحور: تزيد يوم واحد فقط (16+1) = يوم 17 ✓'}
-    ]
-  },
-  '136.0':{
-    title:'وضع رمضان + لوحة إعدادات 🌙⚙️',
-    features:[
-      {icon:'🌙',text:'سويتش وضع رمضان - تحويل الجرعات لأوقات الفطار والسحور'},
-      {icon:'🕌',text:'4 أوقات رمضان: قبل الفطار · بعد الفطار · قبل السحور · بعد السحور'},
-      {icon:'⚙️',text:'لوحة إعدادات مفتوحة - تعديل الأوقات والأكواد'},
-      {icon:'💊',text:'إضافة/تعديل/حذف أكواد الأصناف ذات الحجم الثابت'},
-      {icon:'🗓️',text:'إدارة أكواد الجرعات الأسبوعية'},
-      {icon:'⏰',text:'تخصيص جميع أوقات الجرعات (عادية + رمضان)'},
-      {icon:'💾',text:'جميع التعديلات تُحفظ في المتصفح وتبقى حتى بعد الإغلاق'}
-    ]
-  },
-  '135.0':{
-    title:'تصميم جديد بالكامل 🎨',
-    features:[
-      {icon:'✨',text:'دايلوج جديد بتصميم Glassmorphism مع تأثيرات Shimmer'},
-      {icon:'📅',text:'أزرار الأشهر بوصف عربي (شهر / شهرين / ٣ شهور)'},
-      {icon:'🔘',text:'Toggles ذكية بتنور لما تتفعّل'},
-      {icon:'⚡',text:'زرار المعالجة بتأثير Pulse + progress bar جديد'},
-      {icon:'🛡️',text:'Functions موحدة + Column Aliases لحماية من تغيير الأعمدة'},
-      {icon:'🔍',text:'Error handling واضح - بيقولك إيه العمود الناقص بالاسم'},
-      {icon:'🔁',text:'تنبيه الأصناف المكررة في نفس الطلب'}
-    ]
-  },
-  '134.0':{
-    title:'تحديث ذكي ⚡',
-    features:[
-      {icon:'💾',text:'حفظ الإعدادات تلقائياً - الأشهر والأيام والخيارات تترجع زي ما سبتها'},
-      {icon:'🔁',text:'تنبيه التكرار - لو نفس الصنف موجود أكتر من مرة في الطلب'},
-      {icon:'📊',text:'ملخص الطلب - إحصائيات كاملة بعد المعالجة'},
-      {icon:'🌙',text:'الوضع الليلي (Dark Mode) - للشغل بالليل'},
-      {icon:'🔔',text:'أصوات تنبيه ذكية - تختلف حسب نوع التنبيه'}
-    ]
-  },
-  '133.0':{
-    title:'تحديث ذكي 🧠',
-    features:[
-      {icon:'👤',text:'استخلاص اسم الضيف/المريض من Prescription Notes تلقائياً'},
-      {icon:'⚠️',text:'نظام تحذيرات جديد بالكامل - لكل تحذير زرار تطبيق أو تجاهل'},
-      {icon:'💊',text:'اكتشاف الجرعة المزدوجة (2 Undefined/tablets) مع تغيير Dose وتضاعف Size'},
-      {icon:'🔍',text:'بحث ذكي في Import Invoice بالفاتورة أو ERX'},
-      {icon:'🛡️',text:'حماية الفاتورة الحالية من الاستيراد المكرر'},
-      {icon:'📋',text:'زرار تصغير لدايلوج خيارات إضافية'},
-      {icon:'📦',text:'اكتشاف تعليمات التغليف: دمج بوكس واحد أو كل شهر بصندوق منفصل'},
-      {icon:'🎉',text:'شاشة What\'s New تظهر مرة واحدة مع كل تحديث'}
-    ]
-  },
-  '132.0':{
-    title:'تحديث رئيسي 🎉',
-    features:[
-      {icon:'🎨',text:'واجهة Dialog جديدة بتصميم احترافي'},
-      {icon:'💊',text:'دعم كل 6 ساعات (Q6H) → صفين × 12 ساعة'},
-      {icon:'📋',text:'جدول جرعات محسن مع تعليم أصناف التكرار ⚡'},
-      {icon:'🌐',text:'اكتشاف لغة الجرعات وضبط Patient Language'},
-      {icon:'🖌️',text:'تنسيق احترافي للصفحة والأزرار والجداول'}
+      {icon:'🧮',text:'إصلاح مضاعفة الكميات: حبتين×28=56 صح (كان 112 غلط)'},
+      {icon:'🧠',text:'تطوير دالة التكرار: تفهم بعد الفطار وقبل النوم / ظهراً وقبل النوم'},
+      {icon:'🔒',text:'منع تغيير توقيت الجرعة: قبل الغداء والعشاء تظل قبل'},
+      {icon:'⚠️',text:'تحذير "عبوة": لو الاسم فيه كلمة عبوة يحذرك ويفضي الحقل'},
+      {icon:'📋',text:'زر عرض الجرعات انتقل بجوار الإعدادات المتقدمة'},
+      {icon:'🌙',text:'حذف الوضع الليلي نهائياً'},
+      {icon:'🔵',text:'إطار أزرق حول الخيارات المفعّلة'},
+      {icon:'⚡',text:'تفعيل تلقائي للخيارات عند اكتشاف طلب تقسيم'},
+      {icon:'🖨️',text:'زر تجميع للطباعة مرن: شهر / شهرين / ثلاثة'}
     ]
   }
 };
@@ -418,7 +235,7 @@ var _defaultFixedSizeCodes={
   '102077738':10,
   '102371620':24,
   '102988654':48,
-  '103169239':21,
+  '103169239':20,
   '103243857':30,
   '103437918':30,
   '103683617':30
@@ -991,13 +808,7 @@ window.ezCloseDoses=function(){
   if(d) d.remove();
 };
 
-window.ezToggleDark=function(){
-  var isDark=document.body.classList.toggle('ez-dark-mode');
-  saveSettings({darkMode:isDark});
-  var btn=document.querySelector('.ez-header-actions .ez-btn-icon[onclick*="ezToggleDark"]');
-  if(btn) btn.textContent=isDark?'☀️':'🌙';
-  ezBeep('info');
-};
+/* Dark mode removed in v141 */
 
 window.ezMinimize=function(){
   var d=document.getElementById('ez-dialog-box');
@@ -1949,31 +1760,49 @@ window.ezNextMonth=function(){
         var sInput=r.querySelectorAll('td')[si]?r.querySelectorAll('td')[si].querySelector('input,textarea'):null;
         if(sInput) fireEv(sInput);
       });
-      btn.innerHTML=(monthCounter===1)?'📅 الشهر الثالث':'🖨️ تجميع للطباعة';
+      btn.innerHTML='📅 الشهر الثالث';
       btn.style.background=(monthCounter===1)?'linear-gradient(135deg, #818cf8, #6366f1)':'linear-gradient(135deg, #10b981, #059669)';
       btn.style.color='#fff';
       btn.setAttribute('data-step',String(monthCounter+1));
     }
-  } else if(monthCounter===3){
-    if(originalStartDate){sDateElem.value=originalStartDate;fireEv(sDateElem);}
-    rows.forEach(function(r,ix){
-      if(ix===0)return;
-      var tds=r.querySelectorAll('td');
-      if(qi>=0&&tds.length>qi){
-        var qInput=tds[qi].querySelector('input,textarea');
-        if(qInput){qInput.value='3';fireEv(qInput);}
-        else tds[qi].textContent='3';
-      }
-      if(tds.length>si){
-        var sInput=tds[si].querySelector('input,textarea');
-        if(sInput) fireEv(sInput);
-      }
-    });
-    btn.innerHTML='✅ تم التجميع بنجاح';
-    btn.style.background='linear-gradient(135deg, #10b981, #059669)';
+  } else if(monthCounter>=3){
+    /* الشهر الثالث وصلنا - نوقف الزر */
+    btn.innerHTML='✅ تم عرض 3 شهور';
+    btn.style.background='linear-gradient(135deg, #94a3b8, #64748b)';
     btn.style.color='#fff';
     btn.disabled=true;
   }
+};
+
+window.ezConsolidateForPrint=function(){
+  var tb=_ezFindTable();if(!tb)return;
+  var sDateElem=document.querySelector('#fstartDate');
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var qi=_ezIdx(hs,'qty'),si=_ezIdx(hs,'size');
+  var overlay=document.createElement('div');overlay.id='ez-consolidate-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center';
+  var html='<div style="width:320px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);font-family:Cairo,sans-serif">';
+  html+='<div style="padding:18px 22px 14px;text-align:center;border-bottom:1px solid rgba(129,140,248,0.08)"><div style="font-size:24px;margin-bottom:4px">🖨️</div><div style="font-size:16px;font-weight:900;color:#1e1b4b">تجميع للطباعة</div><div style="font-size:11px;font-weight:700;color:#64748b">اختر عدد الشهور</div></div>';
+  html+='<div style="padding:16px 22px;display:flex;flex-direction:column;gap:8px">';
+  html+='<button onclick="window._doConsolidate(1)" style="height:44px;border:2px solid rgba(99,102,241,0.15);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#3730a3;background:rgba(99,102,241,0.04)">📦 شهر واحد (Qty=1)</button>';
+  html+='<button onclick="window._doConsolidate(2)" style="height:44px;border:2px solid rgba(99,102,241,0.15);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#3730a3;background:rgba(99,102,241,0.04)">📦📦 شهرين (Qty=2)</button>';
+  html+='<button onclick="window._doConsolidate(3)" style="height:44px;border:2px solid rgba(16,185,129,0.2);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#065f46;background:rgba(16,185,129,0.06)">📦📦📦 ثلاثة شهور (Qty=3)</button>';
+  html+='</div><div style="padding:8px 22px 16px"><button onclick="document.getElementById(\'ez-consolidate-overlay\').remove()" style="width:100%;height:36px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:rgba(148,163,184,0.05)">إلغاء</button></div></div>';
+  overlay.innerHTML=html;overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+};
+
+window._doConsolidate=function(months){
+  var tb=_ezFindTable();if(!tb)return;
+  var sDateElem=document.querySelector('#fstartDate');
+  if(originalStartDate&&sDateElem){sDateElem.value=originalStartDate;_ezFire(sDateElem);}
+  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
+  var qi=_ezIdx(hs,'qty'),si=_ezIdx(hs,'size');
+  var rows=tb.querySelectorAll('tr');
+  for(var i=1;i<rows.length;i++){var tds=rows[i].querySelectorAll('td');if(qi>=0&&tds.length>qi){var qInput=tds[qi].querySelector('input,textarea');if(qInput){qInput.value=String(months);_ezFire(qInput);}else tds[qi].textContent=String(months);}if(si>=0&&tds.length>si){var sInput=tds[si].querySelector('input,textarea');if(sInput) _ezFire(sInput);}}
+  var overlay=document.getElementById('ez-consolidate-overlay');if(overlay)overlay.remove();
+  var labels={1:'شهر واحد',2:'شهرين',3:'ثلاثة شهور'};
+  window.ezShowToast('✅ تم التجميع: '+labels[months]+' (Qty='+months+')','success');ezBeep('success');
 };
 
 /* ══════════════════════════════════════════
@@ -2716,7 +2545,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-consolidate-btn" onclick="window.ezConsolidateForPrint()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">🖨️ تجميع للطباعة</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -2745,6 +2574,13 @@ function smartDoseRecognizer(note){
     .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .replace(/\s+/g,' ').trim();
+  /* FIX v141: Strip duration phrases BEFORE frequency detection
+     "3 شهور" / "3 اشهر" / "30 يوم" = duration, NOT frequency
+     Without this, "بعد الاكل 3 شهور" gets detected as 3 times */
+  s=s.replace(/\d+\s*(شهر|شهور|اشهر|شهرين|month|months)/gi,'')
+    .replace(/\d+\s*(يوم|ايام|اسبوع|اسابيع|day|days|week|weeks)/gi,'')
+    .replace(/لمد[ةه]?\s*\d+/gi,'')
+    .replace(/\s+/g,' ').trim();
   var res={count:1,hasB:false,hasL:false,hasD:false,isBefore:false,hasM:false,hasN:false,hasA:false,hasE:false,hasBed:false,hasEmpty:false,language:'arabic',confidence:'high',rawFrequency:null};
   res.language=detectLanguage(raw);
 
@@ -2759,7 +2595,7 @@ function smartDoseRecognizer(note){
   res.hasE=/\b(evening|eve)\b|مساء|مسا|المساء|المسا|ليل|الليل/i.test(s);
   res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
   res.hasEmpty=/\b(empty|fasting)\b|ريق|الريق|على الريق|معده فارغه|empty\s*stomach/i.test(s);
-  res.isBefore=/\b(before|bef|pre|ac|a\.c)\b|قبل\s*(الاكل|الاكل|الوجب)/i.test(s);
+  res.isBefore=/\b(before|bef|pre|ac|a\.c)\b|قبل/i.test(s);
 
   /* ── Step 2: Explicit frequency abbreviations (highest priority) ── */
   if(/\bqid\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){res.count=4;res.rawFrequency='QID';return res;}
@@ -2825,6 +2661,12 @@ function getTimeFromWords(w){
   /* CRITICAL FIX: "قبل الأكل مرتين" should be beforeMeal (8:00) not morning (9:30) */
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
+  /* بعد/مع الاكل المبهمة → بعد الفطار */
+  if(/(?:بعد|مع)\s*(الاكل|الأكل|الوجبه?)\b|after\s*(meal|food)\b|\bpc\b/i.test(s))return{time:NT.afterBreakfast||'09:00'};
+  /* قبل الاكل المبهمة → قبل الفطار */
+  if(/قبل\s*(الاكل|الأكل|الوجبه?)\b|before\s*(meal|food)\b|\bac\b/i.test(s))return{time:NT.beforeMeal||'08:00'};
+  var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
+  if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
   var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
@@ -2852,12 +2694,24 @@ function getMealTimesFromNote(note){
   var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
   var hasL=/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/i.test(s);
   var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
+  var hasNoon=/ظهر|الظهر|noon|midday/i.test(s);
+  var hasBed=/نوم|النوم|bed|sleep|hs\b/i.test(s);
+  var hasMorning=/صباح|الصباح|morning/i.test(s);
+  var hasEvening=/مساء|مسا|المساء|evening/i.test(s);
+  var hasAfternoon=/عصر|العصر|afternoon|asr/i.test(s);
   var times=[];
   if(hasB) times.push(isBefore?8:9);
+  if(hasMorning&&!hasB) times.push(9);
+  if(hasNoon&&!hasL) times.push(12);
   if(hasL) times.push(isBefore?13:14);
+  if(hasAfternoon&&!hasL) times.push(15);
   if(hasD) times.push(isBefore?20:21);
-  times.sort(function(a,b){return a-b;});
-  return times;
+  if(hasEvening&&!hasD) times.push(21);
+  if(hasBed) times.push(22);
+  var unique={};var result=[];
+  for(var i=0;i<times.length;i++){if(!unique[times[i]]){unique[times[i]]=true;result.push(times[i]);}}
+  result.sort(function(a,b){return a-b;});
+  return result;
 }
 
 /* ── المبدأ الجديد: هل الأوقات غير منتظمة؟ ──
@@ -2891,7 +2745,10 @@ function shouldDuplicateRow(note){
   /* ── الحالات القديمة للكلمات غير الوجبات (صباح/ظهر/عصر/مساء) ── */
   var isMN=(d.hasM||d.hasB)&&(d.hasN||d.hasL);var isNE=(d.hasN||d.hasL)&&(d.hasE||d.hasD);var isMA=(d.hasM||d.hasB)&&d.hasA;var isAE=d.hasA&&(d.hasE||d.hasD);
   if(isMN||isNE||isMA||isAE)return{type:'two',doseInfo:d,isBefore:d.isBefore};
-  /* count===2 فقط لو مفيش أوقات وجبات واضحة (اللي اتحسبت فوق بالمبدأ الجديد) */
+  /* Bed + any meal = two (non-regular timing) */
+  if(d.hasBed&&(d.hasB||d.hasL||d.hasD||d.hasM||d.hasN||d.hasA||d.hasE))return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  if(d.hasEmpty&&d.hasBed)return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  /* count===2 فقط لو مفيش أوقات وجبات واضحة */
   var isRegularTwice=/12|twice|bid|b\s*i\s*d|مرتين/.test(s)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(s)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(s);
   if(d.count===2&&!isRegularTwice&&mealTimes.length===0)return{type:'two',doseInfo:d,isBefore:d.isBefore};
   return null;
@@ -3074,6 +2931,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       var timeA=ta[0]*60+ta[1];
       var timeB=tb2[0]*60+tb2[1];
       /* ترتيب عادي بالوقت - الأصغر أولاً */
+      /* في رمضان: السحور (1-5 صباحاً) يجي بعد الفطار (6 مساءً - 12 منتصف الليل) */
+      if(timeA>=0&&timeA<=300&&timeB>=1080){return 1;}
+      if(timeB>=0&&timeB<=300&&timeA>=1080){return -1;}
       var diff=timeA-timeB;
       if(diff===0&&ei_idx>=0){var evA=parseInt(get(a.row.querySelectorAll('td')[ei_idx]))||0;var evB=parseInt(get(b.row.querySelectorAll('td')[ei_idx]))||0;return evB-evA;}
       return diff;
@@ -3438,7 +3298,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
       /* ── NORMAL MODE (original logic) ── */
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
-      if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}/* 56/60 BID default: no clear dose → force every=12, start=09:00 */var _origFixedVal=fixedSizeCodes[rd.itemCode];if((_origFixedVal===56||_origFixedVal===60)&&dose_fix.count<=1&&!isE12_fix&&rd.timesPerDay<=1){setEvry(tds_nodes[ei_main],'12');setTime(r_node,'09:00');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
+      if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}/* 56/60 BID default: no clear dose → force every=12, start=09:00 */var _origFixedVal=fixedSizeCodes[rd.itemCode];if((_origFixedVal===56||_origFixedVal===60)&&dose_fix.count<=1&&!isE12_fix&&rd.timesPerDay<=1){setEvry(tds_nodes[ei_main],'12');setTime(r_node,'09:00');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var _tpi_fix=getTwoPillsPerDoseInfo(rd.note);if(_tpi_fix.dose<2){var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}else{var fsCur=parseInt(get(tds_nodes[si_main]))||1;if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur,dose:2});}}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
       if(qi_main>=0){var qc2=tds_nodes[qi_main];var cv2=parseInt(get(qc2))||1;if(rd.daysOverrideQty&&rd.daysOverrideQty>0){setSize(qc2,rd.daysOverrideQty);}else{setSize(qc2,cv2*m);}}
       var doseInfo=smartDoseRecognizer(rd.note);var tpi_obj=getTwoPillsPerDoseInfo(rd.note);var doseMultiplier=tpi_obj.dose;var tm2_obj=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);
@@ -3469,10 +3329,16 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       /* Apply forceDose2 override AFTER normal processing */
       if(rd.forceDose2){
         if(di_main>=0)setDose(tds_nodes[di_main],2);
-        if(si_main>=0){var curSz=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],curSz*2);}
-        /* Queue safety confirmation */
-        if(!window._ezDose2Applied) window._ezDose2Applied=[];
-        window._ezDose2Applied.push({name:rd.itemName,newSize:curSz*2,dose:2});
+        var _tpi_check=getTwoPillsPerDoseInfo(rd.note);
+        if(_tpi_check.dose<2){
+          if(si_main>=0){var curSz=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],curSz*2);}
+          if(!window._ezDose2Applied) window._ezDose2Applied=[];
+          window._ezDose2Applied.push({name:rd.itemName,newSize:curSz*2,dose:2});
+        } else {
+          var curSz=parseInt(get(tds_nodes[si_main]))||1;
+          if(!window._ezDose2Applied) window._ezDose2Applied=[];
+          window._ezDose2Applied.push({name:rd.itemName,newSize:curSz,dose:2});
+        }
       }
     }
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
@@ -3735,7 +3601,7 @@ s_style.textContent='\
 .ez-seg.active{background:#3b82f6;color:#fff}\
 .ez-tog-grid{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;display:grid;grid-template-columns:1fr 1fr;gap:8px}\
 .ez-tog-btn{padding:12px 14px;border-radius:14px;border:none;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s;text-align:right;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.02);outline:2px solid transparent}\
-.ez-tog-btn.on{outline:2px solid var(--tc,#3b82f6)25}\
+.ez-tog-btn.on{border:2px solid rgba(99,102,241,0.45)!important;box-shadow:0 0 0 3px rgba(99,102,241,0.1)!important;background:rgba(99,102,241,0.04)!important}\
 .ez-tog-btn .ez-tog-icon{font-size:16px;flex-shrink:0}\
 .ez-tog-btn .ez-tog-lbl{font-size:12px;font-weight:800;color:#94a3b8;flex:1;transition:color 0.2s}\
 .ez-tog-btn.on .ez-tog-lbl{color:var(--tc,#3b82f6)}\
@@ -3799,30 +3665,7 @@ s_style.textContent='\
 .ez-toast-info{border-right:4px solid #818cf8}\
 .ez-toast-warning{border-right:4px solid #f59e0b}\
 .ez-loader-spinner{width:22px;height:22px;border:3px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite}\
-.ez-loader-text{font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif}\
-\
-body.ez-dark-mode{background:#0f0f23!important;color:#e2e8f0!important}\
-body.ez-dark-mode *:not(.ez-dialog-v2):not(.ez-dialog-v2 *):not([id^="ez-"]):not([id^="ez-"] *):not(.ez-toast):not(.ez-toast *){background-color:#1a1a2e!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.15)!important}\
-body.ez-dark-mode input,body.ez-dark-mode textarea,body.ez-dark-mode select{background:#16162a!important;color:#e2e8f0!important;border-color:rgba(129,140,248,0.2)!important}\
-body.ez-dark-mode .form-control{background:#16162a!important;color:#e2e8f0!important}\
-body.ez-dark-mode a{color:#818cf8!important}\
-body.ez-dark-mode button:not(.ez-seg):not(.ez-btn-primary):not(.ez-btn-cancel):not(.ez-btn-doses):not(.ez-btn-icon):not([onclick*="ez"]){background:#1e1e3a!important;color:#c7d2fe!important;border-color:rgba(129,140,248,0.2)!important}\
-body.ez-dark-mode .ez-dialog-v2{background:rgba(20,20,45,0.95)!important;box-shadow:0 30px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(129,140,248,0.1),inset 0 1px 0 rgba(255,255,255,0.03)!important}\
-body.ez-dark-mode .ez-title{color:#e2e8f0!important}\
-body.ez-dark-mode .ez-subtitle{color:#64748b!important}\
-body.ez-dark-mode .ez-section-label span:last-child{color:#94a3b8!important}\
-body.ez-dark-mode .ez-seg:not(.active){color:#94a3b8!important;border-color:rgba(129,140,248,0.12)!important}\
-body.ez-dark-mode .ez-seg:hover:not(.active){background:rgba(129,140,248,0.08)!important;color:#c7d2fe!important}\
-body.ez-dark-mode .ez-toggle-text{color:#94a3b8!important}\
-body.ez-dark-mode .ez-tog-on .ez-toggle-text{color:#e2e8f0!important}\
-body.ez-dark-mode .ez-toggle-row{border-color:rgba(129,140,248,0.06)!important}\
-body.ez-dark-mode .ez-toggle-row:hover,.ez-dark-mode .ez-tog-on{background:rgba(99,102,241,0.06)!important}\
-body.ez-dark-mode .ez-footer{background:rgba(129,140,248,0.03)!important;border-color:rgba(129,140,248,0.06)!important}\
-body.ez-dark-mode .ez-footer span{color:#475569!important}\
-body.ez-dark-mode .ez-btn-cancel{background:rgba(239,68,68,0.06)!important;border-color:rgba(239,68,68,0.12)!important}\
-body.ez-dark-mode .ez-btn-doses{background:rgba(129,140,248,0.06)!important;border-color:rgba(129,140,248,0.12)!important}\
-body.ez-dark-mode .ez-sep{background:linear-gradient(90deg,transparent,rgba(129,140,248,0.1),transparent)!important}\
-body.ez-dark-mode label,body.ez-dark-mode span{color:#c7d2fe!important}';
+.ez-loader-text{font-size:14px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif}';
 /* Table borders - data table only */
 s_style.textContent+='table.ez-data-table{border-collapse:collapse!important;border:1px solid #bbb!important}table.ez-data-table th,table.ez-data-table td{border:1px solid #bbb!important}';
 document.head.appendChild(s_style);
@@ -4452,6 +4295,7 @@ function _ezShowSettingsPanel(){
   };
 }
 var hasDuplicateNotes=scanForDuplicateNotes();
+if(!hasDuplicateNotes){var _pnFields=document.querySelectorAll('textarea,input[type="text"]');for(var _pf=0;_pf<_pnFields.length;_pf++){var _pfv=(_pnFields[_pf].value||'').trim();if(_pfv.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv)){hasDuplicateNotes=true;break;}}}
 var _rm_setting=savedSettings.ramadanMode||false;
 /* Ramadan mode: post dialog is shown ONLY after processing if actual duplicates were created */
 /* We don't force hasDuplicateNotes=true here anymore */
@@ -4461,7 +4305,7 @@ d_box.id='ez-dialog-box';
 d_box.className='ez-dialog-v2';
 d_box.setAttribute('data-m',String(savedSettings.m||1));
 d_box.setAttribute('data-t',String(savedSettings.t||30));
-var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!==false,_sw=savedSettings.showWarnings!==false,_dk=savedSettings.darkMode||false,_rm=savedSettings.ramadanMode||false;
+var _m=savedSettings.m||1,_t=savedSettings.t||30,_ad=savedSettings.autoDuration!==false,_sw=savedSettings.showWarnings!==false,_rm=savedSettings.ramadanMode||false;
 
 /* 🌙 Calculate Ramadan info for display */
 var _fsd=(document.querySelector('#fstartDate')||{}).value||'';
@@ -4480,7 +4324,7 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
-    <button class="ez-btn-icon" onclick="window.ezToggleDark()" title="الوضع الليلي">'+(_dk?'☀️':'🌙')+'</button>\
+    <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
@@ -4526,7 +4370,7 @@ d_box.innerHTML='\
   <div id="ez-rm-card" style="display:'+(_rm?'block':'none')+';background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:14px;padding:10px 14px;direction:rtl;border:1.5px solid rgba(251,191,36,0.18)">\
     <div style="display:flex;align-items:center;gap:6px;width:100%">\
       <span style="font-size:11px;font-weight:800;color:#92400e">باقي</span>\
-      <input type="number" id="ez-rm-days-left" min="1" max="30" value="" placeholder="?" onclick="this.select()" style="flex:1;text-align:center;padding:6px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:16px;font-weight:900;font-family:Cairo,sans-serif;color:#92400e;background:rgba(255,255,255,0.7)" />\
+      <input type="number" id="ez-rm-days-left" min="1" max="30" value="'+(_rmToday.inRamadan?(_rmAutoLeft||_rmTodayLeft):'')+'" placeholder="?" onclick="this.select()" style="flex:1;text-align:center;padding:6px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:16px;font-weight:900;font-family:Cairo,sans-serif;color:#92400e;background:rgba(255,255,255,0.7)" />\
       <span style="font-size:11px;font-weight:800;color:#92400e">يوم</span>\
     </div>\
     '+(_rmToday.inRamadan?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+(_rmAutoLeft||_rmTodayLeft)+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:8px;font-size:10px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+(_rmAutoLeft||_rmTodayLeft)+'</strong> يوم 👆</div>':(!_rmToday.inRamadan?'<div style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:9px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان لم يبدأ بعد</div>':''))+'\
@@ -4535,7 +4379,6 @@ d_box.innerHTML='\
 </div>\
 <div class="ez-actions">\
     <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
-    <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
     <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
     <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
@@ -4544,9 +4387,30 @@ d_box.innerHTML='\
 <div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
 
 document.body.appendChild(d_box);
-if(_dk) document.body.classList.add('ez-dark-mode');
-/* 📦 Scan pack sizes and show warning */
-try{_renderPackWarningBanner();}catch(e){console.error('PACK ERROR:',e);alert('Pack error: '+e.message);}
+/* Async: فحص الجدول بعد ظهور الدايلوج مباشرة */
+setTimeout(function(){
+  try{
+    /* فحص التقسيم — فقط في ملاحظات الروشتة، مش نوتات الأدوية */
+    var _dupCheck=scanForDuplicateNotes();
+    if(!_dupCheck){
+      var _pnFields2=document.querySelectorAll('textarea,input[type="text"]');
+      for(var _pf2=0;_pf2<_pnFields2.length;_pf2++){
+        /* تجاهل الحقول داخل الجدول (نوتات الأدوية) */
+        if(_pnFields2[_pf2].closest('table')) continue;
+        var _pfv2=(_pnFields2[_pf2].value||'').trim();
+        /* لازم يكون فيه كلمة تقسيم/ترتيب/دمج/بوكس/صندوق + طول كافي */
+        if(_pfv2.length>15&&/تقسيم|تقسم|ترتيب|دمج|بوكس|صندوق|صناديق/i.test(_pfv2)){_dupCheck=true;break;}
+      }
+    }
+    if(_dupCheck){
+      var _togBtn=document.querySelector('.ez-tog-btn[style*="6366f1"]');
+      var _togCb=document.getElementById('show-post-dialog');
+      if(_togBtn&&_togCb&&!_togCb.checked){_togCb.checked=true;_togBtn.classList.add('on');}
+    }
+    /* تنبيهات حجم العبوة */
+    _renderPackWarningBanner();
+  }catch(e){console.warn('EZ scan:',e);}
+},50);
 /* Observer: راقب data-t و data-m وأعد رسم التنبيه تلقائياً */
 (function(){var _dlgBox=document.getElementById('ez-dialog-box');if(!_dlgBox)return;var _packObs=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){if(muts[i].attributeName==='data-t'||muts[i].attributeName==='data-m'){try{_renderPackWarningBanner();}catch(e){}break;}}});_packObs.observe(_dlgBox,{attributes:true,attributeFilter:['data-t','data-m']});})();
 /* Pulse effect on primary button */
@@ -4570,8 +4434,7 @@ makeDraggable(d_box);
     });
   }
 })();
-beautifyPage();
-showWhatsNew();
+setTimeout(function(){beautifyPage();showWhatsNew();},100);
 
 /* ══════════════════════════════════════════
    NAME EXTRACTION FROM PRESCRIPTION NOTES
@@ -4789,9 +4652,17 @@ function extractAndConfirmName(){
     if(!notesField) return;
     var notesText=(notesField.value||'').trim();
     if(!notesText) return;
+    var nameField=findNameField();
+    if(nameField){
+      var _curName=(nameField.value||'').trim();
+      if(_curName.length>0&&/عبو[ةه]|العبو[ةه]|عبوه|علبه|علبة|العلبه|العلبة|كتابة اسم المريض|عدم كتابة|لا تكتب|لاتكتب/i.test(_curName)){
+        nameField.value='';_ezFire(nameField);
+        window.ezShowToast('⚠️ الضيف يحتاج تغيير الاسم','warning');ezBeep('warning');
+        return;
+      }
+    }
     var extractedName=extractName(notesText);
     if(!extractedName) return;
-    var nameField=findNameField();
     if(!nameField) return;
 
     /* Show as gentle slide-down banner */
