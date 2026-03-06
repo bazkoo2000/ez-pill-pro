@@ -4390,13 +4390,16 @@ document.body.appendChild(d_box);
 /* Async: فحص الجدول بعد ظهور الدايلوج مباشرة */
 setTimeout(function(){
   try{
-    /* فحص التقسيم */
+    /* فحص التقسيم — فقط في ملاحظات الروشتة، مش نوتات الأدوية */
     var _dupCheck=scanForDuplicateNotes();
     if(!_dupCheck){
       var _pnFields2=document.querySelectorAll('textarea,input[type="text"]');
       for(var _pf2=0;_pf2<_pnFields2.length;_pf2++){
+        /* تجاهل الحقول داخل الجدول (نوتات الأدوية) */
+        if(_pnFields2[_pf2].closest('table')) continue;
         var _pfv2=(_pnFields2[_pf2].value||'').trim();
-        if(_pfv2.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv2)){_dupCheck=true;break;}
+        /* لازم يكون فيه كلمة تقسيم/ترتيب/دمج/بوكس/صندوق + طول كافي */
+        if(_pfv2.length>15&&/تقسيم|تقسم|ترتيب|دمج|بوكس|صندوق|صناديق/i.test(_pfv2)){_dupCheck=true;break;}
       }
     }
     if(_dupCheck){
