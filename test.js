@@ -1,285 +1,273 @@
-javascript:(function(){
-  const BASE_URL = 'https://rtlapps.nahdi.sa/ez_pill_web/';
-  const STATUSES = {
-    new:       { label: 'New',           color: '#f59e0b', dot: '#f59e0b' },
-    readypack: { label: 'Ready to Pack', color: '#22c55e', dot: '#22c55e' },
-    packed:    { label: 'Packed',        color: '#6366f1', dot: '#6366f1' },
-    delivered: { label: 'Delivered',     color: '#8b5cf6', dot: '#8b5cf6' },
-    cancelled: { label: 'Cancelled',     color: '#ef4444', dot: '#ef4444' }
-  };
-  const d=document;let links=[],openedLinks=new Set(),isDragging=false,dragX=0,dragY=0,isMinimized=false,cancelSearch=false;
-  d.getElementById('baz-ui')&&d.getElementById('baz-ui').remove();d.getElementById('baz-style')&&d.getElementById('baz-style').remove();
-  const esc=(s)=>(s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+javascript:(async function(){
 
-  const style=d.createElement('style');style.id='baz-style';
-  style.innerHTML=`
-    #baz-ui,#baz-ui *{box-sizing:border-box;margin:0;padding:0}
-    #baz-ui{position:fixed;width:460px;max-width:96vw;background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);z-index:999999;border-radius:22px;direction:rtl;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Cairo,Helvetica,sans-serif;max-height:88vh;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);overflow:hidden}
-    #baz-ui.minimized #baz-body{display:none}#baz-ui.minimized{max-height:unset;width:420px}
-    #baz-ui #baz-header{padding:14px 20px 6px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;flex-shrink:0}
-    #baz-ui #baz-header:active{cursor:grabbing}
-    #baz-ui .hdr-left{display:flex;align-items:center;gap:10px}
-    #baz-ui .hdr-logo{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25);flex-shrink:0}
-    #baz-ui .hdr-title{color:#1f2937;font-size:15px;font-weight:800}
-    #baz-ui .hdr-ver{color:#6366f1;font-size:10px;font-weight:600}
-    #baz-ui .hdr-btns{display:flex;gap:6px}
-    #baz-ui .hdr-btn{background:rgba(0,0,0,0.06);border:none;color:#9ca3af;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-    #baz-ui .hdr-btn:hover{background:rgba(0,0,0,0.1);color:#6b7280}
-    #baz-ui #baz-body{padding:10px 16px 14px;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,0.08) transparent}
-    #baz-ui #baz-body::-webkit-scrollbar{width:3px}#baz-ui #baz-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.08);border-radius:3px}
-    #baz-ui .search-section{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}
-    #baz-ui .fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-    #baz-ui .field-group{display:flex;flex-direction:column;gap:4px}
-    #baz-ui .field-label{font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:0.3px}
-    #baz-ui .field-row{display:flex;align-items:center;background:rgba(0,0,0,0.03);border:none;border-radius:10px;overflow:hidden;transition:all .15s}
-    #baz-ui .field-row:focus-within{box-shadow:0 0 0 2px rgba(99,102,241,0.15);background:rgba(99,102,241,0.03)}
-    #baz-ui .field-prefix{padding:0 8px;color:#6366f1;font-size:11px;font-weight:700;border-left:1px solid rgba(0,0,0,0.04);height:100%;display:flex;align-items:center}
-    #baz-ui .baz-input{flex:1;background:transparent;border:none;outline:none;color:#1f2937;font-size:12px;padding:10px 12px;font-family:inherit;font-weight:600}
-    #baz-ui .baz-input::placeholder{color:#d1d5db}
-    #baz-ui .baz-btn{padding:10px 12px;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
-    #baz-ui .baz-btn:disabled{opacity:0.4;cursor:not-allowed}
-    #baz-ui .baz-btn:not(:disabled):active{transform:scale(0.98);opacity:0.9}
-    #baz-ui .btn-ready{background:#6366f1;color:white}
-    #baz-ui .btn-cancel{background:rgba(239,68,68,0.06);color:#ef4444;display:none}
-    #baz-ui #baz-status-bar{display:flex;align-items:center;gap:8px;padding:8px 0;min-height:32px}
-    #baz-ui #baz-spinner{width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:baz-spin 0.6s linear infinite;display:none;flex-shrink:0}
-    @keyframes baz-spin{to{transform:rotate(360deg)}}
-    #baz-ui #baz-st{font-size:12px;color:#9ca3af;flex:1;font-weight:600}
-    #baz-ui #baz-st b{color:#6366f1}
-    #baz-ui #baz-st .err{color:#ef4444}
-    #baz-ui #baz-open-panel{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;display:none;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}
-    #baz-ui .open-stats{display:flex;gap:16px;margin-bottom:10px}
-    #baz-ui .stat-item{display:flex;flex-direction:column;gap:2px}
-    #baz-ui .stat-val{font-size:18px;font-weight:900;color:#1f2937}
-    #baz-ui .stat-val.green{color:#22c55e}#baz-ui .stat-val.orange{color:#f59e0b}
-    #baz-ui .stat-lbl{font-size:9px;color:#9ca3af;font-weight:700;letter-spacing:0.3px}
-    #baz-ui .open-row{display:flex;align-items:center;gap:8px}
-    #baz-ui .open-count-input{width:56px;background:rgba(0,0,0,0.03);border:none;border-radius:10px;color:#1f2937;font-size:13px;font-weight:900;text-align:center;padding:8px;outline:none;font-family:inherit}
-    #baz-ui .open-count-input:focus{box-shadow:0 0 0 2px rgba(99,102,241,0.15)}
-    #baz-ui .btn-open{background:#6366f1;color:white;padding:8px 16px;border:none;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
-    #baz-ui .btn-open:active{transform:scale(0.98);opacity:0.9}
-    
-    /* CSS Order Counter */
-    #baz-ui #baz-cards{display:flex;flex-direction:column;gap:8px; counter-reset: baz-counter;}
-    
-    #baz-ui .result-card{background:#fff;border-radius:14px;padding:14px 16px;transition:all .15s;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}
-    #baz-ui .result-card::before{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;border-radius:0 14px 14px 0;background:var(--card-color,#6366f1)}
-    #baz-ui .result-card:hover{background:#f9fafb;transform:translateX(-2px)}
-    #baz-ui .result-card.opened{opacity:0.35}
-    #baz-ui .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.04)}
-    
-    #baz-ui .card-idx::after { counter-increment: baz-counter; content: "#" counter(baz-counter); }
-    #baz-ui .card-idx{background:rgba(99,102,241,0.08);color:#6366f1;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:800;margin-left:8px}
-    
-    #baz-ui .card-order{font-size:14px;font-weight:800;color:#1f2937;font-family:monospace;}
-    #baz-ui .card-status{font-size:10px;font-weight:800;padding:4px 10px;border-radius:8px;background:rgba(99,102,241,0.06);color:var(--card-color,#6366f1);letter-spacing:0.3px}
-    #baz-ui .card-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-    #baz-ui .info-item{display:flex;flex-direction:column;gap:3px}
-    #baz-ui .info-lbl{font-size:10px;color:#9ca3af;font-weight:700}
-    #baz-ui .info-val{font-size:13px;color:#374151;font-weight:800;line-height:1.4;word-break:break-word}
-    #baz-ui .card-bottom{display:flex;justify-content:space-between;align-items:flex-end;padding-top:10px;border-top:1px dashed rgba(0,0,0,0.06)}
-    #baz-ui .card-invoice{font-size:11px;color:#6b7280;font-weight:700;font-family:monospace;letter-spacing:0.5px}
-    #baz-ui .card-date{font-size:10px;color:#9ca3af;font-weight:600;margin-top:4px}
-    #baz-ui .card-open-btn{text-decoration:none;background:rgba(99,102,241,0.08);color:#6366f1;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;transition:all .15s;font-family:inherit}
-    #baz-ui .card-open-btn:hover{background:#6366f1;color:white;box-shadow:0 4px 12px rgba(99,102,241,0.2)}
-    #baz-ui .card-opened-lbl{font-size:11px;color:#9ca3af;font-weight:700;padding:8px 0}
-    #baz-ui .empty-state{text-align:center;padding:32px 20px;color:#d1d5db}
-    #baz-ui .empty-icon{font-size:32px;margin-bottom:8px}
-    #baz-ui .empty-text{font-size:13px;font-weight:600}
-  `;d.head.appendChild(style);
+/* ═══════════════════════════════════════════════════════
+   🏥 مستخرج فروع النهدي v4 - بوكماركلت بواجهة كاملة
+   يُحقن مباشرة داخل صفحة rtlapps.nahdi.sa
+═══════════════════════════════════════════════════════ */
 
-  const ui=d.createElement('div');ui.id='baz-ui';ui.style.cssText='top:50%;left:50%;transform:translate(-50%,-50%);';
-  ui.innerHTML=`
-    <div id="baz-header">
-      <div class="hdr-left">
-        <div class="hdr-logo">📡</div>
-        <div><span class="hdr-title">البحث الشامل</span><br><span class="hdr-ver">v15.1 — Pure Speed & Sorted ⚡</span></div>
-      </div>
-      <div class="hdr-btns">
-        <button class="hdr-btn" id="baz-min">−</button>
-        <button class="hdr-btn" id="baz-close" style="background:rgba(239,68,68,0.08);color:#ef4444">✕</button>
-      </div>
-    </div>
-    <div id="baz-body">
-      <div class="search-section">
-        <div class="fields-grid">
-          <div class="field-group"><span class="field-label">رقم الفاتورة</span><div class="field-row"><input class="baz-input" id="f-invoice" placeholder="INV-12345"></div></div>
-          <div class="field-group"><span class="field-label">رقم الطلب</span><div class="field-row"><span class="field-prefix">ERX</span><input class="baz-input" id="f-order" placeholder="أرقام فقط"></div></div>
-          <div class="field-group" style="grid-column: 1 / -1;"><span class="field-label">موبايل الضيف</span><div class="field-row"><input class="baz-input" id="f-mobile" placeholder="05xxxxxxxx"></div></div>
-        </div>
-        <div style="display:flex; gap:8px;" id="baz-btn-grid">
-          <button id="baz-run-all" class="baz-btn btn-ready" style="flex:1; font-size:14px; padding:12px;">🔍 بحث شامل في كل الحالات</button>
-          <button id="baz-cancel" class="baz-btn btn-cancel" style="flex:0.35;">⛔ إلغاء</button>
-        </div>
-      </div>
-      <div id="baz-status-bar"><div id="baz-spinner"></div><div id="baz-st"></div></div>
-      <div id="baz-open-panel">
-        <div class="open-stats">
-          <div class="stat-item"><span class="stat-val" id="stat-total">0</span><span class="stat-lbl">إجمالي</span></div>
-          <div class="stat-item"><span class="stat-val green" id="stat-opened">0</span><span class="stat-lbl">مفتوحة</span></div>
-          <div class="stat-item"><span class="stat-val orange" id="stat-remain">0</span><span class="stat-lbl">متبقية</span></div>
-        </div>
-        <div class="open-row"><input class="open-count-input" id="baz-open-count" type="number" min="1" value="10"><button class="btn-open" id="baz-do-open">فتح ▶</button></div>
-      </div>
-      <div id="baz-cards"></div>
-    </div>`;
-  d.body.appendChild(ui);
+/* ═══ إزالة أي نسخة سابقة ═══ */
+if(document.getElementById('nahdi-dash')){document.getElementById('nahdi-dash').remove();}
 
-  const hdr=d.getElementById('baz-header');
-  hdr.addEventListener('mousedown',(e)=>{if(e.target.closest('.hdr-btn'))return;isDragging=true;const rect=ui.getBoundingClientRect();dragX=e.clientX-rect.left;dragY=e.clientY-rect.top;ui.style.transform='none'});
-  d.addEventListener('mousemove',(e)=>{if(!isDragging)return;let x=Math.max(0,Math.min(window.innerWidth-ui.offsetWidth,e.clientX-dragX));let y=Math.max(0,Math.min(window.innerHeight-ui.offsetHeight,e.clientY-dragY));ui.style.left=x+'px';ui.style.top=y+'px'});
-  d.addEventListener('mouseup',()=>{isDragging=false});
+/* ═══ بناء الواجهة ═══ */
+const dash=document.createElement('div');
+dash.id='nahdi-dash';
+dash.innerHTML=`
+<style>
+#nahdi-dash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;overflow-y:auto;overflow-x:hidden;}
+#nahdi-dash *{box-sizing:border-box;margin:0;padding:0;}
+.nx-header{background:linear-gradient(135deg,#003d7a,#0057a8,#0070d4);color:#fff;padding:20px 24px;position:sticky;top:0;z-index:10;box-shadow:0 4px 20px rgba(0,57,122,.25);}
+.nx-htop{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.nx-title{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700;}
+.nx-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:8px;font-size:18px;cursor:pointer;}
+.nx-close:hover{background:rgba(255,255,255,.3);}
+.nx-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.nx-st{background:rgba(255,255,255,.12);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,.1);}
+.nx-st .lb{font-size:11px;opacity:.7;margin-bottom:3px;}
+.nx-st .vl{font-size:24px;font-weight:800;line-height:1;}
+.nx-st.s1 .vl{color:#6ff5c0;} .nx-st.s2 .vl{color:#fff;} .nx-st.s3 .vl{color:#ffd866;} .nx-st.s4 .vl{color:rgba(255,255,255,.45);} .nx-st.s5 .vl{font-size:18px;}
+.nx-pbar{height:8px;background:rgba(255,255,255,.15);border-radius:10px;overflow:hidden;}
+.nx-pfill{height:100%;background:linear-gradient(90deg,#6ff5c0,#00b894);border-radius:10px;width:0%;transition:width .4s;}
+.nx-pfill.run::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:nxshim 1.5s infinite;}
+@keyframes nxshim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.nx-plbl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;opacity:.85;}
+.nx-ctrl{padding:12px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border-bottom:1px solid #e2e8f0;}
+.nx-ctrl label{font-size:13px;color:#6b7280;font-weight:500;}
+.nx-ctrl input[type=number]{width:75px;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:600;text-align:center;outline:none;}
+.nx-ctrl input[type=number]:focus{border-color:#0057a8;box-shadow:0 0 0 3px #e8f0fe;}
+.nx-ctrl select{padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;background:#fff;}
+.nx-btn{padding:9px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
+.nx-go{background:#0057a8;color:#fff;box-shadow:0 2px 8px rgba(0,87,168,.3);} .nx-go:hover{background:#004690;}
+.nx-go:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none;}
+.nx-stop{background:#e74c3c;color:#fff;display:none;} .nx-stop:hover{background:#c0392b;}
+.nx-csv{background:#00b894;color:#fff;margin-right:auto;} .nx-csv:hover{background:#00a884;} .nx-csv:disabled{background:#94a3b8;cursor:not-allowed;}
+.nx-search{flex:1;max-width:250px;margin-right:auto;position:relative;}
+.nx-search input{width:100%;padding:7px 10px 7px 32px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;}
+.nx-search input:focus{border-color:#0057a8;}
+.nx-search .ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:#6b7280;}
+.nx-tbl-wrap{margin:8px 24px 24px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid #e2e8f0;overflow:hidden;}
+.nx-tbl{width:100%;border-collapse:collapse;}
+.nx-tbl thead th{background:#f8fafc;padding:12px 14px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;text-align:right;position:sticky;top:0;}
+.nx-tbl thead th:first-child{text-align:center;width:45px;}
+.nx-tbl tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s;}
+.nx-tbl tbody tr:hover{background:#f8fafc;}
+.nx-tbl tbody tr.nx-new{animation:nxrow .4s ease-out;background:rgba(0,184,148,.12);}
+@keyframes nxrow{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.nx-tbl tbody td{padding:10px 14px;font-size:14px;vertical-align:middle;}
+.nx-tbl tbody td:first-child{text-align:center;font-weight:700;color:#6b7280;font-size:12px;}
+.nx-code{display:inline-block;background:#e8f0fe;color:#0057a8;padding:2px 8px;border-radius:5px;font-weight:700;font-size:13px;font-family:'Courier New',monospace;}
+.nx-name{font-weight:600;}
+.nx-addr{color:#6b7280;font-size:13px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nx-map{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#e8f5e9;color:#2e7d32;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;}
+.nx-map:hover{background:#c8e6c9;}
+.nx-nomap{color:#ccc;font-size:12px;}
+.nx-empty{text-align:center;padding:60px 20px;color:#6b7280;}
+.nx-empty .ei{font-size:42px;margin-bottom:12px;}
+.nx-scan{display:none;align-items:center;gap:6px;font-size:13px;color:rgba(255,255,255,.8);}
+.nx-dot{width:8px;height:8px;background:#6ff5c0;border-radius:50%;animation:nxpls 1s infinite;}
+@keyframes nxpls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+</style>
 
-  const getQuery=()=>{
-    let ord = d.getElementById('f-order').value.trim();
-    if(ord) {
-      ord = ord.replace(/^ERX/i, '');
-      ord = 'ERX' + ord;
-    }
-    return {
-      inv: d.getElementById('f-invoice').value.trim(),
-      ord: ord,
-      mob: d.getElementById('f-mobile').value.trim()
-    };
-  };
+<div class="nx-header">
+  <div class="nx-htop">
+    <div class="nx-title">🏥 مستخرج فروع النهدي v4</div>
+    <div class="nx-scan" id="nxScan"><span class="nx-dot"></span><span id="nxCurCode">...</span></div>
+    <button class="nx-close" id="nxClose" title="إغلاق">✕</button>
+  </div>
+  <div class="nx-stats">
+    <div class="nx-st s1"><div class="lb">فروع جدة ✅</div><div class="vl" id="nxF">0</div></div>
+    <div class="nx-st s2"><div class="lb">تم الفحص 📊</div><div class="vl" id="nxS">0</div></div>
+    <div class="nx-st s3"><div class="lb">مدن أخرى ⏭️</div><div class="vl" id="nxSk">0</div></div>
+    <div class="nx-st s4"><div class="lb">فارغ 📭</div><div class="vl" id="nxE">0</div></div>
+    <div class="nx-st s5"><div class="lb">الوقت ⏱️</div><div class="vl" id="nxT">0:00</div></div>
+  </div>
+  <div class="nx-plbl"><span id="nxPct">0%</span><span id="nxRng">0 / 0</span></div>
+  <div class="nx-pbar"><div class="nx-pfill" id="nxBar" style="position:relative;"></div></div>
+</div>
 
-  const getSearchValue=(q)=>q.mob||q.inv||q.ord||'';
-  const setLoading=(on)=>{d.getElementById('baz-spinner').style.display=on?'block':'none';d.getElementById('baz-run-all').disabled=on;const cb=d.getElementById('baz-cancel');cb.style.display=on?'flex':'none'};
-  const updateOpenPanel=()=>{const rem=links.filter(l=>!openedLinks.has(l.key));d.getElementById('stat-total').textContent=links.length;d.getElementById('stat-opened').textContent=openedLinks.size;d.getElementById('stat-remain').textContent=rem.length;const ce=d.getElementById('baz-open-count');ce.max=rem.length;ce.value=Math.min(parseInt(ce.value)||10,rem.length||1)};
+<div class="nx-ctrl">
+  <label>من:</label><input type="number" id="nxStart" value="1000" min="1">
+  <label>إلى:</label><input type="number" id="nxEnd" value="1400" min="1">
+  <label>المدينة:</label>
+  <select id="nxCity">
+    <option value="جدة">جدة</option><option value="الرياض">الرياض</option><option value="مكة">مكة</option>
+    <option value="المدينة">المدينة</option><option value="الدمام">الدمام</option><option value="">الكل</option>
+  </select>
+  <button class="nx-btn nx-go" id="nxGo">🚀 ابدأ</button>
+  <button class="nx-btn nx-stop" id="nxStp">⏹ إيقاف</button>
+  <div class="nx-search"><span class="ico">🔍</span><input type="text" id="nxQ" placeholder="بحث..." oninput="window._nxFilter()"></div>
+  <button class="nx-btn nx-csv" id="nxDl" disabled>📥 CSV</button>
+</div>
 
-  const addCard=(item,info,orderVal)=>{
-    const url=BASE_URL+`getEZPill_Details?onlineNumber=${encodeURIComponent((item.onlineNumber||'').replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(item.Invoice||'')}&typee=${encodeURIComponent(item.typee||'')}&head_id=${encodeURIComponent(item.head_id||'')}`;
-    links.push({url,key:(item.Invoice||'')+':'+(item.onlineNumber||'')});
-    
-    // استخراج مباشر وسريع جدا للبيانات
-    let guestName = item.guestName || item.customer_firstname || '—';
-    let guestMob = item.guestMobile || item.mobile || item.telephone || '—';
-    let dateRaw = item.created_at || item.Created_Time || item.createdAt || '—';
-    let erx = item.onlineNumber || '—';
-    let invoice = item.Invoice || '—';
+<div class="nx-tbl-wrap">
+  <table class="nx-tbl">
+    <thead><tr><th>#</th><th>رقم الصيدلية</th><th>اسم الصيدلية</th><th>العنوان</th><th>المدينة</th><th>جوجل ماب</th></tr></thead>
+    <tbody id="nxBody"></tbody>
+  </table>
+  <div class="nx-empty" id="nxEmpty"><div class="ei">📋</div><p>اضغط <b>ابدأ</b> لسحب بيانات الفروع</p></div>
+</div>
+`;
+document.body.appendChild(dash);
 
-    const card=d.createElement('div');
-    card.className='result-card';
-    card.id='card-'+links.length;
-    card.style.setProperty('--card-color',info.color);
-    card.style.order = orderVal; 
-    
-    card.innerHTML=`
-      <div class="card-top">
-        <div style="display:flex; align-items:center;">
-          <span class="card-idx"></span> <span class="card-order">${esc(erx)}</span>
-        </div>
-        <span class="card-status" style="background:${info.color}15; color:${info.color}">${esc(info.label)}</span>
-      </div>
-      <div class="card-info">
-        <div class="info-item"><span class="info-lbl">الضيف</span><span class="info-val">${esc(guestName)}</span></div>
-        <div class="info-item"><span class="info-lbl">الموبايل</span><span class="info-val" style="direction:ltr; text-align:right">${esc(guestMob)}</span></div>
-      </div>
-      <div class="card-bottom">
-        <div style="display:flex; flex-direction:column; gap:3px;">
-          <span class="card-invoice" title="رقم الفاتورة">🧾 ${esc(invoice)}</span>
-          <span class="card-date" title="تاريخ ووقت الإنشاء">🕒 ${esc(dateRaw)}</span>
-        </div>
-        <a href="${esc(url)}" target="_blank" class="card-open-btn">فتح ↗</a>
-      </div>
-    `;
-    d.getElementById('baz-cards').appendChild(card);
-  };
+/* ═══ State ═══ */
+let running=false,stop=false,results=[],seen=new Set(),st={s:0,f:0,sk:0,e:0},t0,timer,ifr;
 
-  const runSearch=async(statusKeys)=>{
-    const q=getQuery();const searchValue=getSearchValue(q);const st=d.getElementById('baz-st');const cards=d.getElementById('baz-cards');const panel=d.getElementById('baz-open-panel');
-    if(!searchValue){st.innerHTML='<span class="err">⚠️ أدخل قيمة بحث أولاً</span>';return}
-    cards.innerHTML='';panel.style.display='none';links=[];openedLinks=new Set();cancelSearch=false;setLoading(true);
-    let count=0;let seen=new Set();
-    
-    st.innerHTML=`جاري البحث <b>بسرعة البرق...</b> ⚡`;
+/* ═══ Close button ═══ */
+document.getElementById('nxClose').onclick=function(){
+    stop=true;
+    if(ifr){ifr.remove();ifr=null;}
+    clearInterval(timer);
+    dash.remove();
+};
 
-    const fetchPromises = statusKeys.map(async (status) => {
-      if(cancelSearch) return;
-      const info = STATUSES[status];
-      try {
-        const res = await fetch(BASE_URL+'Home/getOrders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status, pageSelected: 1, searchby: searchValue })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        
-        if(cancelSearch) return; 
+/* ═══ UI helpers ═══ */
+function upStats(){
+    document.getElementById('nxF').textContent=st.f;
+    document.getElementById('nxS').textContent=st.s;
+    document.getElementById('nxSk').textContent=st.sk;
+    document.getElementById('nxE').textContent=st.e;
+    const tot=parseInt(document.getElementById('nxEnd').value)-parseInt(document.getElementById('nxStart').value)+1;
+    const pct=tot>0?Math.round((st.s/tot)*100):0;
+    document.getElementById('nxPct').textContent=pct+'%';
+    document.getElementById('nxRng').textContent=st.s+' / '+tot;
+    document.getElementById('nxBar').style.width=pct+'%';
+}
+function upTime(){
+    if(!t0)return;
+    const el=Math.floor((Date.now()-t0)/1000),m=Math.floor(el/60),s=el%60;
+    document.getElementById('nxT').textContent=m+':'+String(s).padStart(2,'0');
+}
+function addRow(d,idx){
+    document.getElementById('nxEmpty').style.display='none';
+    const tb=document.getElementById('nxBody');
+    const tr=document.createElement('tr');
+    tr.className='nx-new';
+    tr.dataset.q=(d.storeCode+' '+d.storeName+' '+d.storeAddress+' '+d.city).toLowerCase();
+    const mc=d.googleMapsURL?'<a class="nx-map" href="'+d.googleMapsURL+'" target="_blank">📍 الموقع</a>':'<span class="nx-nomap">—</span>';
+    tr.innerHTML='<td>'+idx+'</td><td><span class="nx-code">'+d.storeCode+'</span></td><td class="nx-name">'+d.storeName+'</td><td class="nx-addr" title="'+d.storeAddress+'">'+d.storeAddress+'</td><td>'+d.city+'</td><td>'+mc+'</td>';
+    tb.insertBefore(tr,tb.firstChild);
+    setTimeout(function(){tr.classList.remove('nx-new');},500);
+}
+window._nxFilter=function(){
+    const q=document.getElementById('nxQ').value.toLowerCase();
+    document.querySelectorAll('#nxBody tr').forEach(function(r){r.style.display=r.dataset.q.includes(q)?'':'none';});
+};
 
-        let orders;
-        try { orders = JSON.parse(data.orders_list) } catch (_) { orders = data.orders_list }
-        
-        if (Array.isArray(orders) && orders.length > 0) {
-          orders.forEach(item => {
-            const key = (item.Invoice || '') + ':' + (item.onlineNumber || '');
-            if (seen.has(key)) return;
-            seen.add(key);
-            count++;
-
-            // استخراج الحالة الحقيقية من بيانات الطلب
-            let raw = String(item.status || item.Status || item.order_status || item.OrderStatus || '').toLowerCase().replace(/<[^>]*>?/gm, '').trim();
-            if(!raw) {
-              let cs = JSON.stringify(item).toLowerCase();
-              if(cs.includes('"delivered"')) raw = 'delivered';
-              else if(cs.includes('"packed"')) raw = 'packed';
-              else if(cs.includes('"ready to pack"') || cs.includes('"received"')) raw = 'readypack';
-              else if(cs.includes('"cancelled"')) raw = 'cancelled';
-              else if(cs.includes('"new"')) raw = 'new';
-            }
-            
-            let actualInfo = info;
-            if(raw.includes('delivered')) actualInfo = STATUSES['delivered'];
-            else if(raw.includes('packed')) actualInfo = STATUSES['packed'];
-            else if(raw.includes('ready') || raw.includes('received')) actualInfo = STATUSES['readypack'];
-            else if(raw.includes('cancel')) actualInfo = STATUSES['cancelled'];
-            else if(raw.includes('new')) actualInfo = STATUSES['new'];
-
-            // استخراج التاريخ لترتيب البطاقات باستخدام CSS Order
-            let s = item.created_at || item.Created_Time || item.createdAt || item.date || '';
-            let t = 0;
-            if(s) {
-              t = new Date(s).getTime();
-              if(isNaN(t) && s.includes('|')) {
-                let parts = s.split('|');
-                t = new Date(parts[1].trim() + ' ' + parts[0].trim()).getTime();
-              }
-            }
-            // إعطاء الطلبات التي لا تحتوي على تاريخ رقماً كبيراً لتظل في النهاية
-            let orderVal = (isNaN(t) || t === 0) ? 2000000000 : Math.floor(t / 1000);
-
-            // طباعة البطاقة فوراً، والـ CSS سيتولى ترتيبها بصرياً!
-            addCard(item, actualInfo, orderVal);
-          });
-        }
-      } catch(err) {
-        console.error(`[BazRadar - ${info.label}]`, err);
-      }
+/* ═══ Load page ═══ */
+function loadPg(url){
+    return new Promise(function(res){
+        let done=false;
+        function fin(){if(!done){done=true;ifr.removeEventListener('load',onL);setTimeout(res,400);}}
+        function onL(){fin();}
+        ifr.addEventListener('load',onL);
+        ifr.src=url;
+        setTimeout(fin,3000);
     });
+}
 
-    await Promise.all(fetchPromises);
+/* ═══ Extract ═══ */
+function extract(doc){
+    try{
+        const cells=Array.from(doc.querySelectorAll('td'));
+        if(!cells.length)return null;
+        let d={storeCode:'',storeName:'',storeAddress:'',googleMapsURL:'',city:''};
+        for(let c of cells){
+            let t=c.innerText.trim();
+            if(t.includes('Store Code'))d.storeCode=t.split(':').slice(1).join(':').trim();
+            if(t.includes('Store Name'))d.storeName=t.split(':').slice(1).join(':').trim();
+            if(t.includes('Store Address'))d.storeAddress=t.split(':').slice(1).join(':').trim();
+            if(t.includes('City'))d.city=t.split(':').slice(1).join(':').trim();
+        }
+        const links=Array.from(doc.querySelectorAll('a'));
+        for(let a of links){let h=a.href||a.getAttribute('href')||'';if(h.match(/google.*map|goo\.gl|maps\.app/i)){d.googleMapsURL=h;break;}}
+        if(!d.googleMapsURL){const els=doc.querySelectorAll('[onclick]');for(let e of els){let o=e.getAttribute('onclick')||'';let m=o.match(/https?:\/\/[^\s'"]+(?:google|goo\.gl|maps)[^\s'"]*/i);if(m){d.googleMapsURL=m[0];break;}}}
+        if(!d.googleMapsURL){let h=doc.body.innerHTML;let ps=[/https?:\/\/(?:www\.)?google\.[a-z.]+\/maps[^\s"'<>]*/gi,/https?:\/\/maps\.google\.[a-z.]+[^\s"'<>]*/gi,/https?:\/\/goo\.gl\/maps\/[^\s"'<>]*/gi,/https?:\/\/maps\.app\.goo\.gl\/[^\s"'<>]*/gi];for(let p of ps){let m=h.match(p);if(m){d.googleMapsURL=m[0];break;}}}
+        return d;
+    }catch(e){return null;}
+}
 
-    setLoading(false);
-    if(cancelSearch){st.innerHTML=`<span class="err">⛔ تم الإلغاء</span> — <b>${count}</b> نتيجة`}
-    else if(count>0){st.innerHTML=`✅ اكتمل بسرعة البرق — <b>${count}</b> نتيجة`;panel.style.display='block';updateOpenPanel()}
-    else{cards.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">لم نجد نتائج لـ "${esc(searchValue)}"</div></div>`;st.innerHTML=''}
-  };
+/* ═══ CSV ═══ */
+function dlCSV(){
+    if(!results.length)return;
+    let csv="\uFEFF"+"رقم الصيدلية,اسم الصيدلية,العنوان,رابط جوجل ماب,المدينة\n";
+    results.forEach(function(d){
+        csv+='"'+(d.storeCode||'').replace(/"/g,'""')+'","'+(d.storeName||'').replace(/"/g,'""')+'","'+(d.storeAddress||'').replace(/"/g,'""').replace(/\n/g,' ')+'","'+(d.googleMapsURL||'').replace(/"/g,'""')+'","'+(d.city||'').replace(/"/g,'""')+'"\n';
+    });
+    const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='Nahdi_'+(document.getElementById('nxCity').value||'All')+'_'+results.length+'_Stores_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
 
-  const openResults=async()=>{
-    const n=parseInt(d.getElementById('baz-open-count').value)||10;const remaining=links.filter(l=>!openedLinks.has(l.key));const st=d.getElementById('baz-st');
-    if(remaining.length===0){st.innerHTML='✅ كل النتائج تم فتحها';return}
-    const toOpen=remaining.slice(0,n);
-    for(let i=0;i<toOpen.length;i++){st.innerHTML=`🚀 فتح <b>${i+1}</b> من <b>${toOpen.length}</b>...`;window.open(toOpen[i].url,'_blank');openedLinks.add(toOpen[i].key);
-      d.querySelectorAll('.result-card').forEach(card=>{const btn=card.querySelector('.card-open-btn');if(btn&&btn.getAttribute('href')===toOpen[i].url){card.classList.add('opened');card.querySelector('.card-bottom').querySelector('.card-open-btn').outerHTML=`<span class="card-opened-lbl">✓ تم الفتح</span>`}});
-      await new Promise(r=>setTimeout(r,800))}
-    updateOpenPanel();const left=links.filter(l=>!openedLinks.has(l.key)).length;st.innerHTML=`✅ فُتح <b>${toOpen.length}</b> — متبقي: <b>${left}</b>`};
+document.getElementById('nxDl').onclick=dlCSV;
 
-  d.getElementById('baz-min').onclick=()=>{isMinimized=!isMinimized;ui.classList.toggle('minimized',isMinimized);d.getElementById('baz-min').innerHTML=isMinimized?'+':'−'};
-  d.getElementById('baz-close').onclick=()=>{ui.remove();d.getElementById('baz-style')&&d.getElementById('baz-style').remove()};
-  
-  d.getElementById('baz-run-all').onclick=()=>runSearch(['new', 'readypack', 'packed', 'delivered', 'cancelled']);
-  d.getElementById('baz-cancel').onclick=()=>{cancelSearch=true};
-  d.getElementById('baz-do-open').onclick=openResults;
-  d.querySelectorAll('.baz-input').forEach(el=>{el.onkeypress=(e)=>{if(e.key==='Enter')runSearch(['new', 'readypack', 'packed', 'delivered', 'cancelled'])}});
+/* ═══ Main ═══ */
+document.getElementById('nxGo').onclick=async function(){
+    if(running)return;
+    const s=parseInt(document.getElementById('nxStart').value);
+    const e=parseInt(document.getElementById('nxEnd').value);
+    const city=document.getElementById('nxCity').value;
+    if(isNaN(s)||isNaN(e)||s>e){alert('⚠️ تأكد من النطاق');return;}
+
+    running=true;stop=false;results=[];seen=new Set();st={s:0,f:0,sk:0,e:0};
+    document.getElementById('nxBody').innerHTML='';
+    document.getElementById('nxEmpty').innerHTML='<div class="ei">⏳</div><p>جاري الاستخراج...</p>';
+    document.getElementById('nxEmpty').style.display='block';
+    document.getElementById('nxGo').style.display='none';
+    document.getElementById('nxStp').style.display='inline-flex';
+    document.getElementById('nxDl').disabled=true;
+    document.getElementById('nxStart').disabled=true;
+    document.getElementById('nxEnd').disabled=true;
+    document.getElementById('nxScan').style.display='flex';
+    document.getElementById('nxBar').classList.add('run');
+
+    ifr=document.createElement('iframe');
+    ifr.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1024px;height:768px;opacity:0;pointer-events:none;';
+    document.body.appendChild(ifr);
+
+    t0=Date.now();
+    timer=setInterval(upTime,1000);
+
+    const BASE="https://rtlapps.nahdi.sa/ssp/StoreDashboradOnline.asp?StoreCode=";
+
+    for(let i=s;i<=e;i++){
+        if(stop)break;
+        st.s++;
+        document.getElementById('nxCurCode').textContent='كود: '+i;
+        upStats();
+        await loadPg(BASE+i);
+        let doc;
+        try{doc=ifr.contentDocument||ifr.contentWindow.document;}catch(ex){st.e++;continue;}
+        const data=extract(doc);
+        if(!data||!data.storeName){st.e++;continue;}
+        let ec=data.storeCode.trim(),rc=String(i);
+        if(ec&&ec!==rc){st.e++;continue;}
+        if(seen.has(ec))continue;
+        seen.add(ec);
+        if(city&&!data.city.includes(city)){st.sk++;continue;}
+        data.storeCode=ec||rc;
+        results.push(data);
+        st.f++;
+        upStats();
+        addRow(data,st.f);
+        document.getElementById('nxDl').disabled=false;
+    }
+
+    if(ifr){ifr.remove();ifr=null;}
+    clearInterval(timer);upTime();running=false;
+    document.getElementById('nxGo').style.display='inline-flex';
+    document.getElementById('nxStp').style.display='none';
+    document.getElementById('nxStart').disabled=false;
+    document.getElementById('nxEnd').disabled=false;
+    document.getElementById('nxScan').style.display='none';
+    document.getElementById('nxBar').classList.remove('run');
+    if(!results.length){document.getElementById('nxEmpty').innerHTML='<div class="ei">😕</div><p>لم يتم العثور على فروع</p>';document.getElementById('nxEmpty').style.display='block';}
+};
+
+document.getElementById('nxStp').onclick=function(){
+    stop=true;
+    document.getElementById('nxStp').textContent='⏳ جاري الإيقاف...';
+    document.getElementById('nxStp').disabled=true;
+};
+
 })();
