@@ -17,7 +17,8 @@
     }
   ],
   "fixedSizeCodes": {
-    "100009926": 24
+    "100009926": 24,
+    "100014160": 24
   },
   "removedCodes": [],
   "weeklyInjections": [],
