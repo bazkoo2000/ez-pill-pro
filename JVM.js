@@ -418,7 +418,7 @@ window.ezSetupGemini=function(){
    الريبو: bazkoo2000/ez-pill-pro
    ══════════════════════════════════════════ */
 var _EZ_REPO='bazkoo2000/ez-pill-pro';
-var _EZ_CONFIG_PATH='ez_config.json';
+var _EZ_CONFIG_PATH='ez_config_jvm.json';
 var _EZ_RAW_URL='https://raw.githubusercontent.com/'+_EZ_REPO+'/main/'+_EZ_CONFIG_PATH;
 var _EZ_API_URL='https://api.github.com/repos/'+_EZ_REPO+'/contents/'+_EZ_CONFIG_PATH;
 
