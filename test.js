@@ -2,142 +2,92 @@ javascript:(async function(){
 'use strict';
 
 /* ══════════════════════════════════════════
-   🔌 EZ Device Filler
-   يسحب بيانات الديفايس من صفحة الكاسيتات
-   ويملأها في صفحة الطلب تلقائي
+   🔌 EZ Device Filler v3
    ══════════════════════════════════════════ */
 
-var CASSETTES_URL=location.origin+'/installations/22/cassettes/';
+var API_URL='https://amcoplusapi.farmadosis.com/api/installations/22/cassettes/search?page=1&itemsPerPage=-1&sortDesc[]=false&mustSort=false&multiSort=false&is_active=true&query=&find_deactived_cassette_medicines=0';
+
 var toast=function(msg,ok){
     var t=document.createElement('div');
     t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:14px;font-size:14px;font-weight:700;z-index:9999999;font-family:Cairo,sans-serif;backdrop-filter:blur(20px);box-shadow:0 8px 30px rgba(0,0,0,0.12);color:'+(ok?'#059669':'#dc2626')+';background:#fff;border:1px solid '+(ok?'rgba(5,150,105,0.1)':'rgba(220,38,38,0.1)');
     t.textContent=msg;document.body.appendChild(t);
-    setTimeout(function(){t.remove()},3500);
+    setTimeout(function(){t.remove()},4000);
 };
 
-/* ── Step 1: Show loading ── */
+/* Loading */
 var loadDiv=document.createElement('div');
 loadDiv.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:20px;padding:30px 40px;box-shadow:0 20px 60px rgba(0,0,0,0.15);z-index:9999999;text-align:center;font-family:Cairo,sans-serif;direction:rtl';
-loadDiv.innerHTML='<div style="font-size:30px;margin-bottom:10px">⏳</div><div style="font-size:15px;font-weight:800;color:#1e1b4b">جاري سحب بيانات الأجهزة...</div><div id="ez-dev-status" style="font-size:12px;color:#64748b;margin-top:6px">يتم قراءة صفحة الكاسيتات</div>';
+loadDiv.innerHTML='<div style="font-size:30px;margin-bottom:10px">⏳</div><div style="font-size:15px;font-weight:800;color:#1e1b4b">جاري سحب بيانات الأجهزة...</div><div id="ez-dev-status" style="font-size:12px;color:#64748b;margin-top:6px">جاري الاتصال بالـ API</div>';
 document.body.appendChild(loadDiv);
 var statusEl=document.getElementById('ez-dev-status');
 
 try{
-    /* ── Step 2: Fetch cassettes page ── */
-    statusEl.textContent='جاري فتح صفحة الكاسيتات...';
-    var resp=await fetch(CASSETTES_URL,{credentials:'same-origin'});
-    if(!resp.ok) throw new Error('فشل فتح الصفحة: '+resp.status);
-    var html=await resp.text();
-
-    /* ── Step 3: Parse cassettes table ── */
-    statusEl.textContent='جاري تحليل البيانات...';
-    var parser=new DOMParser();
-    var doc=parser.parseFromString(html,'text/html');
-
-    /* Try to find cassette data — could be in table or in JS/JSON */
-    var cassetteMap={};  /* code → {base, num} */
-    var found=0;
-
-    /* Method 1: Parse HTML table */
-    var tables=doc.querySelectorAll('table');
-    for(var ti=0;ti<tables.length;ti++){
-        var rows=tables[ti].querySelectorAll('tr');
-        if(rows.length<2) continue;
-        var ths=rows[0].querySelectorAll('th,td');
-        var colCode=-1,colBase=-1,colNum=-1;
-        for(var hi=0;hi<ths.length;hi++){
-            var ht=(ths[hi].textContent||'').trim().toLowerCase();
-            if(ht==='code'||ht.indexOf('code')>-1) colCode=hi;
-            if(ht==='base') colBase=hi;
-            if(ht==='num'||ht==='num.') colNum=hi;
-        }
-        if(colCode<0) continue;
-        for(var ri=1;ri<rows.length;ri++){
-            var tds=rows[ri].querySelectorAll('td');
-            if(!tds.length) continue;
-            var code=(tds[colCode]?tds[colCode].textContent:'').trim();
-            var base=(colBase>=0&&tds[colBase])?tds[colBase].textContent.trim():'';
-            var num=(colNum>=0&&tds[colNum])?tds[colNum].textContent.trim():'';
-            if(code){
-                cassetteMap[code]={base:base,num:num};
-                found++;
-            }
+    /* ── Step 1: Get auth token ── */
+    statusEl.textContent='جاري البحث عن التوكن...';
+    var authToken='';
+    for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        var v=localStorage.getItem(k);
+        if(v&&(k.toLowerCase().indexOf('token')>-1||k.toLowerCase().indexOf('auth')>-1)){
+            var clean=v.replace(/^"|"$/g,'').trim();
+            if(clean.length>20&&clean.length<200&&!clean.startsWith('{')&&!clean.startsWith('[')){authToken=clean;break;}
         }
     }
-
-    /* Method 2: Try API endpoint if table parsing found nothing */
-    if(found===0){
-        statusEl.textContent='جاري البحث في الـ API...';
-        /* Try common API patterns */
-        var apiUrls=[
-            location.origin+'/api/installations/22/cassettes/',
-            location.origin+'/api/v1/installations/22/cassettes/',
-            location.origin+'/installations/22/cassettes/?format=json',
-            location.origin+'/installations/22/cassettes/list/',
-        ];
-        for(var ai=0;ai<apiUrls.length;ai++){
-            try{
-                var apiResp=await fetch(apiUrls[ai],{credentials:'same-origin',headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
-                if(apiResp.ok){
-                    var contentType=apiResp.headers.get('content-type')||'';
-                    if(contentType.indexOf('json')>-1){
-                        var apiData=await apiResp.json();
-                        var items=Array.isArray(apiData)?apiData:(apiData.results||apiData.data||apiData.items||[]);
-                        for(var di=0;di<items.length;di++){
-                            var item=items[di];
-                            var c=String(item.code||item.Code||item.product_code||'').trim();
-                            var b=String(item.base||item.Base||item.base_position||'').trim();
-                            var nm=String(item.num||item.Num||item.number||item.position||'').trim();
-                            if(c){cassetteMap[c]={base:b,num:nm};found++;}
-                        }
-                        if(found>0){statusEl.textContent='تم من الـ API: '+found+' صنف';break;}
-                    }
-                }
-            }catch(e){/* try next */}
+    /* Fallback: try cookie */
+    if(!authToken){
+        var cookies=document.cookie.split(';');
+        for(var ci=0;ci<cookies.length;ci++){
+            var ck=cookies[ci].trim();
+            if(ck.indexOf('token=')>-1||ck.indexOf('auth=')>-1){authToken=ck.split('=').slice(1).join('=');break;}
         }
     }
+    console.log('🔌 Token:',authToken?authToken.substring(0,15)+'...':'NOT FOUND');
+    if(!authToken){loadDiv.remove();toast('لم يتم العثور على توكن — سجل دخول أولاً',false);return;}
 
-    /* Method 3: Search for JSON data embedded in page */
-    if(found===0){
-        var scripts=doc.querySelectorAll('script');
-        for(var si=0;si<scripts.length;si++){
-            var txt=scripts[si].textContent||'';
-            /* Look for cassette data patterns */
-            var jsonMatch=txt.match(/cassettes?\s*[:=]\s*(\[[\s\S]*?\])/i);
-            if(jsonMatch){
-                try{
-                    var jd=JSON.parse(jsonMatch[1]);
-                    for(var ji=0;ji<jd.length;ji++){
-                        var jc=String(jd[ji].code||jd[ji].Code||'').trim();
-                        var jb=String(jd[ji].base||jd[ji].Base||'').trim();
-                        var jn=String(jd[ji].num||jd[ji].Num||'').trim();
-                        if(jc){cassetteMap[jc]={base:jb,num:jn};found++;}
-                    }
-                }catch(e){}
-            }
-        }
+    /* ── Step 2: Fetch cassettes ── */
+    statusEl.textContent='جاري سحب الكاسيتات...';
+    var resp=await fetch(API_URL,{
+        credentials:'include',
+        headers:{'Accept':'application/json','Content-Type':'application/json','Authorization':'Bearer '+authToken}
+    });
+
+    if(!resp.ok){
+        console.error('🔌 API response:',resp.status);
+        loadDiv.remove();toast('فشل الاتصال: '+resp.status,false);return;
     }
 
-    statusEl.textContent='تم العثور على '+found+' صنف في الكاسيتات';
-    console.log('🔌 Cassette map:',cassetteMap);
-    console.log('🔌 Total found:',found);
+    var data=await resp.json();
+    var items=Array.isArray(data)?data:(data.results||data.data||data.items||data.cassettes||[]);
+    console.log('🔌 Raw response keys:',Object.keys(data));
+    console.log('🔌 Items:',items.length);
+    if(items.length) console.log('🔌 Sample item keys:',Object.keys(items[0]));
+    if(items.length) console.log('🔌 Sample item:',items[0]);
+
+    /* Build map: code → {base, num} */
+    var cassetteMap={};
+    for(var di=0;di<items.length;di++){
+        var item=items[di];
+        /* Try all possible key names */
+        var code=String(item.code||item.Code||item.product_code||item.productCode||item.drug_code||item.medicine_code||'').trim();
+        var base=String(item.base||item.Base||item.base_position||item.basePosition||item.location||'').trim();
+        var num=String(item.num||item.Num||item.number||item.position||item.cassette_number||item.cassetteNumber||item.slot||'').trim();
+        if(code) cassetteMap[code]={base:base,num:num};
+    }
+
+    var found=Object.keys(cassetteMap).length;
+    statusEl.textContent='تم: '+found+' صنف — جاري ملء الجدول...';
+    console.log('🔌 Cassette map size:',found);
 
     if(found===0){
         loadDiv.remove();
-        toast('لم يتم العثور على بيانات — افتح الكونسول (F12)',false);
-
-        /* Log the page source for debugging */
-        console.log('🔌 === DEBUG: Cassettes page HTML (first 5000 chars) ===');
-        console.log(html.substring(0,5000));
-        console.log('🔌 === DEBUG: Tables found:',doc.querySelectorAll('table').length);
-        console.log('🔌 === DEBUG: Full URL tried:',CASSETTES_URL);
+        toast('البيانات فاضية — افتح الكونسول',false);
+        console.log('🔌 ❌ Items received but no codes parsed. Check sample item above.');
         return;
     }
 
-    /* ── Step 4: Fill Device column in Recharge report ── */
-    statusEl.textContent='جاري ملء خانة الديفايس...';
+    /* ── Step 3: Find checked rows only ── */
     var mainTable=document.querySelector('table');
-    if(!mainTable){loadDiv.remove();toast('لم يتم العثور على جدول الطلب',false);return;}
+    if(!mainTable){loadDiv.remove();toast('لم يتم العثور على جدول',false);return;}
 
     var mainRows=mainTable.querySelectorAll('tr');
     var mainThs=mainRows[0].querySelectorAll('th,td');
@@ -148,32 +98,61 @@ try{
         if(mt==='device'||mt.indexOf('device')>-1) mColDevice=mi;
     }
 
-    if(mColCode<0||mColDevice<0){loadDiv.remove();toast('لم يتم العثور على عمود Code أو Device',false);return;}
+    if(mColCode<0||mColDevice<0){
+        loadDiv.remove();
+        toast('لم يتم العثور على عمود Code أو Device',false);
+        console.log('🔌 Headers found:',Array.from(mainThs).map(function(th){return th.textContent.trim()}));
+        return;
+    }
 
-    var filled=0,notFound=0;
+    var filled=0,notFound=0,skipped=0;
     for(var mri=1;mri<mainRows.length;mri++){
-        var mtds=mainRows[mri].querySelectorAll('td');
+        var row=mainRows[mri];
+        var mtds=row.querySelectorAll('td');
         if(!mtds.length||mColCode>=mtds.length||mColDevice>=mtds.length) continue;
+
+        /* Check if row is selected (has checked checkbox or selection ripple) */
+        var isChecked=false;
+        var checkbox=row.querySelector('input[type="checkbox"]');
+        if(checkbox&&checkbox.checked) isChecked=true;
+        /* Vuetify: check for v-data-table__selected or mdi-checkbox-marked */
+        if(!isChecked&&row.classList.contains('v-data-table__selected')) isChecked=true;
+        if(!isChecked&&row.querySelector('.mdi-checkbox-marked,.v-simple-checkbox .v-icon.mdi-checkbox-marked')) isChecked=true;
+        /* Check for selection-controls__ripple with active state */
+        if(!isChecked){
+            var ripple=row.querySelector('.v-input--selection-controls__ripple');
+            if(ripple){
+                var parentInput=ripple.closest('.v-input');
+                if(parentInput&&(parentInput.classList.contains('v-input--is-label-active')||parentInput.querySelector('.mdi-checkbox-marked'))) isChecked=true;
+            }
+        }
+        /* Check aria-checked */
+        if(!isChecked){
+            var ariaCheck=row.querySelector('[aria-checked="true"]');
+            if(ariaCheck) isChecked=true;
+        }
+
+        if(!isChecked){skipped++;continue;}
+
         var drugCode=(mtds[mColCode].textContent||'').trim();
         if(!drugCode) continue;
 
         var info=cassetteMap[drugCode];
         if(info){
             var deviceText=info.base||info.num||'—';
-            /* Color code: green if has base (in machine), orange if only num */
             var color=info.base?'#059669':'#f59e0b';
-            var label=info.base?'Base: '+info.base:'Num: '+info.num;
-            mtds[mColDevice].innerHTML='<span style="font-weight:800;color:'+color+';font-size:13px" title="'+label+'">'+deviceText+'</span>';
+            var title=info.base?'Base: '+info.base:'Num: '+info.num;
+            mtds[mColDevice].innerHTML='<span style="font-weight:800;color:'+color+';font-size:13px" title="'+title+'">'+deviceText+'</span>';
             filled++;
         } else {
-            mtds[mColDevice].innerHTML='<span style="color:#dc2626;font-size:12px;font-weight:700">غير موجود</span>';
+            mtds[mColDevice].innerHTML='<span style="color:#dc2626;font-size:11px;font-weight:700">✗ غير موجود</span>';
             notFound++;
         }
     }
 
     loadDiv.remove();
-    toast('تم ملء '+filled+' صنف — '+notFound+' غير موجود',true);
-    console.log('🔌 Filled:',filled,'Not found:',notFound);
+    toast('تم: '+filled+' صنف ✅ | '+notFound+' غير موجود | '+skipped+' غير محدد',true);
+    console.log('🔌 ✅ Filled:',filled,'Not found:',notFound,'Skipped:',skipped);
 
 }catch(e){
     loadDiv.remove();
