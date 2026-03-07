@@ -2,10 +2,11 @@ javascript:(async function(){
 'use strict';
 
 /* ══════════════════════════════════════════
-   🔌 EZ Device Filler v3
+   🔌 EZ Device Filler v4
+   يفتح صفحة الكاسيتات ويسحب البيانات منها
    ══════════════════════════════════════════ */
 
-var API_URL='https://amcoplusapi.farmadosis.com/api/installations/22/cassettes/search?page=1&itemsPerPage=-1&sortDesc[]=false&mustSort=false&multiSort=false&is_active=true&query=&find_deactived_cassette_medicines=0';
+var CASSETTES_PATH='/installations/22/cassettes/';
 
 var toast=function(msg,ok){
     var t=document.createElement('div');
@@ -17,142 +18,224 @@ var toast=function(msg,ok){
 /* Loading */
 var loadDiv=document.createElement('div');
 loadDiv.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:20px;padding:30px 40px;box-shadow:0 20px 60px rgba(0,0,0,0.15);z-index:9999999;text-align:center;font-family:Cairo,sans-serif;direction:rtl';
-loadDiv.innerHTML='<div style="font-size:30px;margin-bottom:10px">⏳</div><div style="font-size:15px;font-weight:800;color:#1e1b4b">جاري سحب بيانات الأجهزة...</div><div id="ez-dev-status" style="font-size:12px;color:#64748b;margin-top:6px">جاري الاتصال بالـ API</div>';
+loadDiv.innerHTML='<div style="font-size:30px;margin-bottom:10px">⏳</div><div style="font-size:15px;font-weight:800;color:#1e1b4b">جاري سحب بيانات الأجهزة...</div><div id="ez-dev-status" style="font-size:12px;color:#64748b;margin-top:6px">جاري فتح صفحة الكاسيتات</div>';
 document.body.appendChild(loadDiv);
 var statusEl=document.getElementById('ez-dev-status');
 
 try{
-    /* ── Step 1: Get auth token ── */
-    statusEl.textContent='جاري البحث عن التوكن...';
-    var authToken='';
-    for(var i=0;i<localStorage.length;i++){
-        var k=localStorage.key(i);
-        var v=localStorage.getItem(k);
-        if(v&&(k.toLowerCase().indexOf('token')>-1||k.toLowerCase().indexOf('auth')>-1)){
-            var clean=v.replace(/^"|"$/g,'').trim();
-            if(clean.length>20&&clean.length<200&&!clean.startsWith('{')&&!clean.startsWith('[')){authToken=clean;break;}
-        }
-    }
-    /* Fallback: try cookie */
-    if(!authToken){
-        var cookies=document.cookie.split(';');
-        for(var ci=0;ci<cookies.length;ci++){
-            var ck=cookies[ci].trim();
-            if(ck.indexOf('token=')>-1||ck.indexOf('auth=')>-1){authToken=ck.split('=').slice(1).join('=');break;}
-        }
-    }
-    console.log('🔌 Token:',authToken?authToken.substring(0,15)+'...':'NOT FOUND');
-    if(!authToken){loadDiv.remove();toast('لم يتم العثور على توكن — سجل دخول أولاً',false);return;}
-
-    /* ── Step 2: Fetch cassettes ── */
-    statusEl.textContent='جاري سحب الكاسيتات...';
-    var resp=await fetch(API_URL,{mode:'cors',credentials:'omit',
-        
-        headers:{'Accept':'application/json','Content-Type':'application/json','Authorization':'Bearer '+authToken}
-    });
-
-    if(!resp.ok){
-        console.error('🔌 API response:',resp.status);
-        loadDiv.remove();toast('فشل الاتصال: '+resp.status,false);return;
-    }
-
-    var data=await resp.json();
-    var items=Array.isArray(data)?data:(data.results||data.data||data.items||data.cassettes||[]);
-    console.log('🔌 Raw response keys:',Object.keys(data));
-    console.log('🔌 Items:',items.length);
-    if(items.length) console.log('🔌 Sample item keys:',Object.keys(items[0]));
-    if(items.length) console.log('🔌 Sample item:',items[0]);
-
-    /* Build map: code → {base, num} */
+    /* ── Step 1: Try using the app's own axios instance ── */
+    statusEl.textContent='جاري البحث عن الاتصال...';
     var cassetteMap={};
-    for(var di=0;di<items.length;di++){
-        var item=items[di];
-        /* Try all possible key names */
-        var code=String(item.code||item.Code||item.product_code||item.productCode||item.drug_code||item.medicine_code||'').trim();
-        var base=String(item.base||item.Base||item.base_position||item.basePosition||item.location||'').trim();
-        var num=String(item.num||item.Num||item.number||item.position||item.cassette_number||item.cassetteNumber||item.slot||'').trim();
-        if(code) cassetteMap[code]={base:base,num:num};
+    var found=0;
+    var gotData=false;
+
+    /* Method 1: Use Nuxt/Vue $axios from the app itself */
+    var nuxtRoot=document.getElementById('__nuxt');
+    if(nuxtRoot&&nuxtRoot.__vue__){
+        statusEl.textContent='جاري استخدام اتصال التطبيق...';
+        try{
+            var vm=nuxtRoot.__vue__;
+            /* Walk up to find $axios */
+            var ax=vm.$axios||vm.$root.$axios||(vm.$nuxt&&vm.$nuxt.$axios);
+            if(ax){
+                console.log('🔌 Found $axios, fetching cassettes...');
+                var apiUrl='/api/installations/22/cassettes/search?page=1&itemsPerPage=-1&sortDesc[]=false&mustSort=false&multiSort=false&is_active=true&query=&find_deactived_cassette_medicines=0';
+                var resp=await ax.get(apiUrl);
+                var data=resp.data;
+                console.log('🔌 Response keys:',Object.keys(data));
+                var items=Array.isArray(data)?data:(data.results||data.data||data.items||data.rows||[]);
+                console.log('🔌 Items:',items.length);
+                if(items.length){
+                    console.log('🔌 Sample keys:',Object.keys(items[0]));
+                    console.log('🔌 Sample:',items[0]);
+                }
+                for(var di=0;di<items.length;di++){
+                    var item=items[di];
+                    var code=String(item.code||item.Code||item.product_code||item.productCode||item.drug_code||item.medicine_code||'').trim();
+                    var base=String(item.base||item.Base||item.base_position||item.basePosition||item.location||'').trim();
+                    var num=String(item.num||item.Num||item.number||item.position||item.cassette_number||item.cassetteNumber||item.slot||'').trim();
+                    if(code){cassetteMap[code]={base:base,num:num};found++;}
+                }
+                if(found>0) gotData=true;
+            } else {
+                console.log('🔌 $axios not found on root, searching children...');
+                /* Try to find axios in $nuxt context */
+                if(vm.$nuxt){
+                    var ctx=vm.$nuxt.$options.context;
+                    if(ctx&&ctx.$axios){
+                        ax=ctx.$axios;
+                        var resp2=await ax.get('/api/installations/22/cassettes/search?page=1&itemsPerPage=-1&is_active=true');
+                        var items2=Array.isArray(resp2.data)?resp2.data:(resp2.data.results||resp2.data.data||resp2.data.items||resp2.data.rows||[]);
+                        console.log('🔌 Context axios items:',items2.length);
+                        if(items2.length) console.log('🔌 Sample:',items2[0]);
+                        for(var d2=0;d2<items2.length;d2++){
+                            var i2=items2[d2];
+                            var c2=String(i2.code||i2.Code||i2.product_code||'').trim();
+                            var b2=String(i2.base||i2.Base||'').trim();
+                            var n2=String(i2.num||i2.Num||i2.number||'').trim();
+                            if(c2){cassetteMap[c2]={base:b2,num:n2};found++;}
+                        }
+                        if(found>0) gotData=true;
+                    }
+                }
+            }
+        }catch(e){console.warn('🔌 Axios method error:',e);}
     }
 
-    var found=Object.keys(cassetteMap).length;
-    statusEl.textContent='تم: '+found+' صنف — جاري ملء الجدول...';
-    console.log('🔌 Cassette map size:',found);
+    /* Method 2: If axios failed, open popup and read from rendered page */
+    if(!gotData){
+        statusEl.textContent='جاري فتح صفحة الكاسيتات...';
+        console.log('🔌 Axios not available, opening popup...');
+        var popup=window.open(location.origin+CASSETTES_PATH,'_blank','width=1200,height=800');
+        if(!popup){loadDiv.remove();toast('فعّل النوافذ المنبثقة (popups) وجرب تاني',false);return;}
 
-    if(found===0){
-        loadDiv.remove();
-        toast('البيانات فاضية — افتح الكونسول',false);
-        console.log('🔌 ❌ Items received but no codes parsed. Check sample item above.');
-        return;
+        /* Wait for page to load and render */
+        statusEl.textContent='جاري انتظار تحميل الصفحة...';
+        await new Promise(function(resolve){setTimeout(resolve,3000)});
+
+        /* Try to get axios from popup */
+        var maxWait=30;
+        var interval=setInterval(async function(){
+            maxWait--;
+            statusEl.textContent='جاري انتظار البيانات... ('+maxWait+')';
+            try{
+                var pNuxt=popup.document.getElementById('__nuxt');
+                if(pNuxt&&pNuxt.__vue__){
+                    var pvm=pNuxt.__vue__;
+                    var pax=pvm.$axios||pvm.$root.$axios||(pvm.$nuxt&&pvm.$nuxt.$axios);
+                    if(pax){
+                        clearInterval(interval);
+                        console.log('🔌 Got $axios from popup');
+                        try{
+                            var pr=await pax.get('/api/installations/22/cassettes/search?page=1&itemsPerPage=-1&is_active=true&query=&find_deactived_cassette_medicines=0');
+                            var pd=pr.data;
+                            var pi=Array.isArray(pd)?pd:(pd.results||pd.data||pd.items||pd.rows||[]);
+                            console.log('🔌 Popup items:',pi.length);
+                            if(pi.length) console.log('🔌 Sample:',pi[0]);
+                            for(var pk=0;pk<pi.length;pk++){
+                                var px=pi[pk];
+                                var pc=String(px.code||px.Code||px.product_code||'').trim();
+                                var pb=String(px.base||px.Base||'').trim();
+                                var pn=String(px.num||px.Num||px.number||'').trim();
+                                if(pc){cassetteMap[pc]={base:pb,num:pn};found++;}
+                            }
+                        }catch(e3){console.warn('🔌 Popup fetch error:',e3);}
+                        popup.close();
+                        gotData=found>0;
+                        fillTable();
+                    }
+                }
+                /* Also try reading table from popup DOM */
+                if(!gotData){
+                    var ptable=popup.document.querySelector('table');
+                    if(ptable){
+                        var prows=ptable.querySelectorAll('tr');
+                        if(prows.length>5){ /* Data loaded */
+                            clearInterval(interval);
+                            console.log('🔌 Reading from popup table, rows:',prows.length);
+                            var pths=prows[0].querySelectorAll('th,td');
+                            var pcCode=-1,pcBase=-1,pcNum=-1;
+                            for(var phi=0;phi<pths.length;phi++){
+                                var pht=(pths[phi].textContent||'').trim().toLowerCase();
+                                if(pht==='code') pcCode=phi;
+                                if(pht==='base') pcBase=phi;
+                                if(pht==='num'||pht==='num.') pcNum=phi;
+                            }
+                            console.log('🔌 Popup columns — Code:',pcCode,'Base:',pcBase,'Num:',pcNum);
+                            if(pcCode>=0){
+                                for(var pri=1;pri<prows.length;pri++){
+                                    var ptds=prows[pri].querySelectorAll('td');
+                                    if(!ptds.length) continue;
+                                    var pcc=(ptds[pcCode]?ptds[pcCode].textContent:'').trim();
+                                    var pbb=(pcBase>=0&&ptds[pcBase])?ptds[pcBase].textContent.trim():'';
+                                    var pnn=(pcNum>=0&&ptds[pcNum])?ptds[pcNum].textContent.trim():'';
+                                    if(pcc){cassetteMap[pcc]={base:pbb,num:pnn};found++;}
+                                }
+                            }
+                            popup.close();
+                            gotData=found>0;
+                            fillTable();
+                        }
+                    }
+                }
+            }catch(e){/* cross-origin or not loaded yet */}
+            if(maxWait<=0){
+                clearInterval(interval);
+                popup.close();
+                loadDiv.remove();
+                toast('انتهى الوقت — البيانات لم تتحمل',false);
+            }
+        },1000);
+        return; /* fillTable will be called from interval */
     }
 
-    /* ── Step 3: Find checked rows only ── */
-    var mainTable=document.querySelector('table');
-    if(!mainTable){loadDiv.remove();toast('لم يتم العثور على جدول',false);return;}
+    if(gotData) fillTable();
 
-    var mainRows=mainTable.querySelectorAll('tr');
-    var mainThs=mainRows[0].querySelectorAll('th,td');
-    var mColCode=-1,mColDevice=-1;
-    for(var mi=0;mi<mainThs.length;mi++){
-        var mt=(mainThs[mi].textContent||'').trim().toLowerCase();
-        if(mt==='code') mColCode=mi;
-        if(mt==='device'||mt.indexOf('device')>-1) mColDevice=mi;
-    }
+    function fillTable(){
+        console.log('🔌 Cassette map size:',found);
+        if(found===0){loadDiv.remove();toast('لم يتم العثور على بيانات',false);return;}
 
-    if(mColCode<0||mColDevice<0){
-        loadDiv.remove();
-        toast('لم يتم العثور على عمود Code أو Device',false);
-        console.log('🔌 Headers found:',Array.from(mainThs).map(function(th){return th.textContent.trim()}));
-        return;
-    }
+        statusEl.textContent='تم: '+found+' — جاري ملء الجدول...';
 
-    var filled=0,notFound=0,skipped=0;
-    for(var mri=1;mri<mainRows.length;mri++){
-        var row=mainRows[mri];
-        var mtds=row.querySelectorAll('td');
-        if(!mtds.length||mColCode>=mtds.length||mColDevice>=mtds.length) continue;
+        var mainTable=document.querySelector('table');
+        if(!mainTable){loadDiv.remove();toast('لم يتم العثور على جدول',false);return;}
 
-        /* Check if row is selected (has checked checkbox or selection ripple) */
-        var isChecked=false;
-        var checkbox=row.querySelector('input[type="checkbox"]');
-        if(checkbox&&checkbox.checked) isChecked=true;
-        /* Vuetify: check for v-data-table__selected or mdi-checkbox-marked */
-        if(!isChecked&&row.classList.contains('v-data-table__selected')) isChecked=true;
-        if(!isChecked&&row.querySelector('.mdi-checkbox-marked,.v-simple-checkbox .v-icon.mdi-checkbox-marked')) isChecked=true;
-        /* Check for selection-controls__ripple with active state */
-        if(!isChecked){
-            var ripple=row.querySelector('.v-input--selection-controls__ripple');
-            if(ripple){
-                var parentInput=ripple.closest('.v-input');
-                if(parentInput&&(parentInput.classList.contains('v-input--is-label-active')||parentInput.querySelector('.mdi-checkbox-marked'))) isChecked=true;
+        var mainRows=mainTable.querySelectorAll('tr');
+        var mainThs=mainRows[0].querySelectorAll('th,td');
+        var mColCode=-1,mColDevice=-1;
+        for(var mi=0;mi<mainThs.length;mi++){
+            var mt=(mainThs[mi].textContent||'').trim().toLowerCase();
+            if(mt==='code') mColCode=mi;
+            if(mt==='device'||mt.indexOf('device')>-1) mColDevice=mi;
+        }
+
+        if(mColCode<0||mColDevice<0){
+            loadDiv.remove();
+            toast('عمود Code أو Device مش موجود',false);
+            console.log('🔌 Headers:',Array.from(mainThs).map(function(th){return th.textContent.trim()}));
+            return;
+        }
+
+        var filled=0,notFound=0,skipped=0;
+        for(var mri=1;mri<mainRows.length;mri++){
+            var row=mainRows[mri];
+            var mtds=row.querySelectorAll('td');
+            if(!mtds.length||mColCode>=mtds.length||mColDevice>=mtds.length) continue;
+
+            /* Check if row is selected */
+            var isChecked=false;
+            var cb=row.querySelector('input[type="checkbox"]');
+            if(cb&&cb.checked) isChecked=true;
+            if(!isChecked&&row.classList.contains('v-data-table__selected')) isChecked=true;
+            if(!isChecked&&row.querySelector('.mdi-checkbox-marked')) isChecked=true;
+            if(!isChecked){
+                var ripple=row.querySelector('.v-input--selection-controls__ripple');
+                if(ripple){var pi2=ripple.closest('.v-input');if(pi2&&(pi2.classList.contains('v-input--is-label-active')||pi2.querySelector('.mdi-checkbox-marked')))isChecked=true;}
+            }
+            if(!isChecked){var ac=row.querySelector('[aria-checked="true"]');if(ac)isChecked=true;}
+
+            if(!isChecked){skipped++;continue;}
+
+            var drugCode=(mtds[mColCode].textContent||'').trim();
+            if(!drugCode) continue;
+
+            var info=cassetteMap[drugCode];
+            if(info){
+                var deviceText=info.base||info.num||'—';
+                var color=info.base?'#059669':'#f59e0b';
+                var title=info.base?'Base: '+info.base:'Num: '+info.num;
+                mtds[mColDevice].innerHTML='<span style="font-weight:800;color:'+color+';font-size:13px" title="'+title+'">'+deviceText+'</span>';
+                filled++;
+            } else {
+                mtds[mColDevice].innerHTML='<span style="color:#dc2626;font-size:11px;font-weight:700">✗</span>';
+                notFound++;
             }
         }
-        /* Check aria-checked */
-        if(!isChecked){
-            var ariaCheck=row.querySelector('[aria-checked="true"]');
-            if(ariaCheck) isChecked=true;
-        }
 
-        if(!isChecked){skipped++;continue;}
-
-        var drugCode=(mtds[mColCode].textContent||'').trim();
-        if(!drugCode) continue;
-
-        var info=cassetteMap[drugCode];
-        if(info){
-            var deviceText=info.base||info.num||'—';
-            var color=info.base?'#059669':'#f59e0b';
-            var title=info.base?'Base: '+info.base:'Num: '+info.num;
-            mtds[mColDevice].innerHTML='<span style="font-weight:800;color:'+color+';font-size:13px" title="'+title+'">'+deviceText+'</span>';
-            filled++;
-        } else {
-            mtds[mColDevice].innerHTML='<span style="color:#dc2626;font-size:11px;font-weight:700">✗ غير موجود</span>';
-            notFound++;
-        }
+        loadDiv.remove();
+        toast('تم: '+filled+' ✅ | '+notFound+' غير موجود | '+skipped+' غير محدد',true);
+        console.log('🔌 ✅ Filled:',filled,'Not found:',notFound,'Skipped:',skipped);
     }
-
-    loadDiv.remove();
-    toast('تم: '+filled+' صنف ✅ | '+notFound+' غير موجود | '+skipped+' غير محدد',true);
-    console.log('🔌 ✅ Filled:',filled,'Not found:',notFound,'Skipped:',skipped);
 
 }catch(e){
     loadDiv.remove();
