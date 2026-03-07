@@ -30,7 +30,9 @@
         var combined=new Uint8Array(iv.length+encrypted.byteLength);
         combined.set(iv);
         combined.set(new Uint8Array(encrypted),iv.length);
-        return btoa(String.fromCharCode.apply(null,combined));
+        /* Chunked btoa to avoid stack overflow on large data */
+        var chunks=[];for(var i=0;i<combined.length;i+=8192){var slice=combined.subarray(i,Math.min(i+8192,combined.length));var str='';for(var j=0;j<slice.length;j++)str+=String.fromCharCode(slice[j]);chunks.push(str);}
+        return btoa(chunks.join(''));
     }
 
     async function _ezDecrypt(b64){
@@ -78,7 +80,10 @@
                 var getResp=await fetch(_EZ_API_URL,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json'}});
                 if(getResp.ok){var gd=await getResp.json();sha=gd.sha;}
             }catch(e){}
-            var body={message:'تحديث قاعدة الأدوية — '+new Date().toLocaleString('ar-EG'),content:btoa(unescape(encodeURIComponent(encrypted))),branch:'main'};
+            /* Chunked btoa for large content */
+            var rawBytes=new TextEncoder().encode(encrypted);
+            var chunks2=[];for(var ci=0;ci<rawBytes.length;ci+=8192){var sl=rawBytes.subarray(ci,Math.min(ci+8192,rawBytes.length));var s2='';for(var cj=0;cj<sl.length;cj++)s2+=String.fromCharCode(sl[cj]);chunks2.push(s2);}
+            var body={message:'تحديث قاعدة الأدوية — '+new Date().toLocaleString('ar-EG'),content:btoa(chunks2.join('')),branch:'main'};
             if(sha)body.sha=sha;
             var resp=await fetch(_EZ_API_URL,{
                 method:'PUT',
