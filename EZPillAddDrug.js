@@ -73,29 +73,49 @@
         if(!token){_ezToast('لا يوجد توكن جيتهاب','error');return false;}
         try{
             var json=JSON.stringify(db);
+            console.log('💊 Encrypting '+db.length+' drugs ('+json.length+' bytes)...');
             var encrypted=await _ezEncrypt(json);
+            console.log('💊 Encrypted length: '+encrypted.length);
             /* Get SHA */
             var sha='';
             try{
                 var getResp=await fetch(_EZ_API_URL,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json'}});
-                if(getResp.ok){var gd=await getResp.json();sha=gd.sha;}
-            }catch(e){}
-            /* Chunked btoa for large content */
-            var rawBytes=new TextEncoder().encode(encrypted);
-            var chunks2=[];for(var ci=0;ci<rawBytes.length;ci+=8192){var sl=rawBytes.subarray(ci,Math.min(ci+8192,rawBytes.length));var s2='';for(var cj=0;cj<sl.length;cj++)s2+=String.fromCharCode(sl[cj]);chunks2.push(s2);}
-            var body={message:'تحديث قاعدة الأدوية — '+new Date().toLocaleString('ar-EG'),content:btoa(chunks2.join('')),branch:'main'};
+                console.log('💊 SHA fetch status: '+getResp.status);
+                if(getResp.ok){var gd=await getResp.json();sha=gd.sha;console.log('💊 SHA: '+sha);}
+            }catch(e){console.warn('💊 SHA fetch error (ok if new file):',e)}
+            /* GitHub API wants base64 of the file content — encrypted is already ASCII base64 so safe for btoa */
+            var fileContent=encrypted;
+            /* Chunk the btoa for safety */
+            var b64Content='';
+            try{
+                b64Content=btoa(fileContent);
+            }catch(e){
+                /* Fallback: chunk it */
+                console.log('💊 btoa failed, using chunked approach...');
+                var enc=new TextEncoder().encode(fileContent);
+                var chunks=[];
+                for(var ci=0;ci<enc.length;ci+=8192){
+                    var sl=enc.subarray(ci,Math.min(ci+8192,enc.length));
+                    var s='';for(var cj=0;cj<sl.length;cj++)s+=String.fromCharCode(sl[cj]);
+                    chunks.push(s);
+                }
+                b64Content=btoa(chunks.join(''));
+            }
+            console.log('💊 Base64 content length: '+b64Content.length);
+            var body={message:'تحديث قاعدة الأدوية — '+new Date().toLocaleString('ar-EG'),content:b64Content,branch:'main'};
             if(sha)body.sha=sha;
+            console.log('💊 Pushing to GitHub...');
             var resp=await fetch(_EZ_API_URL,{
                 method:'PUT',
                 headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
                 body:JSON.stringify(body)
             });
-            if(!resp.ok){var err=await resp.json();throw new Error(err.message||resp.status);}
-            console.log('💊 Drugs pushed to GitHub');
+            if(!resp.ok){var err=await resp.json();console.error('💊 Push failed:',resp.status,err);_ezToast('فشل الرفع ('+resp.status+'): '+(err.message||'خطأ غير معروف'),'error');return false;}
+            console.log('💊 Drugs pushed to GitHub ✅');
             return true;
         }catch(e){
             console.error('💊 Push error:',e);
-            _ezToast('خطأ في رفع الأدوية: '+e.message,'error');
+            _ezToast('خطأ: '+e.message,'error');
             return false;
         }
     }
