@@ -412,6 +412,291 @@ window.ezSetupGemini=function(){
   inp.focus();
 };
 
+
+/* ══════════════════════════════════════════
+   ☁️ CLOUD CONFIG — إعدادات سحابية من جيتهاب
+   الريبو: bazkoo2000/ez-pill-pro
+   ══════════════════════════════════════════ */
+var _EZ_REPO='bazkoo2000/ez-pill-pro';
+var _EZ_CONFIG_PATH='ez_config.json';
+var _EZ_RAW_URL='https://raw.githubusercontent.com/'+_EZ_REPO+'/main/'+_EZ_CONFIG_PATH;
+var _EZ_API_URL='https://api.github.com/repos/'+_EZ_REPO+'/contents/'+_EZ_CONFIG_PATH;
+
+/* Storage helpers */
+function _ezGetGHToken(){try{return localStorage.getItem('ez_gh_token')||'';}catch(e){return '';}}
+function _ezSetGHToken(t){try{localStorage.setItem('ez_gh_token',t);}catch(e){}}
+function _ezGetAdminPin(){try{return localStorage.getItem('ez_admin_pin')||'';}catch(e){return '';}}
+function _ezSetAdminPin(p){try{localStorage.setItem('ez_admin_pin',p);}catch(e){}}
+var _ezCloudConfig=null;
+var _ezCloudSHA=null;
+
+/* ── Fetch config from GitHub (public — no token needed) ── */
+async function _ezFetchCloudConfig(){
+  try{
+    var resp=await fetch(_EZ_RAW_URL+'?t='+Date.now());
+    if(!resp.ok){console.warn('☁️ Cloud config fetch failed:',resp.status);return null;}
+    var data=await resp.json();
+    _ezCloudConfig=data;
+    console.log('☁️ Cloud config loaded successfully');
+    return data;
+  }catch(e){console.warn('☁️ Cloud config error:',e);return null;}
+}
+
+/* ── Get file SHA (needed for updates) ── */
+async function _ezGetConfigSHA(){
+  var token=_ezGetGHToken();
+  if(!token) return null;
+  try{
+    var resp=await fetch(_EZ_API_URL,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json'}});
+    if(!resp.ok) return null;
+    var data=await resp.json();
+    _ezCloudSHA=data.sha;
+    return data.sha;
+  }catch(e){return null;}
+}
+
+/* ── Push config to GitHub ── */
+async function _ezPushCloudConfig(config,message){
+  var token=_ezGetGHToken();
+  if(!token){window.ezShowToast('لا يوجد توكن جيتهاب','error');return false;}
+  try{
+    if(!_ezCloudSHA) await _ezGetConfigSHA();
+    config._meta=config._meta||{};
+    config._meta.lastUpdate=new Date().toISOString().slice(0,10);
+    config._meta.version='1.0';
+    config._meta.app='EZ_Pill';
+    var content=btoa(unescape(encodeURIComponent(JSON.stringify(config,null,2))));
+    var body={message:message||'تحديث الإعدادات',content:content,branch:'main'};
+    if(_ezCloudSHA) body.sha=_ezCloudSHA;
+    var resp=await fetch(_EZ_API_URL,{
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(!resp.ok){var err=await resp.json();console.error('☁️ Push failed:',err);window.ezShowToast('فشل الرفع: '+(err.message||resp.status),'error');return false;}
+    var result=await resp.json();
+    _ezCloudSHA=result.content.sha;
+    _ezCloudConfig=config;
+    console.log('☁️ Config pushed successfully');
+    return true;
+  }catch(e){console.error('☁️ Push error:',e);window.ezShowToast('خطأ في الرفع: '+e.message,'error');return false;}
+}
+
+/* ── Apply cloud config to local ── */
+function _ezApplyCloudConfig(cloud){
+  if(!cloud) return;
+  if(cloud.fixedSizeCodes){for(var k in cloud.fixedSizeCodes){fixedSizeCodes[k]=cloud.fixedSizeCodes[k];}}
+  if(cloud.removedCodes){for(var i=0;i<cloud.removedCodes.length;i++){delete fixedSizeCodes[cloud.removedCodes[i]];}}
+  if(cloud.weeklyInjections){for(var i=0;i<cloud.weeklyInjections.length;i++){if(weeklyInjections.indexOf(cloud.weeklyInjections[i])===-1)weeklyInjections.push(cloud.weeklyInjections[i]);}}
+  if(cloud.codeStartTimes){for(var k in cloud.codeStartTimes){CODE_START_TIMES[k]=cloud.codeStartTimes[k];}}
+  if(cloud.normalTimes){for(var k in cloud.normalTimes){NORMAL_TIMES[k]=cloud.normalTimes[k];}}
+  if(cloud.ramadanTimes){for(var k in cloud.ramadanTimes){RAMADAN_TIMES[k]=cloud.ramadanTimes[k];}}
+  if(cloud.gemini&&cloud.gemini.model){_ezSetGeminiModel(cloud.gemini.model);}
+  console.log('☁️ Cloud config applied to local');
+}
+
+/* ── Check if current user is admin ── */
+function _ezIsAdmin(){return _ezGetAdminPin()==='101093';}
+
+/* ══════════════════════════════════════════
+   ☁️ CLOUD SETTINGS UI
+   ══════════════════════════════════════════ */
+window.ezCloudSettings=function(){
+  var isAdmin=_ezIsAdmin();
+  var hasToken=!!_ezGetGHToken();
+  
+  var overlay=document.createElement('div');
+  overlay.id='ez-cloud-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+  
+  var card=document.createElement('div');
+  card.style.cssText='width:440px;max-width:95vw;max-height:85vh;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12);display:flex;flex-direction:column';
+  
+  /* Header */
+  var hdr=document.createElement('div');
+  hdr.style.cssText='padding:16px 20px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px;flex-shrink:0';
+  hdr.innerHTML='<div style="font-size:22px">☁️</div><div style="flex:1"><div style="font-size:15px;font-weight:900;color:#1e1b4b">الإعدادات السحابية</div><div style="font-size:10px;font-weight:700;color:#64748b">الحالة: '+(isAdmin?'<b style="color:#059669">مسؤول ✅</b>':'<b style="color:#6366f1">مستخدم</b>')+'</div></div>';
+  var closeBtn=document.createElement('button');
+  closeBtn.textContent='✕';
+  closeBtn.style.cssText='width:28px;height:28px;border:none;border-radius:8px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08);font-size:14px';
+  closeBtn.addEventListener('click',function(){overlay.remove();});
+  hdr.appendChild(closeBtn);
+  card.appendChild(hdr);
+  
+  /* Body */
+  var body=document.createElement('div');
+  body.style.cssText='padding:14px 18px;overflow-y:auto;flex:1;direction:rtl';
+  
+  if(!isAdmin){
+    /* ── Login form ── */
+    var loginDiv=document.createElement('div');
+    loginDiv.style.cssText='text-align:center;padding:20px 0';
+    loginDiv.innerHTML='<div style="font-size:40px;margin-bottom:10px">🔐</div><div style="font-size:14px;font-weight:800;color:#1e1b4b;margin-bottom:12px">دخول المسؤول</div>';
+    var pinInp=document.createElement('input');
+    pinInp.type='password';pinInp.placeholder='الرقم السري';pinInp.maxLength=10;
+    pinInp.style.cssText='width:200px;padding:10px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:18px;font-weight:900;text-align:center;font-family:Cairo,sans-serif;outline:none;letter-spacing:4px';
+    loginDiv.appendChild(pinInp);
+    var loginBtn=document.createElement('button');
+    loginBtn.textContent='دخول';
+    loginBtn.style.cssText='display:block;width:200px;margin:12px auto 0;height:40px;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5)';
+    loginBtn.addEventListener('click',function(){
+      if(pinInp.value==='101093'){
+        _ezSetAdminPin('101093');
+        overlay.remove();
+        window.ezCloudSettings();
+      } else {
+        window.ezShowToast('الرقم السري غير صحيح','error');
+        pinInp.value='';pinInp.focus();
+      }
+    });
+    pinInp.addEventListener('keydown',function(e){if(e.key==='Enter')loginBtn.click();});
+    loginDiv.appendChild(loginBtn);
+    body.appendChild(loginDiv);
+  } else {
+    /* ── Admin Panel ── */
+    
+    /* Token setup */
+    var secT=_ezMakeSection('🔑 توكن جيتهاب',hasToken?'متصل ✅':'غير متصل');
+    var tokenInp=document.createElement('input');
+    tokenInp.type='password';tokenInp.placeholder='الصق التوكن هنا';tokenInp.value='';
+    tokenInp.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-family:Cairo,sans-serif;direction:ltr;outline:none;margin:6px 0;box-sizing:border-box';
+    secT.appendChild(tokenInp);
+    var tokenSave=document.createElement('button');
+    tokenSave.textContent='💾 حفظ التوكن';
+    tokenSave.style.cssText='width:100%;height:34px;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:#10b981;margin-top:4px';
+    tokenSave.addEventListener('click',function(){
+      var t=tokenInp.value.trim();
+      if(t){_ezSetGHToken(t);window.ezShowToast('تم حفظ التوكن','success');overlay.remove();window.ezCloudSettings();}
+    });
+    secT.appendChild(tokenSave);
+    body.appendChild(secT);
+    
+    /* ── Add fixed size code ── */
+    var secF=_ezMakeSection('📦 إضافة كود حجم ثابت','');
+    var fRow=document.createElement('div');fRow.style.cssText='display:flex;gap:6px;margin:6px 0';
+    var fCode=document.createElement('input');fCode.placeholder='الكود';fCode.style.cssText='flex:1;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;direction:ltr;outline:none';
+    var fSize=document.createElement('input');fSize.type='number';fSize.placeholder='الحجم';fSize.style.cssText='width:70px;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;direction:ltr;outline:none';
+    fRow.appendChild(fCode);fRow.appendChild(fSize);secF.appendChild(fRow);
+    var fBtn=_ezMakeBtn('➕ إضافة ورفع','#6366f1',async function(){
+      if(!fCode.value||!fSize.value){window.ezShowToast('ادخل الكود والحجم','error');return;}
+      var cfg=_ezCloudConfig||{};
+      if(!cfg.fixedSizeCodes)cfg.fixedSizeCodes={};
+      cfg.fixedSizeCodes[fCode.value.trim()]=parseInt(fSize.value);
+      fBtn.textContent='⏳ جاري الرفع...';
+      var ok=await _ezPushCloudConfig(cfg,'إضافة كود ثابت: '+fCode.value);
+      fBtn.textContent=ok?'✅ تم':'❌ فشل';
+      if(ok){fixedSizeCodes[fCode.value.trim()]=parseInt(fSize.value);fCode.value='';fSize.value='';}
+      setTimeout(function(){fBtn.textContent='➕ إضافة ورفع';},2000);
+    });
+    secF.appendChild(fBtn);body.appendChild(secF);
+    
+    /* ── Add weekly code ── */
+    var secW=_ezMakeSection('💉 إضافة كود أسبوعي','');
+    var wCode=document.createElement('input');wCode.placeholder='الكود';wCode.style.cssText='width:100%;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;direction:ltr;outline:none;margin:6px 0;box-sizing:border-box';
+    secW.appendChild(wCode);
+    var wBtn=_ezMakeBtn('➕ إضافة ورفع','#10b981',async function(){
+      if(!wCode.value){window.ezShowToast('ادخل الكود','error');return;}
+      var cfg=_ezCloudConfig||{};
+      if(!cfg.weeklyInjections)cfg.weeklyInjections=[];
+      if(cfg.weeklyInjections.indexOf(wCode.value.trim())===-1)cfg.weeklyInjections.push(wCode.value.trim());
+      wBtn.textContent='⏳ جاري الرفع...';
+      var ok=await _ezPushCloudConfig(cfg,'إضافة كود أسبوعي: '+wCode.value);
+      wBtn.textContent=ok?'✅ تم':'❌ فشل';
+      if(ok){if(weeklyInjections.indexOf(wCode.value.trim())===-1)weeklyInjections.push(wCode.value.trim());wCode.value='';}
+      setTimeout(function(){wBtn.textContent='➕ إضافة ورفع';},2000);
+    });
+    secW.appendChild(wBtn);body.appendChild(secW);
+    
+    /* ── Add custom word ── */
+    var secCW=_ezMakeSection('📝 إضافة كلمة جرعة جديدة','');
+    var cwRow=document.createElement('div');cwRow.style.cssText='display:flex;gap:6px;margin:6px 0';
+    var cwWord=document.createElement('input');cwWord.placeholder='الكلمة (مثل: الضحى)';cwWord.style.cssText='flex:1;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;outline:none';
+    var cwTime=document.createElement('input');cwTime.type='time';cwTime.value='09:00';cwTime.style.cssText='width:100px;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;outline:none';
+    cwRow.appendChild(cwWord);cwRow.appendChild(cwTime);secCW.appendChild(cwRow);
+    var cwBtn=_ezMakeBtn('➕ إضافة ورفع','#f59e0b',async function(){
+      if(!cwWord.value){window.ezShowToast('ادخل الكلمة','error');return;}
+      var cfg=_ezCloudConfig||{};
+      if(!cfg.customWords)cfg.customWords={};
+      cfg.customWords[cwWord.value.trim()]={time:cwTime.value,meaning:cwWord.value.trim()};
+      cwBtn.textContent='⏳ جاري الرفع...';
+      var ok=await _ezPushCloudConfig(cfg,'إضافة كلمة: '+cwWord.value);
+      cwBtn.textContent=ok?'✅ تم':'❌ فشل';
+      if(ok) cwWord.value='';
+      setTimeout(function(){cwBtn.textContent='➕ إضافة ورفع';},2000);
+    });
+    secCW.appendChild(cwBtn);body.appendChild(secCW);
+    
+    /* ── Add code start time ── */
+    var secCST=_ezMakeSection('🕐 وقت بدء مخصص لكود','');
+    var cstRow=document.createElement('div');cstRow.style.cssText='display:flex;gap:6px;margin:6px 0';
+    var cstCode=document.createElement('input');cstCode.placeholder='الكود';cstCode.style.cssText='flex:1;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:13px;font-family:Cairo,sans-serif;direction:ltr;outline:none';
+    var cstTime=document.createElement('input');cstTime.type='time';cstTime.value='21:00';cstTime.style.cssText='width:90px;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:13px;outline:none';
+    var cstEvery=document.createElement('select');cstEvery.style.cssText='width:70px;padding:8px;border:1.5px solid rgba(129,140,248,0.2);border-radius:8px;font-size:12px;outline:none';
+    cstEvery.innerHTML='<option value="24">24</option><option value="12">12</option><option value="8">8</option>';
+    cstRow.appendChild(cstCode);cstRow.appendChild(cstTime);cstRow.appendChild(cstEvery);secCST.appendChild(cstRow);
+    var cstBtn=_ezMakeBtn('➕ إضافة ورفع','#8b5cf6',async function(){
+      if(!cstCode.value){window.ezShowToast('ادخل الكود','error');return;}
+      var cfg=_ezCloudConfig||{};
+      if(!cfg.codeStartTimes)cfg.codeStartTimes={};
+      cfg.codeStartTimes[cstCode.value.trim()]={time:cstTime.value,every:parseInt(cstEvery.value)};
+      cstBtn.textContent='⏳ جاري الرفع...';
+      var ok=await _ezPushCloudConfig(cfg,'وقت مخصص لكود: '+cstCode.value);
+      cstBtn.textContent=ok?'✅ تم':'❌ فشل';
+      if(ok){CODE_START_TIMES[cstCode.value.trim()]={time:cstTime.value,every:parseInt(cstEvery.value)};cstCode.value='';}
+      setTimeout(function(){cstBtn.textContent='➕ إضافة ورفع';},2000);
+    });
+    secCST.appendChild(cstBtn);body.appendChild(secCST);
+    
+    /* ── View current cloud config ── */
+    var secView=_ezMakeSection('👁️ عرض الإعدادات الحالية','');
+    var viewBtn=_ezMakeBtn('📥 سحب من جيتهاب','#06b6d4',async function(){
+      viewBtn.textContent='⏳ جاري السحب...';
+      var cfg=await _ezFetchCloudConfig();
+      if(cfg){
+        var pre=document.createElement('pre');
+        pre.style.cssText='background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:10px;direction:ltr;text-align:left;max-height:200px;overflow:auto;margin-top:8px;white-space:pre-wrap;word-break:break-all';
+        pre.textContent=JSON.stringify(cfg,null,2);
+        secView.appendChild(pre);
+        window.ezShowToast('تم سحب الإعدادات','success');
+      }
+      viewBtn.textContent='📥 سحب من جيتهاب';
+    });
+    secView.appendChild(viewBtn);body.appendChild(secView);
+    
+    /* ── Logout ── */
+    var logoutBtn=document.createElement('button');
+    logoutBtn.textContent='🚪 تسجيل خروج المسؤول';
+    logoutBtn.style.cssText='width:100%;height:36px;border:1.5px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#dc2626;background:rgba(239,68,68,0.04);margin-top:12px';
+    logoutBtn.addEventListener('click',function(){_ezSetAdminPin('');overlay.remove();window.ezShowToast('تم تسجيل الخروج','info');});
+    body.appendChild(logoutBtn);
+  }
+  
+  card.appendChild(body);
+  overlay.appendChild(card);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+  if(!isAdmin){var pi=card.querySelector('input[type="password"]');if(pi)pi.focus();}
+};
+
+/* ── UI Helpers ── */
+function _ezMakeSection(title,subtitle){
+  var sec=document.createElement('div');
+  sec.style.cssText='background:rgba(99,102,241,0.03);border:1px solid rgba(129,140,248,0.1);border-radius:12px;padding:10px 14px;margin-bottom:10px';
+  var h=document.createElement('div');
+  h.style.cssText='font-size:13px;font-weight:900;color:#1e1b4b;display:flex;align-items:center;justify-content:space-between';
+  h.innerHTML='<span>'+title+'</span>'+(subtitle?'<span style="font-size:10px;font-weight:700;color:#64748b">'+subtitle+'</span>':'');
+  sec.appendChild(h);
+  return sec;
+}
+function _ezMakeBtn(text,color,onclick){
+  var btn=document.createElement('button');
+  btn.textContent=text;
+  btn.style.cssText='width:100%;height:36px;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:'+color+';margin-top:6px';
+  btn.addEventListener('click',onclick);
+  return btn;
+}
+
+
 var _defaultFixedSizeCodes={
   '100009926':24,
   '100009934':48,
@@ -4753,6 +5038,7 @@ d_box.innerHTML='\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
     <button class="ez-btn-icon" onclick="window.ezSetupGemini()" title="إعداد الذكاء الاصطناعي">🤖</button>\
+    <button class="ez-btn-icon" onclick="window.ezCloudSettings()" title="الإعدادات السحابية">☁️</button>\
     <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
@@ -4854,6 +5140,13 @@ makeDraggable(d_box);
   }
 })();
 setTimeout(function(){beautifyPage();showWhatsNew();},100);
+
+/* ☁️ Auto-fetch cloud config */
+setTimeout(function(){
+  _ezFetchCloudConfig().then(function(cfg){
+    if(cfg){_ezApplyCloudConfig(cfg);console.log('☁️ Cloud config applied on load');}
+  }).catch(function(){});
+},200);
 
 /* ══════════════════════════════════════════
    NAME EXTRACTION FROM PRESCRIPTION NOTES
