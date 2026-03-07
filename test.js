@@ -2616,7 +2616,6 @@ function cleanNote(txt){
    PILL COUNT EXTRACTION
    ══════════════════════════════════════════ */
 
-
 function extractDayOfWeek(note){
   var s=note.trim();
   var days=[
@@ -2960,216 +2959,6 @@ function _ezDurMatchesSelection(extracted,m,t){
   }
   if(Math.abs(extracted-t)<=3) return true;
   return false;
-}
-
-
-/* ══════════════════════════════════════════
-   🔄 DOSE UNIFICATION CHECK
-   يكشف لو أصناف بنفس الوقت بصياغة مختلفة
-   (صباحاً مع بعد الفطار — مساءً مع بعد العشاء)
-   ══════════════════════════════════════════ */
-function _ezCheckDoseUnification(allRowsData){
-  /* Group timings into equivalent slots */
-  var groups={morning:[],noon:[],evening:[],bed:[]};
-  var groupLabels={
-    morning:{meal:'بعد الفطار',time:'صباحاً',mealKey:'afterBreakfast',timeKey:'morning'},
-    noon:{meal:'بعد الغداء',time:'عصراً',mealKey:'afterLunch',timeKey:'afternoon'},
-    evening:{meal:'بعد العشاء',time:'مساءً',mealKey:'afterDinner',timeKey:'evening'},
-    bed:{meal:'قبل النوم',time:'قبل النوم',mealKey:'bed',timeKey:'bed'}
-  };
-  
-  for(var i=0;i<allRowsData.length;i++){
-    var rd=allRowsData[i];
-    if(!rd.note||rd.hasFixedSize||rd.isWeekly) continue;
-    var n=(rd.note||'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').toLowerCase();
-    
-    var item={idx:i,name:rd.itemName||'',note:rd.note};
-    
-    /* Morning group: صباحاً / بعد الفطار / morning */
-    if(/صباح|صبح|morning|am/i.test(n)&&!/فطار|فطور|breakfast/i.test(n)){
-      item.style='time';groups.morning.push(item);
-    } else if(/[بي]عد.*فطار|[بي]عد.*فطور|after.*break/i.test(n)){
-      item.style='meal';groups.morning.push(item);
-    }
-    
-    /* Noon group: ظهراً/عصراً / بعد الغداء / afternoon */
-    if(/ظهر|عصر|afternoon|noon|pm/i.test(n)&&!/غدا|غداء|غذا|lunch/i.test(n)){
-      item.style='time';groups.noon.push(item);
-    } else if(/[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|after.*lunch/i.test(n)){
-      item.style='meal';groups.noon.push(item);
-    }
-    
-    /* Evening group: مساءً/ليلاً / بعد العشاء / evening */
-    if(/مساء|مسا|ليل|evening|night/i.test(n)&&!/عشا|عشاء|dinner/i.test(n)){
-      item.style='time';groups.evening.push(item);
-    } else if(/[بي]عد.*عشا|[بي]عد.*عشاء|after.*din/i.test(n)){
-      item.style='meal';groups.evening.push(item);
-    }
-  }
-  
-  /* Check each group for mixed styles */
-  var conflicts=[];
-  for(var gk in groups){
-    var g=groups[gk];
-    if(g.length<2) continue;
-    var hasMeal=false,hasTime=false;
-    for(var j=0;j<g.length;j++){
-      if(g[j].style==='meal') hasMeal=true;
-      if(g[j].style==='time') hasTime=true;
-    }
-    if(hasMeal&&hasTime){
-      conflicts.push({group:gk,items:g,labels:groupLabels[gk]});
-    }
-  }
-  
-  return conflicts;
-}
-
-/* Show unification dialog */
-function _ezShowUnifyDialog(conflicts,allRowsData,callback){
-  if(!conflicts||conflicts.length===0){callback();return;}
-  
-  var overlay=document.createElement('div');
-  overlay.id='ez-unify-overlay';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999998;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
-  
-  var card=document.createElement('div');
-  card.style.cssText='width:460px;max-width:95vw;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
-  
-  /* Header */
-  var hdr=document.createElement('div');
-  hdr.style.cssText='height:3px;background:linear-gradient(90deg,#f59e0b,#6366f1,#f59e0b);background-size:200% 100%;animation:barShift 4s ease infinite';
-  card.appendChild(hdr);
-  
-  var hdr2=document.createElement('div');
-  hdr2.style.cssText='padding:16px 20px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(129,140,248,0.08)';
-  hdr2.innerHTML='<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(145deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(245,158,11,0.25)">🔄</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">توحيد صياغة الجرعات</div><div style="font-size:10px;font-weight:700;color:#92400e">تم اكتشاف أصناف بنفس الوقت بصياغة مختلفة</div></div>';
-  card.appendChild(hdr2);
-  
-  /* Body */
-  var body=document.createElement('div');
-  body.style.cssText='padding:14px 18px;max-height:400px;overflow-y:auto;direction:rtl';
-  
-  for(var c=0;c<conflicts.length;c++){
-    var conf=conflicts[c];
-    var sec=document.createElement('div');
-    sec.style.cssText='background:rgba(245,158,11,0.04);border:1.5px solid rgba(245,158,11,0.15);border-radius:14px;padding:12px 14px;margin-bottom:10px';
-    
-    var title=document.createElement('div');
-    title.style.cssText='font-size:13px;font-weight:900;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px';
-    var groupNames={morning:'☀️ الصباح',noon:'🌤️ الظهر/العصر',evening:'🌙 المساء',bed:'😴 النوم'};
-    title.textContent=groupNames[conf.group]+' — '+conf.items.length+' أصناف بصياغة مختلفة';
-    sec.appendChild(title);
-    
-    /* List items */
-    for(var it=0;it<conf.items.length;it++){
-      var item=conf.items[it];
-      var row=document.createElement('div');
-      row.style.cssText='font-size:11px;font-weight:700;padding:4px 8px;margin-bottom:3px;border-radius:8px;display:flex;align-items:center;gap:6px;'+(item.style==='meal'?'background:rgba(16,185,129,0.06);color:#065f46':'background:rgba(99,102,241,0.06);color:#3730a3');
-      row.innerHTML='<span style="font-size:13px">'+(item.style==='meal'?'🍽️':'🕐')+'</span><span style="flex:1">'+_ezEsc(item.name.substring(0,35))+'</span><span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,0.04)">'+_ezEsc(item.note.substring(0,20))+'</span>';
-      sec.appendChild(row);
-    }
-    
-    /* Choice buttons */
-    var choices=document.createElement('div');
-    choices.style.cssText='display:flex;gap:6px;margin-top:10px';
-    
-    var mealBtn=document.createElement('button');
-    mealBtn.textContent='🍽️ توحيد: '+conf.labels.meal;
-    mealBtn.style.cssText='flex:1;height:36px;border:1.5px solid rgba(16,185,129,0.3);border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#065f46;background:rgba(16,185,129,0.06);transition:all 0.2s';
-    mealBtn.setAttribute('data-group',conf.group);
-    mealBtn.setAttribute('data-choice','meal');
-    mealBtn.addEventListener('click',function(){
-      _ezApplyUnify(null,'meal',allRowsData);
-      /* Disable all buttons after choice */
-      var allBtns=overlay.querySelectorAll('button[data-choice]');
-      for(var b=0;b<allBtns.length;b++){allBtns[b].disabled=true;allBtns[b].style.opacity='0.3';}
-      this.textContent='✅ تم توحيد الكل → وجبات';this.disabled=false;this.style.background='#059669';this.style.color='#fff';this.style.opacity='1';
-    });
-    choices.appendChild(mealBtn);
-    
-    var timeBtn=document.createElement('button');
-    timeBtn.textContent='🕐 توحيد: '+conf.labels.time;
-    timeBtn.style.cssText='flex:1;height:36px;border:1.5px solid rgba(99,102,241,0.3);border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#3730a3;background:rgba(99,102,241,0.06);transition:all 0.2s';
-    timeBtn.setAttribute('data-group',conf.group);
-    timeBtn.setAttribute('data-choice','time');
-    timeBtn.addEventListener('click',function(){
-      _ezApplyUnify(null,'time',allRowsData);
-      var allBtns=overlay.querySelectorAll('button[data-choice]');
-      for(var b=0;b<allBtns.length;b++){allBtns[b].disabled=true;allBtns[b].style.opacity='0.3';}
-      this.textContent='✅ تم توحيد الكل → أوقات';this.disabled=false;this.style.background='#6366f1';this.style.color='#fff';this.style.opacity='1';
-    });
-    choices.appendChild(timeBtn);
-    
-    sec.appendChild(choices);
-    body.appendChild(sec);
-  }
-  card.appendChild(body);
-  
-  /* Footer */
-  var foot=document.createElement('div');
-  foot.style.cssText='padding:10px 18px 16px;border-top:1px solid rgba(129,140,248,0.06);display:flex;gap:8px';
-  
-  var doneBtn=document.createElement('button');
-  doneBtn.textContent='✅ تم — متابعة المعالجة';
-  doneBtn.style.cssText='flex:1;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2)';
-  doneBtn.addEventListener('click',function(){overlay.remove();callback();});
-  foot.appendChild(doneBtn);
-  
-  var skipBtn=document.createElement('button');
-  skipBtn.textContent='تجاهل';
-  skipBtn.style.cssText='height:42px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
-  skipBtn.addEventListener('click',function(){overlay.remove();callback();});
-  foot.appendChild(skipBtn);
-  
-  card.appendChild(foot);
-  overlay.appendChild(card);
-  overlay.addEventListener('click',function(e){if(e.target===overlay){overlay.remove();callback();}});
-  document.body.appendChild(overlay);
-}
-
-/* Apply unification to notes — ALL groups at once */
-function _ezApplyUnify(group,choice,allRowsData){
-  /* عند اختيار وجبات: كل الأوقات تتحول لوجبات (صباحاً→بعد الفطار، مساءً→بعد العشاء، عصراً→بعد الغداء) */
-  /* عند اختيار أوقات: كل الوجبات تتحول لأوقات (بعد الفطار→صباحاً، بعد العشاء→مساءً، بعد الغداء→عصراً) */
-  var replacements=[];
-  if(choice==='meal'){
-    replacements=[
-      {from:/صباحا|صباحاً|صبحا|صباح|الصباح|morning/gi,to:'بعد الفطار'},
-      {from:/ظهرا|ظهراً|ظهر|الظهر|عصرا|عصراً|عصر|العصر|afternoon|noon/gi,to:'بعد الغداء'},
-      {from:/مساءا|مساءً|مساء|المساء|مسا|ليلا|ليلاً|ليل|الليل|evening|night/gi,to:'بعد العشاء'}
-    ];
-  } else {
-    replacements=[
-      {from:/[بي]عد\s*(ال)?فطار|[بي]عد\s*(ال)?فطور|after\s*breakfast/gi,to:'صباحاً'},
-      {from:/[بي]عد\s*(ال)?غدا[ءئ]?|[بي]عد\s*(ال)?غذا[ءئ]?|after\s*lunch/gi,to:'عصراً'},
-      {from:/[بي]عد\s*(ال)?عشا[ءئ]?|after\s*dinner/gi,to:'مساءً'}
-    ];
-  }
-  
-  var tb=_ezFindTable();
-  if(!tb) return;
-  var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
-  var ni=_ezIdx(hs,'note');
-  if(ni<0) return;
-  var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
-  var count=0;
-  for(var i=0;i<rows.length;i++){
-    var tds=rows[i].querySelectorAll('td');
-    if(tds.length<=ni) continue;
-    var inp=tds[ni].querySelector('input,textarea');
-    var val=inp?inp.value:(tds[ni].textContent||'');
-    var newVal=val;
-    for(var r=0;r<replacements.length;r++){
-      newVal=newVal.replace(replacements[r].from,replacements[r].to);
-    }
-    if(newVal!==val){
-      if(inp){inp.value=newVal;_ezFire(inp);}else{tds[ni].textContent=newVal;}
-      count++;
-    }
-  }
-  var label=choice==='meal'?'وجبات (فطار/غداء/عشاء)':'أوقات (صباحاً/عصراً/مساءً)';
-  if(count>0) window.ezShowToast('🔄 تم توحيد '+count+' جرعة → '+label,'success');
 }
 
 function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode){
@@ -3561,9 +3350,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     }
   }
 
-  /* 🔄 Check dose unification BEFORE other warnings */
-  var _unifyConflicts=_ezCheckDoseUnification(allRowsData);
-  
   warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
 
   /* 🤖 Gemini AI: resolve unrecognized doses before showing warnings */
@@ -3574,16 +3360,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       _geminiIdxMap.push(_gi);
     }
   }
-  /* Show unification dialog first if conflicts found */
-  if(_unifyConflicts.length>0){
-    _ezShowUnifyDialog(_unifyConflicts,allRowsData,function(){
-      /* إعادة المعالجة بالكامل بعد التوحيد عشان الأوقات تتحسب صح */
-      processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode);
-    });
-    return;
-  }
-  _ezContinueAfterUnify();
-  function _ezContinueAfterUnify(){
   console.log('🤖 Gemini check: '+allRowsData.length+' total rows');
   for(var _dbg=0;_dbg<allRowsData.length;_dbg++){if(allRowsData[_dbg]._needsGemini)console.log('🤖 Row '+_dbg+' needs Gemini: "'+allRowsData[_dbg].note+'"');}
   console.log('🤖 Gemini: '+_geminiNotes.length+' unrecognized notes, key='+(!!_ezGetGeminiKey()));
@@ -3646,7 +3422,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   } else {
     if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
   }
-  } /* end _ezContinueAfterUnify */
 
   function continueProcessing(){
     var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
