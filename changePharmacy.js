@@ -10,8 +10,8 @@ javascript:(function(){
     return JSON.parse(new TextDecoder('utf-8').decode(bytes));
   }
 
-  const _U = 'W3siZCI6Iti52YTZiiDYp9mE2KjYp9iyICjYp9mE2KPYs9in2LPZiikiLCJlIjoiMTAxMDkzIiwibiI6IkFsaSBFbGJheiIsInUiOiJhbGJhei5hYSJ9LHsiZCI6ItmF2YbYtdmI2LEg2KfZhNio2YPYsdmJIiwiZSI6IjEwMjU5OSIsIm4iOiJFTEJBS1JJLk1NIiwidSI6IkVMQkFLUkkuTU0ifSx7ImQiOiLZhdit2YXYryDYp9mE2LTYp9i32LEiLCJlIjoiMTA2MDIzIiwibiI6IkVMU0hBVEVSLk1BIiwidSI6IkVMU0hBVEVSLk1BIn0seyJkIjoi2YXYrdmF2K8g2KrZiNmB2YrZgiIsImUiOiIxMDY1MDkiLCJuIjoiYWxmYWhhZC5tdCIsInUiOiJhbGZhaGFkLm10In0seyJkIjoi2YXYrdmF2K8g2LLZitiv2KfZhiIsImUiOiIxMDUxNDMiLCJuIjoiTW9oYW1lZCBaZWRhbiIsInUiOiJaZWRhbi5NSSJ9LHsiZCI6Itin2LPYp9mF2Ycg2KfZhNiz2YLYpyIsImUiOiIxMDU4OTMiLCJuIjoiT3NhbWEgRWxzYWtrYSIsInUiOiJFbHNha2thLm9tIn0seyJkIjoi2YXYrNiv2Ykg2LPZhdmK2LEiLCJlIjoiMTA0OTg5IiwibiI6Ik1hZ2R5IFNhbWlyIiwidSI6ImVsc2F5ZWQubXMxIn0seyJkIjoi2KfYrdmF2K8g2YjYrdmK2K8iLCJlIjoiMTA1NjA3IiwibiI6IkFobWVkIFdhaGVlZCIsInUiOiJlbHplYWlreS5hdyJ9LHsiZCI6ItmF2K3ZhdmI2K8g2YfZhdin2YUiLCJlIjoiMTA1NTkxIiwibiI6Im1haG1vdWQgaGFtYW0iLCJ1IjoiZWxzYXllZC5tbTQifSx7ImQiOiLZhdit2YXYryDYp9mE2KfZhti12KfYsdmJIiwiZSI6IjEwNTIyNSIsIm4iOiJNb2hhbWVkIEFsYW5zYXJpIiwidSI6ImFsYW5zYXJpLm1oIn0seyJkIjoi2YXYrdmF2K8g2KzZhNin2YQiLCJlIjoiMTA1MTAzIiwibiI6Ik1vaGFtZWQgZ2FsYWwiLCJ1IjoiTU9IQU1FRC5NRzQifSx7ImQiOiLYp9iz2KfZhdmHINin2K3ZhdivIiwiZSI6IjEwMTgzOSIsIm4iOiJPc2FtYSBBaG1lZCIsInUiOiJNQUhNT1VELk9BIn0seyJkIjoi2YXYrdmF2YjYryDYp9mE2KzZhtiv2YkiLCJlIjoiMTAxMTI5IiwibiI6IkFMR0VORElFLk1NIiwidSI6IkFMR0VORElFLk1NIn0seyJkIjoi2LnYqNiv2KfZhNmE2Ycg2LHYp9i02K8iLCJlIjoiMTAyMzcwIiwibiI6IkFiZGFsbGFoIFJhc2hlZCIsInUiOiJyYXNoZWQuYW0xIn1d';
-  const _P = 'W3siYyI6ICIxMzAwIiwgIm4iOiAi2KfZhNis2YjYr9mKIn0sIHsiYyI6ICI0MDgzIiwgIm4iOiAi2YPYsdmK2YUifSwgeyJjIjogIjExMTkiLCAibiI6ICLYp9io2YYg2KfZhNmI2YTZitivIn0sIHsiYyI6ICI2MDc5IiwgIm4iOiAi2KfZhNmG2YfYrCJ9LCB7ImMiOiAiMjUyNSIsICJuIjogItin2YTZhtmC2KfYoSJ9LCB7ImMiOiAiNDA2MSIsICJuIjogItmF2KzYstmKIn0sIHsiYyI6ICI3NjA3IiwgIm4iOiAi2KfZhNis2KfZhdi5In0sIHsiYyI6ICI3MTExIiwgIm4iOiAi2KfZhNin2LHYqtin2YQifSwgeyJjIjogIjUwNzAiLCAibiI6ICLYp9mE2LnYp9isIn0sIHsiYyI6ICIyMDk1IiwgIm4iOiAi2KfZhNiz2YrYsdmHIn0sIHsiYyI6ICIzMDgwIiwgIm4iOiAi2KfZhNio2KfYsiJ9XQ==';
+  const _U = 'W3siZCI6ICLYudmE2Yog2KfZhNio2KfYsiIsICJlIjogIjEwMTA5MyIsICJuIjogIkFsaSBFbGJheiIsICJ1IjogImFsYmF6LmFhIn0sIHsiZCI6ICLZhdmG2LXZiNixINin2YTYqNmD2LHZiSIsICJlIjogIjEwMjU5OSIsICJuIjogIkVMQkFLUkkuTU0iLCAidSI6ICJFTEJBS1JJLk1NIn0sIHsiZCI6ICLZhdit2YXYryDYp9mE2LTYp9i32LEiLCAiZSI6ICIxMDYwMjMiLCAibiI6ICJFTFNIQVRFUi5NQSIsICJ1IjogIkVMU0hBVEVSLk1BIn0sIHsiZCI6ICLZhdit2YXYryDYqtmI2YHZitmCIiwgImUiOiAiMTA2NTA5IiwgIm4iOiAiYWxmYWhhZC5tdCIsICJ1IjogImFsZmFoYWQubXQifSwgeyJkIjogItmF2K3ZhdivINiy2YrYr9in2YYiLCAiZSI6ICIxMDUxNDMiLCAibiI6ICJNb2hhbWVkIFplZGFuIiwgInUiOiAiWmVkYW4uTUkifSwgeyJkIjogItin2LPYp9mF2Ycg2KfZhNiz2YLYpyIsICJlIjogIjEwNTg5MyIsICJuIjogIk9zYW1hIEVsc2Fra2EiLCAidSI6ICJFbHNha2thLm9tIn0sIHsiZCI6ICLZhdis2K/ZiSDYs9mF2YrYsSIsICJlIjogIjEwNDk4OSIsICJuIjogIk1hZ2R5IFNhbWlyIiwgInUiOiAiZWxzYXllZC5tczEifSwgeyJkIjogItin2K3ZhdivINmI2K3ZitivIiwgImUiOiAiMTA1NjA3IiwgIm4iOiAiQWhtZWQgV2FoZWVkIiwgInUiOiAiZWx6ZWFpa3kuYXcifSwgeyJkIjogItmF2K3ZhdmI2K8g2YfZhdin2YUiLCAiZSI6ICIxMDU1OTEiLCAibiI6ICJtYWhtb3VkIGhhbWFtIiwgInUiOiAiZWxzYXllZC5tbTQifSwgeyJkIjogItmF2K3ZhdivINin2YTYp9mG2LXYp9ix2YkiLCAiZSI6ICIxMDUyMjUiLCAibiI6ICJNb2hhbWVkIEFsYW5zYXJpIiwgInUiOiAiYWxhbnNhcmkubWgifSwgeyJkIjogItmF2K3ZhdivINis2YTYp9mEIiwgImUiOiAiMTA1MTAzIiwgIm4iOiAiTW9oYW1lZCBnYWxhbCIsICJ1IjogIk1PSEFNRUQuTUc0In0sIHsiZCI6ICLYp9iz2KfZhdmHINin2K3ZhdivIiwgImUiOiAiMTAxODM5IiwgIm4iOiAiT3NhbWEgQWhtZWQiLCAidSI6ICJNQUhNT1VELk9BIn0sIHsiZCI6ICLZhdit2YXZiNivINin2YTYrNmG2K/ZiSIsICJlIjogIjEwMTEyOSIsICJuIjogIkFMR0VORElFLk1NIiwgInUiOiAiQUxHRU5ESUUuTU0ifSwgeyJkIjogIti52KjYr9in2YTZhNmHINix2KfYtNivIiwgImUiOiAiMTAyMzcwIiwgIm4iOiAiQWJkYWxsYWggUmFzaGVkIiwgInUiOiAicmFzaGVkLmFtMSJ9XQ==';
+  const _P = 'W3siYyI6ICIxMzAwIiwgIm4iOiAi2KfZhNis2YjYr9mKIn0sIHsiYyI6ICI0MDgzIiwgIm4iOiAi2YPYsdmK2YUifSwgeyJjIjogIjExMTkiLCAibiI6ICLYp9io2YYg2KfZhNmI2YTZitivIn0sIHsiYyI6ICI2MDc5IiwgIm4iOiAi2KfZhNmG2YfYrCJ9LCB7ImMiOiAiMjUyNSIsICJuIjogItin2YTZhtmC2KfYoSJ9LCB7ImMiOiAiNDA2MSIsICJuIjogItmF2KzYstmKIn0sIHsiYyI6ICI3NjA3IiwgIm4iOiAi2KfZhNis2KfZhditIn0sIHsiYyI6ICI3MTExIiwgIm4iOiAi2KfZhNin2LHYqtin2YQifSwgeyJjIjogIjUwNzAiLCAibiI6ICLYp9mE2LnYp9isIn0sIHsiYyI6ICIyMDk1IiwgIm4iOiAi2KfZhNiz2YrYsdmHIn0sIHsiYyI6ICIzMDgwIiwgIm4iOiAi2KfZhNio2KfYsiJ9XQ==';
 
   const USERS      = decodeData(_U).map(u => ({ display:u.d, emp_id:u.e, emp_name:u.n, user_name:u.u }));
   const PHARMACIES = decodeData(_P).map(p => ({ code:p.c, name:p.n }));
@@ -37,10 +37,6 @@ javascript:(function(){
     ".sc-select,.sc-input{width:100%;padding:13px 16px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;font-weight:700;color:#1e293b;outline:none;transition:all 0.25s;-webkit-appearance:none}",
     ".sc-select:focus,.sc-input:focus{border-color:#6366f1;background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,0.1)}",
     ".sc-select option{background:#fff;color:#1e293b}",
-    "#sc-user-preview{margin-top:10px;padding:12px 14px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;display:flex;align-items:center;gap:10px;transition:all 0.3s}",
-    "#sc-user-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:white;flex-shrink:0}",
-    "#sc-user-name{font-size:13px;font-weight:800;color:#0369a1}",
-    "#sc-user-meta{font-size:11px;color:#64748b;font-weight:600;margin-top:2px}",
     ".sc-input-wrap{position:relative}",
     ".sc-input-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}",
     ".sc-input-wrap .sc-input{padding-right:42px;text-align:center;font-size:17px;letter-spacing:2px;color:#059669}",
@@ -69,17 +65,13 @@ javascript:(function(){
       '<div style="display:flex;align-items:center;gap:12px;direction:rtl;">' +
         '<div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#6366f1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">&#127643;</div>' +
         '<div><div id="sc-title">مُدير النظام المتقدم</div>' +
-        '<div id="sc-subtitle">Advanced Store Manager — v2.2</div></div>' +
+        '<div id="sc-subtitle">Advanced Store Manager — v2.3</div></div>' +
       '</div>' +
     '</div>' +
     '<div id="sc-body">' +
       '<div class="sc-field">' +
         '<label class="sc-label">⽇︎ اختيار الحساب</label>' +
         '<select id="ali_user_select" class="sc-select">'+usersHTML+'</select>' +
-        '<div id="sc-user-preview">' +
-          '<div id="sc-user-avatar">ع</div>' +
-          '<div><div id="sc-user-name">—</div><div id="sc-user-meta">—</div></div>' +
-        '</div>' +
       '</div>' +
       '<div class="sc-field">' +
         '<label class="sc-label">⼏︎ كود الصيدلية</label>' +
@@ -115,15 +107,6 @@ javascript:(function(){
     wrap.appendChild(t);
     setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); },300); },3500);
   }
-
-  function updatePreview(idx) {
-    var u = USERS[idx]; if (!u) return;
-    document.getElementById('sc-user-avatar').textContent = u.display.trim().charAt(0);
-    document.getElementById('sc-user-name').textContent   = u.display;
-    document.getElementById('sc-user-meta').textContent   = 'ID: '+u.emp_id+'  |  @'+u.user_name;
-  }
-  updatePreview(0);
-  document.getElementById('ali_user_select').addEventListener('change', function(){ updatePreview(parseInt(this.value)); });
 
   document.querySelectorAll('.sc-fmt-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
@@ -175,22 +158,9 @@ javascript:(function(){
       });
 
       if (res.ok) {
-        btn.innerHTML='&#9989; تم — جاري إعادة التشغيل...';
+        btn.innerHTML='&#9989; تم التحديث بنجاح — احذف بيانات الموقع وأعد التحميل';
         btn.style.background='linear-gradient(135deg,#2563eb,#3b82f6)';
-        toast('تم التحديث ✔ — جاري تسجيل الخروج...','success');
-        setTimeout(function(){
-          var allLinks=Array.from(document.querySelectorAll('a,button,input[type=button],input[type=submit]'));
-          var logoutBtn=allLinks.find(function(el){
-            var txt=(el.innerText||el.value||'').trim().toLowerCase();
-            var href=(el.href||'').toLowerCase();
-            var onc=(el.getAttribute('onclick')||'').toLowerCase();
-            return txt.includes('log out')||txt.includes('logout')||txt.includes('خروج')||
-                   href.includes('logout')||href.includes('logoff')||href.includes('signout')||
-                   onc.includes('logout')||onc.includes('logoff');
-          });
-          if (logoutBtn){ logoutBtn.click(); }
-          else { window.location.href=window.location.origin+'/ez_pill_web/'; }
-        },2000);
+        toast('تم التحديث ✔ — احذف بيانات الموقع وأعد التحميل','success');
       } else { throw new Error('server'); }
     } catch(e) {
       btn.innerHTML='&#10060; فشل التحديث';
