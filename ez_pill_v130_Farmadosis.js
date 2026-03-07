@@ -3780,7 +3780,69 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
             console.log('🤖 AI resolved: "'+allRowsData[idx3].note+'" → time='+_localTime+' every='+(ai.every||24)+'h desc='+(ai.readable_ar||'?'));
           }
         }
-        if(resolved>0) window.ezShowToast('🤖 الذكاء الاصطناعي فهم '+resolved+' جرعة','success');
+        if(resolved>0){
+          window.ezShowToast('🤖 الذكاء الاصطناعي فهم '+resolved+' جرعة','success');
+          /* ── Mark AI-resolved rows visually ── */
+          var _aiBannerItems=[];
+          for(var _mk=0;_mk<_geminiIdxMap.length;_mk++){
+            var _mkIdx=_geminiIdxMap[_mk];
+            var _mkRd=allRowsData[_mkIdx];
+            if(!_mkRd||!_mkRd._geminiResolved) continue;
+            var _mkAi=results[_mk]||{};
+            /* Add 🤖 icon next to item name */
+            if(_mkRd.row&&nm_main>=0){
+              var _mkTds=_mkRd.row.querySelectorAll('td');
+              if(_mkTds[nm_main]){
+                var _nameCell=_mkTds[nm_main];
+                /* Don't add twice */
+                if(_nameCell.innerHTML.indexOf('🤖')===-1){
+                  var _aiTag=document.createElement('span');
+                  _aiTag.style.cssText='display:inline-block;margin-left:4px;margin-right:4px;font-size:14px;cursor:help;vertical-align:middle';
+                  _aiTag.textContent='🤖';
+                  _aiTag.title='تم تحليلها بالذكاء الاصطناعي: '+(_mkAi.readable_ar||_mkRd.note);
+                  _nameCell.insertBefore(_aiTag,_nameCell.firstChild);
+                }
+              }
+              /* Light blue background on the row */
+              _mkRd.row.style.background='rgba(99,102,241,0.04)';
+              _mkRd.row.style.borderRight='3px solid #818cf8';
+            }
+            _aiBannerItems.push({name:_mkRd.itemName||'',note:_mkRd.note||'',time:_mkRd.unrecognizedTime||'',every:_mkRd.unrecognizedEvery||24,desc:_mkAi.readable_ar||''});
+          }
+          /* ── Show AI results banner ── */
+          if(_aiBannerItems.length>0){
+            var _bannerOld=document.getElementById('ez-ai-banner');if(_bannerOld)_bannerOld.remove();
+            var _banner=document.createElement('div');
+            _banner.id='ez-ai-banner';
+            _banner.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999998;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(99,102,241,0.15);border:1.5px solid rgba(129,140,248,0.15);max-width:420px;width:90vw;font-family:Cairo,sans-serif;direction:rtl;overflow:hidden;animation:fadeIn .3s ease';
+            var _bHdr='<div style="padding:12px 18px;background:linear-gradient(135deg,rgba(99,102,241,0.05),rgba(139,92,246,0.05));border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:8px">';
+            _bHdr+='<span style="font-size:20px">🤖</span>';
+            _bHdr+='<span style="flex:1;font-size:13px;font-weight:900;color:#1e1b4b">الذكاء الاصطناعي فهم '+_aiBannerItems.length+' جرعة</span>';
+            _bHdr+='<button id="ez-ai-banner-close" style="width:24px;height:24px;border:none;border-radius:6px;background:rgba(148,163,184,0.08);color:#94a3b8;cursor:pointer;font-size:12px">✕</button>';
+            _bHdr+='</div>';
+            var _bBody='<div style="padding:10px 16px;max-height:200px;overflow-y:auto">';
+            for(var _bi=0;_bi<_aiBannerItems.length;_bi++){
+              var _bItem=_aiBannerItems[_bi];
+              _bBody+='<div style="padding:8px 10px;background:rgba(99,102,241,0.03);border-radius:10px;margin-bottom:6px;display:flex;align-items:center;gap:8px">';
+              _bBody+='<span style="font-size:16px">🤖</span>';
+              _bBody+='<div style="flex:1;min-width:0">';
+              _bBody+='<div style="font-size:12px;font-weight:800;color:#1e1b4b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(_bItem.name||'صنف')+'</div>';
+              _bBody+='<div style="font-size:10px;color:#64748b;margin-top:1px">النص: '+_bItem.note+'</div>';
+              _bBody+='</div>';
+              _bBody+='<div style="text-align:left;flex-shrink:0">';
+              _bBody+='<div style="font-size:12px;font-weight:900;color:#6366f1">'+_bItem.time+'</div>';
+              _bBody+='<div style="font-size:9px;color:#94a3b8">كل '+_bItem.every+' ساعة</div>';
+              _bBody+='</div>';
+              _bBody+='</div>';
+            }
+            _bBody+='</div>';
+            _banner.innerHTML=_bHdr+_bBody;
+            document.body.appendChild(_banner);
+            document.getElementById('ez-ai-banner-close').onclick=function(){_banner.remove()};
+            /* Auto-hide after 10 seconds */
+            setTimeout(function(){if(_banner.parentNode){_banner.style.transition='opacity .4s,transform .4s';_banner.style.opacity='0';_banner.style.transform='translateX(-50%) translateY(-10px)';setTimeout(function(){_banner.remove()},400);}},10000);
+          }
+        }
       }
       /* Now show remaining warnings */
       if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
@@ -3980,7 +4042,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       rmBadge.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999994;background:linear-gradient(145deg,#1e1b4b,#312e81);color:#fbbf24;padding:8px 24px;border-radius:30px;font-family:Cairo,sans-serif;font-size:13px;font-weight:900;box-shadow:0 6px 20px rgba(30,27,75,0.3),inset 0 1px 0 rgba(255,255,255,0.1);display:flex;align-items:center;gap:8px;animation:fadeSlideUp 0.5s ease;border:1.5px solid rgba(251,191,36,0.3)';
       rmBadge.innerHTML='<span style="font-size:18px">🌙</span> وضع رمضان مفعّل <span style="font-size:10px;color:rgba(251,191,36,0.6);margin-right:6px">فطار '+RAMADAN_TIMES.afterIftar+' · سحور '+RAMADAN_TIMES.afterSuhoor+'</span>';
       document.body.appendChild(rmBadge);
-      setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},8000);
+      setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},10000);
     }
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
