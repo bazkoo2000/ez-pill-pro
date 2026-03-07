@@ -307,14 +307,22 @@ window.ezSetupGemini=function(){
     else{window.ezShowToast('❌ ادخل المفتاح','error');}
   });
   foot.appendChild(saveBtn);
-  var secBtn=document.createElement('button');
-  secBtn.textContent=current?'🗑️ حذف':'إلغاء';
-  secBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
-  secBtn.addEventListener('click',function(){
-    if(current){_ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');}
-    overlay.remove();
-  });
-  foot.appendChild(secBtn);
+  /* زر حذف — يظهر فقط لو فيه مفتاح محفوظ */
+  if(current){
+    var delBtn=document.createElement('button');
+    delBtn.textContent='🗑️ حذف';
+    delBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#dc2626;background:rgba(239,68,68,0.04)';
+    delBtn.addEventListener('click',function(){
+      _ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');overlay.remove();
+    });
+    foot.appendChild(delBtn);
+  }
+  /* زر إلغاء — يظهر دائماً */
+  var cancelBtn=document.createElement('button');
+  cancelBtn.textContent='إلغاء';
+  cancelBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
+  cancelBtn.addEventListener('click',function(){overlay.remove();});
+  foot.appendChild(cancelBtn);
   /* Test button */
   var testBtn=document.createElement('button');
   testBtn.textContent='🧪 اختبار الاتصال';
