@@ -212,13 +212,13 @@ function _ezSetGeminiModel(m){try{localStorage.setItem('ez_gemini_model',m);}cat
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
 
 /* Prompt مصمم للصيدلة — يرجع JSON فقط */
-var _GEMINI_PROMPT='You are a pharmacy dose interpreter for Saudi pharmacies.\n\nIMPORTANT RULES:\n- Words like حبه/حبة/قرص/كبسولة are UNIT WORDS meaning \"1 pill\" — they are NOT the dose count. Ignore them.\n- حبتين/قرصين = dose of 2 pills per time (set dose field to 2)\n- Focus ONLY on TIMING and FREQUENCY, not pill count.\n- Notes may have typos in Arabic (صبلح=صباحا، مسلء=مساء، etc). Interpret the intended meaning.\n\nReturn ONLY a JSON object:\n- count: times per day (1,2,3,4)\n- startTime: first dose HH:MM (24h)\n- every: hours between doses (24,12,8,6)\n- isBefore: true=before meals, false=after\n- dose: pills per time (1 unless حبتين/قرصين)\n- confidence: \"high\" or \"low\"\n- readable_ar: Arabic description WITHOUT pill count words\n\nExamples:\n\"حبه صباحا ومساء\" → {\"count\":2,\"startTime\":\"09:00\",\"every\":12,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرتين صباحاً ومساءً\"}\n\"بعد الفطار والعشاء\" → {\"count\":2,\"startTime\":\"09:00\",\"every\":12,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرتين بعد الفطار والعشاء\"}\n\"حبتين بعد الاكل\" → {\"count\":1,\"startTime\":\"09:00\",\"every\":24,\"isBefore\":false,\"dose\":2,\"confidence\":\"high\",\"readable_ar\":\"مرة بعد الأكل (حبتين)\"}\n\"once daily at night\" → {\"count\":1,\"startTime\":\"21:00\",\"every\":24,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرة واحدة ليلاً\"}\n\"tid pc\" → {\"count\":3,\"startTime\":\"08:00\",\"every\":8,\"isBefore\":true,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"ثلاث مرات قبل الأكل\"}';
+var _GEMINI_PROMPT='You are a Saudi pharmacy dose interpreter. Parse Arabic/English dose notes.\n\nRULES:\n- حبه/قرص/كبسولة = unit words (ignore them, dose=1)\n- حبتين/قرصين = dose=2 pills\n- Focus on TIMING keywords (صباح=morning, مساء=evening, ظهر=noon, ليل=night, ريق=empty stomach, نوم=bedtime)\n- Arabic typos are common — interpret the intended meaning\n- When unsure, pick the most likely interpretation\n\nReturn ONLY valid JSON (no markdown, no text):\n{"count":N, "startTime":"HH:MM", "every":N, "isBefore":BOOL, "dose":N, "readable_ar":"وصف عربي"}\n\nFields:\n- count: times per day (1-4)\n- startTime: first dose time 24h format\n- every: hours between doses (24/12/8/6)\n- isBefore: true=before meals\n- dose: pills per time (usually 1)\n- readable_ar: Arabic summary\n\nExamples:\n"حبه صباحا ومساء" → {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"readable_ar":"مرتين صباحاً ومساءً"}\n"بعد الاكل" → {"count":1,"startTime":"09:00","every":24,"isBefore":false,"dose":1,"readable_ar":"مرة بعد الأكل"}\n"قبل النوم" → {"count":1,"startTime":"22:00","every":24,"isBefore":false,"dose":1,"readable_ar":"مرة قبل النوم"}\n"tid pc" → {"count":3,"startTime":"08:00","every":8,"isBefore":true,"dose":1,"readable_ar":"ثلاث مرات قبل الأكل"}\n"once daily" → {"count":1,"startTime":"09:00","every":24,"isBefore":false,"dose":1,"readable_ar":"مرة يومياً"}\n"على الريق" → {"count":1,"startTime":"07:00","every":24,"isBefore":true,"dose":1,"readable_ar":"مرة على الريق"}';
 
 async function _ezGeminiParse(noteText){
   var key=_ezGetGeminiKey();
   if(!key) return null;
   try{
-    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key='+key,{
+    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+_ezGetGeminiModel()+':generateContent?key='+key,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -239,7 +239,7 @@ async function _ezGeminiBatch(notes){
   var key=_ezGetGeminiKey();
   if(!key||notes.length===0){console.log('🤖 Batch: no key or empty notes');return [];}
   console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: '+_ezGetGeminiModel()+')...');
-  var prompt=_GEMINI_PROMPT+'\n\nParse ALL of these notes. Return a JSON ARRAY with one object per note, in the same order:\n';
+  var prompt=_GEMINI_PROMPT+'\n\nParse ALL notes below. Return ONLY a JSON ARRAY (no markdown). One object per note, same order.\nIMPORTANT: ALWAYS provide startTime and every fields. If unsure, make your best guess.\n\n';
   for(var i=0;i<notes.length;i++) prompt+=(i+1)+'. "'+notes[i]+'"\n';
   var _model=_ezGetGeminiModel();
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+_model+':generateContent?key='+key;
@@ -731,7 +731,7 @@ var _defaultFixedSizeCodes={
   '102077738':10,
   '102371620':24,
   '102988654':48,
-  '103169239':21,
+  '103169239':20,
   '103243857':30,
   '103437918':30,
   '103683617':30
@@ -3731,9 +3731,19 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(results&&results.length>0){
         var resolved=0;
         for(var _r=0;_r<results.length&&_r<_geminiIdxMap.length;_r++){
+          console.log('🤖 Result['+_r+']: note="'+_geminiNotes[_r]+'" → AI=',JSON.stringify(results[_r]));
           var ai=results[_r];var idx3=_geminiIdxMap[_r];
-          if(ai&&ai.startTime&&ai.confidence==='high'){
+          if(ai&&(ai.startTime||ai.count)){
+            /* Accept any AI response with time or count — not just 'high' confidence */
             /* Map AI time to local NORMAL_TIMES using AI's Arabic description */
+            /* Normalize AI response fields */
+            if(!ai.startTime&&ai.start_time) ai.startTime=ai.start_time;
+            if(!ai.startTime&&ai.time) ai.startTime=ai.time;
+            if(!ai.readable_ar&&ai.readableAr) ai.readable_ar=ai.readableAr;
+            if(!ai.readable_ar&&ai.description) ai.readable_ar=ai.description;
+            if(!ai.every&&ai.interval) ai.every=ai.interval;
+            if(!ai.every) ai.every=24;
+            if(!ai.startTime) ai.startTime='09:00';
             var _aiH=parseInt(ai.startTime.split(':')[0]);
             var _aiDesc=(ai.readable_ar||'').toLowerCase();
             var _localTime=ai.startTime;
@@ -3767,7 +3777,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
             /* Remove the warning for this item */
             warningQueue=warningQueue.filter(function(w){return !(w.type==='unrecognized_dose'&&w.rowIndex===idx3);});
             resolved++;
-            console.log('🤖 AI resolved: "'+allRowsData[idx3].note+'" → '+ai.startTime+' every '+ai.every+'h ('+ai.readable_ar+')');
+            console.log('🤖 AI resolved: "'+allRowsData[idx3].note+'" → time='+_localTime+' every='+(ai.every||24)+'h desc='+(ai.readable_ar||'?'));
           }
         }
         if(resolved>0) window.ezShowToast('🤖 الذكاء الاصطناعي فهم '+resolved+' جرعة','success');
