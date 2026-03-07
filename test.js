@@ -3172,7 +3172,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
     if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
     var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
-    var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);var h_s=!!(itemCode&&weeklyInjections.indexOf(itemCode)>-1);
+    var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);
+    var h_s=!!(itemCode&&weeklyInjections.indexOf(itemCode)>-1);
+    /* FIX: detect weekly from note text too */
+    if(!h_s&&/اسبوعيا|أسبوعياً|اسبوعيه|كل اسبوع|كل أسبوع|مره اسبوعيا|مره بالاسبوع|مرة بالأسبوع|مره كل اسبوع|weekly|once.*week|per.*week|every.*week|once.*weekly|q1w|qw/i.test(fn_str)){h_s=true;console.log('📅 Weekly detected from note: "'+fn_str+'"');}
 
     /* ── RAMADAN MODE OVERRIDES ── */
     var ramadanInfo=null;
