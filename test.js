@@ -3579,7 +3579,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     return;
   }
   _ezContinueAfterUnify();
-  }
   function _ezContinueAfterUnify(){
   console.log('🤖 Gemini check: '+allRowsData.length+' total rows');
   for(var _dbg=0;_dbg<allRowsData.length;_dbg++){if(allRowsData[_dbg]._needsGemini)console.log('🤖 Row '+_dbg+' needs Gemini: "'+allRowsData[_dbg].note+'"');}
@@ -3643,6 +3642,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   } else {
     if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
   }
+  } /* end _ezContinueAfterUnify */
 
   function continueProcessing(){
     var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
