@@ -3,38 +3,38 @@
     "version": "1.0",
     "app": "EZ_Pill",
     "lastUpdate": "2026-03-07",
-    "updatedBy": "admin"
+    "updatedBy": "admin",
+    "testWrite": true
   },
-
   "admin": {
     "pin": "101093"
   },
-
   "users": [
-    {"id": "admin", "name": "المسؤول", "role": "admin", "active": true},
-    {"id": "user1", "name": "فني 1", "role": "user", "active": true}
+    {
+      "id": "admin",
+      "name": "المسؤول",
+      "role": "admin",
+      "active": true
+    },
+    {
+      "id": "user1",
+      "name": "فني 1",
+      "role": "user",
+      "active": true
+    }
   ],
-
-  "fixedSizeCodes": {},
-
+  "fixedSizeCodes": {
+    "999999999": 99
+  },
   "removedCodes": [],
-
   "weeklyInjections": [],
-
   "removedWeekly": [],
-
   "codeStartTimes": {},
-
   "customWords": {},
-
   "customTimeRules": [],
-
   "customRamadanRules": [],
-
   "normalTimes": {},
-
   "ramadanTimes": {},
-
   "gemini": {
     "model": "gemini-flash-latest"
   }
