@@ -23,7 +23,12 @@
   "removedCodes": [],
   "weeklyInjections": [],
   "removedWeekly": [],
-  "codeStartTimes": {},
+  "codeStartTimes": {
+    "100633948": {
+      "time": "14:00",
+      "every": 24
+    }
+  },
   "customWords": {},
   "customTimeRules": [],
   "customRamadanRules": [],
