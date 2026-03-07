@@ -3080,10 +3080,11 @@ function _ezShowUnifyDialog(conflicts,allRowsData,callback){
     mealBtn.setAttribute('data-group',conf.group);
     mealBtn.setAttribute('data-choice','meal');
     mealBtn.addEventListener('click',function(){
-      var grp=this.getAttribute('data-group');
-      _ezApplyUnify(grp,'meal',allRowsData);
-      this.textContent='✅ تم';this.disabled=true;this.style.background='#059669';this.style.color='#fff';
-      var sib=this.parentElement.querySelector('[data-choice="time"]');if(sib){sib.disabled=true;sib.style.opacity='0.3';}
+      _ezApplyUnify(null,'meal',allRowsData);
+      /* Disable all buttons after choice */
+      var allBtns=overlay.querySelectorAll('button[data-choice]');
+      for(var b=0;b<allBtns.length;b++){allBtns[b].disabled=true;allBtns[b].style.opacity='0.3';}
+      this.textContent='✅ تم توحيد الكل → وجبات';this.disabled=false;this.style.background='#059669';this.style.color='#fff';this.style.opacity='1';
     });
     choices.appendChild(mealBtn);
     
@@ -3093,10 +3094,10 @@ function _ezShowUnifyDialog(conflicts,allRowsData,callback){
     timeBtn.setAttribute('data-group',conf.group);
     timeBtn.setAttribute('data-choice','time');
     timeBtn.addEventListener('click',function(){
-      var grp=this.getAttribute('data-group');
-      _ezApplyUnify(grp,'time',allRowsData);
-      this.textContent='✅ تم';this.disabled=true;this.style.background='#6366f1';this.style.color='#fff';
-      var sib=this.parentElement.querySelector('[data-choice="meal"]');if(sib){sib.disabled=true;sib.style.opacity='0.3';}
+      _ezApplyUnify(null,'time',allRowsData);
+      var allBtns=overlay.querySelectorAll('button[data-choice]');
+      for(var b=0;b<allBtns.length;b++){allBtns[b].disabled=true;allBtns[b].style.opacity='0.3';}
+      this.textContent='✅ تم توحيد الكل → أوقات';this.disabled=false;this.style.background='#6366f1';this.style.color='#fff';this.style.opacity='1';
     });
     choices.appendChild(timeBtn);
     
@@ -3127,26 +3128,25 @@ function _ezShowUnifyDialog(conflicts,allRowsData,callback){
   document.body.appendChild(overlay);
 }
 
-/* Apply unification to notes */
+/* Apply unification to notes — ALL groups at once */
 function _ezApplyUnify(group,choice,allRowsData){
-  var mealMap={morning:'بعد الفطار',noon:'بعد الغداء',evening:'بعد العشاء',bed:'قبل النوم'};
-  var timeMap={morning:'صباحاً',noon:'عصراً',evening:'مساءً',bed:'قبل النوم'};
-  
-  /* Full replacement map: what to search → what to replace with */
+  /* عند اختيار وجبات: كل الأوقات تتحول لوجبات (صباحاً→بعد الفطار، مساءً→بعد العشاء، عصراً→بعد الغداء) */
+  /* عند اختيار أوقات: كل الوجبات تتحول لأوقات (بعد الفطار→صباحاً، بعد العشاء→مساءً، بعد الغداء→عصراً) */
   var replacements=[];
   if(choice==='meal'){
-    var target=mealMap[group];
-    if(group==='morning') replacements=[{from:/صباحا|صباحاً|صبحا|صباح|الصباح|morning/gi,to:target}];
-    if(group==='noon') replacements=[{from:/ظهرا|ظهراً|ظهر|الظهر|عصرا|عصراً|عصر|العصر|afternoon|noon/gi,to:target}];
-    if(group==='evening') replacements=[{from:/مساءا|مساءً|مساء|المساء|مسا|ليلا|ليلاً|ليل|الليل|evening|night/gi,to:target}];
+    replacements=[
+      {from:/صباحا|صباحاً|صبحا|صباح|الصباح|morning/gi,to:'بعد الفطار'},
+      {from:/ظهرا|ظهراً|ظهر|الظهر|عصرا|عصراً|عصر|العصر|afternoon|noon/gi,to:'بعد الغداء'},
+      {from:/مساءا|مساءً|مساء|المساء|مسا|ليلا|ليلاً|ليل|الليل|evening|night/gi,to:'بعد العشاء'}
+    ];
   } else {
-    var target=timeMap[group];
-    if(group==='morning') replacements=[{from:/بعد\s*(ال)?فطار|بعد\s*(ال)?فطور|after\s*breakfast/gi,to:target}];
-    if(group==='noon') replacements=[{from:/بعد\s*(ال)?غدا|بعد\s*(ال)?غداء|بعد\s*(ال)?غذا|بعد\s*(ال)?غذاء|after\s*lunch/gi,to:target}];
-    if(group==='evening') replacements=[{from:/بعد\s*(ال)?عشا|بعد\s*(ال)?عشاء|after\s*dinner/gi,to:target}];
+    replacements=[
+      {from:/[بي]عد\s*(ال)?فطار|[بي]عد\s*(ال)?فطور|after\s*breakfast/gi,to:'صباحاً'},
+      {from:/[بي]عد\s*(ال)?غدا[ءئ]?|[بي]عد\s*(ال)?غذا[ءئ]?|after\s*lunch/gi,to:'عصراً'},
+      {from:/[بي]عد\s*(ال)?عشا[ءئ]?|after\s*dinner/gi,to:'مساءً'}
+    ];
   }
   
-  /* Apply to table */
   var tb=_ezFindTable();
   if(!tb) return;
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');
@@ -3168,7 +3168,8 @@ function _ezApplyUnify(group,choice,allRowsData){
       count++;
     }
   }
-  if(count>0) window.ezShowToast('🔄 تم توحيد '+count+' جرعة → '+target,'success');
+  var label=choice==='meal'?'وجبات (فطار/غداء/عشاء)':'أوقات (صباحاً/عصراً/مساءً)';
+  if(count>0) window.ezShowToast('🔄 تم توحيد '+count+' جرعة → '+label,'success');
 }
 
 function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode){
@@ -3575,10 +3576,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   }
   /* Show unification dialog first if conflicts found */
   if(_unifyConflicts.length>0){
-    _ezShowUnifyDialog(_unifyConflicts,allRowsData,function(){_ezContinueAfterUnify();});
+    _ezShowUnifyDialog(_unifyConflicts,allRowsData,function(){
+      /* إعادة المعالجة بالكامل بعد التوحيد عشان الأوقات تتحسب صح */
+      processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode);
+    });
     return;
   }
-  _ezContinueAfterUnify();
   function _ezContinueAfterUnify(){
   console.log('🤖 Gemini check: '+allRowsData.length+' total rows');
   for(var _dbg=0;_dbg<allRowsData.length;_dbg++){if(allRowsData[_dbg]._needsGemini)console.log('🤖 Row '+_dbg+' needs Gemini: "'+allRowsData[_dbg].note+'"');}
