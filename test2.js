@@ -3372,17 +3372,32 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         for(var _r=0;_r<results.length&&_r<_geminiIdxMap.length;_r++){
           var ai=results[_r];var idx3=_geminiIdxMap[_r];
           if(ai&&ai.startTime&&ai.confidence==='high'){
-            /* Map AI time to local NORMAL_TIMES based on hour */
+            /* Map AI time to local NORMAL_TIMES using AI's Arabic description */
             var _aiH=parseInt(ai.startTime.split(':')[0]);
+            var _aiDesc=(ai.readable_ar||'').toLowerCase();
             var _localTime=ai.startTime;
-            if(_aiH>=5&&_aiH<=8) _localTime=NORMAL_TIMES.empty||NORMAL_TIMES.beforeMeal||ai.startTime;
-            else if(_aiH>=8&&_aiH<10) _localTime=ai.isBefore?(NORMAL_TIMES.beforeBreakfast||'08:00'):(NORMAL_TIMES.afterBreakfast||NORMAL_TIMES.morning||'09:00');
+            /* Match by keyword in AI description first (most accurate) */
+            if(/صباح|morning/i.test(_aiDesc)) _localTime=NORMAL_TIMES.morning||'09:00';
+            else if(/ريق|empty|fasting/i.test(_aiDesc)) _localTime=NORMAL_TIMES.empty||'08:00';
+            else if(/قبل.*فطار|before.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeBreakfast||'08:00';
+            else if(/بعد.*فطار|after.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
+            else if(/ظهر|noon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.noon||'12:00';
+            else if(/قبل.*غدا|قبل.*غداء|before.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeLunch||'13:00';
+            else if(/بعد.*غدا|بعد.*غداء|after.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterLunch||'14:00';
+            else if(/عصر|afternoon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afternoon||'15:00';
+            else if(/مغرب/i.test(_aiDesc)) _localTime=NORMAL_TIMES.maghrib||'18:00';
+            else if(/قبل.*عشا|before.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeDinner||'20:00';
+            else if(/بعد.*عشا|after.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterDinner||'21:00';
+            else if(/مساء|evening|ليل|night/i.test(_aiDesc)) _localTime=NORMAL_TIMES.evening||'21:00';
+            else if(/نوم|bed|sleep/i.test(_aiDesc)) _localTime=NORMAL_TIMES.bed||'22:00';
+            /* Fallback by hour if no keyword matched */
+            else if(_aiH>=5&&_aiH<=7) _localTime=NORMAL_TIMES.empty||'08:00';
+            else if(_aiH>=8&&_aiH<10) _localTime=NORMAL_TIMES.morning||'09:00';
             else if(_aiH>=10&&_aiH<13) _localTime=NORMAL_TIMES.noon||'12:00';
-            else if(_aiH>=13&&_aiH<15) _localTime=ai.isBefore?(NORMAL_TIMES.beforeLunch||'13:00'):(NORMAL_TIMES.afterLunch||'14:00');
-            else if(_aiH>=15&&_aiH<18) _localTime=NORMAL_TIMES.afternoon||'15:00';
-            else if(_aiH>=18&&_aiH<20) _localTime=NORMAL_TIMES.maghrib||'18:00';
-            else if(_aiH>=20&&_aiH<22) _localTime=ai.isBefore?(NORMAL_TIMES.beforeDinner||'20:00'):(NORMAL_TIMES.afterDinner||NORMAL_TIMES.evening||'21:00');
-            else if(_aiH>=22||_aiH<5) _localTime=NORMAL_TIMES.bed||'22:00';
+            else if(_aiH>=13&&_aiH<16) _localTime=NORMAL_TIMES.afterLunch||'14:00';
+            else if(_aiH>=16&&_aiH<19) _localTime=NORMAL_TIMES.maghrib||'18:00';
+            else if(_aiH>=19&&_aiH<22) _localTime=NORMAL_TIMES.evening||'21:00';
+            else _localTime=NORMAL_TIMES.bed||'22:00';
             console.log('🤖 Time map: AI='+ai.startTime+' → local='+_localTime);
             allRowsData[idx3].unrecognizedTime=_localTime;
             allRowsData[idx3].unrecognizedEvery=ai.every||24;
