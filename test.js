@@ -313,9 +313,15 @@ window.ezSetupGemini=function(){
   modelSel.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box';
   var models=[
     {value:'gemini-flash-latest',label:'gemini-flash-latest (المستقر ✅)'},
-    {value:'gemini-2.0-flash',label:'gemini-2.0-flash'},
+    {value:'gemini-flash-lite-latest',label:'gemini-flash-lite-latest (خفيف)'},
+    {value:'gemini-2.5-flash',label:'gemini-2.5-flash (الأحدث)'},
     {value:'gemini-2.5-flash-lite',label:'gemini-2.5-flash-lite (سريع)'},
-    {value:'gemini-1.5-flash',label:'gemini-1.5-flash (قديم)'}
+    {value:'gemini-2.0-flash',label:'gemini-2.0-flash'},
+    {value:'gemini-2.0-flash-001',label:'gemini-2.0-flash-001'},
+    {value:'gemini-2.0-flash-lite-001',label:'gemini-2.0-flash-lite-001'},
+    {value:'gemini-3-flash-preview',label:'gemini-3-flash-preview (تجريبي)'},
+    {value:'gemini-pro-latest',label:'gemini-pro-latest (متقدم)'},
+    {value:'gemini-2.5-pro',label:'gemini-2.5-pro (متقدم)'}
   ];
   var currentModel=_ezGetGeminiModel();
   for(var mi=0;mi<models.length;mi++){
@@ -377,8 +383,10 @@ window.ezSetupGemini=function(){
   testBtn.addEventListener('click',function(){
     var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
     if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
-    testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/'+_ezGetGeminiModel()+':generateContent?key='+testKey,{
+    var selModel=document.getElementById('ez-gemini-model-select').value;
+    testBtn.textContent='⏳ جاري الاختبار ('+selModel+')...';testBtn.disabled=true;
+    testBtn.style.color='#6366f1';testBtn.style.borderColor='rgba(99,102,241,0.2)';
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/'+selModel+':generateContent?key='+testKey,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}})
@@ -387,11 +395,11 @@ window.ezSetupGemini=function(){
       return r.json();
     }).then(function(data){
       var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
-      testBtn.textContent='✅ الاتصال ناجح!';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';
+      testBtn.textContent='✅ ناجح ('+selModel+') — اضغط لإعادة الاختبار';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';testBtn.disabled=false;
       window.ezShowToast('✅ جيميناي يعمل! الرد: '+text.substring(0,60),'success');
       console.log('🤖 Test response:',text);
     }).catch(function(err){
-      testBtn.textContent='❌ فشل: '+err.message;testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';
+      testBtn.textContent='❌ فشل — غيّر الموديل واضغط للإعادة';testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';testBtn.disabled=false;
       window.ezShowToast('❌ خطأ: '+err.message,'error');
       console.error('🤖 Test error:',err);
     });
