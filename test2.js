@@ -307,14 +307,22 @@ window.ezSetupGemini=function(){
     else{window.ezShowToast('❌ ادخل المفتاح','error');}
   });
   foot.appendChild(saveBtn);
-  var secBtn=document.createElement('button');
-  secBtn.textContent=current?'🗑️ حذف':'إلغاء';
-  secBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
-  secBtn.addEventListener('click',function(){
-    if(current){_ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');}
-    overlay.remove();
-  });
-  foot.appendChild(secBtn);
+  /* زر حذف — يظهر فقط لو فيه مفتاح محفوظ */
+  if(current){
+    var delBtn=document.createElement('button');
+    delBtn.textContent='🗑️ حذف';
+    delBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#dc2626;background:rgba(239,68,68,0.04)';
+    delBtn.addEventListener('click',function(){
+      _ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');overlay.remove();
+    });
+    foot.appendChild(delBtn);
+  }
+  /* زر إلغاء — يظهر دائماً */
+  var cancelBtn=document.createElement('button');
+  cancelBtn.textContent='إلغاء';
+  cancelBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
+  cancelBtn.addEventListener('click',function(){overlay.remove();});
+  foot.appendChild(cancelBtn);
   /* Test button */
   var testBtn=document.createElement('button');
   testBtn.textContent='🧪 اختبار الاتصال';
@@ -3364,7 +3372,19 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         for(var _r=0;_r<results.length&&_r<_geminiIdxMap.length;_r++){
           var ai=results[_r];var idx3=_geminiIdxMap[_r];
           if(ai&&ai.startTime&&ai.confidence==='high'){
-            allRowsData[idx3].unrecognizedTime=ai.startTime;
+            /* Map AI time to local NORMAL_TIMES based on hour */
+            var _aiH=parseInt(ai.startTime.split(':')[0]);
+            var _localTime=ai.startTime;
+            if(_aiH>=5&&_aiH<=8) _localTime=NORMAL_TIMES.empty||NORMAL_TIMES.beforeMeal||ai.startTime;
+            else if(_aiH>=8&&_aiH<10) _localTime=ai.isBefore?(NORMAL_TIMES.beforeBreakfast||'08:00'):(NORMAL_TIMES.afterBreakfast||NORMAL_TIMES.morning||'09:00');
+            else if(_aiH>=10&&_aiH<13) _localTime=NORMAL_TIMES.noon||'12:00';
+            else if(_aiH>=13&&_aiH<15) _localTime=ai.isBefore?(NORMAL_TIMES.beforeLunch||'13:00'):(NORMAL_TIMES.afterLunch||'14:00');
+            else if(_aiH>=15&&_aiH<18) _localTime=NORMAL_TIMES.afternoon||'15:00';
+            else if(_aiH>=18&&_aiH<20) _localTime=NORMAL_TIMES.maghrib||'18:00';
+            else if(_aiH>=20&&_aiH<22) _localTime=ai.isBefore?(NORMAL_TIMES.beforeDinner||'20:00'):(NORMAL_TIMES.afterDinner||NORMAL_TIMES.evening||'21:00');
+            else if(_aiH>=22||_aiH<5) _localTime=NORMAL_TIMES.bed||'22:00';
+            console.log('🤖 Time map: AI='+ai.startTime+' → local='+_localTime);
+            allRowsData[idx3].unrecognizedTime=_localTime;
             allRowsData[idx3].unrecognizedEvery=ai.every||24;
             allRowsData[idx3].warningOverride=true;
             allRowsData[idx3]._geminiResolved=true;
