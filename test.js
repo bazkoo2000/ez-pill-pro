@@ -216,7 +216,7 @@ async function _ezGeminiParse(noteText){
   var key=_ezGetGeminiKey();
   if(!key) return null;
   try{
-    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key,{
+    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -236,11 +236,11 @@ async function _ezGeminiParse(noteText){
 async function _ezGeminiBatch(notes){
   var key=_ezGetGeminiKey();
   if(!key||notes.length===0){console.log('🤖 Batch: no key or empty notes');return [];}
-  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: 2.5-flash-lite)...');
+  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: 2.0-flash)...');
   var prompt=_GEMINI_PROMPT+'\n\nParse ALL of these notes. Return a JSON ARRAY with one object per note, in the same order:\n';
   for(var i=0;i<notes.length;i++) prompt+=(i+1)+'. "'+notes[i]+'"\n';
-  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key;
-  console.log('🤖 URL:',url.substring(0,80)+'...');
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key;
+  console.log('🤖 URL:',url.replace(/key=.*/,'key=***'));
   var _body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1000,responseMimeType:'application/json'}});
   var resp=null;
   /* Retry up to 2 times with delay if rate limited (429) */
@@ -331,7 +331,7 @@ window.ezSetupGemini=function(){
     var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
     if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
     testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+testKey,{
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+testKey,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:200,responseMimeType:'application/json'}})
@@ -2835,6 +2835,12 @@ function getTimeFromWords(w){
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
+  /* يوميا/يومياً/daily = مرة واحدة يومياً — وقت افتراضي */
+  if(/يوميا|يومياً|يوميه|daily/i.test(s))return{time:NT.morning||NT.defaultTime};
+  /* اسبوعيا/أسبوعياً/weekly = مرة أسبوعياً — وقت افتراضي */
+  if(/اسبوعيا|أسبوعياً|اسبوعيه|weekly/i.test(s))return{time:NT.morning||NT.defaultTime};
+  /* كلمات تكرار بدون وقت محدد — وقت افتراضي (مش يروح لجيميناي) */
+  if(/مرتين|مره|مرات|ثلاث|اربع|twice|once|thrice|bid|tid|qid|bd|tds|qds|od/i.test(s))return{time:NT.defaultTime};
   /* If note is empty or very short, return default time */
   if(!s||s.length<3)return{time:NT.defaultTime,isEmpty:true};
   /* Unrecognized pattern - return default but flag it */
@@ -3269,6 +3275,17 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     }
   }
 
+  /* 🤖 Mark unrecognized notes for Gemini — runs ALWAYS (not just when warnings enabled) */
+  if(_ezGetGeminiKey()){
+    for(var _gScan=0;_gScan<allRowsData.length;_gScan++){
+      var _gRd=allRowsData[_gScan];
+      if(_gRd.note&&_gRd.note.trim().length>=3&&!_gRd.hasFixedSize&&!_gRd.isWeekly){
+        var _gTime=getTimeFromWords(_gRd.note);
+        if(_gTime.isUnrecognized) _gRd._needsGemini=true;
+      }
+    }
+  }
+
   if(enableWarnings){
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];
@@ -3277,8 +3294,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(rd.note&&rd.note.trim().length>=3&&!rd.hasFixedSize&&!rd.isWeekly){
         var timeResult=getTimeFromWords(rd.note);
         if(timeResult.isUnrecognized){
-          /* Mark for Gemini AI resolution if API key exists */
-          if(_ezGetGeminiKey()) rd._needsGemini=true;
           var curEvery=rd.hourlyInfo&&rd.hourlyInfo.hasInterval?rd.hourlyInfo.hours:24;
           var curSize=rd.calculatedSize||0;
           warningQueue.push({
@@ -3365,8 +3380,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   console.log('🤖 Gemini: '+_geminiNotes.length+' unrecognized notes, key='+(!!_ezGetGeminiKey()));
   if(_geminiNotes.length>0){console.log('🤖 Notes to send:',_geminiNotes);}
   if(_geminiNotes.length>0&&_ezGetGeminiKey()){
+    console.log('🤖 CALLING Gemini with '+_geminiNotes.length+' notes...');
     window.ezShowToast('🤖 جاري تحليل '+_geminiNotes.length+' جرعة بالذكاء الاصطناعي...','info');
     _ezGeminiBatch(_geminiNotes).then(function(results){
+      console.log('🤖 Gemini returned successfully');
       console.log('🤖 Gemini response:',results);
       if(results&&results.length>0){
         var resolved=0;
