@@ -210,18 +210,18 @@ function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
 
 /* Prompt مصمم للصيدلة — يرجع JSON فقط */
-var _GEMINI_PROMPT='You are a pharmacy dose interpreter. Given a prescription note, return ONLY a JSON object with these fields:\n- count: number of times per day (1, 2, 3, or 4)\n- startTime: first dose time in HH:MM format (24h)\n- every: hours between doses (24, 12, 8, or 6)\n- isBefore: true if dose is before meals, false if after\n- confidence: "high" or "low"\n- readable_ar: short Arabic description of the dose\n\nExamples:\n"بعد الفطار والعشاء" → {"count":2,"startTime":"09:00","every":12,"isBefore":false,"confidence":"high","readable_ar":"مرتين يومياً بعد الفطار والعشاء"}\n"once daily at night" → {"count":1,"startTime":"21:00","every":24,"isBefore":false,"confidence":"high","readable_ar":"مرة واحدة ليلاً"}\n"tid pc" → {"count":3,"startTime":"08:00","every":8,"isBefore":true,"confidence":"high","readable_ar":"ثلاث مرات قبل الأكل"}\n\nReturn ONLY the JSON. No explanation. No markdown.';
+var _GEMINI_PROMPT='You are a pharmacy dose interpreter for Saudi pharmacies.\n\nIMPORTANT RULES:\n- Words like حبه/حبة/قرص/كبسولة are UNIT WORDS meaning \"1 pill\" — they are NOT the dose count. Ignore them.\n- حبتين/قرصين = dose of 2 pills per time (set dose field to 2)\n- Focus ONLY on TIMING and FREQUENCY, not pill count.\n- Notes may have typos in Arabic (صبلح=صباحا، مسلء=مساء، etc). Interpret the intended meaning.\n\nReturn ONLY a JSON object:\n- count: times per day (1,2,3,4)\n- startTime: first dose HH:MM (24h)\n- every: hours between doses (24,12,8,6)\n- isBefore: true=before meals, false=after\n- dose: pills per time (1 unless حبتين/قرصين)\n- confidence: \"high\" or \"low\"\n- readable_ar: Arabic description WITHOUT pill count words\n\nExamples:\n\"حبه صباحا ومساء\" → {\"count\":2,\"startTime\":\"09:00\",\"every\":12,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرتين صباحاً ومساءً\"}\n\"بعد الفطار والعشاء\" → {\"count\":2,\"startTime\":\"09:00\",\"every\":12,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرتين بعد الفطار والعشاء\"}\n\"حبتين بعد الاكل\" → {\"count\":1,\"startTime\":\"09:00\",\"every\":24,\"isBefore\":false,\"dose\":2,\"confidence\":\"high\",\"readable_ar\":\"مرة بعد الأكل (حبتين)\"}\n\"once daily at night\" → {\"count\":1,\"startTime\":\"21:00\",\"every\":24,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرة واحدة ليلاً\"}\n\"tid pc\" → {\"count\":3,\"startTime\":\"08:00\",\"every\":8,\"isBefore\":true,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"ثلاث مرات قبل الأكل\"}';
 
 async function _ezGeminiParse(noteText){
   var key=_ezGetGeminiKey();
   if(!key) return null;
   try{
-    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+key,{
+    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{parts:[{text:_GEMINI_PROMPT+'\n\nNote: "'+noteText+'"'}]}],
-        generationConfig:{temperature:0.1,maxOutputTokens:200}
+        generationConfig:{temperature:0.1,maxOutputTokens:200,responseMimeType:'application/json'}
       })
     });
     if(!resp.ok) return null;
@@ -236,12 +236,12 @@ async function _ezGeminiParse(noteText){
 async function _ezGeminiBatch(notes){
   var key=_ezGetGeminiKey();
   if(!key||notes.length===0){console.log('🤖 Batch: no key or empty notes');return [];}
-  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: flash-lite)...');
+  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: 2.5-flash-lite)...');
   var prompt=_GEMINI_PROMPT+'\n\nParse ALL of these notes. Return a JSON ARRAY with one object per note, in the same order:\n';
   for(var i=0;i<notes.length;i++) prompt+=(i+1)+'. "'+notes[i]+'"\n';
-  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+key;
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key;
   console.log('🤖 URL:',url.substring(0,80)+'...');
-  var _body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1000}});
+  var _body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1000,responseMimeType:'application/json'}});
   var resp=null;
   /* Retry up to 2 times with delay if rate limited (429) */
   for(var _retry=0;_retry<3;_retry++){
@@ -323,10 +323,10 @@ window.ezSetupGemini=function(){
     var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
     if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
     testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+testKey,{
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+testKey,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:'Parse this dose: "twice daily after meals". Return ONLY JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:200}})
+      body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:200,responseMimeType:'application/json'}})
     }).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
