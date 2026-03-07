@@ -46,7 +46,7 @@ try{
 
     /* ── Step 2: Fetch cassettes ── */
     statusEl.textContent='جاري سحب الكاسيتات...';
-    var resp=await fetch(API_URL,{
+    var resp=await fetch(API_URL,{mode:'cors',credentials:'omit',
         
         headers:{'Accept':'application/json','Content-Type':'application/json','Authorization':'Bearer '+authToken}
     });
