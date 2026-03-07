@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "app": "EZ_Pill_JVM",
+    "lastUpdate": "2026-03-07",
+    "updatedBy": "admin"
+  },
+  "admin": {
+    "pin": "101093"
+  },
+  "users": [
+    {"id": "admin", "name": "المسؤول", "role": "admin", "active": true}
+  ],
+  "fixedSizeCodes": {},
+  "removedCodes": [],
+  "weeklyInjections": [],
+  "removedWeekly": [],
+  "codeStartTimes": {},
+  "customWords": {},
+  "customTimeRules": [],
+  "customRamadanRules": [],
+  "normalTimes": {},
+  "ramadanTimes": {},
+  "gemini": {
+    "model": "gemini-flash-latest"
+  }
+}
