@@ -3582,6 +3582,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     });
     return;
   }
+  _ezContinueAfterUnify();
   function _ezContinueAfterUnify(){
   console.log('🤖 Gemini check: '+allRowsData.length+' total rows');
   for(var _dbg=0;_dbg<allRowsData.length;_dbg++){if(allRowsData[_dbg]._needsGemini)console.log('🤖 Row '+_dbg+' needs Gemini: "'+allRowsData[_dbg].note+'"');}
