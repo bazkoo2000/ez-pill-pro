@@ -223,7 +223,7 @@ async function _ezGeminiParse(noteText){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{parts:[{text:_GEMINI_PROMPT+'\n\nNote: "'+noteText+'"'}]}],
-        generationConfig:{temperature:0.1,maxOutputTokens:200,responseMimeType:'application/json'}
+        generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}
       })
     });
     if(!resp.ok) return null;
@@ -244,7 +244,7 @@ async function _ezGeminiBatch(notes){
   var _model=_ezGetGeminiModel();
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+_model+':generateContent?key='+key;
   console.log('🤖 URL:',url.replace(/key=.*/,'key=***'));
-  var _body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1000,responseMimeType:'application/json'}});
+  var _body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:2048,responseMimeType:'application/json'}});
   var resp=null;
   /* Retry up to 2 times with delay if rate limited (429) */
   for(var _retry=0;_retry<3;_retry++){
@@ -263,8 +263,22 @@ async function _ezGeminiBatch(notes){
   var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
   console.log('🤖 Extracted text:',text);
   text=text.replace(/```json|```/g,'').trim();
-  var parsed=JSON.parse(text);
-  /* If single note sent, Gemini might return object instead of array */
+  /* Try parsing — if truncated, try to fix */
+  var parsed;
+  try{parsed=JSON.parse(text);}catch(pe){
+    console.warn('🤖 JSON parse failed, trying to fix truncated response...');
+    /* Try adding closing brackets */
+    var fixed=text;
+    if(!fixed.endsWith(']'))fixed+='}]';
+    else if(!fixed.endsWith('}'))fixed+='}';
+    try{parsed=JSON.parse(fixed);}catch(pe2){
+      /* Try extracting individual objects */
+      var objs=[];var re=/\{[^{}]*"count"\s*:\s*\d[^{}]*\}/g;var m;
+      while((m=re.exec(text))!==null){try{objs.push(JSON.parse(m[0]));}catch(e3){}}
+      if(objs.length>0){parsed=objs;console.log('🤖 Recovered '+objs.length+' objects from truncated JSON');}
+      else{throw new Error('Cannot parse Gemini response');}
+    }
+  }
   if(!Array.isArray(parsed)) parsed=[parsed];
   return parsed;
 }
@@ -363,21 +377,23 @@ window.ezSetupGemini=function(){
   testBtn.addEventListener('click',function(){
     var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
     if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
-    testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/'+_ezGetGeminiModel()+':generateContent?key='+testKey,{
+    var selModel=document.getElementById('ez-gemini-model-select').value;
+    testBtn.textContent='⏳ جاري الاختبار ('+selModel+')...';testBtn.disabled=true;
+    testBtn.style.color='#6366f1';testBtn.style.borderColor='rgba(99,102,241,0.2)';
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/'+selModel+':generateContent?key='+testKey,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:200,responseMimeType:'application/json'}})
+      body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}})
     }).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     }).then(function(data){
       var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
-      testBtn.textContent='✅ الاتصال ناجح!';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';
+      testBtn.textContent='✅ ناجح ('+selModel+') — اضغط لإعادة الاختبار';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';testBtn.disabled=false;
       window.ezShowToast('✅ جيميناي يعمل! الرد: '+text.substring(0,60),'success');
       console.log('🤖 Test response:',text);
     }).catch(function(err){
-      testBtn.textContent='❌ فشل: '+err.message;testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';
+      testBtn.textContent='❌ فشل — غيّر الموديل واضغط للإعادة';testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';testBtn.disabled=false;
       window.ezShowToast('❌ خطأ: '+err.message,'error');
       console.error('🤖 Test error:',err);
     });
