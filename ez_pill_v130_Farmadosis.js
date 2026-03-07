@@ -201,6 +201,162 @@ function ezBeep(type){
     }
   }catch(e){}
 }
+
+/* ══════════════════════════════════════════
+   🤖 GEMINI AI FALLBACK - للجرعات غير المفهومة فقط
+   لا يتم إرسال أي بيانات شخصية — فقط نص الجرعة
+   ══════════════════════════════════════════ */
+function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}catch(e){return '';}}
+function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
+
+/* Prompt مصمم للصيدلة — يرجع JSON فقط */
+var _GEMINI_PROMPT='You are a pharmacy dose interpreter for Saudi pharmacies.\n\nIMPORTANT RULES:\n- Words like حبه/حبة/قرص/كبسولة are UNIT WORDS meaning \"1 pill\" — they are NOT the dose count. Ignore them.\n- حبتين/قرصين = dose of 2 pills per time (set dose field to 2)\n- Focus ONLY on TIMING and FREQUENCY, not pill count.\n- Notes may have typos in Arabic (صبلح=صباحا، مسلء=مساء، etc). Interpret the intended meaning.\n\nReturn ONLY a JSON object:\n- count: times per day (1,2,3,4)\n- startTime: first dose HH:MM (24h)\n- every: hours between doses (24,12,8,6)\n- isBefore: true=before meals, false=after\n- dose: pills per time (1 unless حبتين/قرصين)\n- confidence: \"high\" or \"low\"\n- readable_ar: Arabic description WITHOUT pill count words\n\nExamples:\n\"حبه صباحا ومساء\" → {\"count\":2,\"startTime\":\"09:00\",\"every\":12,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرتين صباحاً ومساءً\"}\n\"بعد الفطار والعشاء\" → {\"count\":2,\"startTime\":\"09:00\",\"every\":12,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرتين بعد الفطار والعشاء\"}\n\"حبتين بعد الاكل\" → {\"count\":1,\"startTime\":\"09:00\",\"every\":24,\"isBefore\":false,\"dose\":2,\"confidence\":\"high\",\"readable_ar\":\"مرة بعد الأكل (حبتين)\"}\n\"once daily at night\" → {\"count\":1,\"startTime\":\"21:00\",\"every\":24,\"isBefore\":false,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"مرة واحدة ليلاً\"}\n\"tid pc\" → {\"count\":3,\"startTime\":\"08:00\",\"every\":8,\"isBefore\":true,\"dose\":1,\"confidence\":\"high\",\"readable_ar\":\"ثلاث مرات قبل الأكل\"}';
+
+async function _ezGeminiParse(noteText){
+  var key=_ezGetGeminiKey();
+  if(!key) return null;
+  try{
+    var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:_GEMINI_PROMPT+'\n\nNote: "'+noteText+'"'}]}],
+        generationConfig:{temperature:0.1,maxOutputTokens:200,responseMimeType:'application/json'}
+      })
+    });
+    if(!resp.ok) return null;
+    var data=await resp.json();
+    var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
+    text=text.replace(/```json|```/g,'').trim();
+    return JSON.parse(text);
+  }catch(e){console.warn('Gemini error:',e);return null;}
+}
+
+/* Batch: parse multiple notes at once (more efficient) */
+async function _ezGeminiBatch(notes){
+  var key=_ezGetGeminiKey();
+  if(!key||notes.length===0){console.log('🤖 Batch: no key or empty notes');return [];}
+  console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: 2.5-flash-lite)...');
+  var prompt=_GEMINI_PROMPT+'\n\nParse ALL of these notes. Return a JSON ARRAY with one object per note, in the same order:\n';
+  for(var i=0;i<notes.length;i++) prompt+=(i+1)+'. "'+notes[i]+'"\n';
+  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key;
+  console.log('🤖 URL:',url.substring(0,80)+'...');
+  var _body=JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1000,responseMimeType:'application/json'}});
+  var resp=null;
+  /* Retry up to 2 times with delay if rate limited (429) */
+  for(var _retry=0;_retry<3;_retry++){
+    resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:_body});
+    console.log('🤖 Attempt '+(_retry+1)+': status='+resp.status);
+    if(resp.status!==429) break;
+    if(_retry<2){console.log('🤖 Rate limited, waiting 3s...');await new Promise(function(r){setTimeout(r,3000)});}
+  }
+  if(!resp||!resp.ok){
+    var errText=resp?await resp.text():'No response';
+    console.error('🤖 API Error:',errText);
+    throw new Error('Gemini API '+(resp?resp.status:'?')+': '+(errText||'').substring(0,100));
+  }
+  var data=await resp.json();
+  console.log('🤖 Raw response:',JSON.stringify(data).substring(0,200));
+  var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
+  console.log('🤖 Extracted text:',text);
+  text=text.replace(/```json|```/g,'').trim();
+  var parsed=JSON.parse(text);
+  /* If single note sent, Gemini might return object instead of array */
+  if(!Array.isArray(parsed)) parsed=[parsed];
+  return parsed;
+}
+
+/* UI: Setup Gemini key (called from settings) */
+window.ezSetupGemini=function(){
+  var current=_ezGetGeminiKey();
+  var masked=current?String.fromCharCode(8226).repeat(20)+current.slice(-6):'لم يتم التعيين';
+  var statusColor=current?'#059669':'#dc2626';
+  var statusText=current?'✅ مفعّل':'❌ غير مفعّل';
+  var overlay=document.createElement('div');
+  overlay.id='ez-gemini-setup';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+  var card=document.createElement('div');
+  card.style.cssText='width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
+  /* Header */
+  var hdr=document.createElement('div');
+  hdr.style.cssText='padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
+  hdr.innerHTML='<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">جيميناي — لفهم الجرعات غير المعروفة</div></div>';
+  card.appendChild(hdr);
+  /* Body */
+  var body=document.createElement('div');
+  body.style.cssText='padding:16px 22px;direction:rtl';
+  body.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">الحالة: <b style="color:'+statusColor+'">'+statusText+'</b></div><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:8px">'+masked+'</div>';
+  var inp=document.createElement('input');
+  inp.id='ez-gemini-key-input';inp.type='password';inp.placeholder='الصق مفتاح Gemini API هنا';
+  inp.style.cssText='width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box';
+  body.appendChild(inp);
+  var info=document.createElement('div');
+  info.style.cssText='font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px';
+  info.innerHTML='🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>';
+  body.appendChild(info);
+  card.appendChild(body);
+  /* Buttons */
+  var foot=document.createElement('div');
+  foot.style.cssText='padding:10px 22px 16px;display:flex;gap:8px';
+  var saveBtn=document.createElement('button');
+  saveBtn.textContent='💾 حفظ';
+  saveBtn.style.cssText='flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
+  saveBtn.addEventListener('click',function(){
+    var k=document.getElementById('ez-gemini-key-input').value.trim();
+    if(k){_ezSetGeminiKey(k);window.ezShowToast('✅ تم حفظ مفتاح جيميناي','success');overlay.remove();}
+    else{window.ezShowToast('❌ ادخل المفتاح','error');}
+  });
+  foot.appendChild(saveBtn);
+  /* زر حذف — يظهر فقط لو فيه مفتاح محفوظ */
+  if(current){
+    var delBtn=document.createElement('button');
+    delBtn.textContent='🗑️ حذف';
+    delBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#dc2626;background:rgba(239,68,68,0.04)';
+    delBtn.addEventListener('click',function(){
+      _ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');overlay.remove();
+    });
+    foot.appendChild(delBtn);
+  }
+  /* زر إلغاء — يظهر دائماً */
+  var cancelBtn=document.createElement('button');
+  cancelBtn.textContent='إلغاء';
+  cancelBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
+  cancelBtn.addEventListener('click',function(){overlay.remove();});
+  foot.appendChild(cancelBtn);
+  /* Test button */
+  var testBtn=document.createElement('button');
+  testBtn.textContent='🧪 اختبار الاتصال';
+  testBtn.style.cssText='width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
+  testBtn.addEventListener('click',function(){
+    var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
+    if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
+    testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+testKey,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:200,responseMimeType:'application/json'}})
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(data){
+      var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
+      testBtn.textContent='✅ الاتصال ناجح!';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';
+      window.ezShowToast('✅ جيميناي يعمل! الرد: '+text.substring(0,60),'success');
+      console.log('🤖 Test response:',text);
+    }).catch(function(err){
+      testBtn.textContent='❌ فشل: '+err.message;testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';
+      window.ezShowToast('❌ خطأ: '+err.message,'error');
+      console.error('🤖 Test error:',err);
+    });
+  });
+  body.appendChild(testBtn);
+  card.appendChild(foot);
+  overlay.appendChild(card);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+  inp.focus();
+};
+
 var _defaultFixedSizeCodes={
   '100009926':24,
   '100009934':48,
@@ -938,6 +1094,9 @@ window.ezShowDoses=function(){
     c=c.replace(/كل\s*\d+\s*ساع[ةهات]*/g,'');
     c=c.replace(/^\s*[-–—]\s*/,'');
     if(/^\s*[\da-zA-Z]/.test(c)&&/[\u0600-\u06FF]/.test(c)){var idx=c.search(/[\u0600-\u06FF]/);if(idx>0) c=c.substring(idx);}
+    /* Strip dose words */
+    c=c.replace(/و(قرص|حبه|حبة|كبسوله|كبسولة)\b/g,'و ');
+    c=c.replace(/(^|\s)(قرص|حبه|حبة|حيه|حيه|كبسوله|كبسولة|اقراص|حبوب|كبسولات)(\s|$)/gi,'$1$3');
     return c.replace(/\s+/g,' ').trim();
   }
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
@@ -2446,6 +2605,10 @@ function cleanNote(txt){
     var idx=c.search(/[\u0600-\u06FF]/);
     if(idx>0) c=c.substring(idx);
   }
+  /* Step 6: Separate glued "و" connector first (وقرص→و  / وحبه→و ) */
+  c=c.replace(/و(قرص|حبه|حبة|كبسوله|كبسولة)\b/g,'و ');
+  /* Step 7: Strip ALL standalone dose unit words — keep حبتين/قرصين (dose=2) */
+  c=c.replace(/(^|\s)(قرص|حبه|حبة|حيه|حيه|كبسوله|كبسولة|اقراص|حبوب|كبسولات)(\s|$)/gi,'$1$3');
   return c.replace(/\s+/g,' ').trim();
 }
 
@@ -2579,6 +2742,8 @@ function smartDoseRecognizer(note){
   s=s.replace(/\d+\s*(شهر|شهور|اشهر|شهرين|month|months)/gi,'')
     .replace(/\d+\s*(يوم|ايام|اسبوع|اسابيع|day|days|week|weeks)/gi,'')
     .replace(/لمد[ةه]?\s*\d+/gi,'')
+    .replace(/و(قرص|حبه|حبة|كبسوله|كبسولة)/gi,' و ')
+    .replace(/(^|\s)(قرص|حبه|حبة|كبسوله|كبسولة|اقراص|حبوب)(\s|$)/gi,'$1$3')
     .replace(/\s+/g,' ').trim();
   var res={count:1,hasB:false,hasL:false,hasD:false,isBefore:false,hasM:false,hasN:false,hasA:false,hasE:false,hasBed:false,hasEmpty:false,language:'arabic',confidence:'high',rawFrequency:null};
   res.language=detectLanguage(raw);
@@ -2589,9 +2754,9 @@ function smartDoseRecognizer(note){
   res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|مع\s*(ال)?(غدا|غداء|غذا|غذاء)/i.test(s);
   res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|سحور|السحور|سحر|مع\s*(ال)?(عشا|عشاء|سحور|سحر)/i.test(s);
   res.hasM=/\b(morning|am|morn|a\.m)\b|صباح|الصباح|صبح/i.test(s);
-  res.hasN=/\b(noon|midday)\b|ظهر|الظهر/i.test(s);
+  res.hasN=/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/i.test(s);
   res.hasA=/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/i.test(s);
-  res.hasE=/\b(evening|eve)\b|مساء|مسا|المساء|المسا|ليل|الليل/i.test(s);
+  res.hasE=/\b(evening|eve|night)\b|مساء|مسا|مساءا|مساءً|المساء|المسا|ليل|الليل|ليلا|ليلاً/i.test(s);
   res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
   res.hasEmpty=/\b(empty|fasting)\b|ريق|الريق|على الريق|معده فارغه|empty\s*stomach/i.test(s);
   res.isBefore=/\b(before|bef|pre|ac|a\.c)\b|قبل/i.test(s);
@@ -2661,13 +2826,13 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   /* بعد/مع الاكل المبهمة → بعد الفطار */
-  if(/(?:بعد|مع)\s*(الاكل|الأكل|الوجبه?)\b|after\s*(meal|food)\b|\bpc\b/i.test(s))return{time:NT.afterBreakfast||'09:00'};
+  if(/(?:[بي]عد|مع)\s*(الاكل|الأكل|الوجبه?|الطعام)\b|after\s*(meal|food)\b|\bpc\b/i.test(s))return{time:NT.afterBreakfast||'09:00'};
   /* قبل الاكل المبهمة → قبل الفطار */
-  if(/قبل\s*(الاكل|الأكل|الوجبه?)\b|before\s*(meal|food)\b|\bac\b/i.test(s))return{time:NT.beforeMeal||'08:00'};
+  if(/قبل\s*(الاكل|الأكل|الوجبه?|الطعام)\b|before\s*(meal|food)\b|\bac\b/i.test(s))return{time:NT.beforeMeal||'08:00'};
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
-  var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|بعد.*فطر|بعد.*فطار|بعد.*فطور|بعد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|بعد.*غدا|بعد.*غداء|بعد.*غذا|بعد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|بعد.*عشا|بعد.*عشو|بعد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'},{test:/مساء|مسا|evening|eve/,time:'21:30'}];
+  var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء/,time:'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء/,time:'14:00'},{test:/\b(asr|afternoon|pm|p\.m)\b|عصر|العصر/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|hs|h\.s/,time:'22:00'},{test:/مساء|مسا|مساءا|مساءً|evening|eve|night|ليل|الليل|ليلا|ليلاً/,time:'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -2693,10 +2858,10 @@ function getMealTimesFromNote(note){
   var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
   var hasL=/غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|lunch/i.test(s);
   var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
-  var hasNoon=/ظهر|الظهر|noon|midday/i.test(s);
+  var hasNoon=/ظهر|الظهر|ظهرا|ظهراً|noon|midday/i.test(s);
   var hasBed=/نوم|النوم|bed|sleep|hs\b/i.test(s);
   var hasMorning=/صباح|الصباح|morning/i.test(s);
-  var hasEvening=/مساء|مسا|المساء|evening/i.test(s);
+  var hasEvening=/مساء|مسا|مساءا|مساءً|المساء|evening|night|ليل|ليلا|ليلاً/i.test(s);
   var hasAfternoon=/عصر|العصر|afternoon|asr/i.test(s);
   var times=[];
   if(hasB) times.push(isBefore?8:9);
@@ -3113,6 +3278,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(rd.note&&rd.note.trim().length>=3&&!rd.hasFixedSize&&!rd.isWeekly){
         var timeResult=getTimeFromWords(rd.note);
         if(timeResult.isUnrecognized){
+          /* Mark for Gemini AI resolution if API key exists */
+          if(_ezGetGeminiKey()) rd._needsGemini=true;
           var curEvery=rd.hourlyInfo&&rd.hourlyInfo.hasInterval?rd.hourlyInfo.hours:24;
           var curSize=rd.calculatedSize||0;
           warningQueue.push({
@@ -3155,6 +3322,18 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         }
       }
       
+      /* FIX v141: تحذير الجرعات المتناقضة */
+      if(rd.note&&rd.note.trim().length>=3&&!rd.hasFixedSize&&!rd.isWeekly){
+        var _doseRec2=smartDoseRecognizer(rd.note);
+        var _hourly2=rd.hourlyInfo;
+        /* تناقض: كل 12 ساعة (مرتين) + بعد الأكل المبهم (مرة واحدة) */
+        if(_hourly2&&_hourly2.hasInterval&&_hourly2.timesPerDay===2&&_doseRec2.count===1&&!/مرتين|twice|bid/i.test(rd.note)){
+          var _hasAmbigMeal=/(?:بعد|قبل|مع)\s*(الاكل|الأكل|الوجبه?|الطعام)/i.test(rd.note);
+          if(_hasAmbigMeal){
+            warningQueue.push({level:'info',message:'ℹ️ الصنف: '+_ezEsc(rd.itemName)+' — كل '+_hourly2.hours+' ساعة + بعد الأكل',detail:'كل '+_hourly2.hours+' ساعة = '+_hourly2.timesPerDay+' مرات لكن بعد الأكل عادةً مرة واحدة. تحقق من الجرعة.',editable:false,rowIndex:i,type:'info'});
+          }
+        }
+      }
       if(rd.hasFixedSize&&rd.dui){
         var totalSize=fixedSizeCodes[rd.itemCode];
         var parts=rd.dui.type==='three'?3:(rd.dui.type==='q6h'?1:2);
@@ -3173,7 +3352,77 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   }
 
   warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
-  if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+
+  /* 🤖 Gemini AI: resolve unrecognized doses before showing warnings */
+  var _geminiNotes=[];var _geminiIdxMap=[];
+  for(var _gi=0;_gi<allRowsData.length;_gi++){
+    if(allRowsData[_gi]._needsGemini&&allRowsData[_gi].note){
+      _geminiNotes.push(allRowsData[_gi].note);
+      _geminiIdxMap.push(_gi);
+    }
+  }
+  console.log('🤖 Gemini check: '+allRowsData.length+' total rows');
+  for(var _dbg=0;_dbg<allRowsData.length;_dbg++){if(allRowsData[_dbg]._needsGemini)console.log('🤖 Row '+_dbg+' needs Gemini: "'+allRowsData[_dbg].note+'"');}
+  console.log('🤖 Gemini: '+_geminiNotes.length+' unrecognized notes, key='+(!!_ezGetGeminiKey()));
+  if(_geminiNotes.length>0){console.log('🤖 Notes to send:',_geminiNotes);}
+  if(_geminiNotes.length>0&&_ezGetGeminiKey()){
+    window.ezShowToast('🤖 جاري تحليل '+_geminiNotes.length+' جرعة بالذكاء الاصطناعي...','info');
+    _ezGeminiBatch(_geminiNotes).then(function(results){
+      console.log('🤖 Gemini response:',results);
+      if(results&&results.length>0){
+        var resolved=0;
+        for(var _r=0;_r<results.length&&_r<_geminiIdxMap.length;_r++){
+          var ai=results[_r];var idx3=_geminiIdxMap[_r];
+          if(ai&&ai.startTime&&ai.confidence==='high'){
+            /* Map AI time to local NORMAL_TIMES using AI's Arabic description */
+            var _aiH=parseInt(ai.startTime.split(':')[0]);
+            var _aiDesc=(ai.readable_ar||'').toLowerCase();
+            var _localTime=ai.startTime;
+            /* Match by keyword in AI description first (most accurate) */
+            if(/صباح|morning/i.test(_aiDesc)) _localTime=NORMAL_TIMES.morning||'09:00';
+            else if(/ريق|empty|fasting/i.test(_aiDesc)) _localTime=NORMAL_TIMES.empty||'08:00';
+            else if(/قبل.*فطار|before.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeBreakfast||'08:00';
+            else if(/بعد.*فطار|after.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
+            else if(/ظهر|noon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.noon||'12:00';
+            else if(/قبل.*غدا|قبل.*غداء|before.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeLunch||'13:00';
+            else if(/بعد.*غدا|بعد.*غداء|after.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterLunch||'14:00';
+            else if(/عصر|afternoon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afternoon||'15:00';
+            else if(/مغرب/i.test(_aiDesc)) _localTime=NORMAL_TIMES.maghrib||'18:00';
+            else if(/قبل.*عشا|before.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeDinner||'20:00';
+            else if(/بعد.*عشا|after.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterDinner||'21:00';
+            else if(/مساء|evening|ليل|night/i.test(_aiDesc)) _localTime=NORMAL_TIMES.evening||'21:00';
+            else if(/نوم|bed|sleep/i.test(_aiDesc)) _localTime=NORMAL_TIMES.bed||'22:00';
+            /* Fallback by hour if no keyword matched */
+            else if(_aiH>=5&&_aiH<=7) _localTime=NORMAL_TIMES.empty||'08:00';
+            else if(_aiH>=8&&_aiH<10) _localTime=NORMAL_TIMES.morning||'09:00';
+            else if(_aiH>=10&&_aiH<13) _localTime=NORMAL_TIMES.noon||'12:00';
+            else if(_aiH>=13&&_aiH<16) _localTime=NORMAL_TIMES.afterLunch||'14:00';
+            else if(_aiH>=16&&_aiH<19) _localTime=NORMAL_TIMES.maghrib||'18:00';
+            else if(_aiH>=19&&_aiH<22) _localTime=NORMAL_TIMES.evening||'21:00';
+            else _localTime=NORMAL_TIMES.bed||'22:00';
+            console.log('🤖 Time map: AI='+ai.startTime+' → local='+_localTime);
+            allRowsData[idx3].unrecognizedTime=_localTime;
+            allRowsData[idx3].unrecognizedEvery=ai.every||24;
+            allRowsData[idx3].warningOverride=true;
+            allRowsData[idx3]._geminiResolved=true;
+            /* Remove the warning for this item */
+            warningQueue=warningQueue.filter(function(w){return !(w.type==='unrecognized_dose'&&w.rowIndex===idx3);});
+            resolved++;
+            console.log('🤖 AI resolved: "'+allRowsData[idx3].note+'" → '+ai.startTime+' every '+ai.every+'h ('+ai.readable_ar+')');
+          }
+        }
+        if(resolved>0) window.ezShowToast('🤖 الذكاء الاصطناعي فهم '+resolved+' جرعة','success');
+      }
+      /* Now show remaining warnings */
+      if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+    }).catch(function(err){
+      console.error('🤖 Gemini ERROR:',err);
+      window.ezShowToast('🤖 خطأ في جيميناي: '+(err.message||err),'error');
+      if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+    });
+  } else {
+    if(warningQueue.length>0&&enableWarnings){window.showWarnings(warningQueue,function(){continueProcessing();});}else{continueProcessing();}
+  }
 
   function continueProcessing(){
     var defaultStartDate=document.querySelector('#fstartDate')?document.querySelector('#fstartDate').value:null;
@@ -4326,6 +4575,7 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
+    <button class="ez-btn-icon" onclick="window.ezSetupGemini()" title="إعداد الذكاء الاصطناعي">🤖</button>\
     <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
