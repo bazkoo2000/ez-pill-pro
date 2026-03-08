@@ -207,7 +207,7 @@ function ezBeep(type){
    لا يتم إرسال أي بيانات شخصية — فقط نص الجرعة
    ══════════════════════════════════════════ */
 function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}catch(e){return '';}}
-function _ezGetGeminiModel(){try{return localStorage.getItem('ez_gemini_model')||'gemini-flash-latest';}catch(e){return 'gemini-flash-latest';}}
+function _ezGetGeminiModel(){try{return localStorage.getItem('ez_gemini_model')||'gemini-2.0-flash';}catch(e){return 'gemini-2.0-flash';}}
 function _ezSetGeminiModel(m){try{localStorage.setItem('ez_gemini_model',m);}catch(e){}}
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
 
@@ -248,7 +248,8 @@ async function _ezGeminiBatch(notes){
   var resp=null;
   /* Retry up to 2 times with delay if rate limited (429) */
   for(var _retry=0;_retry<3;_retry++){
-    resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:_body});
+    var _ctrl=new AbortController();var _tid=setTimeout(function(){_ctrl.abort();},15000);
+    try{resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:_body,signal:_ctrl.signal});}catch(_fe){clearTimeout(_tid);if(_fe.name==='AbortError'){console.error('🤖 Timeout after 15s');throw new Error('Gemini timeout');}throw _fe;}clearTimeout(_tid);
     console.log('🤖 Attempt '+(_retry+1)+': status='+resp.status);
     if(resp.status!==429&&resp.status!==503) break;
     if(_retry<2){var _wMs=resp.status===503?5000:3000;console.log('🤖 '+(resp.status===503?'Server busy (503), waiting 5s...':'Rate limited, waiting 3s...'));await new Promise(function(r){setTimeout(r,_wMs)});}
@@ -312,7 +313,7 @@ window.ezSetupGemini=function(){
   modelSel.id='ez-gemini-model-select';
   modelSel.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box';
   var models=[
-    {value:'gemini-flash-latest',label:'gemini-flash-latest (المستقر ✅)'},
+    {value:'gemini-2.0-flash',label:'gemini-2.0-flash (المستقر ✅)'},
     {value:'gemini-flash-lite-latest',label:'gemini-flash-lite-latest (خفيف)'},
     {value:'gemini-2.5-flash',label:'gemini-2.5-flash (الأحدث)'},
     {value:'gemini-2.5-flash-lite',label:'gemini-2.5-flash-lite (سريع)'},
