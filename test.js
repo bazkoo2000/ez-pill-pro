@@ -250,8 +250,8 @@ async function _ezGeminiBatch(notes){
   for(var _retry=0;_retry<3;_retry++){
     resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:_body});
     console.log('🤖 Attempt '+(_retry+1)+': status='+resp.status);
-    if(resp.status!==429) break;
-    if(_retry<2){console.log('🤖 Rate limited, waiting 3s...');await new Promise(function(r){setTimeout(r,3000)});}
+    if(resp.status!==429&&resp.status!==503) break;
+    if(_retry<2){var _wMs=resp.status===503?5000:3000;console.log('🤖 '+(resp.status===503?'Server busy (503), waiting 5s...':'Rate limited, waiting 3s...'));await new Promise(function(r){setTimeout(r,_wMs)});}
   }
   if(!resp||!resp.ok){
     var errText=resp?await resp.text():'No response';
