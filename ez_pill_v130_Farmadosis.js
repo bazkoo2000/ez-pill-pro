@@ -2106,6 +2106,10 @@ window.cancelWarnings=function(){
    SUBMIT HANDLER
    ══════════════════════════════════════════ */
 window.ezSubmit=function(){
+  /* Clean brackets from patient name */
+  var _pn=document.querySelector('input[name="Name"],#Name,input[placeholder*="Name"]');
+  if(_pn&&_pn.value&&/[()\[\]{}⟨⟩<>«»]/.test(_pn.value)){_pn.value=_cleanNameField(_pn.value);fire(_pn);}
+
   try{
     var d=document.getElementById('ez-dialog-box');
     if(!d) return;
@@ -2933,9 +2937,17 @@ function _ezColorDupRows(tb){
   }
 }
 
+/* Strip brackets from Name field — system rejects them */
+function _cleanNameField(txt){
+  if(!txt) return '';
+  return txt.toString().replace(/[()\[\]{}⟨⟩<>«»]/g,' ').replace(/\s+/g,' ').trim();
+}
+
 function cleanNote(txt){
   if(!txt) return '';
   var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
+  /* Strip brackets/parentheses — system rejects them */
+  c=c.replace(/[()\[\]{}⟨⟩<>«»]/g,' ');
   /* Step 1: Strip system pattern "1 Tablets every 24 Hrs for 30 days1" */
   c=c.replace(/\d*\s*(Tablets?|Capsules?|undefined|Caps?|Tab)\s*every\s*\d+\s*Hrs?\s*(for\s*)?\d*\s*days?\d*/gi,'');
   /* Step 2: Strip English duration fragments */
@@ -3500,7 +3512,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
   tb_main.querySelectorAll('tr').forEach(function(r_node,ri_idx){
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
-    if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+    if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);
+      /* Clean brackets from name */
+      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;fire(_snInp);}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
     var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
     if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
     rtp_list.push(r_node);
@@ -3517,6 +3531,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
     if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
+    /* Clean name field — remove brackets that system rejects */
+    if(itemName&&/[()\[\]{}⟨⟩<>«»]/.test(itemName)){
+      var cleanedName=_cleanNameField(itemName);
+      if(nm_main>=0&&tds_nodes[nm_main]){var _nmInp=tds_nodes[nm_main].querySelector('input,textarea');if(_nmInp){_nmInp.value=cleanedName;fire(_nmInp);}else{tds_nodes[nm_main].textContent=cleanedName;}}
+      itemName=cleanedName;
+    }
     if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
     var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
     var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);
