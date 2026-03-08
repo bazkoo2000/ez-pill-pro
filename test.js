@@ -211,6 +211,14 @@ function _ezGetGeminiModel(){try{return localStorage.getItem('ez_gemini_model')|
 function _ezSetGeminiModel(m){try{localStorage.setItem('ez_gemini_model',m);}catch(e){}}
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
 
+/* OpenAI helpers */
+function _ezGetOpenAIKey(){try{return localStorage.getItem('ez_openai_key')||'';}catch(e){return '';}}
+function _ezSetOpenAIKey(k){try{localStorage.setItem('ez_openai_key',k);}catch(e){}}
+function _ezGetOpenAIModel(){try{return localStorage.getItem('ez_openai_model')||'gpt-4o-mini';}catch(e){return 'gpt-4o-mini';}}
+function _ezSetOpenAIModel(m){try{localStorage.setItem('ez_openai_model',m);}catch(e){}}
+function _ezGetAIProvider(){try{return localStorage.getItem('ez_ai_provider')||'gemini';}catch(e){return 'gemini';}}
+function _ezSetAIProvider(p){try{localStorage.setItem('ez_ai_provider',p);}catch(e){}}
+
 /* Prompt مصمم للصيدلة — يرجع JSON فقط */
 var _GEMINI_PROMPT='You are a Saudi pharmacy dose interpreter. Parse Arabic/English dose notes.\n\nRULES:\n- حبه/قرص/كبسولة = unit words (ignore them, dose=1)\n- حبتين/قرصين = dose=2 pills\n- Focus on TIMING keywords (صباح=morning, مساء=evening, ظهر=noon, ليل=night, ريق=empty stomach, نوم=bedtime)\n- Arabic typos are common — interpret the intended meaning\n- When unsure, pick the most likely interpretation\n\nReturn ONLY valid JSON (no markdown, no text):\n{"count":N, "startTime":"HH:MM", "every":N, "isBefore":BOOL, "dose":N, "readable_ar":"وصف عربي"}\n\nFields:\n- count: times per day (1-4)\n- startTime: first dose time 24h format\n- every: hours between doses (24/12/8/6)\n- isBefore: true=before meals\n- dose: pills per time (usually 1)\n- readable_ar: Arabic summary\n\nExamples:\n"حبه صباحا ومساء" → {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"readable_ar":"مرتين صباحاً ومساءً"}\n"بعد الاكل" → {"count":1,"startTime":"09:00","every":24,"isBefore":false,"dose":1,"readable_ar":"مرة بعد الأكل"}\n"قبل النوم" → {"count":1,"startTime":"22:00","every":24,"isBefore":false,"dose":1,"readable_ar":"مرة قبل النوم"}\n"tid pc" → {"count":3,"startTime":"08:00","every":8,"isBefore":true,"dose":1,"readable_ar":"ثلاث مرات قبل الأكل"}\n"once daily" → {"count":1,"startTime":"09:00","every":24,"isBefore":false,"dose":1,"readable_ar":"مرة يومياً"}\n"على الريق" → {"count":1,"startTime":"07:00","every":24,"isBefore":true,"dose":1,"readable_ar":"مرة على الريق"}';
 
@@ -235,7 +243,7 @@ async function _ezGeminiParse(noteText){
 }
 
 /* Batch: parse multiple notes at once (more efficient) */
-async function _ezGeminiBatch(notes){
+async function _ezAIBatch(notes){
   var key=_ezGetGeminiKey();
   if(!key||notes.length===0){console.log('🤖 Batch: no key or empty notes');return [];}
   console.log('🤖 Batch: sending '+notes.length+' notes to Gemini (model: '+_ezGetGeminiModel()+')...');
@@ -284,133 +292,201 @@ async function _ezGeminiBatch(notes){
   return parsed;
 }
 
-/* UI: Setup Gemini key (called from settings) */
+/* OpenAI Batch: parse multiple notes */
+async function _ezOpenAIBatch(notes){
+  var key=_ezGetOpenAIKey();
+  if(!key||notes.length===0){console.log('🤖 OpenAI Batch: no key or empty notes');return [];}
+  var model=_ezGetOpenAIModel();
+  console.log('🤖 OpenAI Batch: sending '+notes.length+' notes (model: '+model+')...');
+  var prompt=_GEMINI_PROMPT+'\n\nParse ALL notes below. Return ONLY a JSON ARRAY (no markdown). One object per note, same order.\nIMPORTANT: ALWAYS provide startTime and every fields. If unsure, make your best guess.\n\n';
+  for(var i=0;i<notes.length;i++) prompt+=(i+1)+'. "'+notes[i]+'"\n';
+  var body=JSON.stringify({
+    model:model,
+    messages:[{role:'user',content:prompt}],
+    temperature:0.1,
+    max_tokens:2048,
+    response_format:{type:'json_object'}
+  });
+  var resp=null;
+  for(var _retry=0;_retry<3;_retry++){
+    var _ctrl=new AbortController();var _tid=setTimeout(function(){_ctrl.abort();},15000);
+    try{resp=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:body,signal:_ctrl.signal});}
+    catch(_fe){clearTimeout(_tid);if(_fe.name==='AbortError'){console.error('🤖 OpenAI Timeout');throw new Error('OpenAI timeout');}throw _fe;}
+    clearTimeout(_tid);
+    console.log('🤖 OpenAI Attempt '+(_retry+1)+': status='+resp.status);
+    if(resp.status!==429&&resp.status!==503) break;
+    if(_retry<2){await new Promise(function(r){setTimeout(r,3000);});}
+  }
+  if(!resp||!resp.ok){
+    var errText=resp?await resp.text():'No response';
+    console.error('🤖 OpenAI API Error:',errText);
+    throw new Error('OpenAI API '+(resp?resp.status:'?')+': '+(errText||'').substring(0,100));
+  }
+  var data=await resp.json();
+  var text=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
+  console.log('🤖 OpenAI raw:',text.substring(0,200));
+  text=text.replace(/```json|```/g,'').trim();
+  /* OpenAI json_object mode wraps array in {items:[...]} sometimes */
+  var parsed;
+  try{
+    parsed=JSON.parse(text);
+    if(!Array.isArray(parsed)){
+      /* Try common wrapper keys */
+      parsed=parsed.items||parsed.doses||parsed.results||parsed.data||[parsed];
+    }
+  }catch(pe){
+    var objs=[];var re=/\{[^{}]*"count"\s*:\s*\d[^{}]*\}/g;var m;
+    while((m=re.exec(text))!==null){try{objs.push(JSON.parse(m[0]));}catch(e3){}}
+    if(objs.length>0){parsed=objs;}
+    else{throw new Error('Cannot parse OpenAI response');}
+  }
+  if(!Array.isArray(parsed)) parsed=[parsed];
+  return parsed;
+}
+
+/* Unified AI batch: routes to OpenAI or Gemini based on provider setting */
+async function _ezAIBatch(notes){
+  var provider=_ezGetAIProvider();
+  if(provider==='openai'&&_ezGetOpenAIKey()){
+    return _ezOpenAIBatch(notes);
+  }
+  return _ezAIBatch(notes);
+}
+
+/* UI: Setup AI key — supports Gemini + OpenAI */
 window.ezSetupGemini=function(){
-  var current=_ezGetGeminiKey();
-  var masked=current?String.fromCharCode(8226).repeat(20)+current.slice(-6):'لم يتم التعيين';
-  var statusColor=current?'#059669':'#dc2626';
-  var statusText=current?'✅ مفعّل ('+_ezGetGeminiModel()+')':'❌ غير مفعّل';
+  var geminiKey=_ezGetGeminiKey();
+  var openaiKey=_ezGetOpenAIKey();
+  var provider=_ezGetAIProvider();
   var overlay=document.createElement('div');
   overlay.id='ez-gemini-setup';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
   var card=document.createElement('div');
-  card.style.cssText='width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
+  card.style.cssText='width:400px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
   /* Header */
   var hdr=document.createElement('div');
-  hdr.style.cssText='padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
-  hdr.innerHTML='<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">جيميناي — لفهم الجرعات غير المعروفة</div></div>';
+  hdr.style.cssText='padding:18px 22px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;gap:10px';
+  hdr.innerHTML='<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#fff">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.7)">للجرعات غير المفهومة — لا يتم إرسال بيانات شخصية</div></div>';
   card.appendChild(hdr);
   /* Body */
   var body=document.createElement('div');
-  body.style.cssText='padding:16px 22px;direction:rtl';
-  body.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">الحالة: <b style="color:'+statusColor+'">'+statusText+'</b></div><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:8px">'+masked+'</div>';
-  /* Model selector */
-  var modelLabel=document.createElement('div');
-  modelLabel.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';
-  modelLabel.textContent='الموديل:';
-  body.appendChild(modelLabel);
-  var modelSel=document.createElement('select');
-  modelSel.id='ez-gemini-model-select';
-  modelSel.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box';
-  var models=[
-    {value:'gemini-2.0-flash',label:'gemini-2.0-flash (المستقر ✅)'},
-    {value:'gemini-flash-lite-latest',label:'gemini-flash-lite-latest (خفيف)'},
-    {value:'gemini-2.5-flash',label:'gemini-2.5-flash (الأحدث)'},
-    {value:'gemini-2.5-flash-lite',label:'gemini-2.5-flash-lite (سريع)'},
-    {value:'gemini-2.0-flash',label:'gemini-2.0-flash'},
-    {value:'gemini-2.0-flash-001',label:'gemini-2.0-flash-001'},
-    {value:'gemini-2.0-flash-lite-001',label:'gemini-2.0-flash-lite-001'},
-    {value:'gemini-3-flash-preview',label:'gemini-3-flash-preview (تجريبي)'},
-    {value:'gemini-pro-latest',label:'gemini-pro-latest (متقدم)'},
-    {value:'gemini-2.5-pro',label:'gemini-2.5-pro (متقدم)'}
-  ];
-  var currentModel=_ezGetGeminiModel();
-  for(var mi=0;mi<models.length;mi++){
-    var opt=document.createElement('option');
-    opt.value=models[mi].value;opt.textContent=models[mi].label;
-    if(models[mi].value===currentModel) opt.selected=true;
-    modelSel.appendChild(opt);
-  }
-  body.appendChild(modelSel);
-
-  var keyLabel=document.createElement('div');
-  keyLabel.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';
-  keyLabel.textContent='مفتاح API:';
-  body.appendChild(keyLabel);
-  var inp=document.createElement('input');
-  inp.id='ez-gemini-key-input';inp.type='password';inp.placeholder='الصق مفتاح Gemini API هنا';
-  inp.style.cssText='width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box';
-  body.appendChild(inp);
-  var info=document.createElement('div');
-  info.style.cssText='font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px';
-  info.innerHTML='🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>';
-  body.appendChild(info);
+  body.style.cssText='padding:16px 22px;direction:rtl;max-height:70vh;overflow-y:auto';
+  /* Provider selector */
+  body.innerHTML=    '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:6px">مزود الذكاء الاصطناعي:</div>'+
+    '<div id="ez-ai-prov-wrap" style="display:flex;gap:8px;margin-bottom:14px">'+
+      '<button id="ez-prov-gemini" style="flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;border:2px solid \'+(provider==='gemini'?'#6366f1':'rgba(129,140,248,0.2)')+'\';background:\'+(provider==='gemini'?'rgba(99,102,241,0.08)':'#fff')+'\';color:\'+(provider==='gemini'?'#4f46e5':'#64748b')+'\'">'+
+        '🔷 Google Gemini</button>'+
+      '<button id="ez-prov-openai" style="flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;border:2px solid \'+(provider==='openai'?'#10b981':'rgba(16,185,129,0.2)')+'\';background:\'+(provider==='openai'?'rgba(16,185,129,0.08)':'#fff')+'\';color:\'+(provider==='openai'?'#059669':'#64748b')+'\'">'+
+        '🟢 ChatGPT / OpenAI</button>'+
+    '</div>'+
+    /* Gemini section */
+    '<div id="ez-sec-gemini" style="display:\'+(provider==='gemini'?'block':'none')+'\'">'+
+      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">موديل Gemini:</div>'+
+      '<select id="ez-gemini-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">'+
+        '<option value="gemini-2.0-flash"\'+('gemini-2.0-flash'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.0-flash ✅ (الافتراضي)</option>'+
+        '<option value="gemini-2.5-flash"\'+('gemini-2.5-flash'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.5-flash (الأحدث)</option>'+
+        '<option value="gemini-2.5-flash-lite"\'+('gemini-2.5-flash-lite'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.5-flash-lite (سريع)</option>'+
+        '<option value="gemini-2.0-flash-lite-001"\'+('gemini-2.0-flash-lite-001'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.0-flash-lite-001</option>'+
+      '</select>'+
+      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح Gemini API:</div>'+
+      '<input id="ez-gemini-key-input" type="password" placeholder="AIza..." style="width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:6px;box-sizing:border-box" value="'+( geminiKey?'••••••••••••'+geminiKey.slice(-6):'')+'">'+
+      '<div style="font-size:9px;font-weight:600;color:#94a3b8;margin-bottom:10px">📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1">احصل على مفتاح مجاني من Google AI Studio</a></div>'+
+    '</div>'+
+    /* OpenAI section */
+    '<div id="ez-sec-openai" style="display:\'+(provider==='openai'?'block':'none')+'\'">'+
+      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">موديل OpenAI:</div>'+
+      '<select id="ez-openai-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">'+
+        '<option value="gpt-4o-mini"\'+('gpt-4o-mini'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4o-mini ✅ (الأسرع والأرخص)</option>'+
+        '<option value="gpt-4o"\'+('gpt-4o'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4o (الأدق)</option>'+
+        '<option value="gpt-4.1-mini"\'+('gpt-4.1-mini'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4.1-mini (جديد)</option>'+
+        '<option value="gpt-4.1-nano"\'+('gpt-4.1-nano'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4.1-nano (الأخف)</option>'+
+      '</select>'+
+      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح OpenAI API:</div>'+
+      '<input id="ez-openai-key-input" type="password" placeholder="sk-..." style="width:100%;padding:10px 14px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:6px;box-sizing:border-box" value="'+( openaiKey?'••••••••••••'+openaiKey.slice(-6):'')+'">'+
+      '<div style="font-size:9px;font-weight:600;color:#94a3b8;margin-bottom:10px">📎 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#059669">احصل على مفتاح من OpenAI Platform</a><br>💡 gpt-4o-mini الأسرع والأرخص — مناسب جداً للصيدلة</div>'+
+    '</div>'+
+    /* Test button */
+    '<button id="ez-ai-test-btn" style="width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04)">🧪 اختبار الاتصال</button>';
   card.appendChild(body);
-  /* Buttons */
+  /* Buttons footer */
   var foot=document.createElement('div');
-  foot.style.cssText='padding:10px 22px 16px;display:flex;gap:8px';
+  foot.style.cssText='padding:10px 22px 16px;display:flex;gap:8px;direction:rtl';
   var saveBtn=document.createElement('button');
   saveBtn.textContent='💾 حفظ';
   saveBtn.style.cssText='flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
   saveBtn.addEventListener('click',function(){
-    var k=document.getElementById('ez-gemini-key-input').value.trim();
-    var selModel=document.getElementById('ez-gemini-model-select').value;
-    _ezSetGeminiModel(selModel);
-    if(k){_ezSetGeminiKey(k);window.ezShowToast('✅ تم حفظ المفتاح ('+selModel+')','success');overlay.remove();}
-    else if(current){_ezSetGeminiModel(selModel);window.ezShowToast('✅ تم تغيير الموديل إلى '+selModel,'success');overlay.remove();}
-    else{window.ezShowToast('❌ ادخل المفتاح','error');}
+    var prov=document.getElementById('ez-prov-openai').style.borderColor.indexOf('10b981')>-1?'openai':'gemini';
+    _ezSetAIProvider(prov);
+    if(prov==='gemini'){
+      var gk=document.getElementById('ez-gemini-key-input').value.trim();
+      var gm=document.getElementById('ez-gemini-model-select').value;
+      _ezSetGeminiModel(gm);
+      if(gk&&!gk.startsWith('•')){_ezSetGeminiKey(gk);}
+      window.ezShowToast('✅ تم الحفظ — Gemini ('+gm+')','success');
+    } else {
+      var ok=document.getElementById('ez-openai-key-input').value.trim();
+      var om=document.getElementById('ez-openai-model-select').value;
+      _ezSetOpenAIModel(om);
+      if(ok&&!ok.startsWith('•')){_ezSetOpenAIKey(ok);}
+      window.ezShowToast('✅ تم الحفظ — OpenAI ('+om+')','success');
+    }
+    overlay.remove();
   });
   foot.appendChild(saveBtn);
-  /* زر حذف — يظهر فقط لو فيه مفتاح محفوظ */
-  if(current){
-    var delBtn=document.createElement('button');
-    delBtn.textContent='🗑️ حذف';
-    delBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#dc2626;background:rgba(239,68,68,0.04)';
-    delBtn.addEventListener('click',function(){
-      _ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');overlay.remove();
-    });
-    foot.appendChild(delBtn);
-  }
-  /* زر إلغاء — يظهر دائماً */
   var cancelBtn=document.createElement('button');
   cancelBtn.textContent='إلغاء';
   cancelBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
   cancelBtn.addEventListener('click',function(){overlay.remove();});
   foot.appendChild(cancelBtn);
-  /* Test button */
-  var testBtn=document.createElement('button');
-  testBtn.textContent='🧪 اختبار الاتصال';
-  testBtn.style.cssText='width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
-  testBtn.addEventListener('click',function(){
-    var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
-    if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
-    var selModel=document.getElementById('ez-gemini-model-select').value;
-    testBtn.textContent='⏳ جاري الاختبار ('+selModel+')...';testBtn.disabled=true;
-    testBtn.style.color='#6366f1';testBtn.style.borderColor='rgba(99,102,241,0.2)';
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/'+selModel+':generateContent?key='+testKey,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}})
-    }).then(function(r){
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      return r.json();
-    }).then(function(data){
-      var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
-      testBtn.textContent='✅ ناجح ('+selModel+') — اضغط لإعادة الاختبار';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';testBtn.disabled=false;
-      window.ezShowToast('✅ جيميناي يعمل! الرد: '+text.substring(0,60),'success');
-      console.log('🤖 Test response:',text);
-    }).catch(function(err){
-      testBtn.textContent='❌ فشل — غيّر الموديل واضغط للإعادة';testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';testBtn.disabled=false;
-      window.ezShowToast('❌ خطأ: '+err.message,'error');
-      console.error('🤖 Test error:',err);
-    });
-  });
-  body.appendChild(testBtn);
   card.appendChild(foot);
   overlay.appendChild(card);
   overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
   document.body.appendChild(overlay);
-  inp.focus();
+  /* Provider toggle logic */
+  function _switchProv(p){
+    var isOAI=p==='openai';
+    document.getElementById('ez-sec-gemini').style.display=isOAI?'none':'block';
+    document.getElementById('ez-sec-openai').style.display=isOAI?'block':'none';
+    document.getElementById('ez-prov-gemini').style.borderColor=isOAI?'rgba(129,140,248,0.2)':'#6366f1';
+    document.getElementById('ez-prov-gemini').style.background=isOAI?'#fff':'rgba(99,102,241,0.08)';
+    document.getElementById('ez-prov-gemini').style.color=isOAI?'#64748b':'#4f46e5';
+    document.getElementById('ez-prov-openai').style.borderColor=isOAI?'#10b981':'rgba(16,185,129,0.2)';
+    document.getElementById('ez-prov-openai').style.background=isOAI?'rgba(16,185,129,0.08)':'#fff';
+    document.getElementById('ez-prov-openai').style.color=isOAI?'#059669':'#64748b';
+  }
+  document.getElementById('ez-prov-gemini').addEventListener('click',function(){_switchProv('gemini');});
+  document.getElementById('ez-prov-openai').addEventListener('click',function(){_switchProv('openai');});
+  /* Test button logic */
+  document.getElementById('ez-ai-test-btn').addEventListener('click',function(){
+    var prov=document.getElementById('ez-prov-openai').style.borderColor.indexOf('10b981')>-1?'openai':'gemini';
+    var testBtn=document.getElementById('ez-ai-test-btn');
+    testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
+    var testPromise;
+    if(prov==='openai'){
+      var ok=document.getElementById('ez-openai-key-input').value.trim()||_ezGetOpenAIKey();
+      var om=document.getElementById('ez-openai-model-select').value;
+      if(!ok){window.ezShowToast('❌ ادخل مفتاح OpenAI','error');testBtn.textContent='🧪 اختبار الاتصال';testBtn.disabled=false;return;}
+      testPromise=fetch('https://api.openai.com/v1/chat/completions',{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ok},
+        body:JSON.stringify({model:om,messages:[{role:'user',content:'Parse dose: "مرتين بعد الاكل". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"readable_ar":"مرتين بعد الأكل"}'}],temperature:0.1,max_tokens:100,response_format:{type:'json_object'}})
+      }).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){return (d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'ok';});
+    } else {
+      var gk=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
+      var gm=document.getElementById('ez-gemini-model-select').value;
+      if(!gk){window.ezShowToast('❌ ادخل مفتاح Gemini','error');testBtn.textContent='🧪 اختبار الاتصال';testBtn.disabled=false;return;}
+      testPromise=fetch('https://generativelanguage.googleapis.com/v1beta/models/'+gm+':generateContent?key='+gk,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:'Parse dose: "مرتين بعد الاكل". Return JSON only: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:100}})
+      }).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){return (d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text)||'ok';});
+    }
+    testPromise.then(function(txt){
+      testBtn.textContent='✅ ناجح — اضغط للإعادة';testBtn.style.color='#059669';testBtn.disabled=false;
+      window.ezShowToast('✅ '+prov+' يعمل!','success');console.log('🤖 Test OK:',txt);
+    }).catch(function(err){
+      testBtn.textContent='❌ فشل — اضغط للإعادة';testBtn.style.color='#dc2626';testBtn.disabled=false;
+      window.ezShowToast('❌ خطأ: '+err.message,'error');
+    });
+  });
 };
 
 
