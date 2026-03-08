@@ -521,7 +521,13 @@ window.ezSetupGemini=function(){
       window.ezShowToast('\u2705 '+prov+' \u064A\u0639\u0645\u0644!','success');
     }).catch(function(err){
       testBtn.textContent='\u274C \u0641\u0634\u0644';testBtn.style.color='#dc2626';testBtn.disabled=false;
-      window.ezShowToast('\u274C \u062E\u0637\u0623: '+err.message,'error');
+      var errMsg=err.message||String(err);
+      /* CORS shows as TypeError: Failed to fetch */
+      if(errMsg.indexOf('fetch')>-1||errMsg.indexOf('NetworkError')>-1||errMsg.indexOf('CORS')>-1){
+        errMsg='\u062D\u062C\u0628 CORS \u2014 \u0627\u0644\u0645\u062A\u0635\u0641\u062D \u064A\u0645\u0646\u0639 \u0627\u0644\u0627\u062A\u0635\u0627\u0644 🚫';
+      }
+      console.error('\uD83E\uDD16 AI Test error:',err,prov,prov==='openai'?om2:gm2);
+      window.ezShowToast('\u274C '+errMsg,'error');
     });
   });
 };
