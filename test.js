@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='141.0';
+var APP_VERSION='142.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -930,7 +930,10 @@ function _extractPackFromName(name){
 
 function _estimateTPD(noteText){
   if(!noteText) return 1;
-  var n=(noteText+'').toLowerCase().replace(/[أإآ]/g,'ا');
+  var n=(noteText+'').toLowerCase().replace(/[أإآ]/g,'ا').trim();
+  /* Empty, default, or very short notes → assume once daily */
+  if(n.length<3) return 1;
+  if(/^0\s|^0$|^tablet|^cap|^undefined|^null|^every\s*$|^ever$/i.test(n)) return 1;
   if(/مرتين|twice|bid|b\.?i\.?d|صباح.*مسا|مسا.*صباح|morning.*evening|12\s*h/i.test(n)) return 2;
   if(/ثلاث|three|tid|t\.?i\.?d|8\s*h/i.test(n)) return 3;
   if(/اربع|four|qid|q\.?i\.?d|6\s*h/i.test(n)) return 4;
@@ -978,8 +981,11 @@ function _scanPackSizeWarnings(dialogM,dialogT){
   var has28=false,has30=false;
   for(var j=0;j<allItems.length;j++){
     var ed=allItems[j].effDays;
-    if(ed===28||ed===14) has28=true;
-    if(ed===30||ed===60||ed===90) has30=true;
+    var pk=allItems[j].packSize;
+    /* Check BOTH effective days AND raw pack size */
+    if(pk===28||pk===56||pk===14||pk===42||ed===28||ed===14||ed===56) has28=true;
+    if(pk===30||pk===60||pk===90||pk===100||pk===120||ed===30||ed===60||ed===90) has30=true;
+    console.log('PACK WARN CHECK: '+allItems[j].name+' pack='+pk+' eff='+ed+' → has28='+has28+' has30='+has30);
   }
   if(has28&&has30){
     warnings.push({icon:'⚖️',text:'يوجد أصناف 28 يوم مع أصناف 30 يوم — لازم التساوي على 28',level:'danger'});
@@ -1399,6 +1405,7 @@ window.ezSelect=function(el,type,val){
   /* Update total badge */
   var m2=parseInt(d.getAttribute('data-m'))||1;
   var t2=parseInt(d.getAttribute('data-t'))||30;
+  var badge=document.getElementById('ez-total-badge');
   if(badge) badge.textContent='إجمالي: '+(m2*t2)+' يوم ('+m2+' × '+t2+')';
   /* Update pack size warnings */
   try{_renderPackWarningBanner();}catch(e){console.error("PACK ERR:",e);}
@@ -2099,6 +2106,10 @@ window.cancelWarnings=function(){
    SUBMIT HANDLER
    ══════════════════════════════════════════ */
 window.ezSubmit=function(){
+  /* Clean brackets from patient name */
+  var _pn=document.querySelector('input[name="Name"],#Name,input[placeholder*="Name"]');
+  if(_pn&&_pn.value&&/[()\[\]{}⟨⟩<>«»]/.test(_pn.value)){_pn.value=_cleanNameField(_pn.value);fire(_pn);}
+
   try{
     var d=document.getElementById('ez-dialog-box');
     if(!d) return;
@@ -2926,9 +2937,17 @@ function _ezColorDupRows(tb){
   }
 }
 
+/* Strip brackets from Name field — system rejects them */
+function _cleanNameField(txt){
+  if(!txt) return '';
+  return txt.toString().replace(/[()\[\]{}⟨⟩<>«»]/g,' ').replace(/\s+/g,' ').trim();
+}
+
 function cleanNote(txt){
   if(!txt) return '';
   var c=txt.toString().replace(/[،,.\-_\\]/g,' ');
+  /* Strip brackets/parentheses — system rejects them */
+  c=c.replace(/[()\[\]{}⟨⟩<>«»]/g,' ');
   /* Step 1: Strip system pattern "1 Tablets every 24 Hrs for 30 days1" */
   c=c.replace(/\d*\s*(Tablets?|Capsules?|undefined|Caps?|Tab)\s*every\s*\d+\s*Hrs?\s*(for\s*)?\d*\s*days?\d*/gi,'');
   /* Step 2: Strip English duration fragments */
@@ -3493,7 +3512,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
   tb_main.querySelectorAll('tr').forEach(function(r_node,ri_idx){
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
-    if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+    if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);
+      /* Clean brackets from name */
+      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;fire(_snInp);}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
     var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
     if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
     rtp_list.push(r_node);
@@ -3510,6 +3531,12 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
     if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
+    /* Clean name field — remove brackets that system rejects */
+    if(itemName&&/[()\[\]{}⟨⟩<>«»]/.test(itemName)){
+      var cleanedName=_cleanNameField(itemName);
+      if(nm_main>=0&&tds_nodes[nm_main]){var _nmInp=tds_nodes[nm_main].querySelector('input,textarea');if(_nmInp){_nmInp.value=cleanedName;fire(_nmInp);}else{tds_nodes[nm_main].textContent=cleanedName;}}
+      itemName=cleanedName;
+    }
     if(processedCodes[itemCode])processedCodes[itemCode].note=cn_str;
     var fn_str=cn_str;var original_note=nt_str;var rowLang=detectLanguage(fn_str);detectedLanguagesPerRow.push(rowLang);
     var nl_str=normL(fn_str);var dui_obj=shouldDuplicateRow(nl_str);var hasFixedSize=!!(itemCode&&fixedSizeCodes[itemCode]);
@@ -3839,8 +3866,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
             _banner.innerHTML=_bHdr+_bBody;
             document.body.appendChild(_banner);
             document.getElementById('ez-ai-banner-close').onclick=function(){_banner.remove()};
-            /* Auto-hide after 8 seconds */
-            setTimeout(function(){if(_banner.parentNode){_banner.style.transition='opacity .4s,transform .4s';_banner.style.opacity='0';_banner.style.transform='translateX(-50%) translateY(-10px)';setTimeout(function(){_banner.remove()},400);}},8000);
+            /* Auto-hide after 10 seconds */
+            setTimeout(function(){if(_banner.parentNode){_banner.style.transition='opacity .4s,transform .4s';_banner.style.opacity='0';_banner.style.transform='translateX(-50%) translateY(-10px)';setTimeout(function(){_banner.remove()},400);}},10000);
           }
         }
       }
@@ -4042,7 +4069,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       rmBadge.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999994;background:linear-gradient(145deg,#1e1b4b,#312e81);color:#fbbf24;padding:8px 24px;border-radius:30px;font-family:Cairo,sans-serif;font-size:13px;font-weight:900;box-shadow:0 6px 20px rgba(30,27,75,0.3),inset 0 1px 0 rgba(255,255,255,0.1);display:flex;align-items:center;gap:8px;animation:fadeSlideUp 0.5s ease;border:1.5px solid rgba(251,191,36,0.3)';
       rmBadge.innerHTML='<span style="font-size:18px">🌙</span> وضع رمضان مفعّل <span style="font-size:10px;color:rgba(251,191,36,0.6);margin-right:6px">فطار '+RAMADAN_TIMES.afterIftar+' · سحور '+RAMADAN_TIMES.afterSuhoor+'</span>';
       document.body.appendChild(rmBadge);
-      setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},8000);
+      setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},10000);
     }
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
