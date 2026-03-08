@@ -358,83 +358,125 @@ window.ezSetupGemini=function(){
   var geminiKey=_ezGetGeminiKey();
   var openaiKey=_ezGetOpenAIKey();
   var provider=_ezGetAIProvider();
+  var isOAI=provider==='openai';
+
   var overlay=document.createElement('div');
   overlay.id='ez-gemini-setup';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+
   var card=document.createElement('div');
   card.style.cssText='width:400px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
-  /* Header */
+
   var hdr=document.createElement('div');
   hdr.style.cssText='padding:18px 22px;background:linear-gradient(145deg,#6366f1,#4f46e5);display:flex;align-items:center;gap:10px';
-  hdr.innerHTML='<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#fff">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.7)">للجرعات غير المفهومة — لا يتم إرسال بيانات شخصية</div></div>';
+  hdr.innerHTML='<div style="font-size:24px">&#x1F916;</div><div><div style="font-size:15px;font-weight:900;color:#fff">&#x625;&#x639;&#x62F;&#x627;&#x62F; &#x627;&#x644;&#x630;&#x643;&#x627;&#x621; &#x627;&#x644;&#x627;&#x635;&#x637;&#x646;&#x627;&#x639;&#x64A;</div><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.7)">&#x644;&#x644;&#x62C;&#x631;&#x639;&#x627;&#x62A; &#x63A;&#x64A;&#x631; &#x627;&#x644;&#x645;&#x641;&#x647;&#x648;&#x645;&#x629; &#x2014; &#x644;&#x627; &#x64A;&#x62A;&#x645; &#x625;&#x631;&#x633;&#x627;&#x644; &#x628;&#x64A;&#x627;&#x646;&#x627;&#x62A; &#x634;&#x62E;&#x635;&#x64A;&#x629;</div></div>';
   card.appendChild(hdr);
-  /* Body */
+
   var body=document.createElement('div');
   body.style.cssText='padding:16px 22px;direction:rtl;max-height:70vh;overflow-y:auto';
-  /* Provider selector */
-  body.innerHTML=    '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:6px">مزود الذكاء الاصطناعي:</div>'+
-    '<div id="ez-ai-prov-wrap" style="display:flex;gap:8px;margin-bottom:14px">'+
-      '<button id="ez-prov-gemini" style="flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;border:2px solid \'+(provider==='gemini'?'#6366f1':'rgba(129,140,248,0.2)')+'\';background:\'+(provider==='gemini'?'rgba(99,102,241,0.08)':'#fff')+'\';color:\'+(provider==='gemini'?'#4f46e5':'#64748b')+'\'">'+
-        '🔷 Google Gemini</button>'+
-      '<button id="ez-prov-openai" style="flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;border:2px solid \'+(provider==='openai'?'#10b981':'rgba(16,185,129,0.2)')+'\';background:\'+(provider==='openai'?'rgba(16,185,129,0.08)':'#fff')+'\';color:\'+(provider==='openai'?'#059669':'#64748b')+'\'">'+
-        '🟢 ChatGPT / OpenAI</button>'+
-    '</div>'+
-    /* Gemini section */
-    '<div id="ez-sec-gemini" style="display:\'+(provider==='gemini'?'block':'none')+'\'">'+
-      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">موديل Gemini:</div>'+
-      '<select id="ez-gemini-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">'+
-        '<option value="gemini-2.0-flash"\'+('gemini-2.0-flash'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.0-flash ✅ (الافتراضي)</option>'+
-        '<option value="gemini-2.5-flash"\'+('gemini-2.5-flash'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.5-flash (الأحدث)</option>'+
-        '<option value="gemini-2.5-flash-lite"\'+('gemini-2.5-flash-lite'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.5-flash-lite (سريع)</option>'+
-        '<option value="gemini-2.0-flash-lite-001"\'+('gemini-2.0-flash-lite-001'===_ezGetGeminiModel()?' selected':'')+'>gemini-2.0-flash-lite-001</option>'+
-      '</select>'+
-      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح Gemini API:</div>'+
-      '<input id="ez-gemini-key-input" type="password" placeholder="AIza..." style="width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:6px;box-sizing:border-box" value="'+( geminiKey?'••••••••••••'+geminiKey.slice(-6):'')+'">'+
-      '<div style="font-size:9px;font-weight:600;color:#94a3b8;margin-bottom:10px">📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1">احصل على مفتاح مجاني من Google AI Studio</a></div>'+
-    '</div>'+
-    /* OpenAI section */
-    '<div id="ez-sec-openai" style="display:\'+(provider==='openai'?'block':'none')+'\'">'+
-      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">موديل OpenAI:</div>'+
-      '<select id="ez-openai-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">'+
-        '<option value="gpt-4o-mini"\'+('gpt-4o-mini'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4o-mini ✅ (الأسرع والأرخص)</option>'+
-        '<option value="gpt-4o"\'+('gpt-4o'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4o (الأدق)</option>'+
-        '<option value="gpt-4.1-mini"\'+('gpt-4.1-mini'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4.1-mini (جديد)</option>'+
-        '<option value="gpt-4.1-nano"\'+('gpt-4.1-nano'===_ezGetOpenAIModel()?' selected':'')+'>gpt-4.1-nano (الأخف)</option>'+
-      '</select>'+
-      '<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح OpenAI API:</div>'+
-      '<input id="ez-openai-key-input" type="password" placeholder="sk-..." style="width:100%;padding:10px 14px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:6px;box-sizing:border-box" value="'+( openaiKey?'••••••••••••'+openaiKey.slice(-6):'')+'">'+
-      '<div style="font-size:9px;font-weight:600;color:#94a3b8;margin-bottom:10px">📎 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#059669">احصل على مفتاح من OpenAI Platform</a><br>💡 gpt-4o-mini الأسرع والأرخص — مناسب جداً للصيدلة</div>'+
-    '</div>'+
-    /* Test button */
-    '<button id="ez-ai-test-btn" style="width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04)">🧪 اختبار الاتصال</button>';
+
+  var provLbl=document.createElement('div');
+  provLbl.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:6px';
+  provLbl.textContent='\u0645\u0632\u0648\u062F \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A:';
+  body.appendChild(provLbl);
+
+  var provWrap=document.createElement('div');
+  provWrap.style.cssText='display:flex;gap:8px;margin-bottom:14px';
+
+  var btnGemini=document.createElement('button');
+  btnGemini.id='ez-prov-gemini';
+  btnGemini.textContent='\uD83D\uDD37 Google Gemini';
+  btnGemini.style.cssText='flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;border:2px solid '+(isOAI?'rgba(129,140,248,0.2)':'#6366f1')+';background:'+(isOAI?'#fff':'rgba(99,102,241,0.08)')+';color:'+(isOAI?'#64748b':'#4f46e5');
+  provWrap.appendChild(btnGemini);
+
+  var btnOAI=document.createElement('button');
+  btnOAI.id='ez-prov-openai';
+  btnOAI.textContent='\uD83D\uDFE2 ChatGPT / OpenAI';
+  btnOAI.style.cssText='flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;border:2px solid '+(isOAI?'#10b981':'rgba(16,185,129,0.2)')+';background:'+(isOAI?'rgba(16,185,129,0.08)':'#fff')+';color:'+(isOAI?'#059669':'#64748b');
+  provWrap.appendChild(btnOAI);
+  body.appendChild(provWrap);
+
+  /* Gemini section */
+  var secGemini=document.createElement('div');
+  secGemini.id='ez-sec-gemini';
+  secGemini.style.display=isOAI?'none':'block';
+
+  var gModelLbl=document.createElement('div');
+  gModelLbl.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';
+  gModelLbl.textContent='\u0645\u0648\u062F\u064A\u0644 Gemini:';
+  secGemini.appendChild(gModelLbl);
+
+  var gModelSel=document.createElement('select');
+  gModelSel.id='ez-gemini-model-select';
+  gModelSel.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box';
+  var gModels=[{v:'gemini-2.0-flash',l:'gemini-2.0-flash \u2705'},{v:'gemini-2.5-flash',l:'gemini-2.5-flash'},{v:'gemini-2.5-flash-lite',l:'gemini-2.5-flash-lite'},{v:'gemini-2.0-flash-lite-001',l:'gemini-2.0-flash-lite-001'}];
+  var curGM=_ezGetGeminiModel();
+  for(var gi=0;gi<gModels.length;gi++){var gOpt=document.createElement('option');gOpt.value=gModels[gi].v;gOpt.textContent=gModels[gi].l;if(gModels[gi].v===curGM)gOpt.selected=true;gModelSel.appendChild(gOpt);}
+  secGemini.appendChild(gModelSel);
+
+  var gKeyLbl=document.createElement('div');gKeyLbl.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';gKeyLbl.textContent='\u0645\u0641\u062A\u0627\u062D Gemini API:';secGemini.appendChild(gKeyLbl);
+  var gKeyInp=document.createElement('input');gKeyInp.id='ez-gemini-key-input';gKeyInp.type='password';gKeyInp.placeholder='AIza...';
+  gKeyInp.style.cssText='width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:6px;box-sizing:border-box';
+  if(geminiKey)gKeyInp.value='\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'+geminiKey.slice(-6);secGemini.appendChild(gKeyInp);
+  var gInfo=document.createElement('div');gInfo.style.cssText='font-size:9px;font-weight:600;color:#94a3b8;margin-bottom:10px';
+  gInfo.innerHTML='\uD83D\uDD12 \u0627\u0644\u0645\u0641\u062A\u0627\u062D \u064A\u064F\u062D\u0641\u0638 \u0641\u064A \u0645\u062A\u0635\u0641\u062D\u0643 \u0641\u0642\u0637<br>\uD83D\uDCCE <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1">\u0627\u062D\u0635\u0644 \u0639\u0644\u0649 \u0645\u0641\u062A\u0627\u062D \u0645\u062C\u0627\u0646\u064A</a>';
+  secGemini.appendChild(gInfo);
+  body.appendChild(secGemini);
+
+  /* OpenAI section */
+  var secOAI=document.createElement('div');
+  secOAI.id='ez-sec-openai';
+  secOAI.style.display=isOAI?'block':'none';
+
+  var oModelLbl=document.createElement('div');oModelLbl.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';oModelLbl.textContent='\u0645\u0648\u062F\u064A\u0644 OpenAI:';secOAI.appendChild(oModelLbl);
+  var oModelSel=document.createElement('select');oModelSel.id='ez-openai-model-select';
+  oModelSel.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box';
+  var oModels=[{v:'gpt-4o-mini',l:'gpt-4o-mini \u2705 (\u0627\u0644\u0623\u0633\u0631\u0639 \u0648\u0627\u0644\u0623\u0631\u062E\u0635)'},{v:'gpt-4o',l:'gpt-4o (\u0627\u0644\u0623\u062F\u0642)'},{v:'gpt-4.1-mini',l:'gpt-4.1-mini'},{v:'gpt-4.1-nano',l:'gpt-4.1-nano (\u0627\u0644\u0623\u062E\u0641)'}];
+  var curOM=_ezGetOpenAIModel();
+  for(var oi=0;oi<oModels.length;oi++){var oOpt=document.createElement('option');oOpt.value=oModels[oi].v;oOpt.textContent=oModels[oi].l;if(oModels[oi].v===curOM)oOpt.selected=true;oModelSel.appendChild(oOpt);}
+  secOAI.appendChild(oModelSel);
+
+  var oKeyLbl=document.createElement('div');oKeyLbl.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';oKeyLbl.textContent='\u0645\u0641\u062A\u0627\u062D OpenAI API:';secOAI.appendChild(oKeyLbl);
+  var oKeyInp=document.createElement('input');oKeyInp.id='ez-openai-key-input';oKeyInp.type='password';oKeyInp.placeholder='sk-...';
+  oKeyInp.style.cssText='width:100%;padding:10px 14px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:6px;box-sizing:border-box';
+  if(openaiKey)oKeyInp.value='\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'+openaiKey.slice(-6);secOAI.appendChild(oKeyInp);
+  var oInfo=document.createElement('div');oInfo.style.cssText='font-size:9px;font-weight:600;color:#94a3b8;margin-bottom:10px';
+  oInfo.innerHTML='\uD83D\uDCCE <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#059669">\u0627\u062D\u0635\u0644 \u0639\u0644\u0649 \u0645\u0641\u062A\u0627\u062D \u0645\u0646 OpenAI Platform</a><br>\uD83D\uDCA1 gpt-4o-mini \u0627\u0644\u0623\u0633\u0631\u0639 \u0648\u0627\u0644\u0623\u0631\u062E\u0635';
+  secOAI.appendChild(oInfo);
+  body.appendChild(secOAI);
+
+  /* Test button */
+  var testBtn=document.createElement('button');
+  testBtn.id='ez-ai-test-btn';testBtn.textContent='\uD83E\uDDEA \u0627\u062E\u062A\u0628\u0627\u0631 \u0627\u0644\u0627\u062A\u0635\u0627\u0644';
+  testBtn.style.cssText='width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04)';
+  body.appendChild(testBtn);
   card.appendChild(body);
-  /* Buttons footer */
+
+  /* Footer */
   var foot=document.createElement('div');
   foot.style.cssText='padding:10px 22px 16px;display:flex;gap:8px;direction:rtl';
   var saveBtn=document.createElement('button');
-  saveBtn.textContent='💾 حفظ';
+  saveBtn.textContent='\uD83D\uDCBE \u062D\u0641\u0638';
   saveBtn.style.cssText='flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
   saveBtn.addEventListener('click',function(){
-    var prov=document.getElementById('ez-prov-openai').style.borderColor.indexOf('10b981')>-1?'openai':'gemini';
+    var prov=btnOAI.style.borderColor.indexOf('10b981')>-1?'openai':'gemini';
     _ezSetAIProvider(prov);
     if(prov==='gemini'){
-      var gk=document.getElementById('ez-gemini-key-input').value.trim();
-      var gm=document.getElementById('ez-gemini-model-select').value;
+      var gk=gKeyInp.value.trim();var gm=gModelSel.value;
       _ezSetGeminiModel(gm);
-      if(gk&&!gk.startsWith('•')){_ezSetGeminiKey(gk);}
-      window.ezShowToast('✅ تم الحفظ — Gemini ('+gm+')','success');
+      if(gk&&gk.charCodeAt(0)!==8226){_ezSetGeminiKey(gk);}
+      window.ezShowToast('\u2705 \u062A\u0645 \u0627\u0644\u062D\u0641\u0638 \u2014 Gemini ('+gm+')','success');
     } else {
-      var ok=document.getElementById('ez-openai-key-input').value.trim();
-      var om=document.getElementById('ez-openai-model-select').value;
+      var ok=oKeyInp.value.trim();var om=oModelSel.value;
       _ezSetOpenAIModel(om);
-      if(ok&&!ok.startsWith('•')){_ezSetOpenAIKey(ok);}
-      window.ezShowToast('✅ تم الحفظ — OpenAI ('+om+')','success');
+      if(ok&&ok.charCodeAt(0)!==8226){_ezSetOpenAIKey(ok);}
+      window.ezShowToast('\u2705 \u062A\u0645 \u0627\u0644\u062D\u0641\u0638 \u2014 OpenAI ('+om+')','success');
     }
     overlay.remove();
   });
   foot.appendChild(saveBtn);
   var cancelBtn=document.createElement('button');
-  cancelBtn.textContent='إلغاء';
+  cancelBtn.textContent='\u0625\u0644\u063A\u0627\u0621';
   cancelBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
   cancelBtn.addEventListener('click',function(){overlay.remove();});
   foot.appendChild(cancelBtn);
@@ -442,52 +484,48 @@ window.ezSetupGemini=function(){
   overlay.appendChild(card);
   overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
   document.body.appendChild(overlay);
-  /* Provider toggle logic */
+
+  /* Provider switch */
   function _switchProv(p){
-    var isOAI=p==='openai';
-    document.getElementById('ez-sec-gemini').style.display=isOAI?'none':'block';
-    document.getElementById('ez-sec-openai').style.display=isOAI?'block':'none';
-    document.getElementById('ez-prov-gemini').style.borderColor=isOAI?'rgba(129,140,248,0.2)':'#6366f1';
-    document.getElementById('ez-prov-gemini').style.background=isOAI?'#fff':'rgba(99,102,241,0.08)';
-    document.getElementById('ez-prov-gemini').style.color=isOAI?'#64748b':'#4f46e5';
-    document.getElementById('ez-prov-openai').style.borderColor=isOAI?'#10b981':'rgba(16,185,129,0.2)';
-    document.getElementById('ez-prov-openai').style.background=isOAI?'rgba(16,185,129,0.08)':'#fff';
-    document.getElementById('ez-prov-openai').style.color=isOAI?'#059669':'#64748b';
+    var oai=p==='openai';
+    secGemini.style.display=oai?'none':'block';
+    secOAI.style.display=oai?'block':'none';
+    btnGemini.style.borderColor=oai?'rgba(129,140,248,0.2)':'#6366f1';
+    btnGemini.style.background=oai?'#fff':'rgba(99,102,241,0.08)';
+    btnGemini.style.color=oai?'#64748b':'#4f46e5';
+    btnOAI.style.borderColor=oai?'#10b981':'rgba(16,185,129,0.2)';
+    btnOAI.style.background=oai?'rgba(16,185,129,0.08)':'#fff';
+    btnOAI.style.color=oai?'#059669':'#64748b';
   }
-  document.getElementById('ez-prov-gemini').addEventListener('click',function(){_switchProv('gemini');});
-  document.getElementById('ez-prov-openai').addEventListener('click',function(){_switchProv('openai');});
-  /* Test button logic */
-  document.getElementById('ez-ai-test-btn').addEventListener('click',function(){
-    var prov=document.getElementById('ez-prov-openai').style.borderColor.indexOf('10b981')>-1?'openai':'gemini';
-    var testBtn=document.getElementById('ez-ai-test-btn');
-    testBtn.textContent='⏳ جاري الاختبار...';testBtn.disabled=true;
-    var testPromise;
+  btnGemini.addEventListener('click',function(){_switchProv('gemini');});
+  btnOAI.addEventListener('click',function(){_switchProv('openai');});
+
+  /* Test logic */
+  testBtn.addEventListener('click',function(){
+    var prov=btnOAI.style.borderColor.indexOf('10b981')>-1?'openai':'gemini';
+    testBtn.textContent='\u23F3 \u062C\u0627\u0631\u064A \u0627\u0644\u0627\u062E\u062A\u0628\u0627\u0631...';testBtn.disabled=true;
+    var tp;
     if(prov==='openai'){
-      var ok=document.getElementById('ez-openai-key-input').value.trim()||_ezGetOpenAIKey();
-      var om=document.getElementById('ez-openai-model-select').value;
-      if(!ok){window.ezShowToast('❌ ادخل مفتاح OpenAI','error');testBtn.textContent='🧪 اختبار الاتصال';testBtn.disabled=false;return;}
-      testPromise=fetch('https://api.openai.com/v1/chat/completions',{
-        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ok},
-        body:JSON.stringify({model:om,messages:[{role:'user',content:'Parse dose: "مرتين بعد الاكل". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"readable_ar":"مرتين بعد الأكل"}'}],temperature:0.1,max_tokens:100,response_format:{type:'json_object'}})
-      }).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){return (d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'ok';});
+      var ok2=oKeyInp.value.trim();if(ok2.charCodeAt(0)===8226)ok2='';
+      ok2=ok2||_ezGetOpenAIKey();var om2=oModelSel.value;
+      if(!ok2){window.ezShowToast('\u274C \u0627\u062F\u062E\u0644 \u0645\u0641\u062A\u0627\u062D OpenAI','error');testBtn.textContent='\uD83E\uDDEA \u0627\u062E\u062A\u0628\u0627\u0631 \u0627\u0644\u0627\u062A\u0635\u0627\u0644';testBtn.disabled=false;return;}
+      tp=fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ok2},body:JSON.stringify({model:om2,messages:[{role:'user',content:'Reply with JSON only: {"ok":true}'}],temperature:0,max_tokens:20,response_format:{type:'json_object'}})}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(){return 'ok';});
     } else {
-      var gk=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
-      var gm=document.getElementById('ez-gemini-model-select').value;
-      if(!gk){window.ezShowToast('❌ ادخل مفتاح Gemini','error');testBtn.textContent='🧪 اختبار الاتصال';testBtn.disabled=false;return;}
-      testPromise=fetch('https://generativelanguage.googleapis.com/v1beta/models/'+gm+':generateContent?key='+gk,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:'Parse dose: "مرتين بعد الاكل". Return JSON only: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:100}})
-      }).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){return (d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text)||'ok';});
+      var gk2=gKeyInp.value.trim();if(gk2.charCodeAt(0)===8226)gk2='';
+      gk2=gk2||_ezGetGeminiKey();var gm2=gModelSel.value;
+      if(!gk2){window.ezShowToast('\u274C \u0627\u062F\u062E\u0644 \u0645\u0641\u062A\u0627\u062D Gemini','error');testBtn.textContent='\uD83E\uDDEA \u0627\u062E\u062A\u0628\u0627\u0631 \u0627\u0644\u0627\u062A\u0635\u0627\u0644';testBtn.disabled=false;return;}
+      tp=fetch('https://generativelanguage.googleapis.com/v1beta/models/'+gm2+':generateContent?key='+gk2,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:'Reply with JSON only: {"ok":true}'}]}],generationConfig:{temperature:0,maxOutputTokens:20}})}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(){return 'ok';});
     }
-    testPromise.then(function(txt){
-      testBtn.textContent='✅ ناجح — اضغط للإعادة';testBtn.style.color='#059669';testBtn.disabled=false;
-      window.ezShowToast('✅ '+prov+' يعمل!','success');console.log('🤖 Test OK:',txt);
+    tp.then(function(){
+      testBtn.textContent='\u2705 \u0646\u0627\u062C\u062D';testBtn.style.color='#059669';testBtn.disabled=false;
+      window.ezShowToast('\u2705 '+prov+' \u064A\u0639\u0645\u0644!','success');
     }).catch(function(err){
-      testBtn.textContent='❌ فشل — اضغط للإعادة';testBtn.style.color='#dc2626';testBtn.disabled=false;
-      window.ezShowToast('❌ خطأ: '+err.message,'error');
+      testBtn.textContent='\u274C \u0641\u0634\u0644';testBtn.style.color='#dc2626';testBtn.disabled=false;
+      window.ezShowToast('\u274C \u062E\u0637\u0623: '+err.message,'error');
     });
   });
 };
+
 
 
 /* ══════════════════════════════════════════
