@@ -1,12 +1,12 @@
 javascript:(function(){
 var old=document.getElementById('nahdi_baz_panel');if(old)old.remove();
 var oldStyle=document.getElementById('nahdi_baz_styles');if(oldStyle)oldStyle.remove();
-var d=document,db=[],editOn=false,dragOn=false,delRowOn=false,selI=null,selImg=null,dragEl=null,dragOX=0,dragOY=0,panelCollapsed=false;
+var d=document,db=[],editOn=false,dragOn=false,delRowOn=false,rowOrderOn=false,selI=null,selImg=null,dragEl=null,dragOX=0,dragOY=0,panelCollapsed=false;
 
 var undoStack = [];
 
 /* ══════════════════════════════════════════
-   ☁️ CLOUD CONFIG — سحب الأصناف المشفرة
+    ☁️ CLOUD CONFIG — سحب الأصناف المشفرة
    ══════════════════════════════════════════ */
 var _EZ_REPO='bazkoo2000/ez-pill-pro';
 var _EZ_DRUGS_FILE='ez_drugs_enc.dat';
@@ -134,6 +134,7 @@ css.textContent=`
 .nbp-toast.info{background:#fff;color:#6366f1;border:1px solid rgba(99,102,241,0.1);}
 .nbp-drag-outline{outline:2px dashed rgba(99,102,241,.4)!important;outline-offset:2px;cursor:move!important;}
 .nbp-drag-active{opacity:.65;z-index:99999!important;box-shadow:0 15px 35px rgba(0,0,0,.15)!important;transition:none!important;}
+.nbp-row-ordering{background:rgba(99,102,241,0.1)!important;outline:2px solid #6366f1!important;cursor:ns-resize!important;}
 .nbp-fab{width:52px;height:52px;display:none;align-items:center;justify-content:center;font-size:20px;cursor:pointer;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;box-shadow:0 8px 24px rgba(99,102,241,0.3);transition:transform .2s;}
 .nbp-fab:hover{transform:scale(1.08);}
 .nbp-dot{width:6px;height:6px;border-radius:50%;animation:nbpPulse 1.5s infinite;position:absolute;top:10px;right:10px;}
@@ -178,12 +179,13 @@ ui.innerHTML=
   ' <div class="nbp-grp"><div class="nbp-grp-title">أدوات التحرير</div>'+
     ' <div class="nbp-item" id="nbp_edit" style="position:relative"><div class="nbp-item-icon" style="background:rgba(99,102,241,0.06)">✏️</div><div class="nbp-item-text">تفعيل التعديل الحر</div><span class="nbp-item-arrow">‹</span></div>'+
     ' <div class="nbp-item" id="nbp_drag" style="position:relative"><div class="nbp-item-icon" style="background:rgba(139,92,246,0.06)">🔀</div><div class="nbp-item-text">تحريك العناصر</div><span class="nbp-item-arrow">‹</span></div>'+
+    ' <div class="nbp-item" id="nbp_reorder_row" style="position:relative"><div class="nbp-item-icon" style="background:rgba(34,197,94,0.06)">↕️</div><div class="nbp-item-text">ترتيب صفوف الجدول</div><span class="nbp-item-arrow">‹</span></div>'+
     ' <div class="nbp-item" id="nbp_del_row" style="position:relative"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">✖️</div><div class="nbp-item-text">حذف صفوف الجدول</div><span class="nbp-item-arrow">‹</span></div>'+
   ' </div>'+
   ' <div class="nbp-grp"><div class="nbp-grp-title">عناصر الصفحة</div>'+
     ' <div class="nbp-item" id="nbp_qr"><div class="nbp-item-icon" style="background:rgba(239,68,68,0.06)">🗑️</div><div class="nbp-item-text">حذف الباركود والتذكير</div><span class="nbp-item-arrow">‹</span></div>'+
   ' </div>'+
-  ' <div class="nbp-grp"><div class="nbp-grp-title">إدارة الأصناف</div>'+
+  ' <div class="nbp-grp"><div class="nbp-grp-title">اضافة صنف</div>'+
     ' <div class="nbp-item" id="nbp_cloud_status"><div class="nbp-item-icon" style="background:rgba(99,102,241,0.06)">☁️</div><div class="nbp-item-text" id="nbp_cloud_text">جاري تحميل الأصناف...</div><span class="nbp-item-arrow" id="nbp_cloud_count"></span></div>'+
     ' <div style="padding:0 16px"><input type="text" class="nbp-search" id="nbp_search" placeholder="🔍 بحث بالاسم أو الكود..."><div class="nbp-results" id="nbp_results"></div></div>'+
     ' <label class="nbp-item" id="nbp_img_label" for="nbp_img" style="display:none"><div class="nbp-item-icon" style="background:rgba(59,130,246,0.06)">🖼️</div><div class="nbp-item-text">رفع صورة الصنف (اختياري)</div><span class="nbp-item-arrow">‹</span></label>'+
@@ -218,7 +220,7 @@ d.getElementById('nbp_edit').onclick=function(){
   var el=this;if(editOn){el.classList.add('active');el.querySelector('.nbp-item-text').textContent='إيقاف التعديل الحر';var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-red';el.appendChild(dot)}else{el.classList.remove('active');el.querySelector('.nbp-item-text').textContent='تفعيل التعديل الحر';var dot=el.querySelector('.nbp-dot');if(dot)dot.remove()}
   ui.contentEditable='false';toast(editOn?'تم تفعيل التعديل الحر':'تم إيقاف التعديل',editOn?'info':'success')};
 
-/* ── Drag mode ── */
+/* ── Drag mode (Free elements) ── */
 var dragHover=null,elDragRAF=null,elCurX=0,elCurY=0,oldDragStyle={};
 function elAnimate(){if(!dragEl){elDragRAF=null;return}dragEl.style.left=(elCurX-dragOX)+'px';dragEl.style.top=(elCurY-dragOY)+'px';elDragRAF=requestAnimationFrame(elAnimate)}
 function onDragOver(e){var el=e.target;if(el.closest('#nahdi_baz_panel'))return;if(dragHover&&dragHover!==el)dragHover.classList.remove('nbp-drag-outline');el.classList.add('nbp-drag-outline');dragHover=el}
@@ -228,9 +230,61 @@ function onDragMove(e){if(dragEl){e.preventDefault();elCurX=e.clientX;elCurY=e.c
 function onDragUp(){if(dragEl){undoStack.push({type:'move',element:dragEl,oldStyle:oldDragStyle});dragEl.classList.remove('nbp-drag-active');dragEl=null;if(elDragRAF){cancelAnimationFrame(elDragRAF);elDragRAF=null}}}
 
 d.getElementById('nbp_drag').onclick=function(){
-  dragOn=!dragOn;var el=this;
+  dragOn=!dragOn;if(dragOn && rowOrderOn) d.getElementById('nbp_reorder_row').click();
+  var el=this;
   if(dragOn){el.classList.add('drag-active');el.querySelector('.nbp-item-text').textContent='إيقاف تحريك العناصر';var dot=d.createElement('div');dot.className='nbp-dot nbp-dot-green';el.appendChild(dot);d.addEventListener('mouseover',onDragOver,true);d.addEventListener('mouseout',onDragOut,true);d.addEventListener('mousedown',onDragDown,true);d.addEventListener('mousemove',onDragMove,true);d.addEventListener('mouseup',onDragUp,true);toast('وضع التحريك: امسك أي عنصر وحرّكه','info')}
   else{el.classList.remove('drag-active');el.querySelector('.nbp-item-text').textContent='تحريك العناصر';var dot=el.querySelector('.nbp-dot');if(dot)dot.remove();d.removeEventListener('mouseover',onDragOver,true);d.removeEventListener('mouseout',onDragOut,true);d.removeEventListener('mousedown',onDragDown,true);d.removeEventListener('mousemove',onDragMove,true);d.removeEventListener('mouseup',onDragUp,true);if(dragHover){dragHover.classList.remove('nbp-drag-outline');dragHover=null}toast('تم إيقاف وضع التحريك','success')}};
+
+/* ── Dynamic Row Reorder (THE NEW FEATURE) ── */
+var activeDraggedRow = null;
+function onRowOrderDown(e) {
+    var row = e.target.closest('tr');
+    if (!row || row.closest('#nahdi_baz_panel')) return;
+    e.preventDefault();
+    activeDraggedRow = row;
+    row.classList.add('nbp-row-ordering');
+    toast('اسحب للأعلى أو لأسفل لتبديل الصفوف', 'info');
+}
+function onRowOrderMove(e) {
+    if (!activeDraggedRow) return;
+    var target = e.target.closest('tr');
+    if (target && target !== activeDraggedRow && target.parentNode === activeDraggedRow.parentNode) {
+        var parent = activeDraggedRow.parentNode;
+        var children = Array.from(parent.children);
+        var activeIdx = children.indexOf(activeDraggedRow);
+        var targetIdx = children.indexOf(target);
+        if (activeIdx < targetIdx) {
+            parent.insertBefore(activeDraggedRow, target.nextSibling);
+        } else {
+            parent.insertBefore(activeDraggedRow, target);
+        }
+    }
+}
+function onRowOrderUp() {
+    if (activeDraggedRow) {
+        activeDraggedRow.classList.remove('nbp-row-ordering');
+        activeDraggedRow = null;
+    }
+}
+d.getElementById('nbp_reorder_row').onclick = function() {
+    rowOrderOn = !rowOrderOn; if(rowOrderOn && dragOn) d.getElementById('nbp_drag').click();
+    var el = this;
+    if (rowOrderOn) {
+        el.classList.add('drag-active'); el.querySelector('.nbp-item-text').textContent = 'إيقاف ترتيب الصفوف';
+        var dot = d.createElement('div'); dot.className = 'nbp-dot nbp-dot-green'; el.appendChild(dot);
+        d.addEventListener('mousedown', onRowOrderDown, true);
+        d.addEventListener('mousemove', onRowOrderMove, true);
+        d.addEventListener('mouseup', onRowOrderUp, true);
+        toast('تم تفعيل سحب وترتيب الصفوف', 'info');
+    } else {
+        el.classList.remove('drag-active'); el.querySelector('.nbp-item-text').textContent = 'ترتيب صفوف الجدول';
+        var dot = el.querySelector('.nbp-dot'); if (dot) dot.remove();
+        d.removeEventListener('mousedown', onRowOrderDown, true);
+        d.removeEventListener('mousemove', onRowOrderMove, true);
+        d.removeEventListener('mouseup', onRowOrderUp, true);
+        toast('تم إيقاف وضع الترتيب', 'success');
+    }
+};
 
 /* ── Delete rows ── */
 function onRowOver(e){var r=e.target.closest('tr');if(!r||r.closest('#nahdi_baz_panel'))return;r.style.outline='2px solid #ef4444';r.style.cursor='pointer';r.title='اضغط للحذف'}
@@ -333,7 +387,7 @@ d.getElementById('nbp_admin').onclick=function(){
 };
 
 /* ══════════════════════════════════════════
-   🚀 AUTO-LOAD DRUGS FROM GITHUB
+    🚀 AUTO-LOAD DRUGS FROM GITHUB
    ══════════════════════════════════════════ */
 (async function(){
   var cloudText=d.getElementById('nbp_cloud_text');
