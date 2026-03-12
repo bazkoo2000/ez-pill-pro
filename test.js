@@ -1,10 +1,10 @@
-[javascript:(function(){
+javascript:(function(){
 var APP_VERSION='143.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
 
-/* [
+/* ══════════════════════════════════════════
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
@@ -910,7 +910,6 @@ function _fmtDate(d){var y=d.getFullYear(),ms=('0'+(d.getMonth()+1)).slice(-2),d
 function isNonTabletItem(itemName){
   return /injection|حقن|حقنة|حقنه|syrup|شراب|cream|كريم|ointment|مرهم|مره|lotion|لوشن|gel|جل|drop|قطر|قطره|spray|بخاخ|inhaler|بخاخة|suppository|لبوس|solution|محلول|suspension|معلق|emulsion|مستحلب|patch|لصقة|لاصق|turbuhaler|turbohaler|diskus|accuhaler|handihaler|ellipta|respimat|nexthaler|breezhaler|genuair|easyhaler|twisthaler|spiromax|pressair|استنشاق|استنشاقى|استنشاقي|inhale|nebulizer|nebuliser|نيبولايزر/i.test(itemName||'');
 }
-
 /* ══════════════════════════════════════
    PACK SIZE EXTRACTION FROM DRUG NAME
    ══════════════════════════════════════ */
@@ -3530,7 +3529,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
     if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);
       /* Clean brackets from name */
-      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|شكاكات|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|turbuhaler|turbohaler|diskus|accuhaler|handihaler|ellipta|respimat|nexthaler|breezhaler|genuair|easyhaler|twisthaler|spiromax|pressair|استنشاق|استنشاقى|استنشاقي|inhale|inhal|nebulizer|nebuliser|نيبولايزر|رذاذ|بخار علاجي/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcoholif(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|شكاكات|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|turbuhaler|turbohaler|diskus|accuhaler|handihaler|ellipta|respimat|nexthaler|breezhaler|genuair|easyhaler|twisthaler|spiromax|pressair|استنشاق|استنشاقى|استنشاقي|inhale|inhal|nebulizer|nebuliser|نيبولايزر|رذاذ|بخار علاجي/i.test(n_val))|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
     var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
     if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
     rtp_list.push(r_node);
