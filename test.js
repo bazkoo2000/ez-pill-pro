@@ -908,7 +908,7 @@ function _fmtDate(d){var y=d.getFullYear(),ms=('0'+(d.getMonth()+1)).slice(-2),d
 
 /* Check if item is injection/syrup/ointment/cream (non-oral solid) */
 function isNonTabletItem(itemName){
-  return /injection|حقن|حقنة|حقنه|syrup|شراب|cream|كريم|ointment|مرهم|مره|lotion|لوشن|gel|جل|drop|قطر|قطره|spray|بخاخ|inhaler|بخاخة|suppository|لبوس|solution|محلول|suspension|معلق|emulsion|مستحلب|patch|لصقة|لاصق/i.test(itemName||'');
+  return /injection|حقن|حقنة|حقنه|syrup|شراب|cream|كريم|ointment|مرهم|مره|lotion|لوشن|gel|جل|drop|قطر|قطره|spray|بخاخ|inhaler|بخاخة|suppository|لبوس|solution|محلول|suspension|معلق|emulsion|مستحلب|patch|لصقة|لاصق|turbuhaler|turbohaler|diskus|accuhaler|handihaler|ellipta|respimat|nexthaler|breezhaler|genuair|easyhaler|twisthaler|spiromax|pressair|استنشاق|استنشاقى|استنشاقي|inhale|nebulizer|nebuliser|نيبولايزر/i.test(itemName||'');
 }
 
 /* ══════════════════════════════════════
