@@ -2,7 +2,7 @@
   "_meta": {
     "version": "1.0",
     "app": "EZ_Pill",
-    "lastUpdate": "2026-03-07",
+    "lastUpdate": "2026-03-14",
     "updatedBy": "admin"
   },
   "admin": {
@@ -18,6 +18,7 @@
   ],
   "fixedSizeCodes": {
     "100009926": 24,
+    "100011680": 20,
     "100014160": 24,
     "100017281": 24
   },
