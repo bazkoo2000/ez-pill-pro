@@ -8,7 +8,7 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
-    '144.0':{
+  '144.0':{
     title:'💊 دعم العبوة 56 تلقائياً',
     features:[
       {icon:'💊',text:'العبوة 56 في الاسم: كل 12 ساعة + 9am تلقائياً'},
@@ -3932,10 +3932,23 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       for(var _pi3=0;_pi3<_nonFixedDays.length;_pi3++){
         if(_nonFixedDays[_pi3]===28||_nonFixedDays[_pi3]===14){_has28NonFixed=true;break;}
       }
-     console.log('PACK PROCESS: nonFixedDays='+JSON.stringify(_nonFixedDays)+' has28NonFixed='+_has28NonFixed);
-      /* FIX v144: 56/60-pack in item NAME triggers 28-policy for all other items */
+      console.log('PACK PROCESS: nonFixedDays='+JSON.stringify(_nonFixedDays)+' has28NonFixed='+_has28NonFixed);
+      /* FIX v144: 56/60-pack in item NAME triggers 28-policy */
       if(!_has28NonFixed){
-        for(var _chk56=0;_chk56
+        for(var _chk56=0;_chk56<allRowsData.length;_chk56++){
+          var _rChk=allRowsData[_chk56];
+          if(!_rChk.hasFixedSize&&!_rChk.isWeekly){
+            var _pChk=_extractPackFromName(_rChk.itemName||'');
+            if(_pChk===56||_pChk===60){
+              _has28NonFixed=true;
+              console.log('PACK56: found '+_pChk+' in name "'+_rChk.itemName+'" → triggers 28-policy');
+              break;
+            }
+          }
+        }
+      }
+
+      /* Mark allRowsData items */
       for(var _ri=0;_ri<allRowsData.length;_ri++){
         var _rd=allRowsData[_ri];
         var _rdName=_rd.itemName||'';
@@ -3967,7 +3980,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
             console.log('PACK BREAK: code '+_rd.itemCode+' fixed='+_fixedVal+' → override to 28');
           }
         }
-         /* 56/60 without 28 policy → use 60 (30×2) */
+        /* 56/60 without 28 policy → use 60 (30×2) */
         if(_rd.hasFixedSize&&!_has28NonFixed){
           var _fixedVal2=fixedSizeCodes[_rd.itemCode];
           if(_fixedVal2===56||_fixedVal2===60){
@@ -3985,6 +3998,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         }
       }
     }catch(_pe){console.warn('Pack process error:',_pe);}
+
     var ramadanRtd=[];/* Ramadan duplicate list */
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];var r_node=rd.row;var tds_nodes=rd.tds;
