@@ -5218,6 +5218,8 @@ function extractAndConfirmName(){
       if(!text||text.length<5) return null;
       /* Normalize newlines to spaces */
       var s=text.trim().replace(/\r?\n/g,' ');
+      /* JVM Fix: تجاهل ما بعد / أو \ في النص */
+      s=s.replace(/\s*\/[^\u0600-\u06FF]*$/,'').replace(/\s*\/\s*(the\s+gue?st|الضيف|المريض)[^\u0600-\u06FF]*/gi,'').trim();
       /* Strip parentheses/brackets so names inside become visible to patterns */
       s=s.replace(/[()[\]{}«»]/g,' ').replace(/\s+/g,' ').trim();
 
@@ -5228,7 +5230,7 @@ function extractAndConfirmName(){
         'الزوج','الزوجه','الزوجة','الام','الأم','الاب','الأب'];
 
       /* Connector words: these appear BETWEEN the keyword and the name - skip them, don't stop */
-      var connectorWords=['الى','إلى','الي','إلي','لـ'];
+      var connectorWords=['الى','إلى','الي','إلي','لـ','بحى','بحي'];
 
       function normA(w){return w.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();}
       function normG(w){return normA(w).replace(/ى/g,'ي');}
@@ -5239,12 +5241,12 @@ function extractAndConfirmName(){
       var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
         'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
         'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة',
-        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في','واضافه','واضافة','واضاف','ويوجد','يوجد'];
+        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في','واضافه','واضافة','واضاف','ويوجد','يوجد','بحى','حى','بحي','حي','صيدلية','صيدليه','فرع','التوصيل على','الرجاء','وكتابة'];
 
       /* على as preposition: only when followed by known location/object word */
       var alaStopNext=['الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
         'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب',
-        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون','الشنطه','الشنطة'];
+        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون','الشنطه','الشنطة','صيدلية','صيدليه','الصيدلية','التوصيل','المجمع','الشارع','الحي','الحى','بحى','بحي'];
 
       function isStopWord(word,nextWord){
         /* على: stop ONLY when followed by a known object/location (preposition context) */
@@ -5269,7 +5271,7 @@ function extractAndConfirmName(){
         'الاكل','النوم','الفطار','السحور','الافطار','الغداء','العشاء',
         'موجود','موجوده','متوفر','متوفره','مطلوب','مطلوبه','اضافي','اضافيه','اضافية',
         'حسب','وصفه','وصفة','روشته','روشتة','روشتته','الوصفه','الروشته',
-        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة'];
+        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة','بحى','حى','الحى','حي','الحي','شارع','الشارع','طريق','الطريق','صيدلية','صيدليه','الصيدلية','بالمروه','المروه','الحرمين','الروضه','الروضة','النزهه','النزهة','السلامه','السلامة','الخبر','الدمام','الرياض','جده','جدة','مكه','مكة','المدينه','المدينة','النعيم','الشرق','الغرب','الشمال','الجنوب','منطقه','منطقة','حارة','حاره','المجمع','المول','السوق','سوق','مركز','المركز'];
       function isNotName(w){var n2=normG(w);var n2bare=n2.replace(/^ال/,'');for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}return false;}
 
       function cleanName(raw){
@@ -5319,7 +5321,9 @@ function extractAndConfirmName(){
 
       /* PRIORITY 2: English name directly after keyword (no parens) */
       var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
-      if(engM&&engM[1]&&engM[1].trim().length>=3) return engM[1].trim();
+      if(engM&&engM[1]&&engM[1].trim().length>=3) var _engName=engM[1].trim();
+      if(/^(the\s+gue?st|guest|the\s+patient|patient)$/i.test(_engName)) _engName=null;
+      if(_engName&&_engName.length>=3) return _engName;
 
       /* PRIORITY 3: Arabic name patterns (with optional connector الى/الي before name) */
       var patterns=[
@@ -5332,7 +5336,7 @@ function extractAndConfirmName(){
         /(?:وكتاب[ةه]\s*اسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:باسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:الاسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
-        /(?:للضيف[ةه]?|للمريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:DISABLED_JVM_FIX_LLDHYF)/i,
         /(?:^|[،,\s])اسم\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]{3,}(?:\s+[\u0600-\u06FF]+){0,3})/i
       ];
 
