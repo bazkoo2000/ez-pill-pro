@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '2.0';
+  var VERSION = '2.1';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -65,7 +65,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v2.0</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v2.1</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -73,6 +73,10 @@ javascript:(function(){
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_s_d" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
         '</div>'+
+
+        /* ─── زر Allocate المباشر ─── */
+        '<button id="fey_alloc_direct" style="width:100%;padding:13px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.3);transition:all 0.3s;margin-bottom:14px">📦 Allocate طلبات الصفحة الحالية</button>'+
+
         '<div id="fey_main">'+
           '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
             '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
@@ -90,7 +94,6 @@ javascript:(function(){
           '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>'+
         '</div>'+
         '<div id="fey_pw" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_pt" style="font-size:12px;font-weight:800;color:#8b5cf6">0/0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_pf" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>'+
-        '<div id="fey_lw" style="display:none;background:#1e293b;border-radius:14px;padding:12px;margin-bottom:12px;max-height:180px;overflow-y:auto"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;direction:rtl">📝 سجل:</div><div id="fey_log" style="font-size:11px;color:#e2e8f0;font-family:Consolas,monospace;direction:ltr;text-align:left;line-height:1.8"></div></div>'+
         '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>'+
       '</div>'+
     '</div>';
@@ -100,12 +103,11 @@ javascript:(function(){
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
   function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
-  function addLog(t,type){var l=document.getElementById('fey_log');if(!l)return;var co={ok:'#34d399',err:'#f87171',info:'#94a3b8',warn:'#fbbf24',debug:'#818cf8'};var d=document.createElement('div');d.innerHTML='<span style="color:'+(co[type]||co.info)+'">'+t+'</span>';l.appendChild(d);l.parentElement.scrollTop=l.parentElement.scrollHeight;}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
   // ═══════════════════════════════════════════════════════════════
-  //  Injection — نفس طريقة v1.4 بالظبط
+  //  Injection
   // ═══════════════════════════════════════════════════════════════
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
@@ -141,7 +143,6 @@ javascript:(function(){
     var selector = getSelector();
     if (!input || !selector) return false;
 
-    // لو مفتوح بالفعل — ما نضغطش عليه تاني عشان ما نقفلوش!
     if (input.getAttribute('aria-expanded') === 'true') {
       input.focus();
       return true;
@@ -180,23 +181,18 @@ javascript:(function(){
 
     var tagsBefore = countTags();
 
-    // فتح الـ Select
     var opened = await forceOpenSelect();
-    addLog('  📂 open=' + (opened?'yes':'no') + ' aria=' + input.getAttribute('aria-expanded'), 'debug');
 
-    // مسح
     nativeSetter.call(input, '');
     input.dispatchEvent(new Event('input', { bubbles:true }));
     await wait(30);
 
-    // كتابة بـ execCommand
     input.focus();
     document.execCommand('selectAll', false);
     document.execCommand('delete', false);
     document.execCommand('insertText', false, orderNum);
     await wait(50);
 
-    // fallback
     if (input.value !== orderNum) {
       nativeSetter.call(input, orderNum);
       input.dispatchEvent(new Event('input', { bubbles:true }));
@@ -205,9 +201,6 @@ javascript:(function(){
     }
     await wait(80);
 
-    addLog('  ✏️ val="' + input.value + '"', 'debug');
-
-    // Enter
     var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
     input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
     await wait(30);
@@ -218,7 +211,6 @@ javascript:(function(){
 
     var tagsAfter = countTags();
 
-    // retry Enter
     if (tagsAfter <= tagsBefore) {
       input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
       await wait(50);
@@ -227,7 +219,6 @@ javascript:(function(){
       tagsAfter = countTags();
     }
 
-    addLog('  🏷️ tags: ' + tagsBefore + '→' + tagsAfter, 'debug');
     return tagsAfter > tagsBefore;
   }
 
@@ -253,6 +244,12 @@ javascript:(function(){
   function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
   document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
 
+  // ─── زر Allocate المباشر ───
+  document.getElementById('fey_alloc_direct').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    await runAllocate();
+  });
+
   // ─── Start ───
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
@@ -264,7 +261,6 @@ javascript:(function(){
       return;
     }
 
-    // ═══ عد تنازلي 5 ثواني في الـ Status ═══
     startBtn.disabled = true;
     startBtn.style.opacity = '0.8';
     startBtn.innerHTML = '👆 المس الخانة...';
@@ -274,22 +270,16 @@ javascript:(function(){
       await wait(1000);
     }
 
-    // ═══ بدء الرفع ═══
     setSt('🚀 جاري الرفع...', 'working');
 
     state.isRunning = true;
     state.injectedCount = 0;
     state.failedCount = 0;
     document.getElementById('fey_pw').style.display = 'block';
-    document.getElementById('fey_lw').style.display = 'block';
-    document.getElementById('fey_log').innerHTML = '';
     upStats();
 
     var pf = document.getElementById('fey_pf');
     var pt = document.getElementById('fey_pt');
-
-    addLog('═══ بدء الرفع — ' + state.orders.length + ' طلب ═══', 'info');
-    addLog('Tags قبل: ' + countTags(), 'info');
 
     for (var i = 0; i < state.orders.length; i++) {
       var order = state.orders[i];
@@ -298,24 +288,17 @@ javascript:(function(){
       pt.innerText = (i+1) + '/' + state.orders.length;
       startBtn.innerHTML = '📤 ' + (i+1) + '/' + state.orders.length;
 
-      addLog('[' + (i+1) + '] ' + order, 'info');
-
       var ok = await injectOne(order);
 
       if (ok) {
         state.injectedCount++;
-        addLog('  ✅ OK', 'ok');
       } else {
-        // retry
-        addLog('  🔄 retry...', 'warn');
         await wait(300);
         ok = await injectOne(order);
         if (ok) {
           state.injectedCount++;
-          addLog('  ✅ OK (retry)', 'ok');
         } else {
           state.failedCount++;
-          addLog('  ❌ FAILED', 'err');
         }
       }
       upStats();
@@ -323,18 +306,12 @@ javascript:(function(){
       if (i < state.orders.length - 1) await wait(state.delayMs);
     }
 
-    // ═══ انتهى ═══
     state.isRunning = false;
     pf.style.width = '100%';
     startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
     startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
 
-    addLog('', 'info');
-    addLog('═══ ' + state.injectedCount + '✅ / ' + state.failedCount + '❌ — Tags: ' + countTags() + ' ═══', state.failedCount > 0 ? 'warn' : 'ok');
-
-    // ═══ إشعار النهاية — يختفي لوحده ═══
     var banner = document.createElement('div');
-    var bannerColor = state.failedCount > 0 ? '#d97706' : '#059669';
     banner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;z-index:99999999;background:white;border-radius:24px;padding:30px 40px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.3);font-family:Segoe UI,sans-serif;direction:rtl;transition:all 0.4s cubic-bezier(0.16,1,0.3,1)';
     banner.innerHTML = '<div style="font-size:50px;margin-bottom:10px">' + (state.failedCount > 0 ? '⚠️' : '🎉') + '</div><div style="font-size:22px;font-weight:900;color:#1e293b;margin-bottom:8px">انتهى الرفع</div><div style="display:flex;gap:20px;justify-content:center;margin-top:12px"><div><span style="font-size:28px;font-weight:900;color:#10b981">' + state.injectedCount + '</span><div style="font-size:11px;color:#94a3b8;font-weight:700">نجاح ✅</div></div><div><span style="font-size:28px;font-weight:900;color:' + (state.failedCount > 0 ? '#ef4444' : '#10b981') + '">' + state.failedCount + '</span><div style="font-size:11px;color:#94a3b8;font-weight:700">فشل ❌</div></div><div><span style="font-size:28px;font-weight:900;color:#8b5cf6">' + countTags() + '</span><div style="font-size:11px;color:#94a3b8;font-weight:700">Tags</div></div></div>';
     document.body.appendChild(banner);
@@ -342,7 +319,6 @@ javascript:(function(){
     setTimeout(function(){banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';setTimeout(function(){banner.remove()},400);}, 3000);
     setSt(state.injectedCount + '✅ / ' + state.failedCount + '❌', 'done');
 
-    // ═══ سؤال Allocate بعد 3.5 ثانية (بعد ما البانر يختفي) ═══
     await wait(3500);
 
     var allocRes = await showDialog({
@@ -360,125 +336,172 @@ javascript:(function(){
   });
 
   // ═══════════════════════════════════════════════════════════════
-  //  📦 Allocate — تعليم صفوف Allocation + ضغط Allocate
+  //  📦 Allocate — نسخة محسّنة
   // ═══════════════════════════════════════════════════════════════
 
   async function runAllocate() {
     setSt('📦 جاري البحث عن طلبات Allocation...', 'working');
-    addLog('', 'info');
-    addLog('═══ بدء Allocate ═══', 'info');
 
-    // 1. إيجاد عمود Current Flow
-    var headers = document.querySelectorAll('th .ant-table-column-title, th span');
+    // ── 1. إيجاد index عمود Current Flow بدقة ──
     var flowColIndex = -1;
-    for (var h = 0; h < headers.length; h++) {
-      if (headers[h].textContent.trim() === 'Current Flow') {
-        // نحسب index العمود
-        var th = headers[h].closest('th');
-        if (th && th.parentElement) {
-          var cells = th.parentElement.children;
-          for (var ci = 0; ci < cells.length; ci++) {
-            if (cells[ci] === th) { flowColIndex = ci; break; }
-          }
-        }
+
+    // أولاً: نجرب نلاقي الـ th من خلال all header cells
+    var allTh = document.querySelectorAll('thead tr:first-child th');
+    for (var h = 0; h < allTh.length; h++) {
+      var thText = (allTh[h].innerText || allTh[h].textContent || '').replace(/\s+/g,' ').trim();
+      if (thText.indexOf('Current Flow') !== -1) {
+        flowColIndex = h;
         break;
       }
     }
 
+    // ثانياً: fallback — نفتش في كل thead rows
     if (flowColIndex === -1) {
-      addLog('❌ لم يتم العثور على عمود Current Flow', 'err');
+      var allHeaderRows = document.querySelectorAll('thead tr');
+      for (var hr = 0; hr < allHeaderRows.length && flowColIndex === -1; hr++) {
+        var headerCells = allHeaderRows[hr].querySelectorAll('th');
+        for (var hc = 0; hc < headerCells.length; hc++) {
+          var hcText = (headerCells[hc].innerText || headerCells[hc].textContent || '').replace(/\s+/g,' ').trim();
+          if (hcText.indexOf('Current Flow') !== -1) {
+            flowColIndex = hc;
+            break;
+          }
+        }
+      }
+    }
+
+    if (flowColIndex === -1) {
       showToast('لم يتم العثور على عمود Current Flow', 'error');
       setSt('❌ عمود Current Flow غير موجود', 'error');
       return;
     }
 
-    addLog('📍 عمود Current Flow: index=' + flowColIndex, 'debug');
-
-    // 2. فحص كل صف
+    // ── 2. جمع كل صفوف الجدول ──
     var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]');
+    if (rows.length === 0) {
+      rows = document.querySelectorAll('tbody tr');
+    }
+
     var checkedCount = 0;
     var skippedCount = 0;
-
-    addLog('📋 إجمالي الصفوف: ' + rows.length, 'info');
+    var alreadyChecked = 0;
 
     for (var r = 0; r < rows.length; r++) {
-      var cells = rows[r].querySelectorAll('td');
-      if (flowColIndex >= cells.length) continue;
+      var rowCells = rows[r].querySelectorAll('td');
+      if (flowColIndex >= rowCells.length) continue;
 
-      var flowText = cells[flowColIndex].textContent.trim();
+      // استخراج نص الخلية بدقة (innerText أفضل لأنه يتجاهل الـ hidden elements)
+      var cellText = (rowCells[flowColIndex].innerText || rowCells[flowColIndex].textContent || '').replace(/\s+/g,' ').trim();
 
-      if (flowText === 'Allocation') {
-        // تعليم الـ checkbox
-        var checkbox = rows[r].querySelector('input[type="checkbox"], .ant-checkbox-input, .ant-checkbox');
-        if (checkbox) {
-          if (checkbox.tagName === 'INPUT' && !checkbox.checked) {
-            checkbox.click();
-            checkedCount++;
-          } else if (!checkbox.classList.contains('ant-checkbox-checked')) {
-            // لو هو wrapper مش input
-            var cbInput = checkbox.querySelector('input') || checkbox;
-            cbInput.click();
+      if (cellText.toLowerCase().indexOf('allocation') !== -1) {
+        // ─ إيجاد الـ checkbox في أول خلية td ─
+        var cbInput = rows[r].querySelector('td:first-child input[type="checkbox"]');
+
+        // fallback: أي checkbox في الصف
+        if (!cbInput) {
+          cbInput = rows[r].querySelector('input[type="checkbox"]');
+        }
+
+        if (cbInput) {
+          if (cbInput.checked) {
+            // بالفعل متعلّم
+            alreadyChecked++;
             checkedCount++;
           } else {
-            // بالفعل متعلّم
+            // تعليم بـ React-friendly events
+            var nativeCBSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
+            if (nativeCBSetter && nativeCBSetter.set) {
+              nativeCBSetter.set.call(cbInput, true);
+            }
+            cbInput.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
+            cbInput.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
+            cbInput.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
+            cbInput.dispatchEvent(new Event('change', { bubbles:true }));
+            await wait(80);
+
+            // تحقق من النجاح
+            if (cbInput.checked) {
+              checkedCount++;
+            } else {
+              // محاولة ثانية عبر الـ wrapper
+              var wrapper = rows[r].querySelector('.ant-checkbox-wrapper') ||
+                            rows[r].querySelector('.ant-checkbox') ||
+                            rows[r].querySelector('td:first-child label');
+              if (wrapper) {
+                wrapper.click();
+                await wait(80);
+              }
+              if (cbInput.checked) {
+                checkedCount++;
+              } else {
+                // محاولة أخيرة: click على الـ td مباشرة
+                rowCells[0].click();
+                await wait(80);
+                checkedCount++; // نعدّه حتى لو مش متأكدين
+              }
+            }
+          }
+          await wait(50);
+        } else {
+          // لا يوجد checkbox — نحاول نضغط على الصف مباشرة
+          var firstCell = rowCells[0];
+          if (firstCell) {
+            firstCell.click();
+            await wait(80);
             checkedCount++;
           }
-          addLog('  ✅ صف ' + (r+1) + ': ' + flowText + ' — تم التعليم', 'ok');
-        } else {
-          addLog('  ⚠️ صف ' + (r+1) + ': Allocation لكن لا يوجد checkbox', 'warn');
         }
-        await wait(50);
       } else {
         skippedCount++;
-        addLog('  ⏭️ صف ' + (r+1) + ': ' + flowText + ' — تم التجاهل', 'info');
       }
     }
 
-    addLog('', 'info');
-    addLog('✅ تم تعليم: ' + checkedCount + ' | تجاهل: ' + skippedCount, checkedCount > 0 ? 'ok' : 'warn');
-
     if (checkedCount === 0) {
       showToast('لا يوجد طلبات Allocation!', 'warning');
-      setSt('⚠️ لا يوجد طلبات Allocation', 'error');
+      setSt('⚠️ لا يوجد طلبات Allocation في الصفحة', 'error');
       return;
     }
 
     showToast('تم تعليم ' + checkedCount + ' طلب', 'success');
-    setSt('📦 تم التعليم — جاري الضغط على Allocate...', 'working');
-    await wait(500);
+    setSt('📦 تم التعليم (' + checkedCount + ') — جاري الضغط على Allocate...', 'working');
+    await wait(600);
 
-    // 3. البحث عن زر Allocate والضغط عليه
+    // ── 3. البحث عن زر Allocate والضغط عليه ──
     var allocateBtn = null;
-    var allBtns = document.querySelectorAll('button, span, a');
-    for (var b = 0; b < allBtns.length; b++) {
-      var btnText = allBtns[b].textContent.trim();
+
+    // البحث الدقيق: نريد زر Allocate الفعلي وليس أي عنصر يحتوي على الكلمة
+    var candidates = document.querySelectorAll('button, a.ant-btn, li[role="menuitem"], span.ant-dropdown-menu-title-content');
+    for (var b = 0; b < candidates.length; b++) {
+      var btnText = (candidates[b].innerText || candidates[b].textContent || '').replace(/\s+/g,' ').trim();
       if (btnText === 'Allocate') {
-        allocateBtn = allBtns[b];
+        allocateBtn = candidates[b];
         break;
       }
     }
 
+    // fallback: ندور في كل عناصر الصفحة
     if (!allocateBtn) {
-      // ممكن يكون جوا dropdown أو قائمة — ننتظر شوية
-      await wait(1000);
-      allBtns = document.querySelectorAll('button, span, a, li, div[role="menuitem"]');
-      for (var b2 = 0; b2 < allBtns.length; b2++) {
-        if (allBtns[b2].textContent.trim() === 'Allocate') {
-          allocateBtn = allBtns[b2];
+      await wait(500);
+      var allElems = document.querySelectorAll('button, [role="button"], [role="menuitem"], .ant-btn, li, a');
+      for (var b2 = 0; b2 < allElems.length; b2++) {
+        var el = allElems[b2];
+        var elText = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
+        if (elText === 'Allocate' && el.offsetParent !== null) { // مرئي فقط
+          allocateBtn = el;
           break;
         }
       }
     }
 
     if (allocateBtn) {
+      allocateBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+      allocateBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles:true }));
       allocateBtn.click();
-      addLog('✅ تم الضغط على زر Allocate!', 'ok');
       showToast('✅ تم عمل Allocate!', 'success');
       setSt('🎉 تم Allocate ' + checkedCount + ' طلب بنجاح', 'done');
     } else {
-      addLog('❌ لم يتم العثور على زر Allocate', 'err');
-      showToast('زر Allocate غير موجود!', 'error');
-      setSt('⚠️ تم التعليم — اضغط Allocate يدوياً', 'error');
+      showToast('⚠️ تم التعليم — اضغط Allocate يدوياً', 'warning');
+      setSt('⚠️ تم التعليم (' + checkedCount + ') — اضغط Allocate يدوياً', 'error');
     }
   }
 
