@@ -334,7 +334,7 @@ async function _ezGroqBatch(notes){
   if(!Array.isArray(parsed)) parsed = [parsed];
   return parsed;
 }
-catch(e){return '';}}
+
 function _ezGetGeminiModel(){try{return localStorage.getItem('ez_gemini_model')||'gemini-flash-latest';}catch(e){return 'gemini-flash-latest';}}
 function _ezSetGeminiModel(m){try{localStorage.setItem('ez_gemini_model',m);}catch(e){}}
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
@@ -633,9 +633,9 @@ var _EZ_RAW_URL='https://raw.githubusercontent.com/'+_EZ_REPO+'/main/'+_EZ_CONFI
 var _EZ_API_URL='https://api.github.com/repos/'+_EZ_REPO+'/contents/'+_EZ_CONFIG_PATH;
 
 /* Storage helpers */
-function _ezGetGHToken(){try{return localStorage.getItem('ez_gh_token')||'';}catch(e){return '';}}
+function _ezGetGHToken(){try{return localStorage.getItem('ez_gh_token')||'';}
 function _ezSetGHToken(t){try{localStorage.setItem('ez_gh_token',t);}catch(e){}}
-function _ezGetAdminPin(){try{return localStorage.getItem('ez_admin_pin')||'';}catch(e){return '';}}
+function _ezGetAdminPin(){try{return localStorage.getItem('ez_admin_pin')||'';}
 function _ezSetAdminPin(p){try{localStorage.setItem('ez_admin_pin',p);}catch(e){}}
 var _ezCloudConfig=null;
 var _ezCloudSHA=null;
