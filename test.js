@@ -288,6 +288,7 @@ async function _ezGroqBatch(notes){
       });
     } catch(e){
       console.log('🤖 Groq fetch error on attempt '+(_retry+1)+':', e);
+      if(_retry===2) throw e;
       continue;
     }
     console.log('🤖 Groq attempt '+(_retry+1)+': status='+resp.status);
