@@ -5217,6 +5217,30 @@ function extractAndConfirmName(){
     function extractName(text){
       if(!text||text.length<5) return null;
       /* Normalize newlines to spaces */
+
+      /* ══ PRIORITY 0: استخلاص الاسم بعد "/" ══
+         مثال: "وكتابة اسم الضيف / the guset" → يكتب "the guset"
+         مثال: "وكتابة اسم الضيف / محمد العمري" → يكتب "محمد العمري"
+         المنطق: لو فيه "/" وقبله كلمة اسم/ضيف/مريض → كل ما بعد "/" هو الاسم
+      */
+      var _slashMatch=s.match(/(?:اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)|الاسم|باسم|كتاب[ةه]\s*اسم)\s*\/\s*(.+)$/i);
+      if(!_slashMatch){
+        /* كمان جرّب لو "/" جاية بعد أي كلام مباشرة */
+        _slashMatch=s.match(/\/\s*(.{2,50})$/);
+        /* لكن فقط لو الـ match منطقي (مش مجرد رقم أو رمز) */
+        if(_slashMatch&&!/^[\d\s\-\.]+$/.test(_slashMatch[1].trim())){
+          /* تحقق إن قبل الـ / فيه ذكر للاسم أو الضيف */
+          if(!/اسم|ضيف|مريض|عميل|كتاب/i.test(s.substring(0,s.lastIndexOf('/')))) _slashMatch=null;
+        } else {
+          _slashMatch=null;
+        }
+      }
+      if(_slashMatch&&_slashMatch[1]){
+        var _slashName=_slashMatch[1].trim();
+        /* أزل أي علامات ترقيم من البداية والنهاية */
+        _slashName=_slashName.replace(/^[\s\-\.،,;:]+|[\s\-\.،,;:]+$/g,'').trim();
+        if(_slashName.length>=2) return _slashName;
+      }
       var s=text.trim().replace(/\r?\n/g,' ');
       /* JVM Fix: تجاهل ما بعد / أو \ في النص */
       s=s.replace(/\s*\/[^\u0600-\u06FF]*$/,'').replace(/\s*\/\s*(the\s+gue?st|الضيف|المريض)[^\u0600-\u06FF]*/gi,'').trim();
