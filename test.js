@@ -225,7 +225,115 @@ function ezBeep(type){
    🤖 GEMINI AI FALLBACK - للجرعات غير المفهومة فقط
    لا يتم إرسال أي بيانات شخصية — فقط نص الجرعة
    ══════════════════════════════════════════ */
-function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}catch(e){return '';}}
+function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}
+
+
+/* ══════════════════════════════════════════
+   AI PROVIDER SELECTION (Gemini / Groq)
+   ══════════════════════════════════════════ */
+function _ezGetAIProvider(){
+  try{ return localStorage.getItem('ez_ai_provider') || 'gemini'; }
+  catch(e){ return 'gemini'; }
+}
+function _ezSetAIProvider(p){
+  try{ localStorage.setItem('ez_ai_provider', p); } catch(e){}
+}
+
+function _ezGetGroqKey(){
+  try{ return localStorage.getItem('ez_groq_key') || ''; } catch(e){ return ''; }
+}
+function _ezSetGroqKey(k){
+  try{ localStorage.setItem('ez_groq_key', k); } catch(e){}
+}
+
+function _ezGetGroqModel(){
+  try{ return localStorage.getItem('ez_groq_model') || 'mixtral-8x7b-32768'; } catch(e){ return 'mixtral-8x7b-32768'; }
+}
+function _ezSetGroqModel(m){
+  try{ localStorage.setItem('ez_groq_model', m); } catch(e){}
+}
+
+async function _ezGroqBatch(notes){
+  var key = _ezGetGroqKey();
+  if(!key || notes.length===0){ console.log('🤖 Groq: no key or empty notes'); return []; }
+  console.log('🤖 Groq: sending '+notes.length+' notes to Groq (model: '+_ezGetGroqModel()+')...');
+  
+  var prompt = _GEMINI_PROMPT + '\n\nParse ALL notes below. Return ONLY a JSON ARRAY (no markdown). One object per note, same order.\nIMPORTANT: ALWAYS provide startTime and every fields. If unsure, make your best guess.\n\n';
+  for(var i=0; i<notes.length; i++) prompt += (i+1) + '. "' + notes[i] + '"\n';
+  
+  var model = _ezGetGroqModel();
+  var url = 'https://api.groq.com/openai/v1/chat/completions';
+  
+  var body = {
+    model: model,
+    messages: [
+      { role: 'system', content: 'You are a pharmacy dose interpreter. Return valid JSON only.' },
+      { role: 'user', content: prompt }
+    ],
+    temperature: 0.1,
+    max_tokens: 2048,
+    response_format: { type: 'json_object' }
+  };
+  
+  var resp = null;
+  for(var _retry=0; _retry<3; _retry++){
+    try{
+      resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify(body)
+      });
+    } catch(e){
+      console.log('🤖 Groq fetch error on attempt '+(_retry+1)+':', e);
+      continue;
+    }
+    console.log('🤖 Groq attempt '+(_retry+1)+': status='+resp.status);
+    if(resp.status !== 429) break;
+    if(_retry<2){ console.log('🤖 Groq rate limited, waiting 3s...'); await new Promise(r => setTimeout(r,3000)); }
+  }
+  
+  if(!resp || !resp.ok){
+    var errText = resp ? await resp.text() : 'No response';
+    console.error('🤖 Groq API Error:', errText);
+    throw new Error('Groq API '+(resp?resp.status:'?')+': '+(errText||'').substring(0,100));
+  }
+  
+  var data = await resp.json();
+  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if(!content){
+    console.error('🤖 Groq no content in response', data);
+    throw new Error('Groq returned empty response');
+  }
+  
+  var text = content.replace(/\`\`\`json|\`\`\`/g, '').trim();
+  console.log('🤖 Groq extracted text:', text);
+  
+  /* Try parsing — if truncated, try to fix */
+  var parsed;
+  try{ parsed = JSON.parse(text); } catch(pe){
+    console.warn('🤖 Groq JSON parse failed, trying to fix truncated response...');
+    var fixed = text;
+    if(!fixed.endsWith(']')) fixed += '}]';
+    else if(!fixed.endsWith('}')) fixed += '}';
+    try{ parsed = JSON.parse(fixed); } catch(pe2){
+      var objs = [];
+      var re = /\{[^{}]*"count"\s*:\s*\d[^{}]*\}/g;
+      var m;
+      while((m = re.exec(text)) !== null){
+        try{ objs.push(JSON.parse(m[0])); } catch(e3){}
+      }
+      if(objs.length > 0){ parsed = objs; console.log('🤖 Groq recovered '+objs.length+' objects from truncated JSON'); }
+      else { throw new Error('Cannot parse Groq response'); }
+    }
+  }
+  
+  if(!Array.isArray(parsed)) parsed = [parsed];
+  return parsed;
+}
+catch(e){return '';}}
 function _ezGetGeminiModel(){try{return localStorage.getItem('ez_gemini_model')||'gemini-flash-latest';}catch(e){return 'gemini-flash-latest';}}
 function _ezSetGeminiModel(m){try{localStorage.setItem('ez_gemini_model',m);}catch(e){}}
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
@@ -303,133 +411,215 @@ async function _ezGeminiBatch(notes){
 }
 
 /* UI: Setup Gemini key (called from settings) */
-window.ezSetupGemini=function(){
-  var current=_ezGetGeminiKey();
-  var masked=current?String.fromCharCode(8226).repeat(20)+current.slice(-6):'لم يتم التعيين';
-  var statusColor=current?'#059669':'#dc2626';
-  var statusText=current?'✅ مفعّل ('+_ezGetGeminiModel()+')':'❌ غير مفعّل';
-  var overlay=document.createElement('div');
-  overlay.id='ez-gemini-setup';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
-  var card=document.createElement('div');
-  card.style.cssText='width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
-  /* Header */
-  var hdr=document.createElement('div');
-  hdr.style.cssText='padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
-  hdr.innerHTML='<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">جيميناي — لفهم الجرعات غير المعروفة</div></div>';
-  card.appendChild(hdr);
-  /* Body */
-  var body=document.createElement('div');
-  body.style.cssText='padding:16px 22px;direction:rtl';
-  body.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">الحالة: <b style="color:'+statusColor+'">'+statusText+'</b></div><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:8px">'+masked+'</div>';
-  /* Model selector */
-  var modelLabel=document.createElement('div');
-  modelLabel.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';
-  modelLabel.textContent='الموديل:';
-  body.appendChild(modelLabel);
-  var modelSel=document.createElement('select');
-  modelSel.id='ez-gemini-model-select';
-  modelSel.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box';
-  var models=[
-    {value:'gemini-flash-latest',label:'gemini-flash-latest (المستقر ✅)'},
-    {value:'gemini-flash-lite-latest',label:'gemini-flash-lite-latest (خفيف)'},
-    {value:'gemini-2.5-flash',label:'gemini-2.5-flash (الأحدث)'},
-    {value:'gemini-2.5-flash-lite',label:'gemini-2.5-flash-lite (سريع)'},
-    {value:'gemini-2.0-flash',label:'gemini-2.0-flash'},
-    {value:'gemini-2.0-flash-001',label:'gemini-2.0-flash-001'},
-    {value:'gemini-2.0-flash-lite-001',label:'gemini-2.0-flash-lite-001'},
-    {value:'gemini-3-flash-preview',label:'gemini-3-flash-preview (تجريبي)'},
-    {value:'gemini-pro-latest',label:'gemini-pro-latest (متقدم)'},
-    {value:'gemini-2.5-pro',label:'gemini-2.5-pro (متقدم)'}
-  ];
-  var currentModel=_ezGetGeminiModel();
-  for(var mi=0;mi<models.length;mi++){
-    var opt=document.createElement('option');
-    opt.value=models[mi].value;opt.textContent=models[mi].label;
-    if(models[mi].value===currentModel) opt.selected=true;
-    modelSel.appendChild(opt);
-  }
-  body.appendChild(modelSel);
+window.
+/* ══════════════════════════════════════════
+   🤖 AI SETUP UI (Gemini + Groq)
+   ══════════════════════════════════════════ */
+window.ezSetupAI = function(){
+  try{
+    var currentProvider = _ezGetAIProvider();
+    var geminiKey = _ezGetGeminiKey();
+    var geminiModel = _ezGetGeminiModel();
+    var groqKey = _ezGetGroqKey();
+    var groqModel = _ezGetGroqModel();
 
-  var keyLabel=document.createElement('div');
-  keyLabel.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';
-  keyLabel.textContent='مفتاح API:';
-  body.appendChild(keyLabel);
-  var inp=document.createElement('input');
-  inp.id='ez-gemini-key-input';inp.type='password';inp.placeholder='الصق مفتاح Gemini API هنا';
-  inp.style.cssText='width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box';
-  body.appendChild(inp);
-  var info=document.createElement('div');
-  info.style.cssText='font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px';
-  info.innerHTML='🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>';
-  body.appendChild(info);
-  card.appendChild(body);
-  /* Buttons */
-  var foot=document.createElement('div');
-  foot.style.cssText='padding:10px 22px 16px;display:flex;gap:8px';
-  var saveBtn=document.createElement('button');
-  saveBtn.textContent='💾 حفظ';
-  saveBtn.style.cssText='flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
-  saveBtn.addEventListener('click',function(){
-    var k=document.getElementById('ez-gemini-key-input').value.trim();
-    var selModel=document.getElementById('ez-gemini-model-select').value;
-    _ezSetGeminiModel(selModel);
-    if(k){_ezSetGeminiKey(k);window.ezShowToast('✅ تم حفظ المفتاح ('+selModel+')','success');overlay.remove();}
-    else if(current){_ezSetGeminiModel(selModel);window.ezShowToast('✅ تم تغيير الموديل إلى '+selModel,'success');overlay.remove();}
-    else{window.ezShowToast('❌ ادخل المفتاح','error');}
-  });
-  foot.appendChild(saveBtn);
-  /* زر حذف — يظهر فقط لو فيه مفتاح محفوظ */
-  if(current){
-    var delBtn=document.createElement('button');
-    delBtn.textContent='🗑️ حذف';
-    delBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#dc2626;background:rgba(239,68,68,0.04)';
-    delBtn.addEventListener('click',function(){
-      _ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');overlay.remove();
+    var maskedGemini = geminiKey ? '•'.repeat(20) + geminiKey.slice(-6) : 'لم يتم التعيين';
+    var maskedGroq = groqKey ? '•'.repeat(20) + groqKey.slice(-6) : 'لم يتم التعيين';
+
+    var overlay = document.createElement('div');
+    overlay.id = 'ez-ai-setup';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'width:480px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
+
+    /* Header */
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
+    hdr.innerHTML = '<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">اختر المزود وأدخل المفتاح</div></div>';
+    card.appendChild(hdr);
+
+    /* Tabs */
+    var tabsDiv = document.createElement('div');
+    tabsDiv.style.cssText = 'display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid rgba(129,140,248,0.08)';
+    tabsDiv.innerHTML = `
+      <button class="ez-ai-tab" data-provider="gemini" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='gemini'?'linear-gradient(145deg,#6366f1,#4f46e5)':'rgba(148,163,184,0.08)'};color:${currentProvider==='gemini'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Gemini</button>
+      <button class="ez-ai-tab" data-provider="groq" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='groq'?'linear-gradient(145deg,#10b981,#059669)':'rgba(148,163,184,0.08)'};color:${currentProvider==='groq'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Groq</button>
+    `;
+    card.appendChild(tabsDiv);
+
+    /* Panels container */
+    var panelsDiv = document.createElement('div');
+    panelsDiv.style.cssText = 'padding:16px 22px';
+
+    /* Gemini Panel */
+    var geminiPanel = document.createElement('div');
+    geminiPanel.className = 'ez-ai-panel';
+    geminiPanel.style.display = currentProvider==='gemini' ? 'block' : 'none';
+    geminiPanel.innerHTML = `
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:${geminiKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${geminiKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
+          <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGemini}</span>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
+        <select id="ez-gemini-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
+          <option value="gemini-flash-latest" ${geminiModel==='gemini-flash-latest'?'selected':''}>gemini-flash-latest (المستقر ✅)</option>
+          <option value="gemini-flash-lite-latest" ${geminiModel==='gemini-flash-lite-latest'?'selected':''}>gemini-flash-lite-latest (خفيف)</option>
+          <option value="gemini-2.5-flash" ${geminiModel==='gemini-2.5-flash'?'selected':''}>gemini-2.5-flash (الأحدث)</option>
+          <option value="gemini-2.5-flash-lite" ${geminiModel==='gemini-2.5-flash-lite'?'selected':''}>gemini-2.5-flash-lite (سريع)</option>
+          <option value="gemini-2.0-flash" ${geminiModel==='gemini-2.0-flash'?'selected':''}>gemini-2.0-flash</option>
+          <option value="gemini-2.0-flash-001" ${geminiModel==='gemini-2.0-flash-001'?'selected':''}>gemini-2.0-flash-001</option>
+          <option value="gemini-2.0-flash-lite-001" ${geminiModel==='gemini-2.0-flash-lite-001'?'selected':''}>gemini-2.0-flash-lite-001</option>
+          <option value="gemini-3-flash-preview" ${geminiModel==='gemini-3-flash-preview'?'selected':''}>gemini-3-flash-preview (تجريبي)</option>
+          <option value="gemini-pro-latest" ${geminiModel==='gemini-pro-latest'?'selected':''}>gemini-pro-latest (متقدم)</option>
+          <option value="gemini-2.5-pro" ${geminiModel==='gemini-2.5-pro'?'selected':''}>gemini-2.5-pro (متقدم)</option>
+        </select>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
+        <input type="password" id="ez-gemini-key-input" placeholder="الصق مفتاح Gemini API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
+        <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
+          🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
+          📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>
+        </div>
+      </div>
+    `;
+    panelsDiv.appendChild(geminiPanel);
+
+    /* Groq Panel */
+    var groqPanel = document.createElement('div');
+    groqPanel.className = 'ez-ai-panel';
+    groqPanel.style.display = currentProvider==='groq' ? 'block' : 'none';
+    groqPanel.innerHTML = `
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:${groqKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${groqKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
+          <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGroq}</span>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
+        <select id="ez-groq-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
+          <option value="mixtral-8x7b-32768" ${groqModel==='mixtral-8x7b-32768'?'selected':''}>Mixtral 8x7B (سريع)</option>
+          <option value="llama2-70b-4096" ${groqModel==='llama2-70b-4096'?'selected':''}>Llama 2 70B (دقيق)</option>
+          <option value="gemma2-9b-it" ${groqModel==='gemma2-9b-it'?'selected':''}>Gemma 2 9B (خفيف)</option>
+          <option value="llama3-70b-8192" ${groqModel==='llama3-70b-8192'?'selected':''}>Llama 3 70B (أحدث)</option>
+        </select>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
+        <input type="password" id="ez-groq-key-input" placeholder="الصق مفتاح Groq API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
+        <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
+          🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
+          📎 <a href="https://console.groq.com/keys" target="_blank" style="color:#10b981;text-decoration:underline">احصل على مفتاح مجاني من Groq Console</a>
+        </div>
+      </div>
+    `;
+    panelsDiv.appendChild(groqPanel);
+    card.appendChild(panelsDiv);
+
+    /* Buttons */
+    var foot = document.createElement('div');
+    foot.style.cssText = 'padding:10px 22px 16px;display:flex;gap:8px;flex-wrap:wrap';
+
+    var saveBtn = document.createElement('button');
+    saveBtn.textContent = '💾 حفظ';
+    saveBtn.style.cssText = 'flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
+    saveBtn.addEventListener('click', function(){
+      try{
+        var provider = currentProvider;
+        if(provider === 'gemini'){
+          var key = document.getElementById('ez-gemini-key-input').value.trim();
+          var model = document.getElementById('ez-gemini-model-select').value;
+          _ezSetGeminiModel(model);
+          if(key) _ezSetGeminiKey(key);
+          window.ezShowToast('✅ تم حفظ إعدادات Gemini','success');
+        } else {
+          var key = document.getElementById('ez-groq-key-input').value.trim();
+          var model = document.getElementById('ez-groq-model-select').value;
+          _ezSetGroqModel(model);
+          if(key) _ezSetGroqKey(key);
+          window.ezShowToast('✅ تم حفظ إعدادات Groq','success');
+        }
+        _ezSetAIProvider(provider);
+        overlay.remove();
+      } catch(e){ console.warn('EZ save error',e); }
     });
-    foot.appendChild(delBtn);
-  }
-  /* زر إلغاء — يظهر دائماً */
-  var cancelBtn=document.createElement('button');
-  cancelBtn.textContent='إلغاء';
-  cancelBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
-  cancelBtn.addEventListener('click',function(){overlay.remove();});
-  foot.appendChild(cancelBtn);
-  /* Test button */
-  var testBtn=document.createElement('button');
-  testBtn.textContent='🧪 اختبار الاتصال';
-  testBtn.style.cssText='width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
-  testBtn.addEventListener('click',function(){
-    var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
-    if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
-    var selModel=document.getElementById('ez-gemini-model-select').value;
-    testBtn.textContent='⏳ جاري الاختبار ('+selModel+')...';testBtn.disabled=true;
-    testBtn.style.color='#6366f1';testBtn.style.borderColor='rgba(99,102,241,0.2)';
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/'+selModel+':generateContent?key='+testKey,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}})
-    }).then(function(r){
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      return r.json();
-    }).then(function(data){
-      var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
-      testBtn.textContent='✅ ناجح ('+selModel+') — اضغط لإعادة الاختبار';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';testBtn.disabled=false;
-      window.ezShowToast('✅ جيميناي يعمل! الرد: '+text.substring(0,60),'success');
-      console.log('🤖 Test response:',text);
-    }).catch(function(err){
-      testBtn.textContent='❌ فشل — غيّر الموديل واضغط للإعادة';testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';testBtn.disabled=false;
-      window.ezShowToast('❌ خطأ: '+err.message,'error');
-      console.error('🤖 Test error:',err);
+    foot.appendChild(saveBtn);
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'إلغاء';
+    cancelBtn.style.cssText = 'height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
+    cancelBtn.addEventListener('click', function(){ overlay.remove(); });
+    foot.appendChild(cancelBtn);
+
+    var testBtn = document.createElement('button');
+    testBtn.textContent = '🧪 اختبار الاتصال';
+    testBtn.style.cssText = 'width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
+    testBtn.addEventListener('click', function(){
+      try{
+        var provider = currentProvider;
+        if(provider === 'gemini'){
+          var key = document.getElementById('ez-gemini-key-input').value.trim() || _ezGetGeminiKey();
+          if(!key){ window.ezShowToast('❌ أدخل مفتاح Gemini أولاً','error'); return; }
+          var model = document.getElementById('ez-gemini-model-select').value;
+          testBtn.textContent = '⏳ جاري الاختبار (Gemini)...'; testBtn.disabled = true;
+          fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+key, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({contents:[{parts:[{text:'Return JSON: {"test":"ok"}'}]}], generationConfig:{responseMimeType:'application/json'}})
+          }).then(r=>r.json()).then(d=>{
+            testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
+            window.ezShowToast('✅ Gemini يعمل','success');
+          }).catch(e=>{
+            testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
+            window.ezShowToast('❌ خطأ: '+e.message,'error');
+          });
+        } else {
+          var key = document.getElementById('ez-groq-key-input').value.trim() || _ezGetGroqKey();
+          if(!key){ window.ezShowToast('❌ أدخل مفتاح Groq أولاً','error'); return; }
+          var model = document.getElementById('ez-groq-model-select').value;
+          testBtn.textContent = '⏳ جاري الاختبار (Groq)...'; testBtn.disabled = true;
+          fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method:'POST',
+            headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+key},
+            body:JSON.stringify({model:model, messages:[{role:'user', content:'Return JSON: {"test":"ok"}'}], temperature:0.1, max_tokens:50})
+          }).then(r=>r.json()).then(d=>{
+            testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
+            window.ezShowToast('✅ Groq يعمل','success');
+          }).catch(e=>{
+            testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
+            window.ezShowToast('❌ خطأ: '+e.message,'error');
+          });
+        }
+      } catch(e){ console.warn('EZ test error',e); }
     });
-  });
-  body.appendChild(testBtn);
-  card.appendChild(foot);
-  overlay.appendChild(card);
-  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
-  document.body.appendChild(overlay);
-  inp.focus();
+    foot.appendChild(testBtn);
+
+    card.appendChild(foot);
+    overlay.appendChild(card);
+
+    /* Tab switching */
+    var tabs = overlay.querySelectorAll('.ez-ai-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function(){
+        var prov = this.getAttribute('data-provider');
+        currentProvider = prov;
+        tabs.forEach(t => {
+          t.style.background = 'rgba(148,163,184,0.08)';
+          t.style.color = '#64748b';
+        });
+        this.style.background = prov==='gemini' ? 'linear-gradient(145deg,#6366f1,#4f46e5)' : 'linear-gradient(145deg,#10b981,#059669)';
+        this.style.color = '#fff';
+        overlay.querySelectorAll('.ez-ai-panel').forEach(p => p.style.display = 'none');
+        overlay.querySelector(prov==='gemini' ? '.ez-ai-panel:first-child' : '.ez-ai-panel:last-child').style.display = 'block';
+      });
+    });
+
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    if(currentProvider === 'gemini') document.getElementById('ez-gemini-key-input').focus();
+    else document.getElementById('ez-groq-key-input').focus();
+  } catch(e){ console.warn('EZ setupAI error',e); }
 };
+;
 
 
 /* ══════════════════════════════════════════
@@ -3012,20 +3202,86 @@ function extractDayOfWeek(note){
   return null;
 }
 
+
 function extractDuration(note){
-  var s=note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه')
+  var s = note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه')
     .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .trim();
-  var result={hasDuration:false,days:null,isPRN:false,isUntilFinish:false,original:note};
-  if(/عند الحاجه|عند اللزوم|prn|as\s*needed|when\s*needed|sos|عند الضرورة|if\s*needed|p\.r\.n/i.test(s)){result.isPRN=true;return result;}
-  if(/حتى (نفاد|انتهاء|انهاء|الشفاء)|until\s*(finish|complete|symptom|gone|resolved)|till\s*finish/i.test(s)){result.isUntilFinish=true;return result;}
-  var dayPatterns=[{r:/لمده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/مده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/(\d+)\s*(يوم(?!ي)|ايام)\s*فقط/i,g:1},{r:/(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/(\d+)\s*days?(?!\s*supply)/i,g:1},{r:/for\s*(\d+)\s*days?/i,g:1},{r:/x\s*(\d+)\s*days?/i,g:1},{r:/duration[:\s]*(\d+)\s*days?/i,g:1}];
-  for(var i=0;i<dayPatterns.length;i++){var m=s.match(dayPatterns[i].r);if(m){var _dd=parseInt(m[dayPatterns[i].g]);if(_dd<=1)continue;result.hasDuration=true;result.days=_dd;return result;}}
-  var weekPatterns=[{r:/اسبوع واحد|واحد اسبوع|1\s*اسبوع|one\s*week|1\s*week/i,d:7},{r:/اسبوعين|2\s*اسبوع|two\s*weeks?|2\s*weeks?/i,d:14},{r:/ثلاث(ه)?\s*اسابيع|3\s*اسابيع|three\s*weeks?|3\s*weeks?/i,d:21},{r:/اربع(ه)?\s*اسابيع|4\s*اسابيع|four\s*weeks?|4\s*weeks?/i,d:28},{r:/شهر واحد|واحد شهر|1\s*شهر|one\s*month|1\s*month/i,d:30},{r:/شهرين|2\s*شهر|two\s*months?|2\s*months?/i,d:60},{r:/ثلاث(ه)?\s*اشهر|3\s*اشهر|three\s*months?|3\s*months?/i,d:90}];
-  for(var i=0;i<weekPatterns.length;i++){if(weekPatterns[i].r.test(s)){result.hasDuration=true;result.days=weekPatterns[i].d;return result;}}
+  
+  var result = { hasDuration: false, days: null, isPRN: false, isUntilFinish: false, original: note };
+  
+  if(/عند الحاجه|عند اللزوم|prn|as\s*needed|when\s*needed|sos|عند الضرورة|if\s*needed|p\.r\.n/i.test(s)){
+    result.isPRN = true; return result;
+  }
+  
+  if(/حتى (نفاد|انتهاء|انهاء|الشفاء)|until\s*(finish|complete|symptom|gone|resolved)|till\s*finish/i.test(s)){
+    result.isUntilFinish = true; return result;
+  }
+  
+  /* أنماط الأيام */
+  var dayPatterns = [
+    {r: /لمده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i, g:1},
+    {r: /مده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i, g:1},
+    {r: /(\d+)\s*(يوم(?!ي)|ايام)\s*فقط/i, g:1},
+    {r: /(\d+)\s*(يوم(?!ي)|ايام)/i, g:1},
+    {r: /(\d+)\s*days?(?!\s*supply)/i, g:1},
+    {r: /for\s*(\d+)\s*days?/i, g:1},
+    {r: /x\s*(\d+)\s*days?/i, g:1},
+    {r: /duration[:s]*(\d+)\s*days?/i, g:1},
+    {r: /(\d+)\s*D/i, g:1}  // "10D" اختصار
+  ];
+  
+  for(var i=0; i<dayPatterns.length; i++){
+    var m = s.match(dayPatterns[i].r);
+    if(m){
+      var _dd = parseInt(m[dayPatterns[i].g]);
+      if(_dd <= 1) continue;
+      result.hasDuration = true;
+      result.days = _dd;
+      return result;
+    }
+  }
+  
+  /* أنماط الأسابيع والشهور */
+  var weekPatterns = [
+    {r: /اسبوع واحد|واحد اسبوع|1\s*اسبوع|one\s*week|1\s*week/i, d:7},
+    {r: /اسبوعين|2\s*اسبوع|two\s*weeks?|2\s*weeks?/i, d:14},
+    {r: /ثلاث(ه)?\s*اسابيع|3\s*اسابيع|three\s*weeks?|3\s*weeks?/i, d:21},
+    {r: /اربع(ه)?\s*اسابيع|4\s*اسابيع|four\s*weeks?|4\s*weeks?/i, d:28},
+    {r: /شهر واحد|واحد شهر|1\s*شهر|one\s*month|1\s*month/i, d:30},
+    {r: /شهرين|2\s*شهر|two\s*months?|2\s*months?/i, d:60},
+    {r: /ثلاث(ه)?\s*اشهر|3\s*اشهر|three\s*months?|3\s*months?/i, d:90},
+    {r: /اربع(ه)?\s*اشهر|4\s*اشهر|four\s*months?|4\s*months?/i, d:120}
+  ];
+  
+  for(var i=0; i<weekPatterns.length; i++){
+    if(weekPatterns[i].r.test(s)){
+      result.hasDuration = true;
+      result.days = weekPatterns[i].d;
+      return result;
+    }
+  }
+  
+  /* أنماط مكتوبة بالأحرف (عشرة أيام) */
+  var wordNumbers = {
+    'واحد':1, 'واحدة':1, 'اثنين':2, 'اثنان':2, 'ثلاث':3, 'ثلاثة':3,
+    'اربع':4, 'اربعة':4, 'أربع':4, 'أربعة':4, 'خمس':5, 'خمسة':5,
+    'ست':6, 'ستة':6, 'سبع':7, 'سبعة':7, 'ثمان':8, 'ثمانية':8,
+    'تسع':9, 'تسعة':9, 'عشر':10, 'عشرة':10
+  };
+  for(var num in wordNumbers){
+    var r = new RegExp(num + '\\s*(ايام|أيام|يوم)', 'i');
+    if(r.test(s)){
+      result.hasDuration = true;
+      result.days = wordNumbers[num];
+      return result;
+    }
+  }
+  
   return result;
 }
+
 
 function extractHourlyInterval(note){
   var s=note.toLowerCase()
@@ -3107,89 +3363,171 @@ function makeDraggable(el){
 /* ══════════════════════════════════════════
    DOSE RECOGNIZER - ENHANCED v2
    ══════════════════════════════════════════ */
+
 function smartDoseRecognizer(note){
-  var raw=note;
+  var raw = note;
   /* Normalize: Arabic chars + Arabic numerals ٠١٢٣٤٥٦٧٨٩ → 0123456789 */
   var s=(note||'').toLowerCase()
     .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي')
     .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .replace(/\s+/g,' ').trim();
-  /* FIX v141: Strip duration phrases BEFORE frequency detection
-     "3 شهور" / "3 اشهر" / "30 يوم" = duration, NOT frequency
-     Without this, "بعد الاكل 3 شهور" gets detected as 3 times */
+
+  /* Strip duration phrases BEFORE frequency detection */
   s=s.replace(/\d+\s*(شهر|شهور|اشهر|شهرين|month|months)/gi,'')
     .replace(/\d+\s*(يوم|ايام|اسبوع|اسابيع|day|days|week|weeks)/gi,'')
     .replace(/لمد[ةه]?\s*\d+/gi,'')
     .replace(/و(قرص|حبه|حبة|كبسوله|كبسولة)/gi,' و ')
     .replace(/(^|\s)(قرص|حبه|حبة|كبسوله|كبسولة|اقراص|حبوب)(\s|$)/gi,'$1$3')
     .replace(/\s+/g,' ').trim();
-  var res={count:1,hasB:false,hasL:false,hasD:false,isBefore:false,hasM:false,hasN:false,hasA:false,hasE:false,hasBed:false,hasEmpty:false,language:'arabic',confidence:'high',rawFrequency:null};
-  res.language=detectLanguage(raw);
 
-  /* ── Step 1: Detect meal/time keywords ── */
-  /* In non-Ramadan mode: سحور = عشاء (dinner), فطار/افطار = فطار (breakfast) */
-  res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار|مع\s*(ال)?(فطار|فطور|افطار)/i.test(s);
-  res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|عداء|العداء|مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/i.test(s);
-  res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|العشى|سحور|السحور|سحر|مع\s*(ال)?(عشا|عشاء|سحور|سحر)/i.test(s);
-  res.hasM=/\b(morning|am|morn|a\.m|mane)\b|صباح|الصباح|صبح/i.test(s);
-  res.hasN=/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/i.test(s);
-  res.hasA=/\b(asr|afternoon)\b|عصر|العصر/i.test(s);
-  res.hasE=/\b(evening|eve|night|pm|p\.m)\b|مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|المسا|ليل|الليل|ليلا|ليلاً/i.test(s);
-  res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s|nocte)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
-  res.hasEmpty=/\b(empty|fasting)\b|ريق|الريق|الريج|الريئ|على الريق|معده فارغه|empty\s*stomach/i.test(s);
-  res.isBefore=/\b(before|bef|pre|ac|a\.c)\b|قبل/i.test(s);
+  var res = {
+    count: 1,
+    hasB: false, hasL: false, hasD: false, isBefore: false,
+    hasM: false, hasN: false, hasA: false, hasE: false, hasBed: false, hasEmpty: false,
+    language: 'arabic', confidence: 'high', rawFrequency: null
+  };
+  res.language = detectLanguage(raw);
+
+  /* Step 1: Detect meal/time keywords */
+  res.hasB  = /\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار|مع\s*(ال)?(فطار|فطور|افطار)/i.test(s);
+  res.hasL  = /\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|عداء|العداء|مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/i.test(s);
+  res.hasD  = /\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|العشى|سحور|السحور|سحر|مع\s*(ال)?(عشا|عشاء|سحور|سحر)/i.test(s);
+  res.hasM  = /\b(morning|am|morn|a\.m|mane)\b|صباح|الصباح|صبح/i.test(s);
+  res.hasN  = /\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/i.test(s);
+  res.hasA  = /\b(asr|afternoon)\b|عصر|العصر/i.test(s);
+  res.hasE  = /\b(evening|eve|night|pm|p\.m)\b|مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|المسا|ليل|الليل|ليلا|ليلاً/i.test(s);
+  res.hasBed = /\b(bed|bedtime|sleep|sle|hs|h\.s|nocte)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
+  res.hasEmpty = /\b(empty|fasting)\b|ريق|الريق|الريج|الريئ|على الريق|معده فارغه|empty\s*stomach/i.test(s);
+  res.isBefore = /\b(before|bef|pre|ac|a\.c)\b|قبل/i.test(s);
+
   /* FIX: مساءا قبل النوم = single bedtime */
-  if(res.hasBed&&res.hasE&&!res.hasB&&!res.hasL&&!res.hasD&&!res.hasM&&!res.hasN&&!res.hasA){res.hasE=false;}
+  if(res.hasBed && res.hasE && !res.hasB && !res.hasL && !res.hasD && !res.hasM && !res.hasN && !res.hasA){
+    res.hasE = false;
+  }
 
-  /* ── Step 2: Explicit frequency abbreviations (highest priority) ── */
-  if(/\bqid\b|\bqds\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){res.count=4;res.rawFrequency='QID';return res;}
-  if(/\btid\b|\btds\b|t\.i\.d|ثلاث مرات|تلات مرات|3\s*مرات|three\s*times?\s*(a\s*day|daily|يوميا)?|3\s*times?\s*(a\s*day|daily)?|thrice\s*(daily)?/i.test(s)){res.count=3;res.rawFrequency='TID';return res;}
-  if(/\bam\s*[&\/,\s]+\s*pm\b|\bpm\s*[&\/,\s]+\s*am\b|\ba\.?\s*m\.?\s*[&\/,\s]+\s*p\.?\s*m\.?\b/i.test(s)){res.count=2;res.rawFrequency='BID';return res;}
-  if(/\bbid\b|\bbd\b|b\.i\.d|مرتين|مرتان|twice\s*(a\s*day|daily)?|2\s*times?\s*(a\s*day|daily|يوميا)?/i.test(s)){res.count=2;res.rawFrequency='BID';return res;}
-  if(/\bod\b|o\.d|\bqd\b|q\.d|once\s*(a\s*day|daily)?|مره واحده يوميا|مره واحده|حبه يوميا|حبه واحده يوميا/i.test(s)){res.count=1;res.rawFrequency='OD';return res;}
+  /* Step 2: Explicit frequency abbreviations (highest priority) */
+  if(/\bqid\b|\bqds\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){
+    res.count = 4; res.rawFrequency = 'QID'; return res;
+  }
+  if(/\btid\b|\btds\b|t\.i\.d|ثلاث مرات|تلات مرات|3\s*مرات|three\s*times?\s*(a\s*day|daily|يوميا)?|3\s*times?\s*(a\s*day|daily)?|thrice\s*(daily)?/i.test(s)){
+    res.count = 3; res.rawFrequency = 'TID'; return res;
+  }
+  if(/\bam\s*[&\/,\s]+\s*pm\b|\bpm\s*[&\/,\s]+\s*am\b|\ba\.?\s*m\.?\s*[&\/,\s]+\s*p\.?\s*m\.?\b/i.test(s)){
+    res.count = 2; res.rawFrequency = 'BID'; return res;
+  }
+  if(/\bbid\b|\bbd\b|b\.i\.d|مرتين|مرتان|twice\s*(a\s*day|daily)?|2\s*times?\s*(a\s*day|daily|يوميا)?/i.test(s)){
+    res.count = 2; res.rawFrequency = 'BID'; return res;
+  }
+  if(/\bod\b|o\.d|\bqd\b|q\.d|once\s*(a\s*day|daily)?|مره واحده يوميا|مره واحده|حبه يوميا|حبه واحده يوميا/i.test(s)){
+    res.count = 1; res.rawFrequency = 'OD'; return res;
+  }
 
-  /* ── Step 3: Hourly intervals ── */
-  if(/كل\s*4\s*ساع|every\s*4\s*h|q4h|q\s*4\s*h/i.test(s)){res.count=6;res.rawFrequency='Q4H';return res;}
-  if(/كل\s*6\s*(?:ساع)?|every\s*6\s*h|q6h|q\s*6\s*h/i.test(s)){res.count=4;res.rawFrequency='Q6H';return res;}
-  if(/كل\s*8\s*(?:ساع)?|every\s*8\s*h|q8h|q\s*8\s*h/i.test(s)){res.count=3;res.rawFrequency='Q8H';return res;}
-  if(/كل\s*12\s*(?:ساع)?|every\s*12\s*h|q12h|q\s*12\s*h/i.test(s)){res.count=2;res.rawFrequency='Q12H';return res;}
-  if(/كل\s*24\s*(?:ساع)?|every\s*24\s*h|q24h|q\s*24\s*h/i.test(s)){res.count=1;res.rawFrequency='Q24H';return res;}
+  /* Step 3: Hourly intervals */
+  if(/كل\s*4\s*ساع|every\s*4\s*h|q4h|q\s*4\s*h/i.test(s)){
+    res.count = 6; res.rawFrequency = 'Q4H'; return res;
+  }
+  if(/كل\s*6\s*(?:ساع)?|every\s*6\s*h|q6h|q\s*6\s*h/i.test(s)){
+    res.count = 4; res.rawFrequency = 'Q6H'; return res;
+  }
+  if(/كل\s*8\s*(?:ساع)?|every\s*8\s*h|q8h|q\s*8\s*h/i.test(s)){
+    res.count = 3; res.rawFrequency = 'Q8H'; return res;
+  }
+  if(/كل\s*12\s*(?:ساع)?|every\s*12\s*h|q12h|q\s*12\s*h/i.test(s)){
+    res.count = 2; res.rawFrequency = 'Q12H'; return res;
+  }
+  if(/كل\s*24\s*(?:ساع)?|every\s*24\s*h|q24h|q\s*24\s*h/i.test(s)){
+    res.count = 1; res.rawFrequency = 'Q24H'; return res;
+  }
+  /* كل يومين / every other day */
+  if(/كل\s*(يومين|يوم ويوم|48\s*ساع)|every\s*other\s*day|alternate\s*day|eod/i.test(s)){
+    res.count = 0.5; res.rawFrequency = 'Q48H'; return res;
+  }
 
-  /* ── Step 4: Explicit meal-based counting ── */
-  if(/قبل\s*(الوجبات|كل\s*(وجبه|وجبه))|قبل\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){res.count=3;res.isBefore=true;return res;}
-  if(/بعد\s*(الوجبات|كل\s*(وجبه|وجبه))|بعد\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){res.count=3;return res;}
-  if(/مع\s*(الوجبات|كل\s*(وجبه|وجبه))|مع\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|with\s*(all\s*)?meals/i.test(s)){res.count=3;return res;}
+  /* Step 4: Explicit meal-based counting */
+  if(/قبل\s*(الوجبات|كل\s*(وجبه|وجبه))|قبل\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){
+    res.count = 3; res.isBefore = true; return res;
+  }
+  if(/بعد\s*(الوجبات|كل\s*(وجبه|وجبه))|بعد\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){
+    res.count = 3; return res;
+  }
+  if(/مع\s*(الوجبات|كل\s*(وجبه|وجبه))|مع\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|with\s*(all\s*)?meals/i.test(s)){
+    res.count = 3; return res;
+  }
 
-  if(/قبل\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*قبل\s*(الاكل|الاكل)|before\s*meals?\s*twice/i.test(s)){res.count=2;res.isBefore=true;return res;}
-  if(/بعد\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*بعد\s*(الاكل|الاكل)|after\s*meals?\s*twice/i.test(s)){res.count=2;return res;}
+  if(/قبل\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*قبل\s*(الاكل|الاكل)|before\s*meals?\s*twice/i.test(s)){
+    res.count = 2; res.isBefore = true; return res;
+  }
+  if(/بعد\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*بعد\s*(الاكل|الاكل)|after\s*meals?\s*twice/i.test(s)){
+    res.count = 2; return res;
+  }
 
-  if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;res.isBefore=true;return res;}
-  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
-  if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
+  /* Step 5: Single meal/time keywords */
+  if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s) && !/مرتين|مرات|twice|times|الثلاث/i.test(s)){
+    res.count = 1; res.isBefore = true; return res;
+  }
+  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s) && !/مرتين|مرات|twice|times|الثلاث/i.test(s)){
+    res.count = 1; return res;
+  }
+  if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s) && !/مرتين|مرات|twice|times|الثلاث/i.test(s)){
+    res.count = 1; return res;
+  }
 
-  /* ── Step 5: Count from detected meal/time keywords ── */
-  var mealCount=0;
-  if(res.hasB||res.hasM) mealCount++;
-  if(res.hasL||res.hasN) mealCount++;
-  if(res.hasD||res.hasE) mealCount++;
-  if(res.hasA&&mealCount<3) mealCount++;
+  /* Step 6: Count from detected meal/time keywords */
+  var mealCount = 0;
+  if(res.hasB || res.hasM) mealCount++;
+  if(res.hasL || res.hasN) mealCount++;
+  if(res.hasD || res.hasE) mealCount++;
+  if(res.hasA && mealCount < 3) mealCount++;
 
-  if(mealCount>=3){res.count=3;return res;}
-  var pairDual=/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
-  if(mealCount===2||pairDual.test(s)){res.count=2;return res;}
-  if(res.hasEmpty&&res.hasBed){res.count=2;return res;}
-  if(res.hasBed&&mealCount===0){res.count=1;return res;}
-  if(res.hasEmpty&&mealCount===0){res.count=1;return res;}
-  if(/\b(يوميا|daily)\b/i.test(s)&&!res.rawFrequency){res.count=1;return res;}
+  if(mealCount >= 3){ res.count = 3; return res; }
+  var pairDual = /(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
+  if(mealCount === 2 || pairDual.test(s)){ res.count = 2; return res; }
+  if(res.hasEmpty && res.hasBed){ res.count = 2; return res; }
+  if(res.hasBed && mealCount === 0){ res.count = 1; return res; }
+  if(res.hasEmpty && mealCount === 0){ res.count = 1; return res; }
+  if(/\b(يوميا|daily)\b/i.test(s) && !res.rawFrequency){ res.count = 1; return res; }
+
   return res;
 }
 
+
+
 function getTwoPillsPerDoseInfo(n){
-  var s=(n||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
-  /* No half/quarter pills - always whole pills */
-  var twoP=['2 حبه','2 حبة','حبتين','حبتان','2 حبوب','2 قرص','قرصين','قرصان','2 كبسوله','كبسولتين','كبسولتان','2 pill','2 pills','two pill','two pills','2 tablet','2 tablets','two tablet','two tablets','2 tab','2 tabs','two tab','two tabs','2 cap','2 caps','two cap','two caps'];
-  for(var i=0;i<twoP.length;i++){if(s.indexOf(twoP[i].toLowerCase())>-1){var is2=/مرتين|twice|2\s*times|bid|b\.i\.d/i.test(n);var is3=/ثلاث مرات|3\s*مرات|three\s*times|3\s*times|tid|t\.i\.d/i.test(n);var ml=1;if(is3)ml=6;else if(is2)ml=4;else ml=2;return{dose:2,multiplier:ml};}}
+  var s = (n||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+  
+  // قائمة موسعة للجرعة 2
+  var twoP = [
+    '2 حبه','2 حبة','حبتين','حبتان','2 حبوب','2 قرص','قرصين','قرصان',
+    '2 كبسوله','كبسولتين','كبسولتان','2 pill','2 pills','two pill','two pills',
+    '2 tablet','2 tablets','two tablet','two tablets','2 tab','2 tabs','two tab','two tabs',
+    '2 cap','2 caps','two cap','two caps','double dose','جرعة مضاعفة','ضعف الجرعة',
+    'مضاعف','مزدوج','مرتين الجرعة','2*'
+  ];
+  for(var i=0; i<twoP.length; i++){
+    if(s.indexOf(twoP[i].toLowerCase()) > -1){
+      var is2 = /مرتين|twice|2\s*times|bid|b\.i\.d/i.test(n);
+      var is3 = /ثلاث مرات|3\s*مرات|three\s*times|3\s*times|tid|t\.i\.d/i.test(n);
+      var ml = 1;
+      if(is3) ml = 6;
+      else if(is2) ml = 4;
+      else ml = 2;
+      return {dose: 2, multiplier: ml};
+    }
+  }
+  
+  // جرعة 3
+  var threeP = [
+    '3 حبه','3 حبات','3 حبوب','3 قرص','3 اقراص','3 كبسول','3 كبسولات',
+    '3 tab','3 tabs','3 pill','3 pills','three tab','three pill'
+  ];
+  for(var i=0; i<threeP.length; i++){
+    if(s.indexOf(threeP[i].toLowerCase()) > -1) return {dose: 3, multiplier: 3};
+  }
+  
+  return {dose: 1, multiplier: 1};
+}
+}
   var threeP=['3 حبه','3 حبات','3 حبوب','3 قرص','3 اقراص','3 كبسول','3 tab','3 tabs','3 pill','3 pills','three tab','three pill'];
   for(var i=0;i<threeP.length;i++){if(s.indexOf(threeP[i].toLowerCase())>-1)return{dose:3,multiplier:3};}
   return{dose:1,multiplier:1};
@@ -3201,31 +3539,18 @@ function getTimeFromWords(w){
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .trim();
 
-  /* ══ PRIORITY-0 FIX: قبل/بعد الاكل + وقت اليوم — يُقرأ النوت كاملاً ══
-     يجب أن يكون أول كود في الدالة لأن rules لاحقة قد تختطف النتيجة ══ */
-  (function(){
-    var _hasBa  = /بعد\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|after\s*(meal|food)\b|\bpc\b/i.test(s);
-    var _haQa   = /قبل\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|before\s*(meal|food)\b|\bac\b/i.test(s);
-    if(!_hasBa && !_haQa) return; /* لا يوجد ذكر للأكل — اترك الدالة تكمل عادي */
-    /* الآن تحقق من وقت اليوم */
-    var _isEve  = /ليل|الليل|مساء|مساءا|مساءً|مسائا|مسأ|المساء|evening|eve|night/i.test(s);
-    var _isNoon = /ظهر|الظهر|ظهرا|ظهرً|عصر|العصر|عصرا|عصرً|noon|midday|afternoon|asr/i.test(s);
-    var _isMorn = /صباح|الصباح|صبح|صباحا|صباحً|morning|\bam\b/i.test(s);
-    /* لو مفيش تحديد لوقت اليوم — اترك الدالة تكمل بالسلوك الافتراضي */
-    if(!_isEve && !_isNoon && !_isMorn) return;
-    var NT2 = (typeof NT !== "undefined") ? NT : (typeof NORMAL_TIMES !== "undefined" ? NORMAL_TIMES : {});
-    if(_hasBa){
-      if(_isEve)  { returnValue = {time: NT2.afterDinner  || "21:00"}; return; }
-      if(_isNoon) { returnValue = {time: NT2.afterLunch   || "14:00"}; return; }
-      if(_isMorn) { returnValue = {time: NT2.afterBreakfast|| "09:00"}; return; }
+  /* FIX-FINAL: قبل/بعد الاكل + وقت اليوم — direct return بدون IIFE */
+  var _mA=/بعد\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|after\s*(meal|food)\b|\bpc\b/i.test(s);
+  var _mB=/قبل\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|before\s*(meal|food)\b|\bac\b/i.test(s);
+  if(_mA||_mB){
+    var _eV=/مساء|مساءا|مساءً|مسائا|مسأ|المساء|ليل|الليل|evening|eve|night/i.test(s);
+    var _nN=/ظهر|الظهر|ظهرا|ظهرً|عصر|العصر|عصرا|عصرً|noon|midday|afternoon|asr/i.test(s);
+    var _mR=/صباح|الصباح|صبح|صباحا|صباحً|morning/i.test(s);
+    if(_eV||_nN||_mR){
+      if(_mA){if(_eV)return{time:NORMAL_TIMES.afterDinner||'21:00'};if(_nN)return{time:NORMAL_TIMES.afterLunch||'14:00'};return{time:NORMAL_TIMES.afterBreakfast||'09:00'};}
+      if(_mB){if(_eV)return{time:NORMAL_TIMES.beforeDinner||'20:00'};if(_nN)return{time:NORMAL_TIMES.beforeLunch||'13:00'};return{time:NORMAL_TIMES.beforeBreakfast||'08:00'};}
     }
-    if(_haQa){
-      if(_isEve)  { returnValue = {time: NT2.beforeDinner || "20:00"}; return; }
-      if(_isNoon) { returnValue = {time: NT2.beforeLunch  || "13:00"}; return; }
-      if(_isMorn) { returnValue = {time: NT2.beforeBreakfast|| "08:00"}; return; }
-    }
-  })();
-  if(typeof returnValue !== "undefined") return returnValue;
+  }
   var st=s.match(/(?:at|الساعه|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
   var NT=NORMAL_TIMES;
@@ -3265,6 +3590,21 @@ function getTimeFromWords(w){
       if(_hasEve||_hasNight||_hasBed) return {time:NORMAL_TIMES.afterDinner||"21:00"};
     }
   }
+  
+  /* ══ دعم المصطلحات اللاتينية ══ */
+  if(/\bmane\b|\bmane\./i.test(s)){
+    return {time: NORMAL_TIMES.morning || '09:00'};
+  }
+  if(/\bnocte\b|\bnocte\./i.test(s)){
+    return {time: NORMAL_TIMES.bed || '22:00'};
+  }
+  if(/\bstat\b|\bstat\./i.test(s)){
+    var now = new Date();
+    var hours = now.getHours();
+    var minutes = now.getMinutes();
+    return {time: ('0'+hours).slice(-2) + ':' + ('0'+minutes).slice(-2), isStat: true};
+  }
+
   var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
@@ -3332,32 +3672,39 @@ function needsDuplicateByTime(times){
   return (maxG-minG)>0.5;
 }
 
+
 function shouldDuplicateRow(note){
-  var d=smartDoseRecognizer(note);
-  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
-  var isEvery8=/كل\s*8|every\s*8|q8h/i.test(s);
-  if(isEvery8||d.count===3)return{type:'three',doseInfo:d,isBefore:d.isBefore};
-  var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
-  if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
+  var d = smartDoseRecognizer(note);
+  // لا تقسم إذا كانت الجرعة كل يومين (0.5 مرة في اليوم)
+  if(d.count === 0.5) return null;
 
-  /* ── المبدأ الجديد: احسب الأوقات الفعلية وشوف لو منتظمة ── */
-  var mealTimes=getMealTimesFromNote(note);
-  if(mealTimes.length>=2&&needsDuplicateByTime(mealTimes)){
-    var dupType=mealTimes.length>=3?'three':'two';
-    return{type:dupType,doseInfo:d,isBefore:d.isBefore};
+  var s = (note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+
+  var isEvery8 = /كل\s*8|every\s*8|q8h/i.test(s);
+  if(isEvery8 || d.count === 3) return {type:'three', doseInfo:d, isBefore:d.isBefore};
+  
+  var isEvery6 = /كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
+  if(isEvery6) return {type:'q6h', doseInfo:d, isBefore:d.isBefore};
+
+  /* المبدأ الجديد: احسب الأوقات الفعلية وشوف لو منتظمة */
+  var mealTimes = getMealTimesFromNote(note);
+  if(mealTimes.length >= 2 && needsDuplicateByTime(mealTimes)){
+    var dupType = mealTimes.length >= 3 ? 'three' : 'two';
+    return {type:dupType, doseInfo:d, isBefore:d.isBefore};
   }
 
-  /* ── منطق صارم: فقط الأوقات غير المنتظمة تتقسم ── */
-  if(d.hasBed&&(d.hasB||d.hasL||d.hasD||d.hasM||d.hasN||d.hasA)){
-    var _bedMealT=getMealTimesFromNote(note);
-    if(_bedMealT.length>=2&&needsDuplicateByTime(_bedMealT))return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  /* منطق صارم: فقط الأوقات غير المنتظمة تتقسم */
+  if(d.hasBed && (d.hasB || d.hasL || d.hasD || d.hasM || d.hasN || d.hasA)){
+    var _bedMealT = getMealTimesFromNote(note);
+    if(_bedMealT.length >= 2 && needsDuplicateByTime(_bedMealT)) return {type:'two', doseInfo:d, isBefore:d.isBefore};
   }
-  if(d.hasEmpty&&d.hasBed){
-    var _emBedT=getMealTimesFromNote(note);
-    if(_emBedT.length>=2&&needsDuplicateByTime(_emBedT))return{type:'two',doseInfo:d,isBefore:d.isBefore};
+  if(d.hasEmpty && d.hasBed){
+    var _emBedT = getMealTimesFromNote(note);
+    if(_emBedT.length >= 2 && needsDuplicateByTime(_emBedT)) return {type:'two', doseInfo:d, isBefore:d.isBefore};
   }
   return null;
 }
+
 
 function scanForDuplicateNotes(){
   var tb=_ezFindTable();
@@ -3723,7 +4070,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   }
 
   /* 🤖 Mark unrecognized notes for Gemini — runs ALWAYS (not just when warnings enabled) */
-  if(_ezGetGeminiKey()){
+  var _aiProvider = _ezGetAIProvider();
+  var _hasAIKey = (_aiProvider === 'gemini') ? _ezGetGeminiKey() : _ezGetGroqKey();
+  if(_hasAIKey){
     for(var _gScan=0;_gScan<allRowsData.length;_gScan++){
       var _gRd=allRowsData[_gScan];
       if(_gRd.note&&_gRd.note.trim().length>=3&&!_gRd.hasFixedSize&&!_gRd.isWeekly){
@@ -5142,7 +5491,7 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
-    <button class="ez-btn-icon" onclick="window.ezSetupGemini()" title="إعداد الذكاء الاصطناعي">🤖</button>\
+    <button class="ez-btn-icon" onclick="window.ezSetupAI()" title="إعداد الذكاء الاصطناعي">🤖</button>\
     <button class="ez-btn-icon" onclick="window.ezCloudSettings()" title="الإعدادات السحابية">☁️</button>\
     <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
