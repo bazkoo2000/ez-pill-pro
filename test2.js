@@ -277,14 +277,19 @@ async function _ezGroqBatch(notes){
   
   var resp = null;
   for(var _retry=0; _retry<3; _retry++){
-    resp = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + key
-      },
-      body: JSON.stringify(body)
-    });
+    try{
+      resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify(body)
+      });
+    } catch(e){
+      console.log('🤖 Groq fetch error on attempt '+(_retry+1)+':', e);
+      continue;
+    }
     console.log('🤖 Groq attempt '+(_retry+1)+': status='+resp.status);
     if(resp.status !== 429) break;
     if(_retry<2){ console.log('🤖 Groq rate limited, waiting 3s...'); await new Promise(r => setTimeout(r,3000)); }
@@ -411,202 +416,208 @@ window.
    🤖 AI SETUP UI (Gemini + Groq)
    ══════════════════════════════════════════ */
 window.ezSetupAI = function(){
-  var currentProvider = _ezGetAIProvider();
-  var geminiKey = _ezGetGeminiKey();
-  var geminiModel = _ezGetGeminiModel();
-  var groqKey = _ezGetGroqKey();
-  var groqModel = _ezGetGroqModel();
+  try{
+    var currentProvider = _ezGetAIProvider();
+    var geminiKey = _ezGetGeminiKey();
+    var geminiModel = _ezGetGeminiModel();
+    var groqKey = _ezGetGroqKey();
+    var groqModel = _ezGetGroqModel();
 
-  var maskedGemini = geminiKey ? '•'.repeat(20) + geminiKey.slice(-6) : 'لم يتم التعيين';
-  var maskedGroq = groqKey ? '•'.repeat(20) + groqKey.slice(-6) : 'لم يتم التعيين';
+    var maskedGemini = geminiKey ? '•'.repeat(20) + geminiKey.slice(-6) : 'لم يتم التعيين';
+    var maskedGroq = groqKey ? '•'.repeat(20) + groqKey.slice(-6) : 'لم يتم التعيين';
 
-  var overlay = document.createElement('div');
-  overlay.id = 'ez-ai-setup';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+    var overlay = document.createElement('div');
+    overlay.id = 'ez-ai-setup';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
 
-  var card = document.createElement('div');
-  card.style.cssText = 'width:480px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
+    var card = document.createElement('div');
+    card.style.cssText = 'width:480px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
 
-  /* Header */
-  var hdr = document.createElement('div');
-  hdr.style.cssText = 'padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
-  hdr.innerHTML = '<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">اختر المزود وأدخل المفتاح</div></div>';
-  card.appendChild(hdr);
+    /* Header */
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
+    hdr.innerHTML = '<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">اختر المزود وأدخل المفتاح</div></div>';
+    card.appendChild(hdr);
 
-  /* Tabs */
-  var tabsDiv = document.createElement('div');
-  tabsDiv.style.cssText = 'display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid rgba(129,140,248,0.08)';
-  tabsDiv.innerHTML = `
-    <button class="ez-ai-tab" data-provider="gemini" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='gemini'?'linear-gradient(145deg,#6366f1,#4f46e5)':'rgba(148,163,184,0.08)'};color:${currentProvider==='gemini'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Gemini</button>
-    <button class="ez-ai-tab" data-provider="groq" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='groq'?'linear-gradient(145deg,#10b981,#059669)':'rgba(148,163,184,0.08)'};color:${currentProvider==='groq'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Groq</button>
-  `;
-  card.appendChild(tabsDiv);
+    /* Tabs */
+    var tabsDiv = document.createElement('div');
+    tabsDiv.style.cssText = 'display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid rgba(129,140,248,0.08)';
+    tabsDiv.innerHTML = `
+      <button class="ez-ai-tab" data-provider="gemini" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='gemini'?'linear-gradient(145deg,#6366f1,#4f46e5)':'rgba(148,163,184,0.08)'};color:${currentProvider==='gemini'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Gemini</button>
+      <button class="ez-ai-tab" data-provider="groq" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='groq'?'linear-gradient(145deg,#10b981,#059669)':'rgba(148,163,184,0.08)'};color:${currentProvider==='groq'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Groq</button>
+    `;
+    card.appendChild(tabsDiv);
 
-  /* Panels container */
-  var panelsDiv = document.createElement('div');
-  panelsDiv.style.cssText = 'padding:16px 22px';
+    /* Panels container */
+    var panelsDiv = document.createElement('div');
+    panelsDiv.style.cssText = 'padding:16px 22px';
 
-  /* Gemini Panel */
-  var geminiPanel = document.createElement('div');
-  geminiPanel.className = 'ez-ai-panel';
-  geminiPanel.style.display = currentProvider==='gemini' ? 'block' : 'none';
-  geminiPanel.innerHTML = `
-    <div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="background:${geminiKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${geminiKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
-        <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGemini}</span>
+    /* Gemini Panel */
+    var geminiPanel = document.createElement('div');
+    geminiPanel.className = 'ez-ai-panel';
+    geminiPanel.style.display = currentProvider==='gemini' ? 'block' : 'none';
+    geminiPanel.innerHTML = `
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:${geminiKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${geminiKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
+          <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGemini}</span>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
+        <select id="ez-gemini-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
+          <option value="gemini-flash-latest" ${geminiModel==='gemini-flash-latest'?'selected':''}>gemini-flash-latest (المستقر ✅)</option>
+          <option value="gemini-flash-lite-latest" ${geminiModel==='gemini-flash-lite-latest'?'selected':''}>gemini-flash-lite-latest (خفيف)</option>
+          <option value="gemini-2.5-flash" ${geminiModel==='gemini-2.5-flash'?'selected':''}>gemini-2.5-flash (الأحدث)</option>
+          <option value="gemini-2.5-flash-lite" ${geminiModel==='gemini-2.5-flash-lite'?'selected':''}>gemini-2.5-flash-lite (سريع)</option>
+          <option value="gemini-2.0-flash" ${geminiModel==='gemini-2.0-flash'?'selected':''}>gemini-2.0-flash</option>
+          <option value="gemini-2.0-flash-001" ${geminiModel==='gemini-2.0-flash-001'?'selected':''}>gemini-2.0-flash-001</option>
+          <option value="gemini-2.0-flash-lite-001" ${geminiModel==='gemini-2.0-flash-lite-001'?'selected':''}>gemini-2.0-flash-lite-001</option>
+          <option value="gemini-3-flash-preview" ${geminiModel==='gemini-3-flash-preview'?'selected':''}>gemini-3-flash-preview (تجريبي)</option>
+          <option value="gemini-pro-latest" ${geminiModel==='gemini-pro-latest'?'selected':''}>gemini-pro-latest (متقدم)</option>
+          <option value="gemini-2.5-pro" ${geminiModel==='gemini-2.5-pro'?'selected':''}>gemini-2.5-pro (متقدم)</option>
+        </select>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
+        <input type="password" id="ez-gemini-key-input" placeholder="الصق مفتاح Gemini API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
+        <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
+          🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
+          📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>
+        </div>
       </div>
-      <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
-      <select id="ez-gemini-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
-        <option value="gemini-flash-latest" ${geminiModel==='gemini-flash-latest'?'selected':''}>gemini-flash-latest (المستقر ✅)</option>
-        <option value="gemini-flash-lite-latest" ${geminiModel==='gemini-flash-lite-latest'?'selected':''}>gemini-flash-lite-latest (خفيف)</option>
-        <option value="gemini-2.5-flash" ${geminiModel==='gemini-2.5-flash'?'selected':''}>gemini-2.5-flash (الأحدث)</option>
-        <option value="gemini-2.5-flash-lite" ${geminiModel==='gemini-2.5-flash-lite'?'selected':''}>gemini-2.5-flash-lite (سريع)</option>
-        <option value="gemini-2.0-flash" ${geminiModel==='gemini-2.0-flash'?'selected':''}>gemini-2.0-flash</option>
-        <option value="gemini-2.0-flash-001" ${geminiModel==='gemini-2.0-flash-001'?'selected':''}>gemini-2.0-flash-001</option>
-        <option value="gemini-2.0-flash-lite-001" ${geminiModel==='gemini-2.0-flash-lite-001'?'selected':''}>gemini-2.0-flash-lite-001</option>
-        <option value="gemini-3-flash-preview" ${geminiModel==='gemini-3-flash-preview'?'selected':''}>gemini-3-flash-preview (تجريبي)</option>
-        <option value="gemini-pro-latest" ${geminiModel==='gemini-pro-latest'?'selected':''}>gemini-pro-latest (متقدم)</option>
-        <option value="gemini-2.5-pro" ${geminiModel==='gemini-2.5-pro'?'selected':''}>gemini-2.5-pro (متقدم)</option>
-      </select>
-      <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
-      <input type="password" id="ez-gemini-key-input" placeholder="الصق مفتاح Gemini API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
-      <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
-        🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
-        📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>
+    `;
+    panelsDiv.appendChild(geminiPanel);
+
+    /* Groq Panel */
+    var groqPanel = document.createElement('div');
+    groqPanel.className = 'ez-ai-panel';
+    groqPanel.style.display = currentProvider==='groq' ? 'block' : 'none';
+    groqPanel.innerHTML = `
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:${groqKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${groqKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
+          <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGroq}</span>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
+        <select id="ez-groq-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
+          <option value="mixtral-8x7b-32768" ${groqModel==='mixtral-8x7b-32768'?'selected':''}>Mixtral 8x7B (سريع)</option>
+          <option value="llama2-70b-4096" ${groqModel==='llama2-70b-4096'?'selected':''}>Llama 2 70B (دقيق)</option>
+          <option value="gemma2-9b-it" ${groqModel==='gemma2-9b-it'?'selected':''}>Gemma 2 9B (خفيف)</option>
+          <option value="llama3-70b-8192" ${groqModel==='llama3-70b-8192'?'selected':''}>Llama 3 70B (أحدث)</option>
+        </select>
+        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
+        <input type="password" id="ez-groq-key-input" placeholder="الصق مفتاح Groq API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
+        <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
+          🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
+          📎 <a href="https://console.groq.com/keys" target="_blank" style="color:#10b981;text-decoration:underline">احصل على مفتاح مجاني من Groq Console</a>
+        </div>
       </div>
-    </div>
-  `;
-  panelsDiv.appendChild(geminiPanel);
+    `;
+    panelsDiv.appendChild(groqPanel);
+    card.appendChild(panelsDiv);
 
-  /* Groq Panel */
-  var groqPanel = document.createElement('div');
-  groqPanel.className = 'ez-ai-panel';
-  groqPanel.style.display = currentProvider==='groq' ? 'block' : 'none';
-  groqPanel.innerHTML = `
-    <div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="background:${groqKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${groqKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
-        <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGroq}</span>
-      </div>
-      <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
-      <select id="ez-groq-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
-        <option value="mixtral-8x7b-32768" ${groqModel==='mixtral-8x7b-32768'?'selected':''}>Mixtral 8x7B (سريع)</option>
-        <option value="llama2-70b-4096" ${groqModel==='llama2-70b-4096'?'selected':''}>Llama 2 70B (دقيق)</option>
-        <option value="gemma2-9b-it" ${groqModel==='gemma2-9b-it'?'selected':''}>Gemma 2 9B (خفيف)</option>
-        <option value="llama3-70b-8192" ${groqModel==='llama3-70b-8192'?'selected':''}>Llama 3 70B (أحدث)</option>
-      </select>
-      <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
-      <input type="password" id="ez-groq-key-input" placeholder="الصق مفتاح Groq API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
-      <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
-        🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
-        📎 <a href="https://console.groq.com/keys" target="_blank" style="color:#10b981;text-decoration:underline">احصل على مفتاح مجاني من Groq Console</a>
-      </div>
-    </div>
-  `;
-  panelsDiv.appendChild(groqPanel);
-  card.appendChild(panelsDiv);
+    /* Buttons */
+    var foot = document.createElement('div');
+    foot.style.cssText = 'padding:10px 22px 16px;display:flex;gap:8px;flex-wrap:wrap';
 
-  /* Buttons */
-  var foot = document.createElement('div');
-  foot.style.cssText = 'padding:10px 22px 16px;display:flex;gap:8px;flex-wrap:wrap';
-
-  var saveBtn = document.createElement('button');
-  saveBtn.textContent = '💾 حفظ';
-  saveBtn.style.cssText = 'flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
-  saveBtn.addEventListener('click', function(){
-    var provider = currentProvider;
-    if(provider === 'gemini'){
-      var key = document.getElementById('ez-gemini-key-input').value.trim();
-      var model = document.getElementById('ez-gemini-model-select').value;
-      _ezSetGeminiModel(model);
-      if(key) _ezSetGeminiKey(key);
-      window.ezShowToast('✅ تم حفظ إعدادات Gemini','success');
-    } else {
-      var key = document.getElementById('ez-groq-key-input').value.trim();
-      var model = document.getElementById('ez-groq-model-select').value;
-      _ezSetGroqModel(model);
-      if(key) _ezSetGroqKey(key);
-      window.ezShowToast('✅ تم حفظ إعدادات Groq','success');
-    }
-    _ezSetAIProvider(provider);
-    overlay.remove();
-  });
-  foot.appendChild(saveBtn);
-
-  var cancelBtn = document.createElement('button');
-  cancelBtn.textContent = 'إلغاء';
-  cancelBtn.style.cssText = 'height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
-  cancelBtn.addEventListener('click', function(){ overlay.remove(); });
-  foot.appendChild(cancelBtn);
-
-  var testBtn = document.createElement('button');
-  testBtn.textContent = '🧪 اختبار الاتصال';
-  testBtn.style.cssText = 'width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
-  testBtn.addEventListener('click', function(){
-    var provider = currentProvider;
-    if(provider === 'gemini'){
-      var key = document.getElementById('ez-gemini-key-input').value.trim() || _ezGetGeminiKey();
-      if(!key){ window.ezShowToast('❌ أدخل مفتاح Gemini أولاً','error'); return; }
-      var model = document.getElementById('ez-gemini-model-select').value;
-      testBtn.textContent = '⏳ جاري الاختبار (Gemini)...'; testBtn.disabled = true;
-      fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+key, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:'Return JSON: {"test":"ok"}'}]}], generationConfig:{responseMimeType:'application/json'}})
-      }).then(r=>r.json()).then(d=>{
-        testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
-        window.ezShowToast('✅ Gemini يعمل','success');
-      }).catch(e=>{
-        testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
-        window.ezShowToast('❌ خطأ: '+e.message,'error');
-      });
-    } else {
-      var key = document.getElementById('ez-groq-key-input').value.trim() || _ezGetGroqKey();
-      if(!key){ window.ezShowToast('❌ أدخل مفتاح Groq أولاً','error'); return; }
-      var model = document.getElementById('ez-groq-model-select').value;
-      testBtn.textContent = '⏳ جاري الاختبار (Groq)...'; testBtn.disabled = true;
-      fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method:'POST',
-        headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+key},
-        body:JSON.stringify({model:model, messages:[{role:'user', content:'Return JSON: {"test":"ok"}'}], temperature:0.1, max_tokens:50})
-      }).then(r=>r.json()).then(d=>{
-        testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
-        window.ezShowToast('✅ Groq يعمل','success');
-      }).catch(e=>{
-        testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
-        window.ezShowToast('❌ خطأ: '+e.message,'error');
-      });
-    }
-  });
-  foot.appendChild(testBtn);
-
-  card.appendChild(foot);
-  overlay.appendChild(card);
-
-  /* Tab switching */
-  var tabs = overlay.querySelectorAll('.ez-ai-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', function(){
-      var prov = this.getAttribute('data-provider');
-      currentProvider = prov;
-      tabs.forEach(t => {
-        t.style.background = 'rgba(148,163,184,0.08)';
-        t.style.color = '#64748b';
-      });
-      this.style.background = prov==='gemini' ? 'linear-gradient(145deg,#6366f1,#4f46e5)' : 'linear-gradient(145deg,#10b981,#059669)';
-      this.style.color = '#fff';
-      overlay.querySelectorAll('.ez-ai-panel').forEach(p => p.style.display = 'none');
-      overlay.querySelector(prov==='gemini' ? '.ez-ai-panel:first-child' : '.ez-ai-panel:last-child').style.display = 'block';
+    var saveBtn = document.createElement('button');
+    saveBtn.textContent = '💾 حفظ';
+    saveBtn.style.cssText = 'flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
+    saveBtn.addEventListener('click', function(){
+      try{
+        var provider = currentProvider;
+        if(provider === 'gemini'){
+          var key = document.getElementById('ez-gemini-key-input').value.trim();
+          var model = document.getElementById('ez-gemini-model-select').value;
+          _ezSetGeminiModel(model);
+          if(key) _ezSetGeminiKey(key);
+          window.ezShowToast('✅ تم حفظ إعدادات Gemini','success');
+        } else {
+          var key = document.getElementById('ez-groq-key-input').value.trim();
+          var model = document.getElementById('ez-groq-model-select').value;
+          _ezSetGroqModel(model);
+          if(key) _ezSetGroqKey(key);
+          window.ezShowToast('✅ تم حفظ إعدادات Groq','success');
+        }
+        _ezSetAIProvider(provider);
+        overlay.remove();
+      } catch(e){ console.warn('EZ save error',e); }
     });
-  });
+    foot.appendChild(saveBtn);
 
-  overlay.addEventListener('click', function(e){ if(e.target === overlay) overlay.remove(); });
-  document.body.appendChild(overlay);
-  if(currentProvider === 'gemini') document.getElementById('ez-gemini-key-input').focus();
-  else document.getElementById('ez-groq-key-input').focus();
+    var cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'إلغاء';
+    cancelBtn.style.cssText = 'height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
+    cancelBtn.addEventListener('click', function(){ overlay.remove(); });
+    foot.appendChild(cancelBtn);
+
+    var testBtn = document.createElement('button');
+    testBtn.textContent = '🧪 اختبار الاتصال';
+    testBtn.style.cssText = 'width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
+    testBtn.addEventListener('click', function(){
+      try{
+        var provider = currentProvider;
+        if(provider === 'gemini'){
+          var key = document.getElementById('ez-gemini-key-input').value.trim() || _ezGetGeminiKey();
+          if(!key){ window.ezShowToast('❌ أدخل مفتاح Gemini أولاً','error'); return; }
+          var model = document.getElementById('ez-gemini-model-select').value;
+          testBtn.textContent = '⏳ جاري الاختبار (Gemini)...'; testBtn.disabled = true;
+          fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+key, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({contents:[{parts:[{text:'Return JSON: {"test":"ok"}'}]}], generationConfig:{responseMimeType:'application/json'}})
+          }).then(r=>r.json()).then(d=>{
+            testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
+            window.ezShowToast('✅ Gemini يعمل','success');
+          }).catch(e=>{
+            testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
+            window.ezShowToast('❌ خطأ: '+e.message,'error');
+          });
+        } else {
+          var key = document.getElementById('ez-groq-key-input').value.trim() || _ezGetGroqKey();
+          if(!key){ window.ezShowToast('❌ أدخل مفتاح Groq أولاً','error'); return; }
+          var model = document.getElementById('ez-groq-model-select').value;
+          testBtn.textContent = '⏳ جاري الاختبار (Groq)...'; testBtn.disabled = true;
+          fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method:'POST',
+            headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+key},
+            body:JSON.stringify({model:model, messages:[{role:'user', content:'Return JSON: {"test":"ok"}'}], temperature:0.1, max_tokens:50})
+          }).then(r=>r.json()).then(d=>{
+            testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
+            window.ezShowToast('✅ Groq يعمل','success');
+          }).catch(e=>{
+            testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
+            window.ezShowToast('❌ خطأ: '+e.message,'error');
+          });
+        }
+      } catch(e){ console.warn('EZ test error',e); }
+    });
+    foot.appendChild(testBtn);
+
+    card.appendChild(foot);
+    overlay.appendChild(card);
+
+    /* Tab switching */
+    var tabs = overlay.querySelectorAll('.ez-ai-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function(){
+        var prov = this.getAttribute('data-provider');
+        currentProvider = prov;
+        tabs.forEach(t => {
+          t.style.background = 'rgba(148,163,184,0.08)';
+          t.style.color = '#64748b';
+        });
+        this.style.background = prov==='gemini' ? 'linear-gradient(145deg,#6366f1,#4f46e5)' : 'linear-gradient(145deg,#10b981,#059669)';
+        this.style.color = '#fff';
+        overlay.querySelectorAll('.ez-ai-panel').forEach(p => p.style.display = 'none');
+        overlay.querySelector(prov==='gemini' ? '.ez-ai-panel:first-child' : '.ez-ai-panel:last-child').style.display = 'block';
+      });
+    });
+
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    if(currentProvider === 'gemini') document.getElementById('ez-gemini-key-input').focus();
+    else document.getElementById('ez-groq-key-input').focus();
+  } catch(e){ console.warn('EZ setupAI error',e); }
 };
 ;
 
