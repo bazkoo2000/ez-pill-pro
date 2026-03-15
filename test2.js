@@ -3201,31 +3201,18 @@ function getTimeFromWords(w){
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .trim();
 
-  /* ══ PRIORITY-0 FIX: قبل/بعد الاكل + وقت اليوم — يُقرأ النوت كاملاً ══
-     يجب أن يكون أول كود في الدالة لأن rules لاحقة قد تختطف النتيجة ══ */
-  (function(){
-    var _hasBa  = /بعد\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|after\s*(meal|food)\b|\bpc\b/i.test(s);
-    var _haQa   = /قبل\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|before\s*(meal|food)\b|\bac\b/i.test(s);
-    if(!_hasBa && !_haQa) return; /* لا يوجد ذكر للأكل — اترك الدالة تكمل عادي */
-    /* الآن تحقق من وقت اليوم */
-    var _isEve  = /ليل|الليل|مساء|مساءا|مساءً|مسائا|مسأ|المساء|evening|eve|night/i.test(s);
-    var _isNoon = /ظهر|الظهر|ظهرا|ظهرً|عصر|العصر|عصرا|عصرً|noon|midday|afternoon|asr/i.test(s);
-    var _isMorn = /صباح|الصباح|صبح|صباحا|صباحً|morning|\bam\b/i.test(s);
-    /* لو مفيش تحديد لوقت اليوم — اترك الدالة تكمل بالسلوك الافتراضي */
-    if(!_isEve && !_isNoon && !_isMorn) return;
-    var NT2 = (typeof NT !== "undefined") ? NT : (typeof NORMAL_TIMES !== "undefined" ? NORMAL_TIMES : {});
-    if(_hasBa){
-      if(_isEve)  { returnValue = {time: NT2.afterDinner  || "21:00"}; return; }
-      if(_isNoon) { returnValue = {time: NT2.afterLunch   || "14:00"}; return; }
-      if(_isMorn) { returnValue = {time: NT2.afterBreakfast|| "09:00"}; return; }
+  /* FIX-FINAL: قبل/بعد الاكل + وقت اليوم — direct return بدون IIFE */
+  var _mA=/بعد\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|after\s*(meal|food)\b|\bpc\b/i.test(s);
+  var _mB=/قبل\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|before\s*(meal|food)\b|\bac\b/i.test(s);
+  if(_mA||_mB){
+    var _eV=/مساء|مساءا|مساءً|مسائا|مسأ|المساء|ليل|الليل|evening|eve|night/i.test(s);
+    var _nN=/ظهر|الظهر|ظهرا|ظهرً|عصر|العصر|عصرا|عصرً|noon|midday|afternoon|asr/i.test(s);
+    var _mR=/صباح|الصباح|صبح|صباحا|صباحً|morning/i.test(s);
+    if(_eV||_nN||_mR){
+      if(_mA){if(_eV)return{time:NORMAL_TIMES.afterDinner||'21:00'};if(_nN)return{time:NORMAL_TIMES.afterLunch||'14:00'};return{time:NORMAL_TIMES.afterBreakfast||'09:00'};}
+      if(_mB){if(_eV)return{time:NORMAL_TIMES.beforeDinner||'20:00'};if(_nN)return{time:NORMAL_TIMES.beforeLunch||'13:00'};return{time:NORMAL_TIMES.beforeBreakfast||'08:00'};}
     }
-    if(_haQa){
-      if(_isEve)  { returnValue = {time: NT2.beforeDinner || "20:00"}; return; }
-      if(_isNoon) { returnValue = {time: NT2.beforeLunch  || "13:00"}; return; }
-      if(_isMorn) { returnValue = {time: NT2.beforeBreakfast|| "08:00"}; return; }
-    }
-  })();
-  if(typeof returnValue !== "undefined") return returnValue;
+  }
   var st=s.match(/(?:at|الساعه|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
   var NT=NORMAL_TIMES;
