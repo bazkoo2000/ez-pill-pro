@@ -3214,6 +3214,31 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
+    /* ══ FIX: قراءة النوتة كاملة — قبل/بعد الاكل + وقت اليوم ══
+     قبل الاكل مساءا → قبل العشاء 20:00
+     بعد الاكل صباحا → بعد الفطار  09:00
+  */
+  var _isBefore=/\bقبل\b|\bbefore\b|\bpre\b|\bac\b/i.test(s);
+  var _isAfter=/\bبعد\b|\bafter\b|\bpc\b/i.test(s);
+  var _hasMeal=/اكل|أكل|وجبه|وجبة|\bmeal\b|\bfood\b/i.test(s);
+  if((_isBefore||_isAfter)&&_hasMeal){
+    var _hasMorn=/صباح|الصباح|صبحا|صباحا|صباحاً|\bmorning\b|\bam\b/i.test(s);
+    var _hasNoon=/ظهر|الظهر|ظهرا|ظهراً|\bnoon\b|\bmidday\b/i.test(s);
+    var _hasAftn=/عصر|العصر|عصرا|عصراً|\basr\b|\bafternoon\b/i.test(s);
+    var _hasEve=/مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|\bevening\b|\beve\b/i.test(s);
+    var _hasNight=/ليل|الليل|ليلا|ليلاً|\bnight\b/i.test(s);
+    var _hasBed=/نوم|النوم|\bbed\b|\bsleep\b|\bhs\b/i.test(s);
+    if(_isBefore){
+      if(_hasMorn)  return {time:NORMAL_TIMES.beforeBreakfast||"08:00"};
+      if(_hasNoon||_hasAftn) return {time:NORMAL_TIMES.beforeLunch||"13:00"};
+      if(_hasEve||_hasNight||_hasBed) return {time:NORMAL_TIMES.beforeDinner||"20:00"};
+    }
+    if(_isAfter){
+      if(_hasMorn)  return {time:NORMAL_TIMES.afterBreakfast||"09:00"};
+      if(_hasNoon||_hasAftn) return {time:NORMAL_TIMES.afterLunch||"14:00"};
+      if(_hasEve||_hasNight||_hasBed) return {time:NORMAL_TIMES.afterDinner||"21:00"};
+    }
+  }
   var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
@@ -5217,30 +5242,6 @@ function extractAndConfirmName(){
     function extractName(text){
       if(!text||text.length<5) return null;
       /* Normalize newlines to spaces */
-
-      /* ══ PRIORITY 0: استخلاص الاسم بعد "/" ══
-         مثال: "وكتابة اسم الضيف / the guset" → يكتب "the guset"
-         مثال: "وكتابة اسم الضيف / محمد العمري" → يكتب "محمد العمري"
-         المنطق: لو فيه "/" وقبله كلمة اسم/ضيف/مريض → كل ما بعد "/" هو الاسم
-      */
-      var _slashMatch=s.match(/(?:اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)|الاسم|باسم|كتاب[ةه]\s*اسم)\s*\/\s*(.+)$/i);
-      if(!_slashMatch){
-        /* كمان جرّب لو "/" جاية بعد أي كلام مباشرة */
-        _slashMatch=s.match(/\/\s*(.{2,50})$/);
-        /* لكن فقط لو الـ match منطقي (مش مجرد رقم أو رمز) */
-        if(_slashMatch&&!/^[\d\s\-\.]+$/.test(_slashMatch[1].trim())){
-          /* تحقق إن قبل الـ / فيه ذكر للاسم أو الضيف */
-          if(!/اسم|ضيف|مريض|عميل|كتاب/i.test(s.substring(0,s.lastIndexOf('/')))) _slashMatch=null;
-        } else {
-          _slashMatch=null;
-        }
-      }
-      if(_slashMatch&&_slashMatch[1]){
-        var _slashName=_slashMatch[1].trim();
-        /* أزل أي علامات ترقيم من البداية والنهاية */
-        _slashName=_slashName.replace(/^[\s\-\.،,;:]+|[\s\-\.،,;:]+$/g,'').trim();
-        if(_slashName.length>=2) return _slashName;
-      }
       var s=text.trim().replace(/\r?\n/g,' ');
       /* JVM Fix: تجاهل ما بعد / أو \ في النص */
       s=s.replace(/\s*\/[^\u0600-\u06FF]*$/,'').replace(/\s*\/\s*(the\s+gue?st|الضيف|المريض)[^\u0600-\u06FF]*/gi,'').trim();
@@ -5434,6 +5435,71 @@ function extractAndConfirmName(){
         return;
       }
     }
+        /* ══ FIX: استخلاص الاسم بعد "/" مباشرة من notesText ══
+       يعمل قبل extractName — أي حاجة بعد "/" تتكتب كاسم
+    */
+    (function(){
+      if(!notesText) return;
+      /* ابحث عن "/" في النوتة */  
+      var _slashIdx=notesText.lastIndexOf("/");
+      if(_slashIdx<0) return;
+      /* تأكد إن قبل "/" فيه ذكر للاسم أو الضيف أو الكتابة */  
+      var _beforeSlash=notesText.substring(0,_slashIdx);
+      var _hasNameContext=/اسم|ضيف|مريض|عميل|كتاب/i.test(_beforeSlash);
+      if(!_hasNameContext) return;
+      /* كل اللي بعد "/" = الاسم (بعد حذف المسافات والرموز الزيادة) */
+      var _afterSlash=notesText.substring(_slashIdx+1).trim();
+      _afterSlash=_afterSlash.replace(/^[\s\-\.،,;:]+|[\s\-\.،,;:]+$/g,"").trim();
+      if(_afterSlash.length<2) return;
+      /* لو nameField موجود وفيه قيمة مختلفة → نبين البانر */
+      if(!nameField) return;
+      var _slashCurName=(nameField.value||"").trim();
+      if(_slashCurName===_afterSlash) return; /* نفس الاسم بالفعل */
+      /* أنشئ banner مباشر */
+      var _oldBanner=document.getElementById("ez-slash-name-banner");
+      if(_oldBanner) _oldBanner.remove();
+      var _slashBanner=document.createElement("div");
+      _slashBanner.id="ez-slash-name-banner";
+      _slashBanner.style.cssText="position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:460px;max-width:94vw;z-index:9999999;transition:top 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif";
+      var _slashHtml='<div style="background:#fff;border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 12px 40px rgba(99,102,241,0.15);border:2px solid rgba(129,140,248,0.12);border-top:none">';
+      _slashHtml+='<div style="height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
+      _slashHtml+='<div style="padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(129,140,248,0.06)">';
+      _slashHtml+='<div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">👤</div>';
+      _slashHtml+='<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#1e1b4b">تم اكتشاف اسم في الملاحظات</div></div>';
+      _slashHtml+='<button id="ez-sn-close" style="width:28px;height:28px;border:none;border-radius:8px;font-size:14px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08)">✕</button></div>';
+      _slashHtml+='<div style="padding:10px 18px"><div style="font-size:11px;font-weight:700;color:#64748b;background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.08);border-radius:8px;padding:6px 10px;margin-bottom:10px;direction:rtl;word-break:break-word">'+notesText.replace(/</g,"&lt;").replace(/>/g,"&gt;")+'</div>';
+      _slashHtml+='<div style="background:linear-gradient(145deg,#ecfdf5,#d1fae5);border:1.5px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 14px;text-align:center">';
+      _slashHtml+='<div style="font-size:9px;font-weight:800;color:#047857;letter-spacing:0.5px;margin-bottom:3px">الاسم المستخلص</div>';
+      _slashHtml+='<div style="font-size:18px;font-weight:900;color:#064e3b" id="ez-sn-display">'+_afterSlash+'</div>';
+      _slashHtml+='<input type="text" id="ez-sn-edit" value="'+_afterSlash+'" style="display:none;width:100%;padding:4px 8px;border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:16px;font-weight:800;color:#064e3b;text-align:center;font-family:Cairo,sans-serif;outline:none;direction:rtl;margin-top:2px" /></div></div>';
+      _slashHtml+='<div style="padding:8px 18px 14px;display:flex;gap:6px">';
+      _slashHtml+='<button id="ez-sn-ok" style="flex:1;height:38px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)">✅ تأكيد وكتابة الاسم</button>';
+      _slashHtml+='<button id="ez-sn-edit-btn" style="height:38px;padding:0 12px;border:none;border-radius:10px;font-size:14px;cursor:pointer;color:#6366f1;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12)">✏️</button></div></div>';
+      _slashBanner.innerHTML=_slashHtml;
+      document.body.appendChild(_slashBanner);
+      setTimeout(function(){_slashBanner.style.top="0px";},50);
+      function _snClose(){_slashBanner.style.top="-200px";setTimeout(function(){_slashBanner.remove();},600);}
+      document.getElementById("ez-sn-close").onclick=_snClose;
+      var _snEditMode=false;
+      document.getElementById("ez-sn-edit-btn").onclick=function(){
+        var _d=document.getElementById("ez-sn-display");
+        var _i=document.getElementById("ez-sn-edit");
+        if(!_snEditMode){_d.style.display="none";_i.style.display="block";_i.focus();_i.select();this.innerHTML="💾";_snEditMode=true;}
+        else{var _v=_i.value.trim();if(_v)_d.textContent=_v;_d.style.display="block";_i.style.display="none";this.innerHTML="✏️";_snEditMode=false;}
+      };
+      document.getElementById("ez-sn-ok").onclick=function(){
+        var _finalName=_snEditMode?document.getElementById("ez-sn-edit").value.trim():document.getElementById("ez-sn-display").textContent.trim();
+        if(_finalName&&nameField){
+          nameField.value=_finalName;
+          nameField.dispatchEvent(new Event("input",{bubbles:true}));
+          nameField.dispatchEvent(new Event("change",{bubbles:true}));
+          if(typeof angular!=="undefined"){try{angular.element(nameField).triggerHandler("change");}catch(e){}}
+          if(typeof jQuery!=="undefined"){try{jQuery(nameField).trigger("change");}catch(e){}}
+          window.ezShowToast("تم كتابة الاسم: "+_finalName+" ✅","success");
+        }
+        _snClose();
+      };
+    })();
     var extractedName=extractName(notesText);
     if(!extractedName) return;
     if(!nameField) return;
