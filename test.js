@@ -225,7 +225,145 @@ function ezBeep(type){
    🤖 GEMINI AI FALLBACK - للجرعات غير المفهومة فقط
    لا يتم إرسال أي بيانات شخصية — فقط نص الجرعة
    ══════════════════════════════════════════ */
-function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}
+function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}catch(e){return '';}}
+
+
+/* ══════════════════════════════════════════
+   AI PROVIDER SELECTION (Gemini / Groq)
+   ══════════════════════════════════════════ */
+function _ezGetAIProvider(){
+  try{ return localStorage.getItem('ez_ai_provider') || 'gemini'; }
+  catch(e){ return 'gemini'; }
+}
+function _ezSetAIProvider(p){
+  try{ localStorage.setItem('ez_ai_provider', p); } catch(e){}
+}
+
+function _ezGetGroqKey(){
+  try{ return localStorage.getItem('ez_groq_key') || ''; } catch(e){ return ''; }
+}
+function _ezSetGroqKey(k){
+  try{ localStorage.setItem('ez_groq_key', k); } catch(e){}
+}
+
+function _ezGetGroqModel(){
+  try{ return localStorage.getItem('ez_groq_model') || 'mixtral-8x7b-32768'; } catch(e){ return 'mixtral-8x7b-32768'; }
+}
+function _ezSetGroqModel(m){
+  try{ localStorage.setItem('ez_groq_model', m); } catch(e){}
+}
+
+async function _ezGroqBatch(notes){
+  var key = _ezGetGroqKey();
+  if(!key || notes.length===0){ console.log('Groq: no key or empty notes'); return []; }
+  console.log('Groq: sending '+notes.length+' notes (model: '+_ezGetGroqModel()+')...');
+  
+  var prompt = _GEMINI_PROMPT + '\n\nParse ALL notes below. Return ONLY a JSON ARRAY (no markdown). One object per note, same order.\nIMPORTANT: ALWAYS provide startTime and every fields.\n\n';
+  for(var i=0; i<notes.length; i++) prompt += (i+1) + '. "' + notes[i] + '"\n';
+  
+  var model = _ezGetGroqModel();
+  var url = 'https://api.groq.com/openai/v1/chat/completions';
+  
+  var body = {
+    model: model,
+    messages: [
+      { role: 'system', content: 'You are a pharmacy dose interpreter. Return valid JSON only.' },
+      { role: 'user', content: prompt }
+    ],
+    temperature: 0.1,
+    max_tokens: 2048,
+    response_format: { type: 'json_object' }
+  };
+  
+  var resp = null;
+  for(var _retry=0; _retry<3; _retry++){
+    try{
+      resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify(body)
+      });
+    } catch(e){
+      console.log('Groq fetch error attempt '+(_retry+1)+':', e);
+      if(_retry===2) throw e;
+      continue;
+    }
+    console.log('Groq attempt '+(_retry+1)+': status='+resp.status);
+    if(resp.status !== 429) break;
+    if(_retry<2){ console.log('Groq rate limited, waiting 3s...'); await new Promise(function(r){ setTimeout(r,3000); }); }
+  }
+  
+  if(!resp || !resp.ok){
+    var errText = resp ? await resp.text() : 'No response';
+    console.error('Groq API Error:', errText);
+    throw new Error('Groq API '+(resp?resp.status:'?')+': '+(errText||'').substring(0,100));
+  }
+  
+  var data = await resp.json();
+  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if(!content){
+    console.error('Groq no content in response', data);
+    throw new Error('Groq returned empty response');
+  }
+  
+  var _bt = String.fromCharCode(96);
+  var text = content.replace(new RegExp(_bt+_bt+_bt+'json|'+_bt+_bt+_bt, 'g'), '').trim();
+  console.log('Groq extracted text:', text);
+  
+  var parsed;
+  try{ parsed = JSON.parse(text); } catch(pe){
+    console.warn('Groq JSON parse failed, trying to fix...');
+    var fixed = text;
+    if(!fixed.endsWith(']')) fixed += '}]';
+    else if(!fixed.endsWith('}')) fixed += '}';
+    try{ parsed = JSON.parse(fixed); } catch(pe2){
+      var objs = [];
+      var re = /\{[^{}]*"count"\s*:\s*\d[^{}]*\}/g;
+      var m;
+      while((m = re.exec(text)) !== null){
+        try{ objs.push(JSON.parse(m[0])); } catch(e3){}
+      }
+      if(objs.length > 0){ parsed = objs; }
+      else { throw new Error('Cannot parse Groq response'); }
+    }
+  }
+  
+  if(!Array.isArray(parsed)) parsed = [parsed];
+  return parsed;
+}
+
+
+/* ══════════════════════════════════════════
+   HELPER: getMealTimesFromNote + needsDuplicateByTime
+   ══════════════════════════════════════════ */
+function getMealTimesFromNote(note){
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+  var times=[];
+  var isBefore=/قبل|before|pre|ac/i.test(s);
+  if(/فطر|فطار|فطور|افطار|breakfast|morning|صباح|صبح/i.test(s)) times.push(isBefore?'08:00':'09:00');
+  if(/غدا|غداء|غذا|غذاء|lunch|noon|ظهر/i.test(s)) times.push(isBefore?'13:00':'14:00');
+  if(/عصر|afternoon|asr/i.test(s)) times.push('15:00');
+  if(/عشا|عشاء|dinner|supper|مساء|مسا|evening/i.test(s)) times.push(isBefore?'20:00':'21:00');
+  if(/نوم|bed|sleep|hs/i.test(s)) times.push('22:00');
+  if(/ريق|empty|fasting/i.test(s)) times.push('07:00');
+  return times;
+}
+
+function needsDuplicateByTime(times){
+  if(!times||times.length<2) return false;
+  var mins=times.map(function(t){var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);});
+  mins.sort(function(a,b){return a-b;});
+  for(var i=1;i<mins.length;i++){
+    var gap=mins[i]-mins[i-1];
+    if(gap!==720&&gap!==480) return true;
+  }
+  return false;
+}
+
+
 function _ezGetGeminiModel(){try{return localStorage.getItem('ez_gemini_model')||'gemini-flash-latest';}catch(e){return 'gemini-flash-latest';}}
 function _ezSetGeminiModel(m){try{localStorage.setItem('ez_gemini_model',m);}catch(e){}}
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
@@ -470,9 +608,9 @@ var _EZ_RAW_URL='https://raw.githubusercontent.com/'+_EZ_REPO+'/main/'+_EZ_CONFI
 var _EZ_API_URL='https://api.github.com/repos/'+_EZ_REPO+'/contents/'+_EZ_CONFIG_PATH;
 
 /* Storage helpers */
-function _ezGetGHToken(){try{return localStorage.getItem('ez_gh_token')||'';}
+function _ezGetGHToken(){try{return localStorage.getItem('ez_gh_token')||'';}catch(e){return '';}}
 function _ezSetGHToken(t){try{localStorage.setItem('ez_gh_token',t);}catch(e){}}
-function _ezGetAdminPin(){try{return localStorage.getItem('ez_admin_pin')||'';}
+function _ezGetAdminPin(){try{return localStorage.getItem('ez_admin_pin')||'';}catch(e){return '';}}
 function _ezSetAdminPin(p){try{localStorage.setItem('ez_admin_pin',p);}catch(e){}}
 var _ezCloudConfig=null;
 var _ezCloudSHA=null;
