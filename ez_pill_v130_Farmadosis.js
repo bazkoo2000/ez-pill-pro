@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='143.0';
+var APP_VERSION='144.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='EZ_Pill Farmadosis';
@@ -8,6 +8,15 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '144.0':{
+    title:'💊 دعم العبوة 56 تلقائياً',
+    features:[
+      {icon:'💊',text:'العبوة 56 في الاسم: كل 12 ساعة + 9am تلقائياً'},
+      {icon:'📦',text:'العبوة 60 مع سياسة 28 → تتحول لـ 56'},
+      {icon:'🔄',text:'العبوة 56 تفعّل سياسة 28 للأصناف الأخرى'},
+      {icon:'✅',text:'الـ 30 يبقى 28 لو فيه صنف 56 في الجدول'}
+    ]
+  },
   '143.0':{
     title:'🧠 إصلاح ذكاء التكرار + تعديل الجرعات',
     features:[
@@ -3191,6 +3200,19 @@ function getTimeFromWords(w){
     .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .trim();
+
+  /* FIX-FINAL: قبل/بعد الاكل + وقت اليوم — direct return بدون IIFE */
+  var _mA=/بعد\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|after\s*(meal|food)\b|\bpc\b/i.test(s);
+  var _mB=/قبل\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|before\s*(meal|food)\b|\bac\b/i.test(s);
+  if(_mA||_mB){
+    var _eV=/مساء|مساءا|مساءً|مسائا|مسأ|المساء|ليل|الليل|evening|eve|night/i.test(s);
+    var _nN=/ظهر|الظهر|ظهرا|ظهرً|عصر|العصر|عصرا|عصرً|noon|midday|afternoon|asr/i.test(s);
+    var _mR=/صباح|الصباح|صبح|صباحا|صباحً|morning/i.test(s);
+    if(_eV||_nN||_mR){
+      if(_mA){if(_eV)return{time:NORMAL_TIMES.afterDinner||'21:00'};if(_nN)return{time:NORMAL_TIMES.afterLunch||'14:00'};return{time:NORMAL_TIMES.afterBreakfast||'09:00'};}
+      if(_mB){if(_eV)return{time:NORMAL_TIMES.beforeDinner||'20:00'};if(_nN)return{time:NORMAL_TIMES.beforeLunch||'13:00'};return{time:NORMAL_TIMES.beforeBreakfast||'08:00'};}
+    }
+  }
   var st=s.match(/(?:at|الساعه|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
   var NT=NORMAL_TIMES;
@@ -3205,6 +3227,31 @@ function getTimeFromWords(w){
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
   if(beforeMealTwice.test(s))return{time:NT.beforeMeal};
   
+    /* ══ FIX: قراءة النوتة كاملة — قبل/بعد الاكل + وقت اليوم ══
+     قبل الاكل مساءا → قبل العشاء 20:00
+     بعد الاكل صباحا → بعد الفطار  09:00
+  */
+  var _isBefore=/\bقبل\b|\bbefore\b|\bpre\b|\bac\b/i.test(s);
+  var _isAfter=/\bبعد\b|\bafter\b|\bpc\b/i.test(s);
+  var _hasMeal=/اكل|أكل|وجبه|وجبة|\bmeal\b|\bfood\b/i.test(s);
+  if((_isBefore||_isAfter)&&_hasMeal){
+    var _hasMorn=/صباح|الصباح|صبحا|صباحا|صباحاً|\bmorning\b|\bam\b/i.test(s);
+    var _hasNoon=/ظهر|الظهر|ظهرا|ظهراً|\bnoon\b|\bmidday\b/i.test(s);
+    var _hasAftn=/عصر|العصر|عصرا|عصراً|\basr\b|\bafternoon\b/i.test(s);
+    var _hasEve=/مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|\bevening\b|\beve\b/i.test(s);
+    var _hasNight=/ليل|الليل|ليلا|ليلاً|\bnight\b/i.test(s);
+    var _hasBed=/نوم|النوم|\bbed\b|\bsleep\b|\bhs\b/i.test(s);
+    if(_isBefore){
+      if(_hasMorn)  return {time:NORMAL_TIMES.beforeBreakfast||"08:00"};
+      if(_hasNoon||_hasAftn) return {time:NORMAL_TIMES.beforeLunch||"13:00"};
+      if(_hasEve||_hasNight||_hasBed) return {time:NORMAL_TIMES.beforeDinner||"20:00"};
+    }
+    if(_isAfter){
+      if(_hasMorn)  return {time:NORMAL_TIMES.afterBreakfast||"09:00"};
+      if(_hasNoon||_hasAftn) return {time:NORMAL_TIMES.afterLunch||"14:00"};
+      if(_hasEve||_hasNight||_hasBed) return {time:NORMAL_TIMES.afterDinner||"21:00"};
+    }
+  }
   var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
@@ -3755,6 +3802,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
 
   /* 🤖 Gemini AI: resolve unrecognized doses before showing warnings */
+
   var _geminiNotes=[];var _geminiIdxMap=[];
   for(var _gi=0;_gi<allRowsData.length;_gi++){
     if(allRowsData[_gi]._needsGemini&&allRowsData[_gi].note){
@@ -3924,6 +3972,20 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         if(_nonFixedDays[_pi3]===28||_nonFixedDays[_pi3]===14){_has28NonFixed=true;break;}
       }
       console.log('PACK PROCESS: nonFixedDays='+JSON.stringify(_nonFixedDays)+' has28NonFixed='+_has28NonFixed);
+      /* FIX v144: 56/60-pack in item NAME triggers 28-policy */
+      if(!_has28NonFixed){
+        for(var _chk56=0;_chk56<allRowsData.length;_chk56++){
+          var _rChk=allRowsData[_chk56];
+          if(!_rChk.hasFixedSize&&!_rChk.isWeekly){
+            var _pChk=_extractPackFromName(_rChk.itemName||'');
+            if(_pChk===56||_pChk===60){
+              _has28NonFixed=true;
+              console.log('PACK56: found '+_pChk+' in name "'+_rChk.itemName+'" → triggers 28-policy');
+              break;
+            }
+          }
+        }
+      }
 
       /* Mark allRowsData items */
       for(var _ri=0;_ri<allRowsData.length;_ri++){
@@ -3962,6 +4024,15 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           var _fixedVal2=fixedSizeCodes[_rd.itemCode];
           if(_fixedVal2===56||_fixedVal2===60){
             _rd.fixedSizeBreak=60;
+          }
+        }
+        /* v144: 56/60-pack in item NAME → auto BID if note empty or unrecognized */
+        if((_rdPack===56||_rdPack===60)&&!_rd.hasFixedSize&&!_rd.isWeekly){
+          var _nChk56=(_rd.note||'').trim();
+          var _tChk56=_nChk56.length>=3?getTimeFromWords(_nChk56):{isEmpty:true,isUnrecognized:false};
+          if(!_nChk56||_nChk56.length<3||_tChk56.isEmpty||_tChk56.isUnrecognized){
+            _rd.pack56Auto=true;
+            console.log('PACK56 AUTO: "'+_rd.itemName+'" → Size=56 Every=12 Time=09:00');
           }
         }
       }
@@ -4023,6 +4094,13 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
 
       /* ── NORMAL MODE (original logic) ── */
+      /* v144: 56/60-pack auto BID (note empty/unrecognized) */
+      if(rd.pack56Auto&&!rd.hasFixedSize&&!rd.isWeekly&&!rd.dui){
+        setTime(r_node,'09:00');
+        if(di_main>=0)setDose(tds_nodes[di_main],1);
+        if(qi_main>=0){var _q56m=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],_q56m*m);}
+        continue;
+      }
       if(rd.dui){if(qi_main>=0){var qc=tds_nodes[qi_main];var cv=parseInt(get(qc))||1;setSize(qc,cv*m);}rtd_list.push({row:r_node,info:rd.dui,calcDays:rd.calculatedDays});continue;}
       if(rd.hasFixedSize&&!rd.warningOverride){var _fixSize=rd.fixedSizeBreak||fixedSizeCodes[rd.itemCode];setSize(tds_nodes[si_main],_fixSize);var tm_fix=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix.time);var dose_fix=smartDoseRecognizer(rd.note);var isE12_fix=/12|twice|bid|b\.?i\.?d|مرتين/.test(rd.note)||(dose_fix.hasB&&dose_fix.hasD)||(dose_fix.hasM&&dose_fix.hasE)||/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i.test(rd.note)||/قبل\s*(الاكل|الأكل)\s*مرتين/.test(rd.note);if(dose_fix.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}else if(dose_fix.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}else if(dose_fix.count===2||isE12_fix||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}else{setEvry(tds_nodes[ei_main],'24');}if(tm_fix.isCodeTime&&tm_fix.every){setEvry(tds_nodes[ei_main],String(tm_fix.every));}/* 56/60 BID default: no clear dose → force every=12, start=09:00 */var _origFixedVal=fixedSizeCodes[rd.itemCode];if((_origFixedVal===56||_origFixedVal===60)&&dose_fix.count<=1&&!isE12_fix&&rd.timesPerDay<=1){setEvry(tds_nodes[ei_main],'12');setTime(r_node,'09:00');}if(di_main>=0){var tpi_fix=getTwoPillsPerDoseInfo(rd.note);setDose(tds_nodes[di_main],tpi_fix.dose===2?2:tpi_fix.dose);}if(rd.forceDose2&&di_main>=0){setDose(tds_nodes[di_main],2);var _tpi_fix=getTwoPillsPerDoseInfo(rd.note);if(_tpi_fix.dose<2){var fsCur=parseInt(get(tds_nodes[si_main]))||1;setSize(tds_nodes[si_main],fsCur*2);if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur*2,dose:2});}else{var fsCur=parseInt(get(tds_nodes[si_main]))||1;if(!window._ezDose2Applied) window._ezDose2Applied=[];window._ezDose2Applied.push({name:rd.itemName,newSize:fsCur,dose:2});}}if(qi_main>=0){var cur2=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2*m);}continue;}
       if(rd.isWeekly){var bs_val=(rd.calculatedDays==28?4:5)+(m-1)*4;setSize(tds_nodes[si_main],bs_val);setEvry(tds_nodes[ei_main],'168');if(qi_main>=0){var cur3=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur3);}var tm_fix2=getCodeAwareTime(getTimeFromWords(rd.note),rd.itemCode);setTime(r_node,tm_fix2.time);var targetDay=extractDayOfWeek(rd.note);if(targetDay!==null&&defaultStartDate&&sdi_main>=0){var newSD=getNextDayOfWeek(defaultStartDate,targetDay);setStartDate(r_node,newSD);}continue;}
@@ -4070,6 +4148,51 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
+    /* ★POST56_FINAL★ — إصلاح every=12 للأصناف 56/60 بدون جرعة */
+    (function(){
+      var _STRIP56=/\d+\.?\d*\s*(?:mg|mcg|ml|g\b|iu)/gi;
+      var _SIZES56=[56,60];
+      var _SIZES28=[14,28,56];
+      function _getPackSize(name){
+        if(!name) return null;
+        var cl=(name||"").replace(_STRIP56,"~");
+        var nums=[];var re=/(\d+)/g;var m;
+        while((m=re.exec(cl))!==null){
+          var v=parseInt(m[1]);
+          if(v>=14&&v<=120) nums.push(v);
+        }
+        if(!nums.length) return null;
+        return nums[nums.length-1];
+      }
+      /* هل فيه صنف 28 أو 56 بدون جرعة في الروشتة؟ */
+      var _has28=false;
+      for(var _i=0;_i<allRowsData.length;_i++){
+        var _rr=allRowsData[_i];
+        if(_rr.hasFixedSize||_rr.isWeekly) continue;
+        if(_rr.note&&_rr.note.trim().length>2) continue;
+        var _pp=_getPackSize(_rr.itemName||"");
+        if(_pp===28||_pp===14){_has28=true;break;}
+      }
+      console.log("POST56: has28/56 sibling="+_has28);
+      /* تصحيح كل صنف 56 أو 60 بدون جرعة */
+      for(var _j=0;_j<allRowsData.length;_j++){
+        var _rd=allRowsData[_j];
+        if(_rd.hasFixedSize||_rd.isWeekly||_rd.dui) continue;
+        if(_rd.note&&_rd.note.trim().length>2) continue;
+        var _pk=_getPackSize(_rd.itemName||"");
+        if(_SIZES56.indexOf(_pk)<0) continue;
+        var _tds=_rd.tds;
+        /* Size: 56 لو فيه صنف 28، وإلا الحجم الأصلي للعلبة */
+        var _finalSz=_has28?56:_pk;
+        setSize(_tds[si_main],_finalSz);
+        /* Every: دايماً 12 — 56/60 حبة = مرتين يومياً */
+        setEvry(_tds[ei_main],"12");
+        setTime(_rd.row,"09:00");
+        if(di_main>=0) setDose(_tds[di_main],1);
+        console.log("POST56 FIX: "+_rd.itemName+" → size="+_finalSz+" every=12");
+      }
+    })();
+    /* ★END_POST56_FINAL★ */
     sortRowsByTime(tb_main,ti_main,ei_main);
     _ezColorDupRows(tb_main);
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='110px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='110px';}if(ti_main>=0&&tds_nodes[ti_main]){var tiInp2=tds_nodes[ti_main].querySelector('input');if(tiInp2)tiInp2.style.width='100px';}if(ei_main>=0&&tds_nodes[ei_main]){var eiInp2=tds_nodes[ei_main].querySelector('input,select');if(eiInp2)eiInp2.style.width='90px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
@@ -5177,6 +5300,8 @@ function extractAndConfirmName(){
       if(!text||text.length<5) return null;
       /* Normalize newlines to spaces */
       var s=text.trim().replace(/\r?\n/g,' ');
+      /* JVM Fix: تجاهل ما بعد / أو \ في النص */
+      s=s.replace(/\s*\/[^\u0600-\u06FF]*$/,'').replace(/\s*\/\s*(the\s+gue?st|الضيف|المريض)[^\u0600-\u06FF]*/gi,'').trim();
       /* Strip parentheses/brackets so names inside become visible to patterns */
       s=s.replace(/[()[\]{}«»]/g,' ').replace(/\s+/g,' ').trim();
 
@@ -5187,7 +5312,7 @@ function extractAndConfirmName(){
         'الزوج','الزوجه','الزوجة','الام','الأم','الاب','الأب'];
 
       /* Connector words: these appear BETWEEN the keyword and the name - skip them, don't stop */
-      var connectorWords=['الى','إلى','الي','إلي','لـ'];
+      var connectorWords=['الى','إلى','الي','إلي','لـ','بحى','بحي'];
 
       function normA(w){return w.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();}
       function normG(w){return normA(w).replace(/ى/g,'ي');}
@@ -5198,12 +5323,12 @@ function extractAndConfirmName(){
       var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
         'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
         'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة',
-        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في','واضافه','واضافة','واضاف','ويوجد','يوجد'];
+        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في','واضافه','واضافة','واضاف','ويوجد','يوجد','بحى','حى','بحي','حي','صيدلية','صيدليه','فرع','التوصيل على','الرجاء','وكتابة'];
 
       /* على as preposition: only when followed by known location/object word */
       var alaStopNext=['الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
         'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب',
-        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون','الشنطه','الشنطة'];
+        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون','الشنطه','الشنطة','صيدلية','صيدليه','الصيدلية','التوصيل','المجمع','الشارع','الحي','الحى','بحى','بحي'];
 
       function isStopWord(word,nextWord){
         /* على: stop ONLY when followed by a known object/location (preposition context) */
@@ -5228,7 +5353,7 @@ function extractAndConfirmName(){
         'الاكل','النوم','الفطار','السحور','الافطار','الغداء','العشاء',
         'موجود','موجوده','متوفر','متوفره','مطلوب','مطلوبه','اضافي','اضافيه','اضافية',
         'حسب','وصفه','وصفة','روشته','روشتة','روشتته','الوصفه','الروشته',
-        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة'];
+        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة','بحى','حى','الحى','حي','الحي','شارع','الشارع','طريق','الطريق','صيدلية','صيدليه','الصيدلية','بالمروه','المروه','الحرمين','الروضه','الروضة','النزهه','النزهة','السلامه','السلامة','الخبر','الدمام','الرياض','جده','جدة','مكه','مكة','المدينه','المدينة','النعيم','الشرق','الغرب','الشمال','الجنوب','منطقه','منطقة','حارة','حاره','المجمع','المول','السوق','سوق','مركز','المركز'];
       function isNotName(w){var n2=normG(w);var n2bare=n2.replace(/^ال/,'');for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}return false;}
 
       function cleanName(raw){
@@ -5278,7 +5403,9 @@ function extractAndConfirmName(){
 
       /* PRIORITY 2: English name directly after keyword (no parens) */
       var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
-      if(engM&&engM[1]&&engM[1].trim().length>=3) return engM[1].trim();
+      if(engM&&engM[1]&&engM[1].trim().length>=3) var _engName=engM[1].trim();
+      if(/^(the\s+gue?st|guest|the\s+patient|patient)$/i.test(_engName)) _engName=null;
+      if(_engName&&_engName.length>=3) return _engName;
 
       /* PRIORITY 3: Arabic name patterns (with optional connector الى/الي before name) */
       var patterns=[
@@ -5291,7 +5418,7 @@ function extractAndConfirmName(){
         /(?:وكتاب[ةه]\s*اسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:باسم)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:الاسم)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
-        /(?:للضيف[ةه]?|للمريض[ةه]?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:DISABLED_JVM_FIX_LLDHYF)/i,
         /(?:^|[،,\s])اسم\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]{3,}(?:\s+[\u0600-\u06FF]+){0,3})/i
       ];
 
@@ -5365,6 +5492,71 @@ function extractAndConfirmName(){
         return;
       }
     }
+        /* ══ FIX: استخلاص الاسم بعد "/" مباشرة من notesText ══
+       يعمل قبل extractName — أي حاجة بعد "/" تتكتب كاسم
+    */
+    (function(){
+      if(!notesText) return;
+      /* ابحث عن "/" في النوتة */  
+      var _slashIdx=notesText.lastIndexOf("/");
+      if(_slashIdx<0) return;
+      /* تأكد إن قبل "/" فيه ذكر للاسم أو الضيف أو الكتابة */  
+      var _beforeSlash=notesText.substring(0,_slashIdx);
+      var _hasNameContext=/اسم|ضيف|مريض|عميل|كتاب/i.test(_beforeSlash);
+      if(!_hasNameContext) return;
+      /* كل اللي بعد "/" = الاسم (بعد حذف المسافات والرموز الزيادة) */
+      var _afterSlash=notesText.substring(_slashIdx+1).trim();
+      _afterSlash=_afterSlash.replace(/^[\s\-\.،,;:]+|[\s\-\.،,;:]+$/g,"").trim();
+      if(_afterSlash.length<2) return;
+      /* لو nameField موجود وفيه قيمة مختلفة → نبين البانر */
+      if(!nameField) return;
+      var _slashCurName=(nameField.value||"").trim();
+      if(_slashCurName===_afterSlash) return; /* نفس الاسم بالفعل */
+      /* أنشئ banner مباشر */
+      var _oldBanner=document.getElementById("ez-slash-name-banner");
+      if(_oldBanner) _oldBanner.remove();
+      var _slashBanner=document.createElement("div");
+      _slashBanner.id="ez-slash-name-banner";
+      _slashBanner.style.cssText="position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:460px;max-width:94vw;z-index:9999999;transition:top 0.6s cubic-bezier(0.16,1,0.3,1);font-family:Cairo,sans-serif";
+      var _slashHtml='<div style="background:#fff;border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 12px 40px rgba(99,102,241,0.15);border:2px solid rgba(129,140,248,0.12);border-top:none">';
+      _slashHtml+='<div style="height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div>';
+      _slashHtml+='<div style="padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(129,140,248,0.06)">';
+      _slashHtml+='<div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">👤</div>';
+      _slashHtml+='<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#1e1b4b">تم اكتشاف اسم في الملاحظات</div></div>';
+      _slashHtml+='<button id="ez-sn-close" style="width:28px;height:28px;border:none;border-radius:8px;font-size:14px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08)">✕</button></div>';
+      _slashHtml+='<div style="padding:10px 18px"><div style="font-size:11px;font-weight:700;color:#64748b;background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.08);border-radius:8px;padding:6px 10px;margin-bottom:10px;direction:rtl;word-break:break-word">'+notesText.replace(/</g,"&lt;").replace(/>/g,"&gt;")+'</div>';
+      _slashHtml+='<div style="background:linear-gradient(145deg,#ecfdf5,#d1fae5);border:1.5px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 14px;text-align:center">';
+      _slashHtml+='<div style="font-size:9px;font-weight:800;color:#047857;letter-spacing:0.5px;margin-bottom:3px">الاسم المستخلص</div>';
+      _slashHtml+='<div style="font-size:18px;font-weight:900;color:#064e3b" id="ez-sn-display">'+_afterSlash+'</div>';
+      _slashHtml+='<input type="text" id="ez-sn-edit" value="'+_afterSlash+'" style="display:none;width:100%;padding:4px 8px;border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:16px;font-weight:800;color:#064e3b;text-align:center;font-family:Cairo,sans-serif;outline:none;direction:rtl;margin-top:2px" /></div></div>';
+      _slashHtml+='<div style="padding:8px 18px 14px;display:flex;gap:6px">';
+      _slashHtml+='<button id="ez-sn-ok" style="flex:1;height:38px;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)">✅ تأكيد وكتابة الاسم</button>';
+      _slashHtml+='<button id="ez-sn-edit-btn" style="height:38px;padding:0 12px;border:none;border-radius:10px;font-size:14px;cursor:pointer;color:#6366f1;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.12)">✏️</button></div></div>';
+      _slashBanner.innerHTML=_slashHtml;
+      document.body.appendChild(_slashBanner);
+      setTimeout(function(){_slashBanner.style.top="0px";},50);
+      function _snClose(){_slashBanner.style.top="-200px";setTimeout(function(){_slashBanner.remove();},600);}
+      document.getElementById("ez-sn-close").onclick=_snClose;
+      var _snEditMode=false;
+      document.getElementById("ez-sn-edit-btn").onclick=function(){
+        var _d=document.getElementById("ez-sn-display");
+        var _i=document.getElementById("ez-sn-edit");
+        if(!_snEditMode){_d.style.display="none";_i.style.display="block";_i.focus();_i.select();this.innerHTML="💾";_snEditMode=true;}
+        else{var _v=_i.value.trim();if(_v)_d.textContent=_v;_d.style.display="block";_i.style.display="none";this.innerHTML="✏️";_snEditMode=false;}
+      };
+      document.getElementById("ez-sn-ok").onclick=function(){
+        var _finalName=_snEditMode?document.getElementById("ez-sn-edit").value.trim():document.getElementById("ez-sn-display").textContent.trim();
+        if(_finalName&&nameField){
+          nameField.value=_finalName;
+          nameField.dispatchEvent(new Event("input",{bubbles:true}));
+          nameField.dispatchEvent(new Event("change",{bubbles:true}));
+          if(typeof angular!=="undefined"){try{angular.element(nameField).triggerHandler("change");}catch(e){}}
+          if(typeof jQuery!=="undefined"){try{jQuery(nameField).trigger("change");}catch(e){}}
+          window.ezShowToast("تم كتابة الاسم: "+_finalName+" ✅","success");
+        }
+        _snClose();
+      };
+    })();
     var extractedName=extractName(notesText);
     if(!extractedName) return;
     if(!nameField) return;
