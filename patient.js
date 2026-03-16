@@ -2,9 +2,9 @@ javascript:(async function(){
 'use strict';
 
 /* ══════════════════════════════════════════
-   📤 EZ JSON Uploader v2.0
-   رفع ملفات JSON تلقائي لفارمادوسيس
-   واجهة مرئية + سرعة + ثبات
+    📤 EZ JSON Uploader v2.0 (Optimized)
+    رفع ملفات JSON تلقائي لفارمادوسيس
+    واجهة مرئية + سرعة + ثبات
    ══════════════════════════════════════════ */
 
 /* ── Helpers ── */
@@ -144,12 +144,12 @@ async function uploadFile(file,index,total){
     setStep('🔍 البحث عن زر الرفع...');
     var uploadBtn=document.querySelector('.mdi-briefcase-upload');
     if(!uploadBtn){
-        /* Try other selectors */
         uploadBtn=document.querySelector('[title*="upload"],[title*="Upload"]');
     }
     if(uploadBtn){
         simulateClick(uploadBtn);
-        await delay(300,500);
+        /* زيادة وقت الانتظار لظهور الدايلوج أول مرة */
+        await delay(600,900);
     } else {
         addLog(file.name,false,'زر الرفع غير موجود');
         return false;
@@ -159,19 +159,22 @@ async function uploadFile(file,index,total){
 
     /* Step 2: Select from dropdown */
     setStep('📋 اختيار من القائمة...');
-    await delay(200,400);
     try{
-        /* Try multiple selectors for the dropdown */
-        var selectInput=document.querySelector('.v-dialog--active input[readonly]')||
-                        document.querySelector('.v-dialog--active .v-select')||
-                        document.querySelector('#input-304');
-        if(selectInput){
-            simulateClick(selectInput);
-            await delay(300,500);
-            var menu=document.querySelector('.menuable__content__active');
-            if(menu){
-                var firstItem=menu.querySelector('.v-list-item');
-                if(firstItem){simulateClick(firstItem);await delay(200,400);}
+        /* انتظار الدايلوج ليكون نشطاً بالفعل */
+        var activeDialog = await waitFor('.v-dialog--active', 5000);
+        if(activeDialog){
+            var selectInput=activeDialog.querySelector('input[readonly]')||
+                             activeDialog.querySelector('.v-select')||
+                             document.querySelector('#input-304');
+            
+            if(selectInput){
+                simulateClick(selectInput);
+                await delay(400,600);
+                var menu=document.querySelector('.menuable__content__active');
+                if(menu){
+                    var firstItem=menu.querySelector('.v-list-item');
+                    if(firstItem){simulateClick(firstItem);await delay(300,500);}
+                }
             }
         }
     }catch(e){console.warn('Menu select warning:',e);}
@@ -189,7 +192,7 @@ async function uploadFile(file,index,total){
     dt.items.add(file);
     fileInput.files=dt.files;
     fileInput.dispatchEvent(new Event('change',{bubbles:true}));
-    await delay(800,1200);
+    await delay(1000,1500);
 
     await checkPause();if(stopped) return false;
 
@@ -202,7 +205,7 @@ async function uploadFile(file,index,total){
             var btn=importBtn.closest('button')||importBtn;
             if(!btn.disabled){simulateClick(btn);pressed=true;break;}
         }
-        await delay(150,300);
+        await delay(200,400);
     }
     if(!pressed){addLog(file.name,false,'زر Import غير موجود');return false;}
 
@@ -212,13 +215,12 @@ async function uploadFile(file,index,total){
     setStep('⏳ في انتظار التأكيد...');
     try{
         var swalOk=await waitFor('.swal2-confirm',10000);
-        await delay(100,200);
-        simulateClick(swalOk);
         await delay(200,400);
+        simulateClick(swalOk);
+        await delay(400,600);
         addLog(file.name,true,'');
         return true;
     }catch(e){
-        /* Maybe it auto-confirmed or different modal */
         addLog(file.name,false,'لم يظهر تأكيد');
         return false;
     }
@@ -246,6 +248,11 @@ els.startBtn.onclick=async function(){
     els.stopBtn.style.display='block';
     paused=false;stopped=false;results=[];els.log.innerHTML='';
 
+    /* تأخير بسيط جداً قبل معالجة أول ملف 
+       للسماح للواجهة بالاستقرار بعد إغلاق نافذة اختيار الملفات
+    */
+    await delay(800, 1200);
+
     /* Process files */
     var success=0,fail=0;
     for(var i=0;i<total;i++){
@@ -256,7 +263,9 @@ els.startBtn.onclick=async function(){
         updateProgress(i+1,total);
         var ok=await uploadFile(files[i],i+1,total);
         if(ok) success++; else fail++;
-        await delay(300,600);
+        
+        /* تأخير بين كل ملف وآخر لضمان إغلاق الدايلوجات تماماً */
+        await delay(600,1000);
     }
 
     /* Done */
