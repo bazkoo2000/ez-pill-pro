@@ -2,7 +2,7 @@
   "_meta": {
     "version": "1.0",
     "app": "EZ_Pill",
-    "lastUpdate": "2026-03-15",
+    "lastUpdate": "2026-03-16",
     "updatedBy": "admin"
   },
   "admin": {
@@ -49,6 +49,10 @@
       "every": 24
     },
     "101325218": {
+      "time": "21:00",
+      "every": 24
+    },
+    "103344834": {
       "time": "21:00",
       "every": 24
     },
