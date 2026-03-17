@@ -9,39 +9,116 @@
     var _EZ_RAW_URL='https://raw.githubusercontent.com/'+_EZ_REPO+'/main/'+_EZ_DRUGS_FILE;
     var _EZ_API_URL='https://api.github.com/repos/'+_EZ_REPO+'/contents/'+_EZ_DRUGS_FILE;
     var _EZ_ADMIN_PIN='101093';
-    /* Encryption key — مخبي في الكود */
     var _EK=[69,90,80,73,76,76,50,48,50,54,83,69,67,82,69,84];
 
     /* ══════════════════════════════════════════
-       🔐 ENCRYPTION / DECRYPTION (AES-CBC)
+       🔐 CRYPTO — Web Crypto (HTTPS) + CryptoJS Fallback (HTTP)
        ══════════════════════════════════════════ */
-    async function _ezDeriveKey(){
-        var raw=new Uint8Array(_EK);
-        var keyMaterial=await crypto.subtle.importKey('raw',raw,{name:'PBKDF2'},false,['deriveKey']);
-        return crypto.subtle.deriveKey({name:'PBKDF2',salt:new TextEncoder().encode('ezpill_salt_2026'),iterations:100000,hash:'SHA-256'},keyMaterial,{name:'AES-CBC',length:256},false,['encrypt','decrypt']);
+
+    function _ezIsSecureCtx(){
+        return !!(window.crypto && window.crypto.subtle);
     }
 
-    async function _ezEncrypt(text){
+    /* تحميل CryptoJS ديناميكياً للـ HTTP */
+    function _ezLoadCryptoJS(){
+        return new Promise(function(resolve){
+            if(window.CryptoJS && window.CryptoJS.PBKDF2) return resolve(true);
+            var s=document.createElement('script');
+            s.src='https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js';
+            s.onload=function(){ resolve(!!(window.CryptoJS && window.CryptoJS.PBKDF2)); };
+            s.onerror=function(){ console.error('💊 CryptoJS load failed'); resolve(false); };
+            document.head.appendChild(s);
+        });
+    }
+
+    /* ─── Web Crypto (HTTPS) ─── */
+    async function _ezDeriveKey(){
+        var raw=new Uint8Array(_EK);
+        var km=await crypto.subtle.importKey('raw',raw,{name:'PBKDF2'},false,['deriveKey']);
+        return crypto.subtle.deriveKey(
+            {name:'PBKDF2',salt:new TextEncoder().encode('ezpill_salt_2026'),iterations:100000,hash:'SHA-256'},
+            km,{name:'AES-CBC',length:256},false,['encrypt','decrypt']
+        );
+    }
+
+    async function _ezEncryptNative(text){
         var key=await _ezDeriveKey();
         var iv=crypto.getRandomValues(new Uint8Array(16));
-        var encoded=new TextEncoder().encode(text);
-        var encrypted=await crypto.subtle.encrypt({name:'AES-CBC',iv:iv},key,encoded);
-        /* IV (16 bytes) + encrypted data → base64 */
-        var combined=new Uint8Array(iv.length+encrypted.byteLength);
-        combined.set(iv);
-        combined.set(new Uint8Array(encrypted),iv.length);
-        /* Chunked btoa to avoid stack overflow on large data */
-        var chunks=[];for(var i=0;i<combined.length;i+=8192){var slice=combined.subarray(i,Math.min(i+8192,combined.length));var str='';for(var j=0;j<slice.length;j++)str+=String.fromCharCode(slice[j]);chunks.push(str);}
+        var enc=await crypto.subtle.encrypt({name:'AES-CBC',iv:iv},key,new TextEncoder().encode(text));
+        var combined=new Uint8Array(16+enc.byteLength);
+        combined.set(iv); combined.set(new Uint8Array(enc),16);
+        var chunks=[];
+        for(var i=0;i<combined.length;i+=8192){
+            var sl=combined.subarray(i,Math.min(i+8192,combined.length));
+            var s=''; for(var j=0;j<sl.length;j++) s+=String.fromCharCode(sl[j]);
+            chunks.push(s);
+        }
         return btoa(chunks.join(''));
     }
 
-    async function _ezDecrypt(b64){
+    async function _ezDecryptNative(b64){
         var key=await _ezDeriveKey();
         var raw=Uint8Array.from(atob(b64),function(c){return c.charCodeAt(0)});
-        var iv=raw.slice(0,16);
-        var data=raw.slice(16);
-        var decrypted=await crypto.subtle.decrypt({name:'AES-CBC',iv:iv},key,data);
-        return new TextDecoder().decode(decrypted);
+        var dec=await crypto.subtle.decrypt({name:'AES-CBC',iv:raw.slice(0,16)},key,raw.slice(16));
+        return new TextDecoder().decode(dec);
+    }
+
+    /* ─── CryptoJS Fallback (HTTP) ─── */
+    function _ezGetCJSKey(){
+        /* نفس نتيجة PBKDF2 اللي بيعملها Web Crypto بالضبط */
+        var pass=window.CryptoJS.lib.WordArray.create(new Uint8Array(_EK));
+        var salt=window.CryptoJS.enc.Utf8.parse('ezpill_salt_2026');
+        return window.CryptoJS.PBKDF2(pass,salt,{keySize:8,iterations:100000,hasher:window.CryptoJS.algo.SHA256});
+    }
+
+    async function _ezEncryptCJS(text){
+        var ok=await _ezLoadCryptoJS();
+        if(!ok) throw new Error('CryptoJS غير متاح');
+        var CJ=window.CryptoJS;
+        var key=_ezGetCJSKey();
+        var ivArr=new Uint8Array(16);
+        window.crypto.getRandomValues(ivArr);
+        var iv=CJ.lib.WordArray.create(ivArr);
+        var encrypted=CJ.AES.encrypt(text,key,{iv:iv,mode:CJ.mode.CBC,padding:CJ.pad.Pkcs7});
+        /* نفس الفورمات: IV(16 bytes) + ciphertext → base64 */
+        var combined=iv.clone();
+        combined.concat(encrypted.ciphertext);
+        return CJ.enc.Base64.stringify(combined);
+    }
+
+    async function _ezDecryptCJS(b64){
+        var ok=await _ezLoadCryptoJS();
+        if(!ok) throw new Error('CryptoJS غير متاح');
+        var CJ=window.CryptoJS;
+        var key=_ezGetCJSKey();
+        var data=CJ.enc.Base64.parse(b64);
+        /* أول 4 words = 16 bytes = IV */
+        var ivWords=data.words.slice(0,4);
+        var ctWords=data.words.slice(4);
+        var iv=CJ.lib.WordArray.create(ivWords,16);
+        var ct=CJ.lib.WordArray.create(ctWords,data.sigBytes-16);
+        var decrypted=CJ.AES.decrypt({ciphertext:ct},key,{iv:iv,mode:CJ.mode.CBC,padding:CJ.pad.Pkcs7});
+        var result=decrypted.toString(CJ.enc.Utf8);
+        if(!result) throw new Error('فك التشفير أرجع نتيجة فارغة — تأكد أن الملف مرفوع من HTTPS');
+        return result;
+    }
+
+    /* ─── واجهة موحدة ─── */
+    async function _ezEncrypt(text){
+        if(_ezIsSecureCtx()) return _ezEncryptNative(text);
+        return _ezEncryptCJS(text);
+    }
+
+    async function _ezDecrypt(b64){
+        b64=b64.trim();
+        if(_ezIsSecureCtx()){
+            try{ return await _ezDecryptNative(b64); }
+            catch(e){
+                console.warn('💊 Native decrypt failed, trying CryptoJS...',e);
+                return _ezDecryptCJS(b64);
+            }
+        }
+        return _ezDecryptCJS(b64);
     }
 
     /* ══════════════════════════════════════════
@@ -52,17 +129,15 @@
     async function _ezFetchDrugsFromGH(){
         try{
             var resp=await fetch(_EZ_RAW_URL+'?t='+Date.now());
-            if(!resp.ok){console.warn('Drug file fetch:',resp.status);return null;}
+            if(!resp.ok){console.warn('💊 Drug file fetch:',resp.status);return null;}
             var b64=await resp.text();
             var json=await _ezDecrypt(b64.trim());
             var db=JSON.parse(json);
-            /* Cache locally */
             try{localStorage.setItem('ez_drugs_cache',json);localStorage.setItem('ez_drugs_cache_time',Date.now().toString());}catch(e){}
             console.log('💊 Drugs loaded from GitHub:',db.length);
             return db;
         }catch(e){
             console.warn('💊 Fetch/decrypt error:',e);
-            /* Fallback to cache */
             try{var c=localStorage.getItem('ez_drugs_cache');if(c)return JSON.parse(c);}catch(e2){}
             return null;
         }
@@ -76,41 +151,37 @@
             console.log('💊 Encrypting '+db.length+' drugs ('+json.length+' bytes)...');
             var encrypted=await _ezEncrypt(json);
             console.log('💊 Encrypted length: '+encrypted.length);
-            /* Get SHA */
             var sha='';
             try{
                 var getResp=await fetch(_EZ_API_URL,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json'}});
-                console.log('💊 SHA fetch status: '+getResp.status);
-                if(getResp.ok){var gd=await getResp.json();sha=gd.sha;console.log('💊 SHA: '+sha);}
-            }catch(e){console.warn('💊 SHA fetch error (ok if new file):',e)}
-            /* GitHub API wants base64 of the file content — encrypted is already ASCII base64 so safe for btoa */
-            var fileContent=encrypted;
-            /* Chunk the btoa for safety */
+                if(getResp.ok){var gd=await getResp.json();sha=gd.sha;console.log('💊 SHA:',sha);}
+            }catch(e){console.warn('💊 SHA fetch error:',e)}
             var b64Content='';
             try{
-                b64Content=btoa(fileContent);
+                b64Content=btoa(encrypted);
             }catch(e){
-                /* Fallback: chunk it */
-                console.log('💊 btoa failed, using chunked approach...');
-                var enc=new TextEncoder().encode(fileContent);
+                var enc2=new TextEncoder().encode(encrypted);
                 var chunks=[];
-                for(var ci=0;ci<enc.length;ci+=8192){
-                    var sl=enc.subarray(ci,Math.min(ci+8192,enc.length));
-                    var s='';for(var cj=0;cj<sl.length;cj++)s+=String.fromCharCode(sl[cj]);
+                for(var ci=0;ci<enc2.length;ci+=8192){
+                    var sl=enc2.subarray(ci,Math.min(ci+8192,enc2.length));
+                    var s=''; for(var cj=0;cj<sl.length;cj++) s+=String.fromCharCode(sl[cj]);
                     chunks.push(s);
                 }
                 b64Content=btoa(chunks.join(''));
             }
-            console.log('💊 Base64 content length: '+b64Content.length);
             var body={message:'تحديث قاعدة الأدوية — '+new Date().toLocaleString('ar-EG'),content:b64Content,branch:'main'};
             if(sha)body.sha=sha;
-            console.log('💊 Pushing to GitHub...');
             var resp=await fetch(_EZ_API_URL,{
                 method:'PUT',
                 headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
                 body:JSON.stringify(body)
             });
-            if(!resp.ok){var err=await resp.json();console.error('💊 Push failed:',resp.status,err);_ezToast('فشل الرفع ('+resp.status+'): '+(err.message||'خطأ غير معروف'),'error');return false;}
+            if(!resp.ok){
+                var err=await resp.json();
+                console.error('💊 Push failed:',resp.status,err);
+                _ezToast('فشل الرفع ('+resp.status+'): '+(err.message||'خطأ غير معروف'),'error');
+                return false;
+            }
             console.log('💊 Drugs pushed to GitHub ✅');
             return true;
         }catch(e){
@@ -135,7 +206,7 @@
         var c=document.getElementById('ez-drug-toast');
         if(!c){c=document.createElement('div');c.id='ez-drug-toast';c.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999999';document.body.appendChild(c);}
         var t=document.createElement('div');
-        t.style.cssText='padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,Segoe UI,sans-serif;color:#fff;margin-bottom:8px;animation:fadeIn .3s;background:'+(type==='error'?'#dc2626':type==='success'?'#059669':'#6366f1');
+        t.style.cssText='padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,Segoe UI,sans-serif;color:#fff;margin-bottom:8px;background:'+(type==='error'?'#dc2626':type==='success'?'#059669':'#6366f1');
         t.textContent=msg;c.appendChild(t);setTimeout(function(){t.remove()},3000);
     }
     function findT(){
@@ -237,45 +308,38 @@
         d.style.cssText='position:fixed;top:20px;right:20px;z-index:999999;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border:none;border-radius:16px;padding:0;box-shadow:0 20px 40px rgba(0,0,0,0.15);font-family:Cairo,"Segoe UI",sans-serif;width:370px;max-width:95vw;overflow:hidden';
         d.innerHTML=
         '<div style="background:#fff;padding:20px;border-radius:16px 16px 0 0">'+
-          /* Header */
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f0f0">'+
             '<div style="display:flex;align-items:center;gap:10px">'+
               '<div style="width:38px;height:38px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:16px">💊</div>'+
-              '<div><div style="font-weight:800;font-size:16px;color:#1e1b4b">إضافة صنف</div><div id="ez-drug-cloud-status" style="font-size:10px;font-weight:700;color:#94a3b8">جاري التحميل...</div></div>'+
+              '<div>'+
+                '<div style="font-weight:800;font-size:16px;color:#1e1b4b">إضافة صنف</div>'+
+                '<div id="ez-drug-cloud-status" style="font-size:10px;font-weight:700;color:#94a3b8">جاري التحميل...</div>'+
+              '</div>'+
             '</div>'+
             '<div style="display:flex;gap:4px">'+
               '<button id="ez-drug-admin-btn" title="إدارة" style="width:30px;height:30px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#667eea;cursor:pointer;font-size:14px">⚙️</button>'+
               '<button id="ez-drug-close" style="width:30px;height:30px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#94a3b8;cursor:pointer;font-size:16px">&times;</button>'+
             '</div>'+
           '</div>'+
-          /* Search */
           '<div style="margin-bottom:12px;position:relative">'+
             '<input id="ezpill_adddrug_q" type="text" placeholder="ابحث بالاسم أو الكود..." style="width:100%;padding:12px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:12px;font-size:14px;font-family:Cairo,sans-serif;box-sizing:border-box;outline:none;direction:ltr" />'+
             '<div id="search-suggestions" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:12px;max-height:220px;overflow-y:auto;display:none;z-index:1000000;box-shadow:0 8px 24px rgba(0,0,0,0.12);margin-top:4px"></div>'+
           '</div>'+
-          /* Add button */
           '<button id="ezpill_adddrug_btn" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer;font-weight:800;font-size:14px;font-family:Cairo,sans-serif">➕ إضافة للجدول</button>'+
-          /* Status */
           '<div id="ezpill_adddrug_status" style="margin-top:12px;padding:10px;border-radius:10px;background:#f8fafc;font-size:12px;color:#64748b;text-align:center;min-height:20px;font-weight:700"></div>'+
         '</div>'+
-        /* Footer */
         '<div style="background:#f8fafc;padding:10px 20px;border-radius:0 0 16px 16px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">'+
-          '<div style="font-size:10px;color:#94a3b8">v2.0 Cloud</div>'+
+          '<div style="font-size:10px;color:#94a3b8">v2.1 Cloud</div>'+
           '<div id="drug_count" style="font-size:11px;color:#667eea;font-weight:700">0 صنف</div>'+
         '</div>';
         document.body.appendChild(d);
-
-        /* Close */
         document.getElementById('ez-drug-close').onclick=function(){d.remove()};
-
-        /* Admin button */
         document.getElementById('ez-drug-admin-btn').onclick=function(){openAdminPanel()};
-
         return d;
     }
 
     /* ══════════════════════════════════════════
-       👤 ADMIN PANEL — رفع ملف أدوية جديد
+       👤 ADMIN PANEL
        ══════════════════════════════════════════ */
     function openAdminPanel(){
         var pin=prompt('الرقم السري للأدمن:');
@@ -290,18 +354,26 @@
         card.innerHTML=
         '<div style="padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px">'+
           '<div style="font-size:22px">🔐</div>'+
-          '<div style="flex:1"><div style="font-size:15px;font-weight:900;color:#1e1b4b">إدارة قاعدة الأدوية</div><div style="font-size:10px;font-weight:700;color:#64748b">رفع + تشفير + حفظ على جيتهاب</div></div>'+
+          '<div style="flex:1">'+
+            '<div style="font-size:15px;font-weight:900;color:#1e1b4b">إدارة قاعدة الأدوية</div>'+
+            '<div style="font-size:10px;font-weight:700;color:#64748b">رفع + دمج + تشفير + حفظ على جيتهاب</div>'+
+          '</div>'+
           '<button id="ez-admin-close" style="width:28px;height:28px;border:none;border-radius:8px;cursor:pointer;color:#94a3b8;background:rgba(148,163,184,0.08);font-size:14px">✕</button>'+
         '</div>'+
         '<div style="padding:18px 22px;direction:rtl">'+
-          /* Token */
           '<div style="font-size:12px;font-weight:800;color:#1e1b4b;margin-bottom:6px">توكن جيتهاب:</div>'+
           '<input id="ez-admin-token" type="password" placeholder="الصق التوكن" value="'+_ezGetGHToken()+'" style="width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-family:Cairo;direction:ltr;margin-bottom:12px;box-sizing:border-box;outline:none" />'+
-          /* File upload */
           '<div style="font-size:12px;font-weight:800;color:#1e1b4b;margin-bottom:6px">ملف الأصناف الجديد:</div>'+
-          '<input id="ez-admin-file" type="file" accept=".xlsx,.xls,.csv" style="width:100%;padding:10px;border:2px dashed rgba(129,140,248,0.2);border-radius:10px;background:rgba(99,102,241,0.03);font-size:12px;box-sizing:border-box;margin-bottom:12px" />'+
+          '<input id="ez-admin-file" type="file" accept=".xlsx,.xls,.csv" style="width:100%;padding:10px;border:2px dashed rgba(129,140,248,0.2);border-radius:10px;background:rgba(99,102,241,0.03);font-size:12px;box-sizing:border-box;margin-bottom:8px" />'+
           '<div id="ez-admin-file-info" style="font-size:11px;color:#64748b;margin-bottom:12px"></div>'+
-          /* Buttons */
+          '<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">'+
+            '<label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#1e1b4b;cursor:pointer">'+
+              '<input type="radio" name="ez-merge-mode" id="ez-mode-merge" value="merge" checked style="accent-color:#6366f1"> دمج مع الموجود'+
+            '</label>'+
+            '<label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#1e1b4b;cursor:pointer">'+
+              '<input type="radio" name="ez-merge-mode" id="ez-mode-replace" value="replace" style="accent-color:#6366f1"> استبدال كامل'+
+            '</label>'+
+          '</div>'+
           '<button id="ez-admin-encrypt-push" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo;color:#fff;background:linear-gradient(145deg,#6366f1,#4f46e5);margin-bottom:8px">🔐 تشفير ورفع على جيتهاب</button>'+
           '<div id="ez-admin-status" style="padding:10px;border-radius:10px;background:#f8fafc;font-size:12px;color:#64748b;text-align:center;font-weight:700"></div>'+
         '</div>';
@@ -314,7 +386,6 @@
 
         var pendingDB=null;
 
-        /* Parse uploaded file */
         document.getElementById('ez-admin-file').onchange=function(){
             var f=this.files&&this.files[0];if(!f)return;
             var info=document.getElementById('ez-admin-file-info');
@@ -322,41 +393,72 @@
             parseExcel(f,function(db){
                 if(!db||!db.length){info.textContent='❌ فشل قراءة الملف';return;}
                 pendingDB=db;
-                info.innerHTML='✅ تم قراءة <b>'+db.length+'</b> صنف — جاهز للتشفير والرفع';
+                info.innerHTML='✅ تم قراءة <b>'+db.length+'</b> صنف — جاهز للرفع';
             });
         };
 
-        /* Encrypt and push */
         document.getElementById('ez-admin-encrypt-push').onclick=async function(){
             var token=document.getElementById('ez-admin-token').value.trim();
             if(!token){_ezToast('ادخل التوكن','error');return;}
             localStorage.setItem('ez_gh_token',token);
             if(!pendingDB||!pendingDB.length){_ezToast('ارفع الملف أولاً','error');return;}
 
-            var btn=this;var st=document.getElementById('ez-admin-status');
-            btn.textContent='⏳ جاري التشفير...';btn.disabled=true;
+            var mergeMode=document.querySelector('input[name="ez-merge-mode"]:checked').value;
+            var btn=this;
+            var st=document.getElementById('ez-admin-status');
+            btn.disabled=true;
             st.textContent='';
 
             try{
-                st.textContent='🔐 جاري تشفير '+pendingDB.length+' صنف...';
-                /* Push encrypted */
-                var ok=await _ezPushDrugsToGH(pendingDB);
+                var finalDB=[];
+                var addedCount=0;
+
+                if(mergeMode==='merge'){
+                    btn.textContent='⏳ جاري جلب الأصناف الموجودة...';
+                    st.textContent='☁️ جاري جلب الأصناف الموجودة من السحابة...';
+                    var existingDB=await _ezFetchDrugsFromGH()||[];
+                    var mergedMap={};
+                    existingDB.forEach(function(d){if(d.code)mergedMap[d.code.toLowerCase()]=d;});
+                    pendingDB.forEach(function(d){
+                        var key=(d.code||'').toLowerCase();
+                        if(!mergedMap[key]) addedCount++;
+                        mergedMap[key]=d;
+                    });
+                    finalDB=Object.values(mergedMap);
+                    st.textContent='🔀 دمج: '+existingDB.length+' موجود + '+addedCount+' جديد = '+finalDB.length+' إجمالي';
+                }else{
+                    finalDB=pendingDB;
+                    addedCount=pendingDB.length;
+                    st.textContent='⚠️ استبدال كامل: '+finalDB.length+' صنف';
+                }
+
+                btn.textContent='⏳ جاري التشفير والرفع...';
+                var ok=await _ezPushDrugsToGH(finalDB);
+
                 if(ok){
-                    st.innerHTML='✅ تم التشفير والرفع بنجاح — <b>'+pendingDB.length+'</b> صنف';
-                    /* Update local */
-                    window.EZPillDrugDB=pendingDB;
+                    if(mergeMode==='merge'){
+                        st.innerHTML='✅ تم الدمج والرفع — إجمالي <b>'+finalDB.length+'</b> صنف (➕'+addedCount+' جديد)';
+                        _ezToast('تم دمج '+addedCount+' صنف جديد — الإجمالي: '+finalDB.length,'success');
+                    }else{
+                        st.innerHTML='✅ تم الاستبدال والرفع — <b>'+finalDB.length+'</b> صنف';
+                        _ezToast('تم رفع '+finalDB.length+' صنف','success');
+                    }
+                    window.EZPillDrugDB=finalDB;
+                    try{localStorage.setItem('ez_drugs_cache',JSON.stringify(finalDB));}catch(e){}
                     var dc=document.getElementById('drug_count');
-                    if(dc)dc.textContent=pendingDB.length+' صنف';
+                    if(dc)dc.textContent=finalDB.length+' صنف';
                     var cs=document.getElementById('ez-drug-cloud-status');
-                    if(cs)cs.textContent='☁️ '+pendingDB.length+' صنف محمّل';
-                    _ezToast('تم رفع '+pendingDB.length+' صنف مشفر','success');
-                } else {
+                    if(cs)cs.textContent='☁️ '+finalDB.length+' صنف محمّل';
+                }else{
                     st.textContent='❌ فشل الرفع';
                 }
             }catch(e){
                 st.textContent='❌ خطأ: '+e.message;
+                console.error('💊 Admin push error:',e);
             }
-            btn.textContent='🔐 تشفير ورفع على جيتهاب';btn.disabled=false;
+
+            btn.textContent='🔐 تشفير ورفع على جيتهاب';
+            btn.disabled=false;
         };
     }
 
@@ -370,6 +472,14 @@
 
     if(!window.EZPillDrugDB)window.EZPillDrugDB=[];
 
+    /* Pre-load CryptoJS على HTTP حتى يكون جاهز فوراً */
+    if(!_ezIsSecureCtx()){
+        console.log('💊 HTTP context detected — pre-loading CryptoJS...');
+        _ezLoadCryptoJS().then(function(ok){
+            console.log('💊 CryptoJS pre-load: '+(ok?'✅ جاهز':'❌ فشل'));
+        });
+    }
+
     /* Auto-load from GitHub */
     (async function(){
         cloudStatus.textContent='☁️ جاري سحب الأصناف...';
@@ -380,13 +490,12 @@
             drugCount.textContent=db.length+' صنف';
             cloudStatus.textContent='☁️ '+db.length+' صنف محمّل';
             status.textContent='✅ تم تحميل '+db.length+' صنف من السحابة';
-        } else {
+        }else{
             cloudStatus.textContent='⚠️ لا يوجد ملف أدوية';
             status.textContent='لم يتم العثور على أدوية — اضغط ⚙️ للرفع';
         }
     })();
 
-    /* Search */
     function doAdd(){
         var q=document.getElementById('ezpill_adddrug_q').value||'';
         if(!window.EZPillDrugDB||!window.EZPillDrugDB.length){status.textContent='لا توجد أدوية — ارفع الملف من ⚙️';return}
@@ -404,7 +513,9 @@
         var q=this.value,sug=document.getElementById('search-suggestions');
         sug.innerHTML='';
         if(q.length>0&&window.EZPillDrugDB.length){
-            var matches=window.EZPillDrugDB.filter(function(i){return nl(i.name).indexOf(nl(q))>-1||nl(i.code).indexOf(nl(q))>-1}).slice(0,10);
+            var matches=window.EZPillDrugDB.filter(function(i){
+                return nl(i.name).indexOf(nl(q))>-1||nl(i.code).indexOf(nl(q))>-1
+            }).slice(0,10);
             if(matches.length){
                 matches.forEach(function(item){
                     var div=document.createElement('div');
@@ -412,7 +523,11 @@
                     div.innerHTML='<div style="font-weight:700;font-size:13px;color:#1e1b4b">'+item.name+'</div><div style="font-size:11px;color:#94a3b8;direction:ltr">'+item.code+'</div>';
                     div.onmouseover=function(){this.style.background='rgba(99,102,241,0.04)'};
                     div.onmouseout=function(){this.style.background=''};
-                    div.onclick=function(){document.getElementById('ezpill_adddrug_q').value=item.name;sug.style.display='none';document.getElementById('ezpill_adddrug_q').focus()};
+                    div.onclick=function(){
+                        document.getElementById('ezpill_adddrug_q').value=item.name;
+                        sug.style.display='none';
+                        document.getElementById('ezpill_adddrug_q').focus();
+                    };
                     sug.appendChild(div);
                 });
                 sug.style.display='block';
