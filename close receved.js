@@ -334,8 +334,8 @@
             if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl)stEl.innerText='processed'}
           }
         }catch(e){console.warn('فشل:',it.id,e)}
-        updateStats();
-        await sleep(150);
+        if(i%10===0||i===toD.length-1) updateStats();
+        await sleep(50);
       }
       await showDialog({
         icon:'🎉',
