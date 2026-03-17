@@ -1,10 +1,6 @@
 javascript:(async function(){
 'use strict';
 
-/* ══════════════════════════════════════════
-    📤 EZ JSON Uploader v3.0 (Fixed + Fast)
-   ══════════════════════════════════════════ */
-
 var delay=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
 
 var simulateClick=function(el){
@@ -17,6 +13,7 @@ var simulateClick=function(el){
     });
 };
 
+/* انتظر عنصر يظهر داخل container معين أو document */
 var waitFor=function(selector,timeout,root){
     root=root||document;
     timeout=timeout||8000;
@@ -52,11 +49,12 @@ var findBtn=function(txt){
     return null;
 };
 
-/* ── UI ── */
+/* ── UI — يمين الشاشة ── */
 var old=document.getElementById('ez-uploader-panel');if(old)old.remove();
 var panel=document.createElement('div');
 panel.id='ez-uploader-panel';
-panel.style.cssText='position:fixed;top:20px;left:20px;z-index:9999999;width:380px;max-width:95vw;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.15);font-family:Cairo,-apple-system,sans-serif;overflow:hidden;direction:rtl';
+/* 📌 right:20px بدل left */
+panel.style.cssText='position:fixed;top:20px;right:20px;z-index:9999999;width:380px;max-width:95vw;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.15);font-family:Cairo,-apple-system,sans-serif;overflow:hidden;direction:rtl';
 
 panel.innerHTML=
 '<div style="padding:18px 22px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;cursor:move" id="ez-up-header">'+
@@ -88,13 +86,28 @@ panel.innerHTML=
 '</div>';
 document.body.appendChild(panel);
 
-/* Drag */
-var hdr=document.getElementById('ez-up-header'),pDrag=false,pSX=0,pSY=0,pX=20,pY=20;
-panel.style.left=pX+'px';panel.style.top=pY+'px';
-hdr.addEventListener('mousedown',function(e){if(e.target.closest('button'))return;pDrag=true;pSX=e.clientX-pX;pSY=e.clientY-pY;e.preventDefault()});
-document.addEventListener('mousemove',function(e){if(pDrag){pX=e.clientX-pSX;pY=e.clientY-pSY;panel.style.left=pX+'px';panel.style.top=pY+'px'}});
-document.addEventListener('mouseup',function(){pDrag=false});
-document.getElementById('ez-up-close').onclick=function(){panel.remove()};
+/* Drag — يعمل مع right positioning */
+var hdr=document.getElementById('ez-up-header'),pDrag=false,pSX=0,pSY=0;
+var pRight=20,pTop=20;
+hdr.addEventListener('mousedown',function(e){
+    if(e.target.closest('button'))return;
+    pDrag=true;
+    pSX=e.clientX+pRight;   // عكس الاتجاه لـ right
+    pSY=e.clientY-pTop;
+    e.preventDefault();
+});
+document.addEventListener('mousemove',function(e){
+    if(pDrag){
+        pRight=pSX-e.clientX;
+        pTop=e.clientY-pSY;
+        pRight=Math.max(0,Math.min(pRight,window.innerWidth-400));
+        pTop=Math.max(0,Math.min(pTop,window.innerHeight-100));
+        panel.style.right=pRight+'px';
+        panel.style.top=pTop+'px';
+    }
+});
+document.addEventListener('mouseup',function(){pDrag=false;});
+document.getElementById('ez-up-close').onclick=function(){panel.remove();};
 
 /* State */
 var paused=false,stopped=false,results=[];
@@ -124,7 +137,7 @@ function setStep(txt){els.step.textContent=txt;}
 function addLog(name,ok,msg){
     var div=document.createElement('div');
     div.style.cssText='padding:8px 12px;border-radius:8px;margin-bottom:4px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:'+(ok?'rgba(5,150,105,0.04)':'rgba(239,68,68,0.04)')+';color:'+(ok?'#059669':'#dc2626');
-    div.innerHTML='<span>'+(ok?'✅':'❌')+'</span><span style="flex:1;direction:ltr;text-align:left">'+name+'</span><span style="font-size:10px;color:#94a3b8">'+(msg||'')+'</span>';
+    div.innerHTML='<span>'+(ok?'✅':'❌')+'</span><span style="flex:1;direction:ltr;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">'+name+'</span><span style="font-size:10px;color:#94a3b8;flex-shrink:0">'+(msg||'')+'</span>';
     els.log.appendChild(div);
     els.log.scrollTop=els.log.scrollHeight;
     results.push({name:name,ok:ok,msg:msg});
@@ -133,87 +146,91 @@ async function checkPause(){
     while(paused&&!stopped){await delay(200);}
 }
 
-/* ── MAIN UPLOAD LOGIC ── */
+/* ══════════════════════════════════════
+   MAIN UPLOAD — إصلاح file input
+   ══════════════════════════════════════ */
 async function uploadFile(file,index,total){
     els.filename.textContent=file.name;
     updateProgress(index,total);
 
-    /* ── Step 1: تأكد أن أي dialog مفتوح مغلق أولاً ── */
-    setStep('🔍 التحقق من حالة الصفحة...');
-    
-    // إذا كان هناك dialog مفتوح، أغلقه
+    /* 1️⃣ أغلق أي dialog مفتوح */
     if(document.querySelector('.v-dialog--active')){
-        var esc=new KeyboardEvent('keydown',{key:'Escape',keyCode:27,bubbles:true});
-        document.dispatchEvent(esc);
-        await waitForGone('.v-dialog--active', 2000);
+        setStep('🔒 إغلاق dialog سابق...');
+        document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27,bubbles:true}));
+        await waitForGone('.v-dialog--active',3000);
         await delay(300);
     }
 
-    /* ── Step 2: ابحث عن زر الرفع واضغط عليه ── */
+    /* 2️⃣ اضغط زر الرفع */
     setStep('🔍 البحث عن زر الرفع...');
-    
-    var uploadBtn = document.querySelector('.mdi-briefcase-upload');
+    var uploadBtn=document.querySelector('.mdi-briefcase-upload');
     if(!uploadBtn) uploadBtn=document.querySelector('[title*="upload"],[title*="Upload"]');
     if(!uploadBtn){addLog(file.name,false,'زر الرفع غير موجود');return false;}
-    
     simulateClick(uploadBtn);
 
-    /* ── Step 3: انتظر ظهور الـ dialog (event-driven لا fixed delay) ── */
-    setStep('⏳ انتظار الـ Dialog...');
+    /* 3️⃣ انتظر ظهور الـ dialog */
+    setStep('⏳ انتظار Dialog...');
     var activeDialog;
     try{
-        activeDialog = await waitFor('.v-dialog--active', 6000);
+        activeDialog=await waitFor('.v-dialog--active',7000);
     }catch(e){
-        addLog(file.name,false,'الـ Dialog لم يظهر');
+        addLog(file.name,false,'Dialog لم يظهر');
         return false;
     }
-
     await checkPause(); if(stopped) return false;
 
-    /* ── Step 4: اختيار من القائمة ── */
+    /* 4️⃣ اختر من القائمة لو موجودة */
     setStep('📋 اختيار النوع...');
     try{
-        // البحث عن الـ select داخل الـ dialog فقط
-        var selectEl = activeDialog.querySelector('.v-select__slot') ||
-                       activeDialog.querySelector('input[readonly]') ||
-                       activeDialog.querySelector('.v-select');
+        var selectEl=activeDialog.querySelector('.v-select__slot')||
+                     activeDialog.querySelector('input[readonly]')||
+                     activeDialog.querySelector('.v-select');
         if(selectEl){
             simulateClick(selectEl);
-            // انتظر ظهور الـ menu (event-driven)
-            var menu = await waitFor('.menuable__content__active', 3000);
-            var firstItem = menu.querySelector('.v-list-item');
+            var menu=await waitFor('.menuable__content__active',3000);
+            var firstItem=menu.querySelector('.v-list-item');
             if(firstItem){
                 simulateClick(firstItem);
-                // انتظر إغلاق الـ menu
-                await waitForGone('.menuable__content__active', 2000);
+                await waitForGone('.menuable__content__active',2000);
             }
         }
-    }catch(e){console.warn('Select warning:',e.message);}
-
+    }catch(e){/* القائمة اختيارية */}
     await checkPause(); if(stopped) return false;
 
-    /* ── Step 5: حقن الملف ── */
+    /* 5️⃣ انتظر ظهور input[type="file"] جوا الـ dialog
+       ✅ هذا هو الإصلاح الرئيسي — بدل البحث الفوري */
+    setStep('📄 انتظار حقل الملف...');
+    var fileInput;
+    try{
+        /* ابحث جوا الـ dialog أولاً، لو مش موجود انتظر */
+        fileInput=await waitFor('input[type="file"]',6000,activeDialog);
+    }catch(e){
+        /* fallback: ابحث في كل الصفحة */
+        try{
+            fileInput=await waitFor('input[type="file"]',3000);
+        }catch(e2){
+            addLog(file.name,false,'حقل الملف غير موجود');
+            return false;
+        }
+    }
+
+    /* حقن الملف */
     setStep('📄 حقن الملف...');
-    var fileInput = activeDialog.querySelector('input[type="file"]') ||
-                    document.querySelector('input[type="file"]');
-    if(!fileInput){addLog(file.name,false,'حقل الملف غير موجود');return false;}
-    
     var dt=new DataTransfer();
     dt.items.add(file);
     fileInput.files=dt.files;
     fileInput.dispatchEvent(new Event('change',{bubbles:true}));
     fileInput.dispatchEvent(new Event('input',{bubbles:true}));
-
     await checkPause(); if(stopped) return false;
 
-    /* ── Step 6: انتظر Import button يصبح نشطاً ── */
+    /* 6️⃣ انتظر Import button يصبح نشطاً */
     setStep('📥 انتظار زر Import...');
     var pressed=false;
-    for(var j=0;j<20;j++){
+    for(var j=0;j<25;j++){
         var importSpan=findBtn('Import');
         if(importSpan){
             var btn=importSpan.closest('button');
-            if(btn && !btn.disabled && !btn.hasAttribute('disabled')){
+            if(btn&&!btn.disabled&&!btn.hasAttribute('disabled')){
                 simulateClick(btn);
                 pressed=true;
                 break;
@@ -222,23 +239,20 @@ async function uploadFile(file,index,total){
         await delay(200);
     }
     if(!pressed){addLog(file.name,false,'زر Import غير نشط');return false;}
-
     await checkPause(); if(stopped) return false;
 
-    /* ── Step 7: انتظر SweetAlert (event-driven) ── */
+    /* 7️⃣ انتظر SweetAlert */
     setStep('⏳ في انتظار التأكيد...');
     try{
-        var swalOk=await waitFor('.swal2-confirm', 10000);
+        var swalOk=await waitFor('.swal2-confirm',12000);
         await delay(150);
         simulateClick(swalOk);
-        // انتظر اختفاء الـ swal
-        await waitForGone('.swal2-popup', 3000);
-        // انتظر اختفاء الـ dialog
-        await waitForGone('.v-dialog--active', 2000);
+        await waitForGone('.swal2-popup',4000);
+        await waitForGone('.v-dialog--active',3000);
         addLog(file.name,true,'');
         return true;
     }catch(e){
-        addLog(file.name,false,'لم يظهر تأكيد SweetAlert');
+        addLog(file.name,false,'لم يظهر تأكيد');
         return false;
     }
 }
@@ -247,8 +261,8 @@ async function uploadFile(file,index,total){
 els.startBtn.onclick=async function(){
     var files=await new Promise(function(res){
         var inp=document.createElement('input');
-        inp.type='file'; inp.multiple=true; inp.accept='.json';
-        inp.onchange=function(){res(inp.files)};
+        inp.type='file';inp.multiple=true;inp.accept='.json';
+        inp.onchange=function(){res(inp.files);};
         inp.click();
     });
     if(!files||!files.length){els.subtitle.textContent='لم يتم اختيار ملفات';return;}
@@ -260,24 +274,21 @@ els.startBtn.onclick=async function(){
     els.startBtn.style.display='none';
     els.pauseBtn.style.display='block';
     els.stopBtn.style.display='block';
-    paused=false; stopped=false; results=[]; els.log.innerHTML='';
+    paused=false;stopped=false;results=[];els.log.innerHTML='';
 
-    /* ✅ الإصلاح الرئيسي: إعادة focus للصفحة بعد إغلاق نافذة اختيار الملفات */
+    /* ✅ إعادة focus بعد إغلاق file picker */
     window.focus();
     document.body.click();
-    await delay(500); // وقت قصير فقط للتأكد من استقرار الـ focus
+    await delay(400);
 
     var success=0,fail=0;
     for(var i=0;i<total;i++){
         if(stopped) break;
         await checkPause();
         if(stopped) break;
-
         var ok=await uploadFile(files[i],i+1,total);
         if(ok) success++; else fail++;
-        
-        // تأخير صغير فقط بين الملفات
-        if(i < total-1) await delay(300);
+        if(i<total-1) await delay(300);
     }
 
     updateProgress(total,total);
@@ -286,15 +297,11 @@ els.startBtn.onclick=async function(){
     els.stopBtn.style.display='none';
     els.startBtn.style.display='block';
     els.startBtn.textContent='📂 رفع ملفات جديدة';
-
-    var msg=stopped?'تم الإيقاف — ':'اكتمل — ';
-    msg+=success+' نجح';
-    if(fail>0) msg+=' | '+fail+' فشل';
+    var msg=(stopped?'تم الإيقاف — ':'')+success+' نجح'+(fail>0?' | '+fail+' فشل':'');
     els.subtitle.textContent=msg;
     els.bar.style.background=fail>0?'linear-gradient(90deg,#f59e0b,#ef4444)':'linear-gradient(90deg,#10b981,#059669)';
 };
 
-/* Pause/Stop */
 els.pauseBtn.onclick=function(){
     paused=!paused;
     this.textContent=paused?'▶️ استكمال':'⏸️ إيقاف مؤقت';
