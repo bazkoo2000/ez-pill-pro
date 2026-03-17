@@ -104,7 +104,6 @@
 
   panel.addEventListener('click',e=>{if(panel.classList.contains('ali-minimized')){panel.classList.remove('ali-minimized');e.stopPropagation()}});
   
-  // تحسين إدارة الذاكرة عند الإغلاق
   document.getElementById('ali_close').addEventListener('click',e=>{
     e.stopPropagation();
     panel.style.transition='all 0.3s';
@@ -120,9 +119,43 @@
   
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
-  function processData(data){let orders=[];try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}if(!orders||orders.length===0)return;for(let i=0;i<orders.length;i++){const item=orders[i];const inv=item.Invoice||'';const onl=item.onlineNumber||'';const src=item.source||'StorePaid';const hid=item.head_id||'';const typee=item.typee!==undefined?item.typee:'';if(inv.length>=5&&inv.startsWith('0')&&!state.visitedSet.has(inv)){state.visitedSet.add(inv);let st='other';let raw=String(item.status||item.Status||item.order_status||item.OrderStatus||'').toLowerCase().replace(/<[^>]*>?/gm,'').trim();if(raw.includes('packed'))st='packed';else if(raw.includes('received'))st='received';else{let cs=JSON.stringify(item).toLowerCase();if(cs.includes('"packed"'))st='packed';else if(cs.includes('"received"'))st='received'}const bg=st==='received'?'rgba(34,197,94,0.06)':(st==='packed'?'rgba(245,158,11,0.06)':'transparent');state.htmlBuffer+=`<tr class="fast-row" id="row_${esc(inv)}" style="background:${bg}" data-inv="${esc(inv)}" data-onl="${esc(onl)}" data-src="${esc(src)}" data-hid="${esc(hid)}"><td style="padding:12px 8px"><span class="ali-link">${esc(inv)}</span></td><td style="padding:12px 8px">${esc(onl)}</td><td style="padding:12px 8px">${esc(item.guestName||'')}</td><td style="padding:12px 8px">${esc(item.guestMobile||item.mobile||'')}</td><td style="padding:12px 8px">${esc(item.payment_method||'Cash')}</td><td style="padding:12px 8px">${esc(item.created_at||item.Created_Time||'')}</td><td id="st_${esc(inv)}" style="padding:12px 8px">${esc(st)}</td><td style="padding:12px 8px">${esc(src)}</td></tr>`;state.savedRows.push({id:inv,onl:onl,st:st,typee:typee,guestName:item.guestName||'',guestMobile:item.guestMobile||item.mobile||'',src:src,hid:hid})}}}
+  // ✅ processData — fulfilled تُعامَل كـ received
+  function processData(data){
+    let orders=[];
+    try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
+    if(!orders||orders.length===0)return;
 
-  // تحسين الاتصال بالسيرفر (Batch Fetching) للسرعة والاستقرار
+    for(let i=0;i<orders.length;i++){
+      const item=orders[i];
+      const inv=item.Invoice||'';
+      const onl=item.onlineNumber||'';
+      const src=item.source||'StorePaid';
+      const hid=item.head_id||'';
+      const typee=item.typee!==undefined?item.typee:'';
+
+      if(inv.length>=5&&inv.startsWith('0')&&!state.visitedSet.has(inv)){
+        state.visitedSet.add(inv);
+        let st='other';
+        let raw=String(item.status||item.Status||item.order_status||item.OrderStatus||'')
+          .toLowerCase().replace(/<[^>]*>?/gm,'').trim();
+
+        // ✅ fulfilled تُعامَل كـ received
+        if(raw.includes('packed')) st='packed';
+        else if(raw.includes('received')||raw.includes('fulfilled')) st='received';
+        else {
+          let cs=JSON.stringify(item).toLowerCase();
+          if(cs.includes('"packed"')) st='packed';
+          // ✅ fulfilled في JSON أيضاً
+          else if(cs.includes('"received"')||cs.includes('"fulfilled"')) st='received';
+        }
+
+        const bg=st==='received'?'rgba(34,197,94,0.06)':(st==='packed'?'rgba(245,158,11,0.06)':'transparent');
+        state.htmlBuffer+=`<tr class="fast-row" id="row_${esc(inv)}" style="background:${bg}" data-inv="${esc(inv)}" data-onl="${esc(onl)}" data-src="${esc(src)}" data-hid="${esc(hid)}"><td style="padding:12px 8px"><span class="ali-link">${esc(inv)}</span></td><td style="padding:12px 8px">${esc(onl)}</td><td style="padding:12px 8px">${esc(item.guestName||'')}</td><td style="padding:12px 8px">${esc(item.guestMobile||item.mobile||'')}</td><td style="padding:12px 8px">${esc(item.payment_method||'Cash')}</td><td style="padding:12px 8px">${esc(item.created_at||item.Created_Time||'')}</td><td id="st_${esc(inv)}" style="padding:12px 8px">${esc(st)}</td><td style="padding:12px 8px">${esc(src)}</td></tr>`;
+        state.savedRows.push({id:inv,onl:onl,st:st,typee:typee,guestName:item.guestName||'',guestMobile:item.guestMobile||item.mobile||'',src:src,hid:hid});
+      }
+    }
+  }
+
   async function scanAllPages(){
     state.isProcessing=true;
     const fill=document.getElementById('p-fill');
@@ -138,10 +171,10 @@
       processData(data1);updateStats();
       if(fill) fill.style.width=((1/maxPages)*100)+'%';
       
-      const BATCH_SIZE = 5;
-      for (let i = 2; i <= maxPages; i += BATCH_SIZE) {
-        const batch = [];
-        for (let j = i; j < i + BATCH_SIZE && j <= maxPages; j++) {
+      const BATCH_SIZE=5;
+      for(let i=2;i<=maxPages;i+=BATCH_SIZE){
+        const batch=[];
+        for(let j=i;j<i+BATCH_SIZE&&j<=maxPages;j++){
           batch.push(
             fetch(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:j,searchby:''})})
             .then(r=>r.json()).then(data=>{processData(data);updateStats()})
@@ -149,10 +182,10 @@
           );
         }
         await Promise.all(batch);
-        if(fill) fill.style.width=((Math.min(i+BATCH_SIZE-1, maxPages)/maxPages)*100)+'%';
-        if(i + BATCH_SIZE <= maxPages) await sleep(250); 
+        if(fill) fill.style.width=((Math.min(i+BATCH_SIZE-1,maxPages)/maxPages)*100)+'%';
+        if(i+BATCH_SIZE<=maxPages) await sleep(250);
       }
-    } catch(err) {
+    } catch(err){
       console.error(err);setStatus('خطأ في الاتصال بالخادم','error');showToast('فشل الاتصال بالخادم','error');state.isProcessing=false;return;
     }
     finishScan();
@@ -167,28 +200,27 @@
       const tbody=target.querySelector('tbody')||target;
       tbody.innerHTML=state.htmlBuffer;
       
-      // تحسين سرعة البحث (DOM Caching)
-      state.savedRows.forEach(r => {
-        r.node = document.getElementById('row_' + esc(r.id));
+      state.savedRows.forEach(r=>{
+        r.node=document.getElementById('row_'+esc(r.id));
       });
 
-      // حل مشكلة فتح الطلب (Capture Phase & stopPropagation)
-      tbody.addEventListener('click', e => {
-        const tr = e.target.closest('tr[data-inv]');
-        if (tr) {
-          e.stopPropagation(); // إيقاف أي حدث قادم من نظام الموقع الأصلي
-          const link = e.target.closest('.ali-link');
-          if (link) {
-            const inv = tr.dataset.inv;
-            const onl = tr.dataset.onl;
-            const src = tr.dataset.src;
-            const hid = tr.dataset.hid;
-            if (inv && typeof getDetails === 'function') getDetails(onl, inv, src, hid);
+      tbody.addEventListener('click',e=>{
+        const tr=e.target.closest('tr[data-inv]');
+        if(tr){
+          e.stopPropagation();
+          const link=e.target.closest('.ali-link');
+          if(link){
+            const inv=tr.dataset.inv;
+            const onl=tr.dataset.onl;
+            const src=tr.dataset.src;
+            const hid=tr.dataset.hid;
+            if(inv&&typeof getDetails==='function') getDetails(onl,inv,src,hid);
           }
         }
-      }, true); 
+      },true);
     }
     
+    // ✅ عداد received يشمل fulfilled (مخزّن كـ received)
     let recCount=0;state.savedRows.forEach(r=>{if(r.st==='received')recCount++});
     setStatus(`اكتملت العملية: تم حصر ${state.savedRows.length} سجل`,'done');showToast(`اكتمل الحصر: ${state.savedRows.length} سجل`,'success');
 
@@ -209,37 +241,34 @@
       <button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button>
       
       <div class="ios-grp" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;font-weight:700">الطلبات القابلة للتسليم:</span>
+        <span style="font-size:13px;font-weight:700">الطلبات القابلة للتسليم (received + fulfilled):</span>
         <input type="number" id="ali_open_count" value="${recCount}" class="ios-input" style="width:60px;padding:8px;text-align:center;font-size:15px;font-weight:900;color:${IOS.error}" onfocus="this.value=''">
       </div>
       
-      <button id="ali_btn_deliver_silent" class="ios-btn ios-error" style="margin-bottom:8px">📝 تنفيذ أوامر التسليم (Received)</button>
+      <button id="ali_btn_deliver_silent" class="ios-btn ios-error" style="margin-bottom:8px">📝 تنفيذ أوامر التسليم (Received + Fulfilled)</button>
       <button id="ali_btn_export" class="ios-btn ios-warn" style="margin-bottom:8px">📦 تصدير بيانات الطلبات (Packed)</button>
       <button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 إعادة فحص البيانات</button>`;
 
-    const sI=document.getElementById('ali_sI'), sO=document.getElementById('ali_sO'), sc=document.getElementById('ali_search_count'), ob=document.getElementById('ali_btn_open');
+    const sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open');
     let cm=[];
     function fr(){
-      const ri=sI.value.trim(); const is=ri!==''?'0'+ri:''; const os=sO.value.trim().toLowerCase();
-      let sh=0; cm=[]; const hf=is!==''||os!=='';
+      const ri=sI.value.trim();const is=ri!==''?'0'+ri:'';const os=sO.value.trim().toLowerCase();
+      let sh=0;cm=[];const hf=is!==''||os!=='';
       for(let i=0;i<state.savedRows.length;i++){
         const rw=state.savedRows[i];
         const mi=is!==''&&rw.id.startsWith(is);
         const mo=os!==''&&rw.onl.toLowerCase().includes(os);
         const s=hf?(mi||mo):true;
-        
-        // استخدام العناصر المخزنة لسرعة فائقة
         if(rw.node) rw.node.style.display=s?'':'none';
-        
-        if(s){sh++; if(hf)cm.push(rw);}
+        if(s){sh++;if(hf)cm.push(rw);}
       }
       sc.innerText=`عرض ${sh} من ${state.savedRows.length} نتيجة`;
       if(hf&&cm.length>0){
-        ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`; ob.style.opacity='1'; ob.style.cursor='pointer';
+        ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;ob.style.opacity='1';ob.style.cursor='pointer';
       }else if(hf&&cm.length===0){
-        ob.innerHTML='⚡ لا توجد نتائج'; ob.style.opacity='0.5'; ob.style.cursor='not-allowed';
+        ob.innerHTML='⚡ لا توجد نتائج';ob.style.opacity='0.5';ob.style.cursor='not-allowed';
       }else{
-        ob.innerHTML='⚡ ابحث أولاً ثم افتح المطابق'; ob.style.opacity='0.7'; ob.style.cursor='not-allowed';
+        ob.innerHTML='⚡ ابحث أولاً ثم افتح المطابق';ob.style.opacity='0.7';ob.style.cursor='not-allowed';
       }
       sI.className='ios-input'+(ri.length>0?(sh>0?' match':' nomatch'):'');
       sO.className='ios-input'+(os.length>0?(sh>0?' match':' nomatch'):'');
@@ -248,14 +277,14 @@
     sO.addEventListener('input',debounce(fr,150));
 
     ob.addEventListener('click',async function(){
-      const ri=sI.value.trim(); const os=sO.value.trim().toLowerCase(); const hf=ri!==''||os!=='';
+      const ri=sI.value.trim();const os=sO.value.trim().toLowerCase();const hf=ri!==''||os!=='';
       if(!hf){
         showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!','warning');
-        sI.focus(); sI.style.animation='aliBlink 0.5s 3'; setTimeout(()=>{sI.style.animation=''},1500); return;
+        sI.focus();sI.style.animation='aliBlink 0.5s 3';setTimeout(()=>{sI.style.animation=''},1500);return;
       }
       if(cm.length===0){showToast('لا توجد طلبات مطابقة!','warning');return;}
-      ob.disabled=true; ob.style.opacity='0.6'; ob.style.cursor='not-allowed';
-      let opened=0, failed=0;
+      ob.disabled=true;ob.style.opacity='0.6';ob.style.cursor='not-allowed';
+      let opened=0,failed=0;
       const baseUrl=window.location.origin+"/ez_pill_web/getEZPill_Details";
       for(let idx=0;idx<cm.length;idx++){
         const it=cm[idx];
@@ -270,29 +299,73 @@
       }
       showToast(`تم فتح ${opened} طلب (فشل ${failed})`,opened>0?'success':'error');
       setStatus('تم فتح المطابق بنجاح','done');
-      ob.disabled=false; ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`; fr();
+      ob.disabled=false;ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;fr();
     });
 
+    // ✅ زر التسليم يشمل received و fulfilled (كلاهما مخزّن كـ 'received')
     document.getElementById('ali_btn_deliver_silent').addEventListener('click',async()=>{
-      const list=state.savedRows.filter(r=>r.st==='received');const count=parseInt(document.getElementById('ali_open_count').value)||list.length;const toD=list.slice(0,count);
+      const list=state.savedRows.filter(r=>r.st==='received');
+      const count=parseInt(document.getElementById('ali_open_count').value)||list.length;
+      const toD=list.slice(0,count);
       if(!toD.length){showToast('لا توجد سجلات مطابقة','warning');return}
-      const res=await showDialog({icon:'📝',title:'تأكيد أمر التسليم',desc:'سيتم إرسال طلبات التحديث للخادم',badges:[{text:'📥 Received: '+toD.length,active:true},{text:'⚡ معالجة تلقائية',active:true}],info:[{label:'إجمالي السجلات',value:toD.length,color:IOS.error},{label:'العملية',value:'تحديث حالة التسليم',color:IOS.accent}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'✅ تأكيد',value:'confirm',primary:true}]});
+      const res=await showDialog({
+        icon:'📝',
+        title:'تأكيد أمر التسليم',
+        desc:'سيتم إرسال طلبات التحديث للخادم (Received + Fulfilled)',
+        badges:[{text:'📥 Received+Fulfilled: '+toD.length,active:true},{text:'⚡ معالجة تلقائية',active:true}],
+        info:[{label:'إجمالي السجلات',value:toD.length,color:IOS.error},{label:'العملية',value:'تحديث حالة التسليم',color:IOS.accent}],
+        buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'✅ تأكيد',value:'confirm',primary:true}]
+      });
       if(res.action!=='confirm')return;
       const btn=document.getElementById('ali_btn_deliver_silent');btn.disabled=true;btn.style.opacity='0.7';
       let sc=0;const dUrl=window.location.origin+'/ez_pill_web/getEZPill_Details/updatetoDeliver';
-      for(let i=0;i<toD.length;i++){const it=toD[i];btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري (${i+1}/${toD.length})...`;
-        try{const params=new URLSearchParams();params.append('invoice_num',it.id);params.append('patienName',it.guestName);params.append('mobile',it.guestMobile);const r=await fetch(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});if(r.ok){sc++;it.st='processed';if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl)stEl.innerText='processed'}}}catch(e){console.warn('فشل:',it.id,e)}updateStats();await sleep(150)}
-      await showDialog({icon:'🎉',title:'اكتمل التنفيذ',desc:'تم معالجة أوامر التسليم بنجاح',badges:[{text:'✅ نجح: '+sc,active:true},{text:'❌ فشل: '+(toD.length-sc),active:(toD.length-sc)>0}],info:[{label:'تم تسليمه',value:sc,color:IOS.success},{label:'من إجمالي',value:toD.length,color:IOS.accent}],buttons:[{text:'👍 تمام',value:'ok',primary:true}]});
-      showToast(`تم تنفيذ ${sc} سجل`,'success');btn.innerHTML='✅ اكتمل التنفيذ';btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false});
+      for(let i=0;i<toD.length;i++){
+        const it=toD[i];
+        btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري (${i+1}/${toD.length})...`;
+        try{
+          const params=new URLSearchParams();
+          params.append('invoice_num',it.id);
+          params.append('patienName',it.guestName);
+          params.append('mobile',it.guestMobile);
+          const r=await fetch(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});
+          if(r.ok){
+            sc++;
+            it.st='processed';
+            if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl)stEl.innerText='processed'}
+          }
+        }catch(e){console.warn('فشل:',it.id,e)}
+        updateStats();
+        await sleep(150);
+      }
+      await showDialog({
+        icon:'🎉',
+        title:'اكتمل التنفيذ',
+        desc:'تم معالجة أوامر التسليم بنجاح',
+        badges:[{text:'✅ نجح: '+sc,active:true},{text:'❌ فشل: '+(toD.length-sc),active:(toD.length-sc)>0}],
+        info:[{label:'تم تسليمه',value:sc,color:IOS.success},{label:'من إجمالي',value:toD.length,color:IOS.accent}],
+        buttons:[{text:'👍 تمام',value:'ok',primary:true}]
+      });
+      showToast(`تم تنفيذ ${sc} سجل`,'success');
+      btn.innerHTML='✅ اكتمل التنفيذ';btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false;
+    });
 
     document.getElementById('ali_btn_export').addEventListener('click',async()=>{
-      const ri=sI.value.trim(); const os=sO.value.trim().toLowerCase(); const hf=ri!==''||os!=='';
+      const ri=sI.value.trim();const os=sO.value.trim().toLowerCase();const hf=ri!==''||os!=='';
       const targetList=hf?cm:state.savedRows;
       const pr=targetList.filter(r=>r.st==='packed');
       if(!pr.length){showToast('لا توجد بيانات مطابقة للتصدير','warning');return}
       const res=await showDialog({icon:'📦',title:'تصدير البيانات',desc:'سيتم تصدير بيانات الطلبات المجهزة كملفات نصية',info:[{label:'عدد الطلبات',value:pr.length,color:IOS.warn},{label:'عدد الملفات',value:Math.ceil(pr.length/MAX_PER_FILE),color:IOS.accent}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'📥 تصدير',value:'confirm',primary:true}]});
       if(res.action!=='confirm')return;
-      const nf=Math.ceil(pr.length/MAX_PER_FILE);for(let i=0;i<nf;i++){const chunk=pr.slice(i*MAX_PER_FILE,Math.min((i+1)*MAX_PER_FILE,pr.length));const content=chunk.map(r=>r.onl).join('\n');const blob=new Blob([content],{type:'text/plain'});const url=URL.createObjectURL(blob);setTimeout(()=>{const a=document.createElement('a');a.href=url;a.download='Data_Export_'+(i+1)+'.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},i*500)}showToast(`تم تصدير ${nf} ملف`,'success')});
+      const nf=Math.ceil(pr.length/MAX_PER_FILE);
+      for(let i=0;i<nf;i++){
+        const chunk=pr.slice(i*MAX_PER_FILE,Math.min((i+1)*MAX_PER_FILE,pr.length));
+        const content=chunk.map(r=>r.onl).join('\n');
+        const blob=new Blob([content],{type:'text/plain'});
+        const url=URL.createObjectURL(blob);
+        setTimeout(()=>{const a=document.createElement('a');a.href=url;a.download='Data_Export_'+(i+1)+'.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},i*500);
+      }
+      showToast(`تم تصدير ${nf} ملف`,'success');
+    });
 
     document.getElementById('ali_btn_sync').addEventListener('click',async function(){
       if(state.isProcessing){showToast('العملية جارية — انتظر!','warning');return}
@@ -300,7 +373,8 @@
       const res=await showDialog({icon:'🔄',title:'إعادة فحص البيانات',desc:'سيتم إعادة جلب كل البيانات من الخادم',badges:[{text:'حذف القديم',active:true},{text:'جلب الجديد',active:true},{text:'تحديث الحالات',active:true}],info:[{label:'السجلات الحالية',value:oc,color:IOS.accent},{label:'العملية',value:'فحص شامل',color:IOS.blue}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 بدء',value:'confirm',primary:true}]});
       if(res.action!=='confirm')return;
       sb.disabled=true;sb.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...`;sb.style.color=IOS.accent;
-      await scanAllPages()});
+      await scanAllPages();
+    });
   }
 
   document.getElementById('ali_start').addEventListener('click',function(){if(state.isProcessing)return;this.disabled=true;this.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...`;this.style.opacity='0.7';scanAllPages()});
