@@ -1588,12 +1588,12 @@ window.ezPreviewAlerts=function(){
     if(monthMatch) details.push('🗓️ عدد الأشهر: '+monthMatch[1]);
     /* اسم الضيف */
     var namePatterns=[
-      /(?:تغيير\s*(?:ال)?اسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
-      /(?:باسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?))\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:تغيير\s*(?:ال)?اسم?\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:باسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?))\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
       /(?:الاسم\s*(?:يكون|هو)?)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
     ];
     var extractedName=null;
-    for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
+    for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى|برقم|رقم|التواصل|صيدلية|صيدليه).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
     if(extractedName) details.push('👤 اسم الضيف: '+extractedName);
     /* صيدلية التوصيل */
     var pharmaMatch=prescNote.match(/(?:صيدلي[ةه]|لصيدلي[ةه]|فرع)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,2})/i);
@@ -5321,6 +5321,7 @@ function extractAndConfirmName(){
 
       /* Generic title words - NOT actual names */
       var genericWords=['الضيف','الضيفه','الضيفة','ضيف','ضيفه','ضيفة',
+        'الصيف','الصيفه','الصيفة','صيف','صيفه','صيفة', /* typo for الضيف */
         'المريض','المريضه','المريضة','مريض','مريضه','مريضة',
         'العميل','العميله','العميلة','عميل','عميله','عميلة',
         'الزوج','الزوجه','الزوجة','الام','الأم','الاب','الأب'];
@@ -5361,9 +5362,9 @@ function extractAndConfirmName(){
         'بحى','حى','بحي','حي','بمنطقة','بمنطقه','منطقة','منطقه',
         'شارع','الشارع','طريق','الطريق',
         /* رقم وتواصل — مهم جداً */
-        'رقم','الرقم','ارقام','أرقام',
-        'تواصل','التواصل','للتواصل','تليفون','التليفون',
-        'جوال','الجوال','موبايل','الموبايل','هاتف','الهاتف',
+        'رقم','الرقم','ارقام','أرقام','برقم',
+        'تواصل','التواصل','للتواصل','تليفون','التليفون','بتليفون',
+        'جوال','الجوال','موبايل','الموبايل','هاتف','الهاتف','بجوال','بموبايل','بهاتف',
         'واتس','واتساب','الواتس','الواتساب',
         'نمره','نمرة','النمره','النمرة',
         /* ملاحظات */
@@ -5409,6 +5410,11 @@ function extractAndConfirmName(){
         }
         /* ══ صيدلية/صيدليه — always stop ══ */
         if(/^(صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه])$/.test(wn)) return true;
+        /* ══ Smart بـ prefix: برقم=ب+رقم, بجوال=ب+جوال, etc. ══ */
+        if(wn.length>2&&wn.charAt(0)==='ب'){
+          var afterBa=wn.substring(1);
+          for(var _bs=0;_bs<stopWords.length;_bs++){if(afterBa===normA(stopWords[_bs]))return true;}
+        }
         /* ══ Standard stop words check ══ */
         for(var st=0;st<stopWords.length;st++){if(wn===normA(stopWords[st]))return true;}
         return false;
@@ -5426,7 +5432,7 @@ function extractAndConfirmName(){
         'الاكل','النوم','الفطار','السحور','الافطار','الغداء','العشاء',
         'موجود','موجوده','متوفر','متوفره','مطلوب','مطلوبه','اضافي','اضافيه','اضافية',
         'حسب','وصفه','وصفة','روشته','روشتة','روشتته','الوصفه','الروشته',
-        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','جوال','هاتف','واتس','واتساب',
+        'رقم','برقم','نمره','نمرة','تليفون','بتليفون','موبايل','بموبايل','عنوان','جوال','بجوال','هاتف','بهاتف','واتس','واتساب',
         'تواصل','التواصل','للتواصل','اتصال','الاتصال',
         'منطقه','منطقة','بحى','حى','الحى','حي','الحي',
         'شارع','الشارع','طريق','الطريق',
@@ -5441,6 +5447,8 @@ function extractAndConfirmName(){
         if(/^0\d{8,}$/.test(w)) return true;
         if(/^\d{7,}$/.test(w)) return true;
         for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}
+        /* Smart بـ prefix: برقم=ب+رقم */
+        if(n2.length>2&&n2.charAt(0)==='ب'){var afterBa2=n2.substring(1);for(var nn2=0;nn2<notNameWords.length;nn2++){var nw2=normG(notNameWords[nn2]);if(afterBa2===nw2)return true;}}
         return false;
       }
 
@@ -5483,11 +5491,11 @@ function extractAndConfirmName(){
       /* PRIORITY 0: تغيير اسم / تغيير الاسم + connector + name (radical patterns) */
       var changePatterns=[
         /* تغيير اسم الضيف الى على الباز */
-        /(?:تغيير\s*اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /(?:تغيير\s*اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* تغيير الاسم الى / تغيير الاسم ل */
         /(?:تغيير\s*الاسم)\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* تغيير اسم (بدون تحديد ضيف/مريض) */
-        /(?:تغيير\s*الاسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /(?:تغيير\s*الاسم?\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* الاسم يكون / الاسم هو */
         /(?:الاسم\s*(?:يكون|هو|هي|بيكون)?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
       ];
@@ -5501,7 +5509,7 @@ function extractAndConfirmName(){
 
       /* PRIORITY 1: name in parentheses after keywords */
       var parenPatterns=[
-        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
+        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
         /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*[:\-]?\s*\(([^)]+)\)/i
       ];
       for(var pp=0;pp<parenPatterns.length;pp++){
@@ -5510,14 +5518,14 @@ function extractAndConfirmName(){
       }
 
       /* PRIORITY 2: English name directly after keyword (no parens) */
-      var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
+      var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
       if(engM&&engM[1]&&engM[1].trim().length>=3) var _engName=engM[1].trim();
       if(/^(the\s+gue?st|guest|the\s+patient|patient)$/i.test(_engName)) _engName=null;
       if(_engName&&_engName.length>=3) return _engName;
 
       /* PRIORITY 3: Arabic name patterns (with optional connector الى/الي before name) */
       var patterns=[
-        /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?(?:ضيف|صيف)[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل[ـ]?))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
@@ -5610,7 +5618,7 @@ function extractAndConfirmName(){
       if(_slashIdx<0) return;
       /* تأكد إن قبل "/" فيه ذكر للاسم أو الضيف أو الكتابة */  
       var _beforeSlash=notesText.substring(0,_slashIdx);
-      var _hasNameContext=/اسم|ضيف|مريض|عميل|كتاب/i.test(_beforeSlash);
+      var _hasNameContext=/اسم|ضيف|صيف|مريض|عميل|كتاب/i.test(_beforeSlash);
       if(!_hasNameContext) return;
       /* كل اللي بعد "/" = الاسم (بعد حذف المسافات والرموز الزيادة) */
       var _afterSlash=notesText.substring(_slashIdx+1).trim();
@@ -5624,7 +5632,7 @@ function extractAndConfirmName(){
           if(/^0\d{8,}$/.test(_slashWords[_sw])) break;
           if(/^\d{10,}$/.test(_slashWords[_sw])) break;
           var _swNorm=_slashWords[_sw].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').trim();
-          if(/^(والتوصيل|التوصيل|توصيل|صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه]|رقم|الرقم|تواصل|التواصل|للتواصل|جوال|الجوال|موبايل|هاتف|واتس|واتساب|برجاء|الرجاء|فرع|بفرع|وتوصيل|وشكرا|شكرا|ملاحظه|ملاحظة)$/i.test(_swNorm)) break;
+          if(/^(والتوصيل|التوصيل|توصيل|صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه]|رقم|الرقم|برقم|تواصل|التواصل|للتواصل|جوال|الجوال|بجوال|موبايل|بموبايل|هاتف|بهاتف|بتليفون|واتس|واتساب|برجاء|الرجاء|فرع|بفرع|وتوصيل|وشكرا|شكرا|ملاحظه|ملاحظة)$/i.test(_swNorm)) break;
           if(_slashCleaned.length>0&&/^و/.test(_slashWords[_sw])&&_slashWords[_sw].length>1){
             var _afterW=_slashWords[_sw].substring(1);
             if(/^(التوصيل|توصيل|شكرا|الصيدلي[ةه]|صيدلي[ةه]|رقم|الرقم|تواصل|التواصل)$/i.test(_afterW.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه'))) break;
