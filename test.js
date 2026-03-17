@@ -3138,7 +3138,7 @@ function smartDoseRecognizer(note){
   res.hasE=/\b(evening|eve|night|pm|p\.m)\b|مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|المسا|ليل|الليل|ليلا|ليلاً/i.test(s);
   res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s|nocte)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
   res.hasEmpty=/\b(empty|fasting)\b|ريق|الريق|الريج|الريئ|على الريق|معده فارغه|empty\s*stomach/i.test(s);
-  res.isBefore=/\b(before|bef|pre|ac|a\.c)\b|قبل/i.test(s);
+  res.isBefore=/\b(before|befor|bef|pre|ac|a\.c)\b|قبل/i.test(s);
   /* FIX: مساءا قبل النوم = single bedtime */
   if(res.hasBed&&res.hasE&&!res.hasB&&!res.hasL&&!res.hasD&&!res.hasM&&!res.hasN&&!res.hasA){res.hasE=false;}
 
@@ -3216,6 +3216,7 @@ function getTimeFromWords(w){
   var st=s.match(/(?:at|الساعه|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
   var NT=NORMAL_TIMES;
+   s=s.replace(/\bbefor\b/g,'before');
   
   /* CRITICAL FIX: "قبل الأكل مرتين" should be beforeMeal (8:00) not morning (9:30) */
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
@@ -3802,34 +3803,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
 
   /* 🤖 Gemini AI: resolve unrecognized doses before showing warnings */
-  /* ★★ HAS28_FIX_V2 ★★ */
-  /* كشف وجود صنف 28 أو 56 حبة بدون جرعة في الروشتة */
-  var has28Or56PillItem = false;
-  (function(){
-    var _PSIZES=[14,28,56];
-    var _STRIP=/\d+\.?\d*\s*(?:mg|mcg|\u00b5g|\u0645\u062c\u0645|\u0645\u0644\u062c\u0645|\u0645\u0644\u063a\u0645|\u0645\u0644\u063a|\u0645\u062c|ml|g\b|iu|units?|u\/ml|mg\/ml)/gi;
-    for(var _h28=0;_h28<allRowsData.length;_h28++){
-      var _rd28=allRowsData[_h28];
-      if(_rd28.note&&_rd28.note.trim().length>2) continue;
-      var _nm28=(_rd28.itemName||"").replace(_STRIP,"~");
-      var _nums28=[];
-      var _re28=/(\d+)/g;var _m28;
-      while((_m28=_re28.exec(_nm28))!==null){
-        var _v28=parseInt(_m28[1]);
-        if(_PSIZES.indexOf(_v28)>-1) _nums28.push(_v28);
-      }
-      if(_nums28.length>0){
-        var _last28=_nums28[_nums28.length-1];
-        if(_last28===28||_last28===56||_last28===14){
-          has28Or56PillItem=true;
-          console.log("HAS28: found "+_last28+" in '"+_rd28.itemName+"'");
-          break;
-        }
-      }
-    }
-    console.log("HAS28_FIX_V2: has28Or56PillItem="+has28Or56PillItem);
-  })();
-  /* ★★ END HAS28_FIX_V2 ★★ */
 
   var _geminiNotes=[];var _geminiIdxMap=[];
   for(var _gi=0;_gi<allRowsData.length;_gi++){
@@ -4124,11 +4097,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       /* ── NORMAL MODE (original logic) ── */
       /* v144: 56/60-pack auto BID (note empty/unrecognized) */
       if(rd.pack56Auto&&!rd.hasFixedSize&&!rd.isWeekly&&!rd.dui){
-        /* ★ COND60_FIX: مشروط بـ has28Or56PillItem */
-    var _sz60Fix=has28Or56PillItem?56:60;
-    var _ev60Fix=has28Or56PillItem?'12':'24';
-    setSize(tds_nodes[si_main],_sz60Fix);
-        setEvry(tds_nodes[ei_main],_ev60Fix);
         setTime(r_node,'09:00');
         if(di_main>=0)setDose(tds_nodes[di_main],1);
         if(qi_main>=0){var _q56m=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],_q56m*m);}
@@ -4181,6 +4149,51 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
+    /* ★POST56_FINAL★ — إصلاح every=12 للأصناف 56/60 بدون جرعة */
+    (function(){
+      var _STRIP56=/\d+\.?\d*\s*(?:mg|mcg|ml|g\b|iu)/gi;
+      var _SIZES56=[56,60];
+      var _SIZES28=[14,28,56];
+      function _getPackSize(name){
+        if(!name) return null;
+        var cl=(name||"").replace(_STRIP56,"~");
+        var nums=[];var re=/(\d+)/g;var m;
+        while((m=re.exec(cl))!==null){
+          var v=parseInt(m[1]);
+          if(v>=14&&v<=120) nums.push(v);
+        }
+        if(!nums.length) return null;
+        return nums[nums.length-1];
+      }
+      /* هل فيه صنف 28 أو 56 بدون جرعة في الروشتة؟ */
+      var _has28=false;
+      for(var _i=0;_i<allRowsData.length;_i++){
+        var _rr=allRowsData[_i];
+        if(_rr.hasFixedSize||_rr.isWeekly) continue;
+        if(_rr.note&&_rr.note.trim().length>2) continue;
+        var _pp=_getPackSize(_rr.itemName||"");
+        if(_pp===28||_pp===14){_has28=true;break;}
+      }
+      console.log("POST56: has28/56 sibling="+_has28);
+      /* تصحيح كل صنف 56 أو 60 بدون جرعة */
+      for(var _j=0;_j<allRowsData.length;_j++){
+        var _rd=allRowsData[_j];
+        if(_rd.hasFixedSize||_rd.isWeekly||_rd.dui) continue;
+        if(_rd.note&&_rd.note.trim().length>2) continue;
+        var _pk=_getPackSize(_rd.itemName||"");
+        if(_SIZES56.indexOf(_pk)<0) continue;
+        var _tds=_rd.tds;
+        /* Size: 56 لو فيه صنف 28، وإلا الحجم الأصلي للعلبة */
+        var _finalSz=_has28?56:_pk;
+        setSize(_tds[si_main],_finalSz);
+        /* Every: دايماً 12 — 56/60 حبة = مرتين يومياً */
+        setEvry(_tds[ei_main],"12");
+        setTime(_rd.row,"09:00");
+        if(di_main>=0) setDose(_tds[di_main],1);
+        console.log("POST56 FIX: "+_rd.itemName+" → size="+_finalSz+" every=12");
+      }
+    })();
+    /* ★END_POST56_FINAL★ */
     sortRowsByTime(tb_main,ti_main,ei_main);
     _ezColorDupRows(tb_main);
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='110px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='110px';}if(ti_main>=0&&tds_nodes[ti_main]){var tiInp2=tds_nodes[ti_main].querySelector('input');if(tiInp2)tiInp2.style.width='100px';}if(ei_main>=0&&tds_nodes[ei_main]){var eiInp2=tds_nodes[ei_main].querySelector('input,select');if(eiInp2)eiInp2.style.width='90px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
