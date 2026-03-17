@@ -3138,7 +3138,7 @@ function smartDoseRecognizer(note){
   res.hasE=/\b(evening|eve|night|pm|p\.m)\b|مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|المسا|ليل|الليل|ليلا|ليلاً/i.test(s);
   res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s|nocte)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
   res.hasEmpty=/\b(empty|fasting)\b|ريق|الريق|الريج|الريئ|على الريق|معده فارغه|empty\s*stomach/i.test(s);
-  res.isBefore=/\b(before|bef|pre|ac|a\.c)\b|قبل/i.test(s);
+  res.isBefore=/\b(before|befor|bef|pre|ac|a\.c)\b|قبل/i.test(s);
   /* FIX: مساءا قبل النوم = single bedtime */
   if(res.hasBed&&res.hasE&&!res.hasB&&!res.hasL&&!res.hasD&&!res.hasM&&!res.hasN&&!res.hasA){res.hasE=false;}
 
@@ -3216,6 +3216,7 @@ function getTimeFromWords(w){
   var st=s.match(/(?:at|الساعه|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
   var NT=NORMAL_TIMES;
+   s=s.replace(/\bbefor\b/g,'before');
   
   /* CRITICAL FIX: "قبل الأكل مرتين" should be beforeMeal (8:00) not morning (9:30) */
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
