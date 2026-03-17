@@ -65,23 +65,30 @@ var CHANGELOG={
 
 /* ── helpers: read/write version from localStorage + cookie fallback ── */
 function _ezGetSeenVersion(){
+  /* 1. Session guard — if already shown in this page session, skip */
+  if(window._ezWhatsNewShown===APP_VERSION) return APP_VERSION;
   try{
-    var ls=localStorage.getItem('ez_pill_version');
+    var ls=localStorage.getItem('ez_pill_seen_ver');
     if(ls) return ls;
+    /* v146: migrate from old key */
+    var oldLs=localStorage.getItem('ez_pill_version');
+    if(oldLs){localStorage.setItem('ez_pill_seen_ver',oldLs);try{localStorage.removeItem('ez_pill_version');}catch(e){}return oldLs;}
   }catch(e){}
   /* cookie fallback */
   try{
-    var m=document.cookie.match(/(?:^|;\s*)ez_pill_version=([^;]+)/);
+    var m=document.cookie.match(/(?:^|;\s*)ez_pill_seen_ver=([^;]+)/);
     if(m) return decodeURIComponent(m[1]);
   }catch(e){}
   return null;
 }
 function _ezSetSeenVersion(v){
-  try{localStorage.setItem('ez_pill_version',v);}catch(e){}
+  /* Mark in memory immediately so it never shows twice in same session */
+  window._ezWhatsNewShown=v;
+  try{localStorage.setItem('ez_pill_seen_ver',v);}catch(e){}
   /* also set cookie with 1-year expiry as fallback */
   try{
     var exp=new Date();exp.setFullYear(exp.getFullYear()+1);
-    document.cookie='ez_pill_version='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
+    document.cookie='ez_pill_seen_ver='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
   }catch(e){}
 }
 
@@ -92,6 +99,11 @@ function showWhatsNew(){
     var info=CHANGELOG[APP_VERSION];
     /* No changelog entry for this version → silently mark as seen and skip */
     if(!info){_ezSetSeenVersion(APP_VERSION);return;}
+
+    /* ══ v146: Mark as seen IMMEDIATELY — before building UI ══
+       This ensures even if user closes tab or page crashes,
+       the message won't show again */
+    _ezSetSeenVersion(APP_VERSION);
 
     /* Build features HTML */
     var featuresHtml='';
@@ -134,8 +146,6 @@ function showWhatsNew(){
     .ez-wn-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}\
     .ez-wn-btn::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transition:0.5s}\
     .ez-wn-btn:hover::after{left:100%}\
-    .ez-wn-skip{display:block;text-align:center;margin-top:8px;font-size:11px;font-weight:700;color:#a5b4fc;cursor:pointer;font-family:Cairo,sans-serif;transition:color 0.2s;background:none;border:none;width:100%}\
-    .ez-wn-skip:hover{color:#6366f1}\
     </style>\
     <div class="ez-wn-card">\
       <div class="ez-wn-confetti" id="ez-wn-confetti"></div>\
@@ -150,7 +160,6 @@ function showWhatsNew(){
       </div>\
       <div class="ez-wn-footer">\
         <button class="ez-wn-btn" id="ez-wn-ok">تمام، يلا نبدأ 🚀</button>\
-        <button class="ez-wn-skip" id="ez-wn-skip">عدم الإظهار لهذا التحديث</button>\
       </div>\
     </div>';
     document.body.appendChild(overlay);
@@ -165,14 +174,12 @@ function showWhatsNew(){
       confettiEl.appendChild(dot);
     }
 
-    /* Close handlers */
+    /* Close handlers — version already marked as seen above */
     function closeWN(){
-      _ezSetSeenVersion(APP_VERSION);
       overlay.style.animation='ezWnFadeIn 0.3s ease reverse';
       setTimeout(function(){overlay.remove();},300);
     }
     document.getElementById('ez-wn-ok').addEventListener('click',closeWN);
-    document.getElementById('ez-wn-skip').addEventListener('click',closeWN);
     overlay.addEventListener('click',function(e){if(e.target===overlay)closeWN();});
   }catch(e){
     /* localStorage not available or error - skip silently */
