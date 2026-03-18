@@ -1,250 +1,581 @@
-javascript:(function(){
-'use strict';
+/**
+ * ============================================================
+ *  JSON Files Auto Uploader — Vuetify + SweetAlert2
+ * ============================================================
+ *
+ *  الوصف:    أداة لرفع ملفات JSON تلقائياً على مواقع Vuetify
+ *            مع تأكيد SweetAlert2 وإعادة محاولة تلقائية
+ *
+ *  المميزات:
+ *    ✅ رفع دفعة ملفات JSON دفعة واحدة
+ *    ✅ إعادة محاولة تلقائية عند الفشل (3 محاولات)
+ *    ✅ إيقاف مؤقت / استكمال / إيقاف كامل
+ *    ✅ واجهة عربية قابلة للسحب
+ *    ✅ حقن الملفات عبر DataTransfer (بدون نافذة اختيار)
+ *    ✅ سجل عمليات مباشر مع حالة كل ملف
+ *
+ *  الاستخدام: يُنفَّذ ككود Bookmarklet أو عبر Console
+ *  التوافق:  المواقع التي تستخدم Vuetify + SweetAlert2
+ *
+ *  @version  2.0.0
+ *  @license  MIT
+ * ============================================================
+ */
 
-var PID='ez-tools-main';
-var old=document.getElementById(PID);if(old){old.remove();return}
-var SECRET='101093';
+(async function () {
+  "use strict";
 
-/* Smart Context Detection */
-var startTab='orders';
-var loc=window.location.href.toLowerCase();
-var isDetails=loc.indexOf('getezpill_details')>-1||loc.indexOf('getezpill_detail')>-1;
-var isPrint=loc.indexOf('printorder')>-1;
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  ⚙️  الإعدادات — عدّلها حسب حاجتك                      ║
+  // ╚══════════════════════════════════════════════════════════╝
 
-if(isPrint){
-  startTab='tools';
-}else if(isDetails){
-  var allBtns=document.querySelectorAll('input[type="button"],input[type="submit"],button,a');
-  var hasPackedBtn=false;
-  for(var bi=0;bi<allBtns.length;bi++){
-    var btnText=(allBtns[bi].value||allBtns[bi].textContent||'').toLowerCase().trim();
-    if(btnText.indexOf('update status as packed')>-1||btnText.indexOf('download file')>-1){hasPackedBtn=true;break}
+  var CONFIG = {
+    // ── التأخيرات (مللي ثانية) ──
+    // متوازنة بين السرعة والأمان — لا تقل عن 50ms لتجنب تجمّد المتصفح
+    AFTER_ESCAPE_DIALOG:    200,   // بعد إغلاق dialog مفتوح
+    AFTER_SELECT_ITEM:      200,   // بعد اختيار عنصر من القائمة المنسدلة
+    AFTER_FILE_INJECT:      200,   // بعد حقن الملف في الحقل
+    IMPORT_BTN_POLL:        150,   // فترة فحص زر Import (كل X مللي ثانية)
+    BEFORE_SWAL_CONFIRM:    100,   // قبل نقر زر تأكيد SweetAlert
+    BETWEEN_FILES:          200,   // بين ملف وآخر
+    RETRY_BASE:             600,   // تأخير أساسي قبل إعادة المحاولة
+    RETRY_INCREMENT:        300,   // زيادة التأخير مع كل محاولة
+    FOCUS_SETTLE:           300,   // بعد focus على النافذة قبل البدء
+    PAUSE_CHECK_INTERVAL:   150,   // فترة فحص حالة الإيقاف المؤقت
+
+    // ── المهل (Timeouts) ──
+    DIALOG_TIMEOUT:        6000,   // مهلة ظهور الـ Dialog
+    FILE_INPUT_TIMEOUT:    7000,   // مهلة ظهور حقل الملف
+    SWAL_TIMEOUT:         10000,   // مهلة ظهور نافذة SweetAlert
+    MENU_TIMEOUT:          2500,   // مهلة ظهور القائمة المنسدلة
+    GONE_TIMEOUT:          4000,   // مهلة اختفاء عنصر
+
+    // ── إعادة المحاولة ──
+    MAX_RETRIES:               3,  // عدد المحاولات لكل ملف
+    IMPORT_BTN_MAX_POLLS:     25,  // أقصى عدد فحوصات لزر Import
+
+    // ── محددات CSS ──
+    SELECTORS: {
+      UPLOAD_ICON:     ".mdi-briefcase-upload",
+      UPLOAD_ALT:      "[title*='upload'], [title*='Upload']",
+      ACTIVE_DIALOG:   ".v-dialog--active",
+      SELECT_SLOT:     ".v-select__slot",
+      SELECT_INPUT:    "input[readonly]",
+      SELECT_FALLBACK: ".v-select",
+      MENU_ACTIVE:     ".menuable__content__active",
+      MENU_ITEM:       ".v-list-item",
+      FILE_INPUT:      'input[type="file"]',
+      FILE_BTN_1:      ".v-file-input button",
+      FILE_BTN_2:      "[class*='file'] button",
+      FILE_BTN_3:      "button[type='button']:not(.v-btn--icon)",
+      IMPORT_SPANS:    "span.v-btn__content",
+      SWAL_CONFIRM:    ".swal2-confirm",
+      SWAL_POPUP:      ".swal2-popup",
+    },
+  };
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🛠️  الدوال المساعدة الأساسية                           ║
+  // ╚══════════════════════════════════════════════════════════╝
+
+  /**
+   * تأخير بعدد محدد من المللي ثوانِ
+   */
+  function delay(ms) {
+    return new Promise(function (r) { setTimeout(r, ms); });
   }
-  startTab=hasPackedBtn?'tools':'export';
-}
 
-var activeTab=startTab;
+  /**
+   * محاكاة نقرة حقيقية — تُرسل سلسلة أحداث pointer + mouse بالترتيب الطبيعي
+   */
+  function simulateClick(el) {
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var opts = { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y };
 
-var ctxMap={
-  'orders':{icon:'📋',text:'قائمة الطلبات',color:'#6366f1',bg:'rgba(99,102,241,0.08)'},
-  'tools':{icon:'🛠️',text:'صفحة التفاصيل',color:'#22c55e',bg:'rgba(34,197,94,0.08)'},
-  'export':{icon:'📤',text:'عرض فقط',color:'#f59e0b',bg:'rgba(245,158,11,0.08)'},
-};
-var ctx=ctxMap[startTab]||{icon:'📋',text:'',color:'#6366f1',bg:'rgba(99,102,241,0.08)'};
+    var events = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"];
+    events.forEach(function (name) {
+      var Ctor = name.includes("pointer") ? PointerEvent : MouseEvent;
+      el.dispatchEvent(new Ctor(name, opts));
+    });
+  }
 
-function loadTool(url,name,closePanel){
-  if(closePanel){var pp=document.getElementById(PID);if(pp)pp.style.display='none'}
-  var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
-  fetch(full).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(code){
-    try{new Function(code)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}
-  }).catch(function(){
-    try{var x=new XMLHttpRequest();x.open('GET',full,true);x.onload=function(){if(x.status===200){try{new Function(x.responseText)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}}else{alert('فشل تحميل '+name);showPanel()}};x.onerror=function(){alert('فشل تحميل '+name);showPanel()};x.send()}catch(e2){alert('فشل تحميل '+name);showPanel()}
+  /**
+   * انتظار ظهور عنصر في الـ DOM (عبر MutationObserver)
+   */
+  function waitFor(selector, timeout, root) {
+    root = root || document;
+    timeout = timeout || 8000;
+    return new Promise(function (res, rej) {
+      var el = root.querySelector(selector);
+      if (el) return res(el);
+
+      var ob = new MutationObserver(function () {
+        var found = root.querySelector(selector);
+        if (found) { ob.disconnect(); res(found); }
+      });
+      ob.observe(document.body, { childList: true, subtree: true });
+      setTimeout(function () { ob.disconnect(); rej(new Error("Timeout: " + selector)); }, timeout);
+    });
+  }
+
+  /**
+   * انتظار اختفاء عنصر من الـ DOM
+   */
+  function waitForGone(selector, timeout) {
+    timeout = timeout || CONFIG.GONE_TIMEOUT;
+    return new Promise(function (res) {
+      if (!document.querySelector(selector)) return res();
+
+      var ob = new MutationObserver(function () {
+        if (!document.querySelector(selector)) { ob.disconnect(); res(); }
+      });
+      ob.observe(document.body, { childList: true, subtree: true });
+      setTimeout(function () { ob.disconnect(); res(); }, timeout);
+    });
+  }
+
+  /**
+   * البحث عن زر بنصّه (عبر spans داخل أزرار Vuetify)
+   */
+  function findBtn(txt) {
+    var spans = document.querySelectorAll(CONFIG.SELECTORS.IMPORT_SPANS);
+    for (var i = 0; i < spans.length; i++) {
+      if (spans[i].textContent.trim().toLowerCase() === txt.toLowerCase()) return spans[i];
+    }
+    return null;
+  }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  📄  حقن الملف عبر DataTransfer                         ║
+  // ╚══════════════════════════════════════════════════════════╝
+
+  /**
+   * يراقب الـ DOM لظهور أي input[type=file] ويحقن الملف فيه مباشرة
+   * بدون فتح نافذة اختيار الملفات
+   */
+  function injectFile(file) {
+    return new Promise(function (res) {
+      var done = false;
+      var SEL = CONFIG.SELECTORS.FILE_INPUT;
+
+      /** حقن الملف في عنصر input واحد */
+      function inject(inp) {
+        if (done) return false;
+        // منع فتح نافذة اختيار الملفات
+        if (!inp._ezhooked) {
+          inp._ezhooked = true;
+          inp.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); }, true);
+        }
+        try {
+          var dt = new DataTransfer();
+          dt.items.add(file);
+          inp.files = dt.files;
+          inp.dispatchEvent(new Event("change", { bubbles: true }));
+          inp.dispatchEvent(new Event("input",  { bubbles: true }));
+          done = true;
+          return true;
+        } catch (e) {
+          console.warn("[Uploader] inject err:", e);
+          return false;
+        }
+      }
+
+      // مراقبة ظهور حقول ملفات جديدة
+      var ob = new MutationObserver(function () {
+        document.querySelectorAll(SEL).forEach(function (inp) {
+          if (inject(inp)) { ob.disconnect(); res(inp); }
+        });
+      });
+      ob.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["type"] });
+
+      // جرّب الحقن في أي input موجود حالياً
+      var existing = document.querySelector(SEL);
+      if (existing && inject(existing)) { ob.disconnect(); res(existing); return; }
+
+      // مهلة أمان
+      setTimeout(function () { ob.disconnect(); if (!done) res(null); }, CONFIG.FILE_INPUT_TIMEOUT);
+    });
+  }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🎨  واجهة المستخدم (UI Panel)                          ║
+  // ╚══════════════════════════════════════════════════════════╝
+
+  // إزالة أي نسخة سابقة
+  var old = document.getElementById("ez-uploader-panel");
+  if (old) old.remove();
+
+  var panel = document.createElement("div");
+  panel.id = "ez-uploader-panel";
+  panel.style.cssText =
+    "position:fixed;top:20px;right:20px;z-index:9999999;width:400px;max-width:95vw;" +
+    "background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.15);" +
+    "font-family:Cairo,-apple-system,sans-serif;overflow:hidden;direction:rtl";
+
+  panel.innerHTML =
+    // ── Header ──
+    '<div style="padding:18px 22px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;cursor:move" id="ez-up-header">' +
+      '<div style="width:38px;height:38px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff">📤</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:15px;font-weight:900;color:#1e1b4b">رفع ملفات JSON</div>' +
+        '<div style="font-size:10px;font-weight:700;color:#94a3b8" id="ez-up-subtitle">اختر الملفات للبدء</div>' +
+      "</div>" +
+      '<button id="ez-up-close" style="width:28px;height:28px;border:none;border-radius:8px;cursor:pointer;color:#94a3b8;background:#f3f4f6;font-size:14px">✕</button>' +
+    "</div>" +
+
+    // ── Body ──
+    '<div style="padding:16px 22px">' +
+      // شريط التقدم
+      '<div id="ez-up-progress-wrap" style="display:none;margin-bottom:14px">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
+          '<span id="ez-up-progress-text" style="font-size:12px;font-weight:800;color:#1e1b4b">0/0</span>' +
+          '<span id="ez-up-progress-pct" style="font-size:12px;font-weight:800;color:#6366f1">0%</span>' +
+        "</div>" +
+        '<div style="height:8px;background:#f1f5f9;border-radius:8px;overflow:hidden">' +
+          '<div id="ez-up-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:8px;transition:width 0.3s ease"></div>' +
+        "</div>" +
+      "</div>" +
+
+      // الملف الحالي
+      '<div id="ez-up-current" style="display:none;padding:10px 14px;background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.1);border-radius:12px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:2px">الملف الحالي:</div>' +
+        '<div id="ez-up-filename" style="font-size:13px;font-weight:800;color:#1e1b4b;direction:ltr;text-align:left"></div>' +
+        '<div id="ez-up-step" style="font-size:11px;font-weight:700;color:#6366f1;margin-top:4px"></div>' +
+      "</div>" +
+
+      // سجل العمليات
+      '<div id="ez-up-log" style="max-height:200px;overflow-y:auto;margin-bottom:12px;font-size:12px"></div>' +
+
+      // أزرار التحكم
+      '<button id="ez-up-start" style="width:100%;height:44px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 14px rgba(99,102,241,0.25)">📂 اختيار الملفات والبدء</button>' +
+      '<div style="display:flex;gap:8px;margin-top:8px">' +
+        '<button id="ez-up-pause" style="display:none;flex:1;height:36px;border:1.5px solid rgba(245,158,11,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo;color:#f59e0b;background:rgba(245,158,11,0.04)">⏸️ إيقاف مؤقت</button>' +
+        '<button id="ez-up-stop"  style="display:none;flex:1;height:36px;border:1.5px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo;color:#dc2626;background:rgba(239,68,68,0.04)">⏹️ إيقاف</button>' +
+      "</div>" +
+    "</div>";
+
+  document.body.appendChild(panel);
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🖱️  سحب النافذة (Drag)                                ║
+  // ╚══════════════════════════════════════════════════════════╝
+
+  var hdr = document.getElementById("ez-up-header");
+  var dragging = false, startX = 0, startY = 0, panelRight = 20, panelTop = 20;
+
+  hdr.addEventListener("mousedown", function (e) {
+    if (e.target.closest("button")) return;
+    dragging = true;
+    startX = e.clientX + panelRight;
+    startY = e.clientY - panelTop;
+    e.preventDefault();
   });
-}
+  document.addEventListener("mousemove", function (e) {
+    if (!dragging) return;
+    panelRight = Math.max(0, startX - e.clientX);
+    panelTop   = Math.max(0, e.clientY - startY);
+    panel.style.right = panelRight + "px";
+    panel.style.top   = panelTop + "px";
+  });
+  document.addEventListener("mouseup", function () { dragging = false; });
 
-/* تم تعطيل وظيفة المراقبة بناءً على طلبك لإنهاء دور الدايلوج بعد فتح الأداة */
-var watchTimer=null;
-function watchToolClose(){
-  /* تم إيقاف محتوى هذه الوظيفة لمنع عودة الدايلوج الرئيسي */
-}
+  // زر الإغلاق
+  document.getElementById("ez-up-close").onclick = function () { panel.remove(); };
 
-function showPanel(){var pp=document.getElementById(PID);if(pp){pp.style.display='block';pp.style.animation='ezSlideIn 0.35s cubic-bezier(0.16,1,0.3,1)'}}
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  📊  دوال تحديث الواجهة                                 ║
+  // ╚══════════════════════════════════════════════════════════╝
 
-function checkPass(name,cb){var pass=prompt('🔒 أدخل الرقم السري لـ '+name+':');if(pass===null)return;if(pass===SECRET)cb();else alert('❌ الرقم السري غلط')}
+  var paused = false, stopped = false;
 
-/* ===== Helper: read table cell value ===== */
-function gv(td){
-  if(!td)return'';
-  var inp=td.querySelector('input,textarea');
-  if(inp)return inp.value.trim();
-  var sel=td.querySelector('select');
-  if(sel){var o=sel.options[sel.selectedIndex];return o?o.text.trim():''}
-  return td.textContent.trim();
-}
+  var els = {
+    subtitle:     document.getElementById("ez-up-subtitle"),
+    progressWrap: document.getElementById("ez-up-progress-wrap"),
+    progressText: document.getElementById("ez-up-progress-text"),
+    progressPct:  document.getElementById("ez-up-progress-pct"),
+    bar:          document.getElementById("ez-up-bar"),
+    current:      document.getElementById("ez-up-current"),
+    filename:     document.getElementById("ez-up-filename"),
+    step:         document.getElementById("ez-up-step"),
+    log:          document.getElementById("ez-up-log"),
+    startBtn:     document.getElementById("ez-up-start"),
+    pauseBtn:     document.getElementById("ez-up-pause"),
+    stopBtn:      document.getElementById("ez-up-stop"),
+  };
 
-/* ===== Helper: get StoreCode from page header ===== */
-function getStoreCode(){
-  var labels=document.querySelectorAll('label');
-  for(var i=0;i<labels.length;i++){
-    var txt=labels[i].textContent||'';
-    if(txt.indexOf('StoreCode')>-1){return txt.replace(/[^0-9]/g,'')}
+  function updateProgress(i, total) {
+    var pct = Math.round((i / total) * 100);
+    els.progressText.textContent = i + "/" + total;
+    els.progressPct.textContent  = pct + "%";
+    els.bar.style.width          = pct + "%";
   }
-  return'0000';
-}
 
-/* ===== Helper: convert "02:00 PM" or "09:00" to 24h "HH:MM" ===== */
-function to24h(t){
-  t=(t||'09:00').trim().toUpperCase();
-  var isPM=t.indexOf('PM')>-1;
-  var isAM=t.indexOf('AM')>-1;
-  t=t.replace(/[APM\s]/gi,'').trim();
-  var parts=t.split(':');
-  var hr=parseInt(parts[0])||0;
-  var mn=parts[1]||'00';
-  if(isPM&&hr<12)hr+=12;
-  if(isAM&&hr===12)hr=0;
-  return String(hr).padStart(2,'0')+':'+mn;
-}
+  function setStep(txt) {
+    els.step.textContent = txt;
+  }
 
-/* ===== Helper: convert "mm/dd/yyyy" to "YYYYMMDD" ===== */
-function toYMD(d){
-  if(!d)return'';
-  d=d.trim();
-  if(d.indexOf('/')>-1){var p=d.split('/');if(p.length===3)return p[2]+p[0].padStart(2,'0')+p[1].padStart(2,'0')}
-  if(d.indexOf('-')>-1)return d.replace(/-/g,'');
-  return d;
-}
+  function updateLog(name, ok, msg, retryNum) {
+    var key = CSS.escape(name);
+    var existing = els.log.querySelector('[data-file="' + key + '"]');
 
-/* ===== Farmadosis Download (original safeDownload) ===== */
-function safeDownload(){try{var pname=(document.getElementById('pname')||{}).value||'';var mobile=(document.getElementById('mobile')||{}).value||'';var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';if(!pname||!mobile)return;if(!inv)return;var treats=[];var rows=document.querySelectorAll('table.styled-table tr');for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;var code=gv(tds[1]);if(!code||code.length<3)continue;var every=gv(tds[6])||'';var mins=1440;if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;var st=gv(tds[7])||'09:00';if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}if(!st||st.length<3)st='09:00';function fd(dd){if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}return dd}var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]})}if(!treats.length)return;downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv)}catch(e){}}
-
-/* ===== JVM Download (.OCS) ===== */
-function jvmDownload(){
-  try{
-    var pname=(document.getElementById('pname')||{}).value||'';
-    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
-    if(!pname){alert('⚠️ اسم المريض غير موجود');return}
-    if(!inv){alert('⚠️ رقم الفاتورة غير موجود');return}
-
-    var storeCode=getStoreCode();
-    var lines=[];
-    var rows=document.querySelectorAll('table.styled-table tr');
-
-    for(var r=1;r<rows.length;r++){
-      var tds=rows[r].querySelectorAll('td');
-      if(tds.length<12)continue;
-
-      var code=gv(tds[1]);
-      if(!code||code.length<3)continue;
-
-      var itemName=gv(tds[2]);
-      var dose=gv(tds[5])||'1';
-      var every=gv(tds[6])||'';
-      var startTime=gv(tds[7])||'09:00';
-      var startDate=gv(tds[8])||'';
-      var endDate=gv(tds[9])||'';
-      var notes=gv(tds[10])||'';
-      var expiry=gv(tds[11])||'';
-
-      var time24=to24h(startTime);
-      var sd=toYMD(startDate);
-      var ed=toYMD(endDate);
-
-      if(!sd)sd=new Date().toISOString().slice(0,10).replace(/-/g,'');
-      if(!ed)ed=sd;
-
-      /* Period label based on hour */
-      function pLabel(t){var h=parseInt(t.split(':')[0])||0;return h<12?'صباحا':'مساءا'}
-
-      /* Build single OCS line */
-      function mkLine(t,period){
-        return pname+'||Nahdi Pharmacy|Store '+storeCode+'|'+dose+'|'+code+'|'+itemName+'|'+t+'|'+sd+'|'+ed+'|'+expiry+'|'+period+'|'+notes+'|||||';
-      }
-
-      /* Parse every interval */
-      var evH=24;
-      if(every.indexOf('4')>-1&&every.indexOf('24')<0)evH=4;
-      else if(every.indexOf('6')>-1)evH=6;
-      else if(every.indexOf('8')>-1)evH=8;
-      else if(every.indexOf('12')>-1)evH=12;
-
-      if(evH===24){
-        lines.push(mkLine(time24,pLabel(time24)));
-      }else if(evH===12){
-        lines.push(mkLine('09:00','صباحا'));
-        lines.push(mkLine('21:00','مساءا'));
-      }else if(evH===8){
-        lines.push(mkLine('08:00','صباحا'));
-        lines.push(mkLine('16:00','مساءا'));
-        lines.push(mkLine('00:00','صباحا'));
-      }else if(evH===6){
-        lines.push(mkLine('06:00','صباحا'));
-        lines.push(mkLine('12:00','مساءا'));
-        lines.push(mkLine('18:00','مساءا'));
-        lines.push(mkLine('00:00','صباحا'));
-      }else if(evH===4){
-        lines.push(mkLine('06:00','صباحا'));
-        lines.push(mkLine('10:00','صباحا'));
-        lines.push(mkLine('14:00','مساءا'));
-        lines.push(mkLine('18:00','مساءا'));
-        lines.push(mkLine('22:00','مساءا'));
-        lines.push(mkLine('02:00','صباحا'));
-      }
+    if (!existing) {
+      existing = document.createElement("div");
+      existing.setAttribute("data-file", name);
+      existing.style.cssText =
+        "padding:8px 12px;border-radius:8px;margin-bottom:4px;" +
+        "display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;transition:all 0.3s";
+      els.log.appendChild(existing);
     }
 
-    if(!lines.length){alert('⚠️ لا توجد أصناف للتصدير');return}
+    existing.style.background = ok ? "rgba(5,150,105,0.04)" : "rgba(239,68,68,0.04)";
+    existing.style.color      = ok ? "#059669" : "#dc2626";
 
-    /* Download .OCS file */
-    var content=lines.join('\r\n')+'\r\n';
-    var bom='\uFEFF';
-    var blob=new Blob([bom+content],{type:'application/octet-stream'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');
-    a.href=url;
-    a.download='ezPillDownload'+inv+'.OCS';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    var retryBadge = retryNum > 0
+      ? '<span style="font-size:9px;background:rgba(245,158,11,0.15);color:#d97706;padding:1px 5px;border-radius:4px;margin-right:4px">محاولة ' + (retryNum + 1) + "</span>"
+      : "";
 
-  }catch(e){alert('❌ خطأ في تحميل JVM: '+e.message)}
-}
+    var icon = ok ? "✅" : (msg === "فشل نهائي" ? "❌" : "⏳");
 
-if(!document.getElementById('ez-tools-css')){
-  var css=document.createElement('style');css.id='ez-tools-css';
-  css.textContent=
-    '@keyframes ezSlideIn{from{opacity:0;transform:translateY(-18px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}'+
-    '@keyframes ezFadeTab{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}'+
-    '#'+PID+'{position:fixed;top:14px;right:14px;z-index:999999;width:380px;border-radius:22px;overflow:hidden;background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif;animation:ezSlideIn 0.4s cubic-bezier(0.16,1,0.3,1);direction:rtl}'+
-    '#'+PID+' .ez-seg{display:flex;gap:2px;padding:3px;margin:0 16px 10px;border-radius:10px;background:rgba(0,0,0,0.05)}'+
-    '#'+PID+' .ez-seg-btn{flex:1;padding:8px 4px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:#9ca3af;background:transparent;transition:all 0.25s;direction:rtl}'+
-    '#'+PID+' .ez-seg-btn.active{background:#fff;color:#1f2937;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 0 0 0.5px rgba(0,0,0,0.04)}'+
-    '#'+PID+' .ez-group{background:#fff;border-radius:14px;margin:0 16px 12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}'+
-    '#'+PID+' .ez-item{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;transition:background 0.15s;border-bottom:0.5px solid #f3f4f6;direction:rtl}'+
-    '#'+PID+' .ez-item:last-child{border-bottom:none}'+
-    '#'+PID+' .ez-item:hover{background:#f9fafb}'+
-    '#'+PID+' .ez-item:active{background:#f3f4f6}'+
-    '#'+PID+' .ez-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}'+
-    '#'+PID+' .ez-tab-content{animation:ezFadeTab 0.25s ease}'+
-    '#'+PID+' .ez-ctx{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;letter-spacing:0.3px}';
-  document.head.appendChild(css);
-}
+    existing.innerHTML =
+      "<span>" + icon + "</span>" +
+      retryBadge +
+      '<span style="flex:1;direction:ltr;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + "</span>" +
+      '<span style="font-size:10px;color:#94a3b8;white-space:nowrap">' + (msg || "") + "</span>";
 
-var p=document.createElement('div');p.id=PID;
-p.innerHTML=
-'<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+'<div style="display:flex;align-items:center;gap:10px">'+'<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">EZ</div>'+'<div><div style="font-size:15px;font-weight:800;color:#1f2937">EZ Tools</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v2.1 — Smart Context</div></div>'+'</div>'+'<div style="display:flex;align-items:center;gap:8px">'+'<div class="ez-ctx" style="background:'+ctx.bg+';color:'+ctx.color+'">'+ctx.icon+' '+ctx.text+'</div>'+'<button id="ez-t-close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:inherit" onmouseover="this.style.background=\'rgba(239,68,68,0.1)\';this.style.color=\'#ef4444\'" onmouseout="this.style.background=\'rgba(0,0,0,0.06)\';this.style.color=\'#9ca3af\'">×</button>'+'</div></div>'+
-'<div class="ez-seg">'+'<button class="ez-seg-btn'+(startTab==='orders'?' active':'')+'" data-tab="orders">📋 الطلبات</button>'+'<button class="ez-seg-btn'+(startTab==='tools'?' active':'')+'" data-tab="tools">🛠️ الأدوات</button>'+'<button class="ez-seg-btn'+(startTab==='export'?' active':'')+'" data-tab="export">📤 تصدير</button>'+'</div>'+
+    els.log.scrollTop = els.log.scrollHeight;
+  }
 
-/* ===== Orders Tab ===== */
-'<div id="ez-tab-orders" class="ez-tab-content" style="display:'+(startTab==='orders'?'block':'none')+'">'+'<div class="ez-group"><div class="ez-item" id="ez-t-search"><div class="ez-icon" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff)">🔍</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">بحث الطلبات</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">فحص وفتح الطلبات تلقائياً</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div><div class="ez-item" id="ez-t-close-orders"><div class="ez-icon" style="background:linear-gradient(135deg,#fee2e2,#fce7f3)">📝</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تقفيل الطلبات</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تسليم وتصدير الطلبات المجهزة</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div><div class="ez-item" id="ez-t-radar"><div class="ez-icon" style="background:linear-gradient(135deg,#dcfce7,#d1fae5)">📡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">البحث الشامل</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Radar — بحث متقدم</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div></div>'+'</div>'+
+  /** انتظار إذا كان المستخدم ضغط إيقاف مؤقت */
+  async function checkPause() {
+    while (paused && !stopped) {
+      await delay(CONFIG.PAUSE_CHECK_INTERVAL);
+    }
+  }
 
-/* ===== Tools Tab ===== */
-'<div id="ez-tab-tools" class="ez-tab-content" style="display:'+(startTab==='tools'?'block':'none')+'">'+'<div class="ez-group"><div class="ez-item" id="ez-t-add"><div class="ez-icon" style="background:linear-gradient(135deg,#dbeafe,#e0e7ff)">➕</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">إضافة صنف</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">إضافة دواء من ملف Excel/CSV</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div><div class="ez-item" id="ez-t-editor"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Nahdi Editor</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div><div class="ez-item" id="ez-t-fareye"><div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">FarEye Injector</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div></div>'+'</div>'+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  📤  محاولة رفع ملف واحد                                ║
+  // ╚══════════════════════════════════════════════════════════╝
 
-/* ===== Export Tab (UPDATED) ===== */
-'<div id="ez-tab-export" class="ez-tab-content" style="display:'+(startTab==='export'?'block':'none')+'">'+'<div class="ez-group">'+
-'<div class="ez-item" id="ez-t-dl"><div class="ez-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">💊</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل Farmadosis</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف JSON — جهاز Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-'<div class="ez-item" id="ez-t-jvm"><div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🏥</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل JVM</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف OCS — جهاز JVM</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-'<div class="ez-item" id="ez-t-pr"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">🖨️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">طباعة الملخص</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Print Summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-'</div>'+'</div>'+
+  async function attemptUpload(file) {
+    var S = CONFIG.SELECTORS;
 
-'<div style="padding:8px 20px 14px;text-align:center"><div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v2.1 — DEVELOPED BY ALI EL-BAZ</div></div>';
+    // ── 1. إغلاق أي dialog مفتوح ──
+    if (document.querySelector(S.ACTIVE_DIALOG)) {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true }));
+      await waitForGone(S.ACTIVE_DIALOG, 3000);
+      await delay(CONFIG.AFTER_ESCAPE_DIALOG);
+    }
 
-document.body.appendChild(p);
+    // ── 2. النقر على زر الرفع ──
+    setStep("🔍 البحث عن زر الرفع...");
+    var uploadBtn = document.querySelector(S.UPLOAD_ICON) || document.querySelector(S.UPLOAD_ALT);
+    if (!uploadBtn) return { ok: false, reason: "زر الرفع غير موجود" };
+    simulateClick(uploadBtn);
 
-var segBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
-for(var si=0;si<segBtns.length;si++){segBtns[si].addEventListener('click',function(){var tab=this.getAttribute('data-tab');var all=document.querySelectorAll('#'+PID+' .ez-seg-btn');for(var j=0;j<all.length;j++){all[j].classList.remove('active')}this.classList.add('active');var tids=['orders','tools','export'];for(var k=0;k<tids.length;k++){var el=document.getElementById('ez-tab-'+tids[k]);if(el){if(tids[k]===tab){el.style.display='block';el.style.animation='ezFadeTab 0.25s ease'}else{el.style.display='none'}}}activeTab=tab;});}
+    // ── 3. انتظار ظهور الـ Dialog ──
+    setStep("⏳ انتظار Dialog...");
+    var activeDialog;
+    try {
+      activeDialog = await waitFor(S.ACTIVE_DIALOG, CONFIG.DIALOG_TIMEOUT);
+    } catch (e) {
+      return { ok: false, reason: "Dialog لم يظهر" };
+    }
+    await checkPause();
+    if (stopped) return { ok: false, reason: "stopped" };
 
-document.getElementById('ez-t-close').onclick=function(){p.style.transition='all 0.3s cubic-bezier(0.4,0,1,1)';p.style.opacity='0';p.style.transform='translateY(-18px) scale(0.97)';setTimeout(function(){p.remove()},300);};
+    // ── 4. اختيار النوع من القائمة المنسدلة ──
+    setStep("📋 اختيار النوع...");
+    try {
+      var selectEl =
+        activeDialog.querySelector(S.SELECT_SLOT) ||
+        activeDialog.querySelector(S.SELECT_INPUT) ||
+        activeDialog.querySelector(S.SELECT_FALLBACK);
 
-document.getElementById('ez-t-search').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث الطلبات',true);};
-document.getElementById('ez-t-close-orders').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات',true);};
-document.getElementById('ez-t-radar').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);};
-document.getElementById('ez-t-add').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);};
-document.getElementById('ez-t-editor').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);};
-document.getElementById('ez-t-fareye').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);};
-document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
-document.getElementById('ez-t-jvm').onclick=function(){jvmDownload()};
-document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}};
+      if (selectEl) {
+        simulateClick(selectEl);
+        var menu = await waitFor(S.MENU_ACTIVE, CONFIG.MENU_TIMEOUT);
+        var firstItem = menu.querySelector(S.MENU_ITEM);
+        if (firstItem) {
+          simulateClick(firstItem);
+          await waitForGone(S.MENU_ACTIVE, 2000);
+        }
+        await delay(CONFIG.AFTER_SELECT_ITEM);
+      }
+    } catch (e) { /* القائمة اختيارية — نتابع */ }
+    await checkPause();
+    if (stopped) return { ok: false, reason: "stopped" };
+
+    // ── 5. حقن الملف ──
+    setStep("📄 انتظار وحقن الملف...");
+
+    // نبدأ المراقبة قبل أي نقرة
+    var injectPromise = injectFile(file);
+
+    // نقر زر اختيار الملف في Vuetify (إن وُجد)
+    var fileBtn =
+      activeDialog.querySelector(S.FILE_BTN_1) ||
+      activeDialog.querySelector(S.FILE_BTN_2) ||
+      activeDialog.querySelector(S.FILE_BTN_3);
+    if (fileBtn) simulateClick(fileBtn);
+
+    var injected = await injectPromise;
+    if (!injected) return { ok: false, reason: "حقل الملف غير موجود" };
+
+    await delay(CONFIG.AFTER_FILE_INJECT);
+    await checkPause();
+    if (stopped) return { ok: false, reason: "stopped" };
+
+    // ── 6. النقر على زر Import ──
+    setStep("📥 انتظار زر Import...");
+    var pressed = false;
+    for (var j = 0; j < CONFIG.IMPORT_BTN_MAX_POLLS; j++) {
+      var importSpan = findBtn("Import");
+      if (importSpan) {
+        var btn = importSpan.closest("button");
+        if (btn && !btn.disabled && !btn.hasAttribute("disabled")) {
+          simulateClick(btn);
+          pressed = true;
+          break;
+        }
+      }
+      await delay(CONFIG.IMPORT_BTN_POLL);
+    }
+    if (!pressed) return { ok: false, reason: "زر Import غير نشط" };
+    await checkPause();
+    if (stopped) return { ok: false, reason: "stopped" };
+
+    // ── 7. تأكيد SweetAlert ──
+    setStep("⏳ انتظار التأكيد...");
+    try {
+      var swalOk = await waitFor(S.SWAL_CONFIRM, CONFIG.SWAL_TIMEOUT);
+      await delay(CONFIG.BEFORE_SWAL_CONFIRM);
+      simulateClick(swalOk);
+      await waitForGone(S.SWAL_POPUP, CONFIG.GONE_TIMEOUT);
+      await waitForGone(S.ACTIVE_DIALOG, 3000);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, reason: "لم يظهر تأكيد" };
+    }
+  }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  🔄  رفع ملف واحد مع إعادة المحاولة                    ║
+  // ╚══════════════════════════════════════════════════════════╝
+
+  async function uploadWithRetry(file, index, total) {
+    els.filename.textContent = file.name;
+    updateProgress(index, total);
+
+    for (var attempt = 0; attempt <= CONFIG.MAX_RETRIES; attempt++) {
+      if (stopped) return false;
+      await checkPause();
+      if (stopped) return false;
+
+      // تأخير متصاعد بين المحاولات
+      if (attempt > 0) {
+        setStep("🔄 إعادة المحاولة " + attempt + "/" + CONFIG.MAX_RETRIES + "...");
+        updateLog(file.name, false, "جاري إعادة المحاولة " + attempt + "...", attempt);
+        await delay(CONFIG.RETRY_BASE + attempt * CONFIG.RETRY_INCREMENT);
+      }
+
+      var result = await attemptUpload(file);
+
+      if (result.ok) {
+        updateLog(file.name, true, "", attempt);
+        return true;
+      }
+
+      if (result.reason === "stopped") return false;
+
+      // فشل مؤقت أو نهائي
+      if (attempt < CONFIG.MAX_RETRIES) {
+        updateLog(file.name, false, result.reason + "  ← سيعيد", attempt);
+      } else {
+        updateLog(file.name, false, "فشل نهائي: " + result.reason, attempt);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  ▶️  ربط أزرار التحكم                                   ║
+  // ╚══════════════════════════════════════════════════════════╝
+
+  els.startBtn.onclick = async function () {
+    // اختيار الملفات
+    var files = await new Promise(function (res) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.multiple = true;
+      inp.accept = ".json";
+      inp.onchange = function () { res(inp.files); };
+      inp.click();
+    });
+    if (!files || !files.length) { els.subtitle.textContent = "لم يتم اختيار ملفات"; return; }
+
+    // تجهيز الواجهة
+    var total = files.length;
+    els.subtitle.textContent       = "جاري رفع " + total + " ملف...";
+    els.progressWrap.style.display = "block";
+    els.current.style.display      = "block";
+    els.startBtn.style.display     = "none";
+    els.pauseBtn.style.display     = "block";
+    els.stopBtn.style.display      = "block";
+    els.bar.style.background       = "linear-gradient(90deg,#6366f1,#8b5cf6)";
+    paused = false;
+    stopped = false;
+    els.log.innerHTML = "";
+
+    // تأكد إن النافذة مركّزة
+    window.focus();
+    document.body.click();
+    await delay(CONFIG.FOCUS_SETTLE);
+
+    // ── حلقة الرفع الرئيسية ──
+    var success = 0, fail = 0;
+    for (var i = 0; i < total; i++) {
+      if (stopped) break;
+      await checkPause();
+      if (stopped) break;
+
+      var ok = await uploadWithRetry(files[i], i + 1, total);
+      if (ok) success++; else fail++;
+
+      if (i < total - 1) await delay(CONFIG.BETWEEN_FILES);
+    }
+
+    // ── ملخص النتائج ──
+    updateProgress(total, total);
+    els.current.style.display  = "none";
+    els.pauseBtn.style.display = "none";
+    els.stopBtn.style.display  = "none";
+    els.startBtn.style.display = "block";
+    els.startBtn.textContent   = "📂 رفع ملفات جديدة";
+    els.subtitle.textContent   =
+      (stopped ? "تم الإيقاف — " : "اكتمل — ") +
+      success + " نجح" +
+      (fail > 0 ? " | " + fail + " فشل" : "");
+    els.bar.style.background = fail > 0
+      ? "linear-gradient(90deg,#f59e0b,#ef4444)"
+      : "linear-gradient(90deg,#10b981,#059669)";
+  };
+
+  // إيقاف مؤقت / استكمال
+  els.pauseBtn.onclick = function () {
+    paused = !paused;
+    this.textContent        = paused ? "▶️ استكمال" : "⏸️ إيقاف مؤقت";
+    this.style.color        = paused ? "#059669" : "#f59e0b";
+    els.subtitle.textContent = paused ? "متوقف مؤقتاً..." : "جاري الرفع...";
+  };
+
+  // إيقاف كامل
+  els.stopBtn.onclick = function () {
+    stopped = true;
+    els.subtitle.textContent = "جاري الإيقاف...";
+  };
 
 })();
