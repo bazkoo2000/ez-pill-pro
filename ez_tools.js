@@ -13,8 +13,9 @@ var loc=window.location.href.toLowerCase();
 var isDetails=loc.indexOf('getezpill_details')>-1||loc.indexOf('getezpill_detail')>-1;
 var isPrint=loc.indexOf('printorder')>-1;
 var isFarmadosis=loc.indexOf('farmadosis.com')>-1;
+var isFareye=loc.indexOf('fareye')>-1;
 
-if(isFarmadosis){
+if(isFarmadosis||isFareye){
   startTab='tools';
 }else if(isPrint){
   startTab='tools';
@@ -36,9 +37,11 @@ var ctxMap={
   'export':{icon:'📤',text:'عرض فقط',color:'#f59e0b',bg:'rgba(245,158,11,0.08)'},
 };
 
-/* لو على صفحة Farmadosis غيّر النص */
+/* لو على صفحة Farmadosis أو FarEye غيّر النص */
 if(isFarmadosis){
   ctxMap['tools']={icon:'💊',text:'Farmadosis',color:'#8b5cf6',bg:'rgba(139,92,246,0.08)'};
+}else if(isFareye){
+  ctxMap['tools']={icon:'🚀',text:'FarEye',color:'#f97316',bg:'rgba(249,115,22,0.08)'};
 }
 
 var ctx=ctxMap[startTab]||{icon:'📋',text:'',color:'#6366f1',bg:'rgba(99,102,241,0.08)'};
