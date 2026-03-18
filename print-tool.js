@@ -1,5 +1,5 @@
 /**
- * Print RTL Control Tool — v3.0
+ * Print RTL Control Tool — v3.1
  * License: MIT
  */
 (function () {
@@ -55,8 +55,9 @@
   }
 
   /* =========================================================
-     تفعيل RTL تلقائياً عند التشغيل
+     تفعيل الفاصل + RTL تلقائياً عند التشغيل
   ========================================================= */
+  addSpacer();
   addPrintStyle();
 
   /* =========================================================
@@ -262,13 +263,13 @@
   /* =========================================================
      الأحداث
   ========================================================= */
-  addSpacerBtn.onclick    = function () { addSpacer();        toast('✅ تم إضافة الفاصل', '#0066cc');           refresh(); };
-  removeSpacerBtn.onclick = function () { removeSpacer();     toast('🗑️ تم إزالة الفاصل', '#64748b');          refresh(); };
-  rtlOnBtn.onclick        = function () { addPrintStyle();    toast('✅ تم تفعيل محاذاة اليمين', '#7b2ff7');    refresh(); };
-  rtlOffBtn.onclick       = function () { removePrintStyle(); toast('↩️ تم إلغاء محاذاة اليمين', '#64748b');  refresh(); };
+  addSpacerBtn.onclick    = function () { addSpacer();        toast('✅ تم إضافة الفاصل', '#0066cc');          refresh(); };
+  removeSpacerBtn.onclick = function () { removeSpacer();     toast('🗑️ تم إزالة الفاصل', '#64748b');         refresh(); };
+  rtlOnBtn.onclick        = function () { addPrintStyle();    toast('✅ تم تفعيل محاذاة اليمين', '#7b2ff7');   refresh(); };
+  rtlOffBtn.onclick       = function () { removePrintStyle(); toast('↩️ تم إلغاء محاذاة اليمين', '#64748b'); refresh(); };
 
-  printBtn.onclick  = function () { overlay.remove(); setTimeout(function () { window.print(); }, 150); };
-  closeBtn.onclick  = function () { overlay.remove(); };
+  printBtn.onclick = function () { overlay.remove(); setTimeout(function () { window.print(); }, 150); };
+  closeBtn.onclick = function () { overlay.remove(); };
   overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
 
 })();
