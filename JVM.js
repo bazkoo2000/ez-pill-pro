@@ -5393,7 +5393,7 @@ function _ezEidGreeting(){
     /* يظهر يوم 20 مارس 2026 فقط — أول أيام العيد */
     if(!(y===2026&&m===3&&d===20)) return;
     /* مرة واحدة فقط */
-    var eidKey='ez_eid_1447';
+    var eidKey='ez_eid_1447_'+APP_NAME.replace(/\s+/g,'_');
     if(window._ezEidShown) return;
     try{if(localStorage.getItem(eidKey)==='1') return;}catch(e){}
     window._ezEidShown=true;
