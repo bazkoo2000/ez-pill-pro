@@ -499,14 +499,6 @@
 
       saveToSession();
 
-      await showDialog({
-        icon:'🎉',
-        title:'اكتمل التنفيذ',
-        desc:'تم معالجة أوامر التسليم بنجاح',
-        badges:[{text:'✅ نجح: '+sc2,active:true},{text:'❌ فشل: '+(toD.length-sc2),active:(toD.length-sc2)>0}],
-        info:[{label:'تم تسليمه',value:sc2,color:IOS.success},{label:'من إجمالي',value:toD.length,color:IOS.accent},{label:'المتبقي received',value:getReceivedCount(),color:IOS.error}],
-        buttons:[{text:'👍 تمام',value:'ok',primary:true}]
-      });
       showToast(`تم تنفيذ ${sc2} سجل — المتبقي: ${getReceivedCount()}`,'success');
       btn.innerHTML=`✅ اكتمل — متبقي: ${getReceivedCount()}`;btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false;
     });
