@@ -8,17 +8,7 @@ var APP_NAME='EZ_Pill Farmadosis';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
-  '146.0':{
-    title:'🔧 تحسينات شاملة + دقة محلية',
-    features:[
-      {icon:'🚫',text:'عند الحاجة/اللزوم/PRN: يُزال تلقائياً مثل الثلاجة'},
-      {icon:'🕐',text:'أوقات سعودية جديدة: الضحى/الفجر/بعد صلاة'},
-      {icon:'⚡',text:'تسريع فتح الدايلوج + تأخير فحص الجدول'},
-      {icon:'🔤',text:'توحيد تطبيع النصوص العربية في دالة واحدة'},
-      {icon:'👤',text:'كلمات توقف إضافية لاستخلاص الاسم'},
-      {icon:'🔧',text:'استبدال 100+ وقت hardcoded بـ NORMAL_TIMES'}
-    ]
-  },
+  '146.0':{    title:'🔧 تحسينات شاملة + دقة محلية',    features:[      {icon:'🚫',text:'عند الحاجة/اللزوم/PRN: يُزال تلقائياً مثل الثلاجة'},      {icon:'🕐',text:'أوقات سعودية جديدة: الضحى/الفجر/بعد صلاة'},      {icon:'⚡',text:'تسريع فتح الدايلوج + تأخير فحص الجدول'},      {icon:'🔤',text:'توحيد تطبيع النصوص العربية في دالة واحدة'},      {icon:'👤',text:'كلمات توقف إضافية لاستخلاص الاسم'},      {icon:'🔧',text:'استبدال أوقات مكتوبة بـ NORMAL_TIMES'}    ]  },
   '145.0':{
     title:'🧠 ذكاء استخلاص الاسم + دقة جيميناي',
     features:[
@@ -65,16 +55,13 @@ var CHANGELOG={
 
 /* ── helpers: read/write version from localStorage + cookie fallback ── */
 function _ezGetSeenVersion(){
-  /* 1. Session guard — if already shown in this page session, skip */
   if(window._ezWhatsNewShown===APP_VERSION) return APP_VERSION;
   try{
     var ls=localStorage.getItem('ez_pill_seen_ver');
     if(ls) return ls;
-    /* v146: migrate from old key */
     var oldLs=localStorage.getItem('ez_pill_version');
     if(oldLs){localStorage.setItem('ez_pill_seen_ver',oldLs);try{localStorage.removeItem('ez_pill_version');}catch(e){}return oldLs;}
   }catch(e){}
-  /* cookie fallback */
   try{
     var m=document.cookie.match(/(?:^|;\s*)ez_pill_seen_ver=([^;]+)/);
     if(m) return decodeURIComponent(m[1]);
@@ -82,10 +69,8 @@ function _ezGetSeenVersion(){
   return null;
 }
 function _ezSetSeenVersion(v){
-  /* Mark in memory immediately so it never shows twice in same session */
   window._ezWhatsNewShown=v;
   try{localStorage.setItem('ez_pill_seen_ver',v);}catch(e){}
-  /* also set cookie with 1-year expiry as fallback */
   try{
     var exp=new Date();exp.setFullYear(exp.getFullYear()+1);
     document.cookie='ez_pill_seen_ver='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
@@ -100,9 +85,7 @@ function showWhatsNew(){
     /* No changelog entry for this version → silently mark as seen and skip */
     if(!info){_ezSetSeenVersion(APP_VERSION);return;}
 
-    /* ══ v146: Mark as seen IMMEDIATELY — before building UI ══
-       This ensures even if user closes tab or page crashes,
-       the message won't show again */
+    /* v146: Mark as seen IMMEDIATELY */
     _ezSetSeenVersion(APP_VERSION);
 
     /* Build features HTML */
@@ -174,7 +157,7 @@ function showWhatsNew(){
       confettiEl.appendChild(dot);
     }
 
-    /* Close handlers — version already marked as seen above */
+    /* Close handlers */
     function closeWN(){
       overlay.style.animation='ezWnFadeIn 0.3s ease reverse';
       setTimeout(function(){overlay.remove();},300);
@@ -836,7 +819,7 @@ function _ezRamadanToday(){
 
 /* Map normal meal words to Ramadan equivalents */
 function ramadanMapNote(note){
-  var s=_ezNormAr(note);
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
 
   /* ── PRIORITY: بعد الغداء / after lunch → بعد التراويح - يجب التحقق أولاً قبل أي قواعد مخصصة ── */
   /* هذا الـ check لازم يكون قبل customTimeRules لأنها بتلتقط "الغداء" وتحوله لـ 14:00 وبيضيع */
@@ -977,7 +960,7 @@ function _extractPackFromName(name){
 
 function _estimateTPD(noteText){
   if(!noteText) return 1;
-  var n=_ezNormAr(noteText);
+  var n=(noteText+'').toLowerCase().replace(/[أإآ]/g,'ا').trim();
   /* Empty, default, or very short notes → assume once daily */
   if(n.length<3) return 1;
   if(/^0\s|^0$|^tablet|^cap|^undefined|^null|^every\s*$|^ever$/i.test(n)) return 1;
@@ -1193,9 +1176,7 @@ function _ezNormL(txt){
     .trim();
 }
 
-/* ══ Unified Arabic Normalization ══ 
-   Single source for all Arabic text normalization + Arabic numeral conversion.
-   Use this EVERYWHERE instead of inline .replace() chains */
+/* ══ v146: Unified Arabic Normalization ══ */
 function _ezNormAr(txt){
   return(txt||'').toLowerCase()
     .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي')
@@ -1204,7 +1185,6 @@ function _ezNormAr(txt){
     .replace(/\s+/g,' ').trim();
 }
 
-/* Check if note is PRN/عند الحاجة — these items get UNCHECKED */
 function _ezIsPRN(note){
   var s=_ezNormAr(note);
   return /عند\s*(الحاج[ةه]|اللزوم|الضرور[ةه]|الالم|الازوم|اللازوم)|حسب\s*(الحاج[ةه]|اللزوم)|وقت\s*(الحاج[ةه]|الالم|اللزوم)|prn|p\.r\.n|as\s*needed|when\s*needed|sos|if\s*needed|on\s*demand|pro\s*re\s*nata/i.test(s);
@@ -1344,156 +1324,6 @@ window.ezShowToast=function(msg,type){
 window.ezCancel=function(){
   var d=document.getElementById('ez-dialog-box');
   if(d) d.remove();
-  var f=document.getElementById('ez-fab');
-  if(f) f.remove();
-};
-
-/* ══ v146: Toolbar + FAB functions ══ */
-window.ezToggleExpand=function(){
-  var panel=document.getElementById('ez-expand-panel');
-  var btn=document.getElementById('ez-expand-btn');
-  if(panel.classList.contains('show')){panel.classList.remove('show');btn.classList.remove('open');}
-  else{panel.classList.add('show');btn.classList.add('open');}
-};
-window.ezToggleOpt=function(el,id){
-  el.classList.toggle('on');
-  var cb=document.getElementById(id);
-  if(!cb){cb=document.createElement('input');cb.type='checkbox';cb.id=id;cb.style.display='none';el.appendChild(cb);}
-  cb.checked=el.classList.contains('on');
-};
-window.ezToggleRm=function(el){
-  el.classList.toggle('on');
-  var cb=document.getElementById('ramadan-mode');
-  if(!cb){cb=document.createElement('input');cb.type='checkbox';cb.id='ramadan-mode';cb.style.display='none';el.appendChild(cb);}
-  cb.checked=el.classList.contains('on');
-  var rmDays=document.getElementById('ez-rm-days');
-  if(rmDays) rmDays.style.display=cb.checked?'flex':'none';
-};
-window.ezFabToggle=function(){
-  var menu=document.getElementById('ez-fab-menu');
-  menu.classList.toggle('show');
-};
-window.ezFabClose=function(){
-  var menu=document.getElementById('ez-fab-menu');
-  if(menu) menu.classList.remove('show');
-};
-/* Close FAB menu on outside click */
-document.addEventListener('click',function(e){
-  var fab=document.getElementById('ez-fab');
-  if(fab&&!fab.contains(e.target)){var menu=document.getElementById('ez-fab-menu');if(menu)menu.classList.remove('show');}
-});
-
-/* ══ v146: أداة تشخيص المشاكل ══ */
-window.ezDiagnose=function(){
-  var html='<div style="direction:rtl;font-family:Cairo,sans-serif;max-height:70vh;overflow-y:auto;padding:10px">';
-  html+='<h3 style="color:#4f46e5;margin:0 0 10px">🔍 تقرير التشخيص</h3>';
-
-  /* 1- إعدادات اللوكال ستوراج */
-  html+='<div style="background:#f0fdf4;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bbf7d0">';
-  html+='<b style="color:#166534">📦 الإعدادات المحفوظة:</b><br>';
-  try{
-    var s=localStorage.getItem('ez_pill_settings');
-    var sObj=s?JSON.parse(s):{};
-    html+='عدد الأشهر: <b>'+(sObj.m||'غير محدد')+'</b> | عدد الأيام: <b>'+(sObj.t||'غير محدد')+'</b><br>';
-    html+='رمضان: <b>'+(sObj.ramadanMode?'مفعّل':'معطّل')+'</b>';
-  }catch(e){html+='خطأ في قراءة الإعدادات';}
-  html+='</div>';
-
-  /* 2- الأكواد المخصصة */
-  html+='<div style="background:#eff6ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bfdbfe">';
-  html+='<b style="color:#1e40af">⚙️ الأكواد المخصصة المحفوظة:</b><br>';
-  try{
-    var c=localStorage.getItem('ez_pill_custom');
-    var cObj=c?JSON.parse(c):{};
-    if(cObj.fixedSizeCodes&&Object.keys(cObj.fixedSizeCodes).length>0){
-      for(var k in cObj.fixedSizeCodes) html+='كود <b>'+k+'</b> ← حجم ثابت <b>'+cObj.fixedSizeCodes[k]+'</b><br>';
-    }else{html+='لا يوجد أكواد مخصصة';}
-    if(cObj.codeStartTimes&&Object.keys(cObj.codeStartTimes).length>0){
-      html+='<br><b>أوقات مخصصة:</b><br>';
-      for(var k2 in cObj.codeStartTimes){var v2=cObj.codeStartTimes[k2];html+='كود <b>'+k2+'</b> ← '+(typeof v2==='string'?v2:v2.time+' كل '+v2.every+' ساعة')+'<br>';}
-    }
-    if(cObj.customTimeRules&&cObj.customTimeRules.length>0){
-      html+='<br><b>قواعد أوقات مخصصة:</b> '+cObj.customTimeRules.length+' قاعدة<br>';
-    }
-    if(cObj.removedCodes&&cObj.removedCodes.length>0){
-      html+='<br><b>أكواد محذوفة:</b> '+cObj.removedCodes.join(' , ')+'<br>';
-    }
-  }catch(e){html+='خطأ في قراءة الإعدادات المخصصة';}
-  html+='</div>';
-
-  /* 3- فحص الجدول الحالي */
-  html+='<div style="background:#fefce8;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #fef08a">';
-  html+='<b style="color:#854d0e">📋 فحص أصناف الجدول:</b><br>';
-  try{
-    var tb=null;var allTb=document.querySelectorAll('table');
-    for(var i=0;i<allTb.length;i++){var txt=allTb[i].innerText.toLowerCase();if(txt.indexOf('code')>-1&&txt.indexOf('name')>-1){tb=allTb[i];break;}}
-    if(tb){
-      var hdr=tb.querySelectorAll('tr')[0];var ths=hdr?hdr.querySelectorAll('th,td'):[];
-      var ci=-1,ni=-1,si=-1,noti=-1;
-      for(var h=0;h<ths.length;h++){
-        var ht=ths[h].textContent.trim().toLowerCase();
-        if(ht.indexOf('code')>-1)ci=h;
-        if(ht.indexOf('name')>-1)ni=h;
-        if(ht.indexOf('size')>-1||ht.indexOf('qty')>-1)si=h;
-        if(ht.indexOf('note')>-1)noti=h;
-      }
-      var rows=tb.querySelectorAll('tr');
-      for(var r=1;r<rows.length;r++){
-        var tds=rows[r].querySelectorAll('td');
-        if(tds.length<3)continue;
-        var code=ci>=0?(_ezGet(tds[ci]).match(/\d+/)||[''])[0]:'';
-        var name=ni>=0?_ezGet(tds[ni]):'';
-        var size=si>=0?_ezGet(tds[si]):'';
-        var note=noti>=0?_ezGet(tds[noti]):'';
-        if(!code&&!name)continue;
-        var pack=_extractPackFromName(name);
-        var isFixed=!!(fixedSizeCodes&&fixedSizeCodes[code]);
-        var fixedVal=isFixed?fixedSizeCodes[code]:null;
-        var codeTime=(CODE_START_TIMES&&CODE_START_TIMES[code])?CODE_START_TIMES[code]:null;
-        var isPRN=_ezIsPRN(note);
-        html+='<div style="background:#fff;padding:6px 8px;border-radius:8px;margin:4px 0;border:1px solid #e5e7eb;font-size:12px">';
-        html+='<b>'+code+'</b> | '+name.substring(0,40)+'<br>';
-        html+='الحجم الحالي: <b style="color:#dc2626">'+size+'</b>';
-        if(pack) html+=' | عبوة مكتشفة: <b style="color:#7c3aed">'+pack+'</b>';
-        if(isFixed) html+=' | <span style="background:#fbbf24;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:900">كود ثابت: '+fixedVal+'</span>';
-        if(codeTime) html+=' | وقت مخصص: '+codeTime.time;
-        if(isPRN) html+=' | <span style="background:#ef4444;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">عند الحاجة</span>';
-        if(note) html+='<br><span style="color:#6b7280;font-size:10px">النوت: '+note.substring(0,60)+'</span>';
-        html+='</div>';
-      }
-    }else{html+='لم يتم العثور على الجدول';}
-  }catch(e){html+='خطأ في فحص الجدول: '+e.message;}
-  html+='</div>';
-
-  /* 4- خيارات العبوات */
-  html+='<div style="background:#fdf2f8;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #fbcfe8">';
-  html+='<b style="color:#9d174d">🎯 خيارات العبوات المحفوظة:</b><br>';
-  try{
-    var ch14=window._ez14Choices||{};
-    var keys14=Object.keys(ch14);
-    if(keys14.length>0){for(var k3=0;k3<keys14.length;k3++) html+=keys14[k3]+' ← خيار <b>'+ch14[keys14[k3]]+'</b><br>';}
-    else html+='لا يوجد خيارات محفوظة';
-  }catch(e){html+='خطأ';}
-  html+='</div>';
-
-  /* 5- النسخة ومعلومات عامة */
-  html+='<div style="background:#f5f3ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #ddd6fe">';
-  html+='<b style="color:#5b21b6">ℹ️ معلومات عامة:</b><br>';
-  html+='النسخة: <b>'+APP_VERSION+'</b><br>';
-  html+='المتصفح: '+navigator.userAgent.substring(0,80)+'<br>';
-  try{
-    var allKeys=[];for(var ki=0;ki<localStorage.length;ki++){var lk=localStorage.key(ki);if(lk.indexOf('ez_')===0)allKeys.push(lk);}
-    html+='مفاتيح اللوكال ستوراج: <b>'+allKeys.join(' , ')+'</b>';
-  }catch(e){html+='اللوكال ستوراج غير متاح';}
-  html+='</div>';
-
-  html+='</div>';
-
-  /* عرض النتائج */
-  var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
-  ov.innerHTML='<div style="background:#fff;border-radius:18px;width:500px;max-width:90vw;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)"><div style="padding:16px 20px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-weight:900;font-size:16px;text-align:center;direction:rtl">🔍 تقرير التشخيص</div><div style="padding:12px;overflow-y:auto;max-height:65vh">'+html+'</div><div style="padding:12px;text-align:center;border-top:1px solid #e5e7eb"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:8px 30px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;font-family:Cairo,sans-serif">إغلاق</button></div></div>';
-  document.body.appendChild(ov);
 };
 
 window.ezClosePost=function(){
@@ -1674,7 +1504,7 @@ window.ezShowDoses=function(){
       var code=cdi>=0&&tds.length>cdi?getVal(tds[cdi]).replace(/\D/g,''):'';
       if(code&&seenCodes[code])return;if(code)seenCodes[code]=true;
       var isDup=false;
-      if(note){var nl=_ezNormAr(note);isDup=!!shouldDuplicateRow(nl);}
+      if(note){var nl=note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();isDup=!!shouldDuplicateRow(nl);}
       if(name&&note)items.push({name:name,note:note,isDup:isDup,row:r,noteCell:tds[ni],rowIdx:rIdx});
     }
   });
@@ -1737,7 +1567,7 @@ window.ezPreviewAlerts=function(){
     var d2p2=/\b2\s*(tablet|pill|cap|capsule|undefined|tab|قرص|حبة|حبه|كبسول|كبسولة)/gi;
     if(d2p.test(noteRaw.trim())||d2p2.test(noteRaw)){alerts.push({icon:'💊',text:itemName+': جرعة مزدوجة (2)',detail:'مكتوب حبتين في الجرعة',level:'warning'});}
     if(timeResult.isUnrecognized&&!_isFixedPrev&&!_isWeeklyPrev){alerts.push({icon:'❓',text:itemName+': جرعة غير مفهومة',detail:'النص: '+noteClean,level:'warning'});}
-    var nl=_ezNormAr(noteClean);
+    var nl=noteClean.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
     if(shouldDuplicateRow(nl)){alerts.push({icon:'✂️',text:itemName+': سيتم تقسيم الجرعة',detail:'عدد الجرعات: '+doseRec.count,level:'info'});}
   }
   /* ── Pack Size Scan (Layer 2) ── */
@@ -1779,7 +1609,7 @@ window.ezPreviewAlerts=function(){
     ];
     var extractedName=null;
     for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى|برقم|رقم|التواصل|صيدلية|صيدليه).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
-    /* v146: English name fallback for preview */
+    /* v146: English name fallback */
     if(!extractedName){var _engPrev=prescNote.match(/(?:باسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);if(_engPrev&&_engPrev[1]){extractedName=_engPrev[1].trim().replace(/\s+(and|or|delivery|pharmacy|branch|please|kindly|thanks|send|order)[\s.]*/gi,'').trim();if(extractedName.length<2)extractedName=null;}}
     if(extractedName) details.push('👤 اسم الضيف: '+extractedName);
     /* صيدلية التوصيل */
@@ -2327,11 +2157,8 @@ window.ezSubmit=function(){
   try{
     var d=document.getElementById('ez-dialog-box');
     if(!d) return;
-    /* v146: read from toolbar inputs */
-    var mInp=document.getElementById('ez-m-inp');
-    var tInp=document.getElementById('ez-t-inp');
-    var m=mInp?parseInt(mInp.value)||1:parseInt(d.getAttribute('data-m'))||1;
-    var t=tInp?parseInt(tInp.value)||30:parseInt(d.getAttribute('data-t'))||30;
+    var m=parseInt(d.getAttribute('data-m'))||1;
+    var t=parseInt(d.getAttribute('data-t'))||30;
     var autoDuration=document.getElementById('auto-duration')?document.getElementById('auto-duration').checked:true;
     var showWarningsFlag=document.getElementById('show-warnings')?document.getElementById('show-warnings').checked:true;
     var showPostDialog=document.getElementById('show-post-dialog')?document.getElementById('show-post-dialog').checked:false;
@@ -2873,7 +2700,7 @@ window.ezRamadanToNormal=function(){
              ||noteVal.indexOf('التراويح')>-1||noteVal.indexOf('Tarawih')>-1;
 
     /* ── تحويل النوت لجرعة عادية ── */
-    var newNote=noteVal,newTime=NORMAL_TIMES.afterBreakfast||'09:00',newEvry='24';
+    var newNote=noteVal,newTime='09:00',newEvry='24';
     if(isRam){
       var n=noteVal.replace(/^⚡\s*/,'');
       if(n.indexOf('بعد الفطار')>-1||n.indexOf('After Iftar')>-1){
@@ -2887,7 +2714,7 @@ window.ezRamadanToNormal=function(){
       } else if(n.indexOf('بعد التراويح')>-1||n.indexOf('After Tarawih')>-1){
         newNote=n.replace('بعد التراويح','بعد الغداء').replace('After Tarawih','After Lunch');newTime=NORMAL_TIMES.afterLunch||'14:00';
       } else {
-        newNote=n;newTime=NORMAL_TIMES.afterBreakfast||'09:00';
+        newNote=n;newTime='09:00';
       }
       if(ni>=0&&tds[ni]){var nInp=tds[ni].querySelector('input,textarea');if(nInp){nInp.value=newNote;fire(nInp);}}
       if(ti>=0&&tds[ti]){var tInp=tds[ti].querySelector("input[type='time']");if(tInp){tInp.value=newTime;fire(tInp);}}
@@ -3212,7 +3039,10 @@ function extractDayOfWeek(note){
 }
 
 function extractDuration(note){
-  var s=_ezNormAr(note);
+  var s=note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه')
+    .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
+    .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
+    .trim();
   var result={hasDuration:false,days:null,isPRN:false,isUntilFinish:false,original:note};
   if(/عند الحاجه|عند اللزوم|prn|as\s*needed|when\s*needed|sos|عند الضرورة|if\s*needed|p\.r\.n/i.test(s)){result.isPRN=true;return result;}
   if(/حتى (نفاد|انتهاء|انهاء|الشفاء)|until\s*(finish|complete|symptom|gone|resolved)|till\s*finish/i.test(s)){result.isUntilFinish=true;return result;}
@@ -3305,8 +3135,12 @@ function makeDraggable(el){
    ══════════════════════════════════════════ */
 function smartDoseRecognizer(note){
   var raw=note;
-  /* Normalize: Arabic chars + Arabic numerals — using unified _ezNormAr */
-  var s=_ezNormAr(note);
+  /* Normalize: Arabic chars + Arabic numerals ٠١٢٣٤٥٦٧٨٩ → 0123456789 */
+  var s=(note||'').toLowerCase()
+    .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي')
+    .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
+    .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
+    .replace(/\s+/g,' ').trim();
   /* FIX v141: Strip duration phrases BEFORE frequency detection
      "3 شهور" / "3 اشهر" / "30 يوم" = duration, NOT frequency
      Without this, "بعد الاكل 3 شهور" gets detected as 3 times */
@@ -3381,7 +3215,7 @@ function smartDoseRecognizer(note){
 }
 
 function getTwoPillsPerDoseInfo(n){
-  var s=_ezNormAr(n);
+  var s=(n||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
   /* No half/quarter pills - always whole pills */
   var twoP=['2 حبه','2 حبة','حبتين','حبتان','2 حبوب','2 قرص','قرصين','قرصان','2 كبسوله','كبسولتين','كبسولتان','2 pill','2 pills','two pill','two pills','2 tablet','2 tablets','two tablet','two tablets','2 tab','2 tabs','two tab','two tabs','2 cap','2 caps','two cap','two caps'];
   for(var i=0;i<twoP.length;i++){if(s.indexOf(twoP[i].toLowerCase())>-1){var is2=/مرتين|twice|2\s*times|bid|b\.i\.d/i.test(n);var is3=/ثلاث مرات|3\s*مرات|three\s*times|3\s*times|tid|t\.i\.d/i.test(n);var ml=1;if(is3)ml=6;else if(is2)ml=4;else ml=2;return{dose:2,multiplier:ml};}}
@@ -3391,7 +3225,10 @@ function getTwoPillsPerDoseInfo(n){
 }
 
 function getTimeFromWords(w){
-  var s=_ezNormAr(w);
+  var s=(w||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')
+    .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
+    .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
+    .trim();
 
   /* FIX-FINAL: قبل/بعد الاكل + وقت اليوم — direct return بدون IIFE */
   var _mA=/بعد\s*(الاكل|الأكل|الآكل|الوجبه?|الطعام)\b|after\s*(meal|food)\b|\bpc\b/i.test(s);
@@ -3456,7 +3293,7 @@ function getTimeFromWords(w){
   {test:/بعد صلا[ةه] المغرب|after maghrib/,time:NT.maghrib||'18:00'},
   {test:/بعد صلا[ةه] العشاء|after isha/,time:NT.afterDinner||'21:00'},
   {test:/الوجب[ةه] الرئيسي[ةه]|main meal/,time:NT.afterBreakfast||'09:00'},
-  /* ══ Standard rules ══ */
+  /* ══ Standard rules with NORMAL_TIMES ══ */
   {test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:NT.afterBreakfast||'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:NT.afterLunch||'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:NT.afterDinner||'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:NT.afterBreakfast||'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:NT.empty||'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal||'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast||'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:NT.afterBreakfast||'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:NT.morning||'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:NT.noon||'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:NT.beforeLunch||'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:NT.afterLunch||'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:NT.afternoon||'15:00'},{test:/maghrib|مغرب|المغرب/,time:NT.maghrib||'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:NT.beforeDinner||'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:NT.afterDinner||'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:NT.bed||'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:NT.evening||'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
@@ -3484,7 +3321,7 @@ function getCodeAwareTime(timeResult,itemCode){
 
 /* ── Helper: استخرج الأوقات الفعلية من الـ note بناءً على الكلمات ── */
 function getMealTimesFromNote(note){
-  var s=_ezNormAr(note);
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
   var isBefore=/قبل/i.test(s);
   var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
   var hasL=/غدا|غداء|الغدا|الغداء|الغدى|غذا|غذاء|الغذا|الغذاء|عداء|العداء|lunch/i.test(s);
@@ -3528,7 +3365,7 @@ function needsDuplicateByTime(times){
 
 function shouldDuplicateRow(note){
   var d=smartDoseRecognizer(note);
-  var s=_ezNormAr(note);
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
   var isEvery8=/كل\s*8|every\s*8|q8h/i.test(s);
   if(isEvery8||d.count===3)return{type:'three',doseInfo:d,isBefore:d.isBefore};
   var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
@@ -3559,7 +3396,7 @@ function scanForDuplicateNotes(){
   var h=tb.querySelector('tr'),hs=h.querySelectorAll('th,td');var ni=_ezIdx(hs,'note');
   if(ni<0)return false;
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
-  for(var i=0;i<rows.length;i++){var tds=rows[i].querySelectorAll('td');if(tds.length>ni){var inp=tds[ni].querySelector('input,textarea');var noteText=inp?inp.value:tds[ni].textContent;var cleaned=cleanNote(noteText);var nl=_ezNormAr(cleaned);if(nl&&shouldDuplicateRow(nl))return true;}}
+  for(var i=0;i<rows.length;i++){var tds=rows[i].querySelectorAll('td');if(tds.length>ni){var inp=tds[ni].querySelector('input,textarea');var noteText=inp?inp.value:tds[ni].textContent;var cleaned=cleanNote(noteText);var nl=cleaned.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();if(nl&&shouldDuplicateRow(nl))return true;}}
   /* Also check prescription-level notes for بوكسات/boxes/ترتيب patterns */
   if(scanForBoxesRequest()) return true;
   return false;
@@ -4044,7 +3881,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
             if(!ai.readable_ar&&ai.description) ai.readable_ar=ai.description;
             if(!ai.every&&ai.interval) ai.every=ai.interval;
             if(!ai.every) ai.every=24;
-            if(!ai.startTime) ai.startTime=NORMAL_TIMES.afterBreakfast||'09:00';
+            if(!ai.startTime) ai.startTime='09:00';
             var _aiH=parseInt(ai.startTime.split(':')[0]);
             var _aiDesc=(ai.readable_ar||'').toLowerCase();
             var _localTime=ai.startTime;
@@ -4635,46 +4472,68 @@ s_style.textContent='\
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}\
 @keyframes spin{to{transform:rotate(360deg)}}\
 @keyframes meshFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}\
-.ez-dialog-v2{position:fixed;top:0;left:0;right:0;z-index:99999;font-family:Cairo,sans-serif;animation:ezBarSlide 0.4s ease}\
-@keyframes ezBarSlide{from{transform:translateY(-100%)}to{transform:translateY(0)}}\
-.ez-toolbar{display:flex;align-items:center;gap:8px;padding:6px 14px;background:linear-gradient(145deg,#4f46e5,#3b82f6);direction:rtl}\
-.ez-tb-logo{font-size:18px;cursor:pointer}\
-.ez-tb-sep{width:1px;height:24px;background:rgba(255,255,255,0.2);flex-shrink:0}\
-.ez-tb-grp{display:flex;align-items:center;gap:4px}\
-.ez-tb-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,0.7)}\
-.ez-tb-inp{width:42px;height:30px;border:1.5px solid rgba(255,255,255,0.25);border-radius:8px;background:rgba(255,255,255,0.12);color:#fff;text-align:center;font-size:15px;font-weight:900;font-family:Cairo,sans-serif;outline:none}\
-.ez-tb-inp:focus{border-color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.2)}\
-.ez-tb-x{font-size:13px;font-weight:900;color:rgba(255,255,255,0.5)}\
-.ez-tb-go{height:32px;padding:0 18px;border:none;border-radius:10px;background:#fff;color:#4f46e5;font-size:13px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s;white-space:nowrap}\
-.ez-tb-go:hover{background:#e0e7ff;transform:scale(1.03)}\
-.ez-tb-go:active{transform:scale(0.97)}\
-.ez-tb-expand{width:30px;height:30px;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:Cairo,sans-serif}\
-.ez-tb-expand:hover{background:rgba(255,255,255,0.2)}\
-.ez-tb-expand.open{background:rgba(255,255,255,0.2);transform:rotate(180deg)}\
-.ez-tb-ver{font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;margin-right:auto}\
-.ez-expand-panel{display:none;padding:8px 14px 10px;background:linear-gradient(180deg,#4338ca,#3730a3);direction:rtl;animation:fadeSlideUp 0.3s ease}\
-.ez-expand-panel.show{display:flex;flex-wrap:wrap;gap:6px;align-items:center}\
-.ez-ep-tog{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;transition:all 0.2s;font-family:Cairo,sans-serif}\
-.ez-ep-tog:hover{background:rgba(255,255,255,0.12)}\
-.ez-ep-tog.on{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.3)}\
-.ez-ep-tog .ep-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all 0.2s;flex-shrink:0}\
-.ez-ep-tog.on .ep-dot{background:#4ade80}\
-.ez-ep-tog .ep-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,0.7)}\
-.ez-ep-tog.on .ep-lbl{color:#fff}\
-.ez-ep-rm{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:8px;border:1px solid rgba(251,191,36,0.3);background:rgba(251,191,36,0.1);font-family:Cairo,sans-serif}\
-.ez-ep-rm .rm-lbl{font-size:10px;font-weight:700;color:#fbbf24}\
-.ez-ep-rm input{width:36px;height:24px;border:1px solid rgba(251,191,36,0.3);border-radius:6px;background:rgba(255,255,255,0.1);color:#fbbf24;text-align:center;font-size:13px;font-weight:900;font-family:Cairo,sans-serif;outline:none}\
-#ez-pack-warning{margin:0 14px 8px;border-radius:10px}\
-.ez-fab{position:fixed;bottom:20px;left:20px;z-index:99998;font-family:Cairo,sans-serif}\
-.ez-fab-btn{width:48px;height:48px;border-radius:50%;background:linear-gradient(145deg,#4f46e5,#3b82f6);border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(79,70,229,0.35);transition:all 0.3s;display:flex;align-items:center;justify-content:center}\
-.ez-fab-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(79,70,229,0.45)}\
-.ez-fab-menu{position:absolute;bottom:58px;left:0;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1px solid rgba(99,102,241,0.1);overflow:hidden;display:none;min-width:160px;animation:fadeSlideUp 0.2s ease}\
-.ez-fab-menu.show{display:block}\
-.ez-fab-item{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;transition:background 0.15s;border:none;background:none;width:100%;font-family:Cairo,sans-serif;direction:rtl;font-size:12px;font-weight:700;color:#374151}\
-.ez-fab-item:hover{background:rgba(99,102,241,0.06)}\
-.ez-fab-item .fi-icon{font-size:15px;width:24px;text-align:center}\
-.ez-fab-item.danger{color:#ef4444}\
-.ez-fab-item.danger:hover{background:rgba(239,68,68,0.06)}\
+.ez-dialog-v2{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;max-width:96vw;max-height:90vh;z-index:99999;border-radius:28px;background:#f0f4ff;box-shadow:0 24px 64px rgba(59,130,246,0.08),0 0 0 1px rgba(59,130,246,0.06);overflow:hidden;animation:dialogEnter 0.8s cubic-bezier(0.16,1,0.3,1) forwards;font-family:Cairo,sans-serif;display:flex;flex-direction:column}\
+.ez-header{padding:20px 22px 16px;display:flex;justify-content:space-between;align-items:center;cursor:move;flex-shrink:0}\
+.ez-logo-group{display:flex;align-items:center;gap:12px}\
+.ez-logo{width:46px;height:46px;border-radius:23px;background:#fff;border:2px solid rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(59,130,246,0.1)}\
+.ez-title-block{display:flex;flex-direction:column}\
+.ez-title{font-size:18px;font-weight:900;color:#1e3a5f;line-height:1.2;display:flex;align-items:center;gap:4px}\
+.ez-title .ez-brand{font-size:18px;font-weight:900;color:#3b82f6;-webkit-text-fill-color:#3b82f6}\
+.ez-subtitle{font-size:10px;font-weight:600;color:#94a3b8;margin-top:0}\
+.ez-header-actions{display:flex;align-items:center;gap:4px}\
+.ez-version{display:none}\
+.ez-btn-icon{width:34px;height:34px;border-radius:17px;border:none;background:rgba(255,255,255,0.8);color:#94a3b8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
+.ez-btn-icon:hover{background:rgba(59,130,246,0.1);color:#3b82f6}\
+.ez-content{padding:0 16px 6px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;min-height:0}\
+.ez-content::-webkit-scrollbar{width:5px}\
+.ez-content::-webkit-scrollbar-track{background:transparent}\
+.ez-content::-webkit-scrollbar-thumb{background:rgba(129,140,248,0.2);border-radius:10px}\
+.ez-content::-webkit-scrollbar-thumb:hover{background:rgba(129,140,248,0.4)}\
+.ez-float-card{background:#fff;border-radius:20px;padding:14px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;flex-shrink:0;margin:0 16px;border-bottom:1px solid rgba(99,102,241,0.06)}\
+.ez-dur-row{display:flex;gap:22px;align-items:flex-start}\
+.ez-dur-col{flex:1}\
+.ez-dur-col.wide{flex:1.2}\
+.ez-dur-divider{width:1px;height:52px;background:#e2e8f0;align-self:center;flex-shrink:0}\
+.ez-dur-label{font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:8px;letter-spacing:0.3px}\
+.ez-seg-group{display:flex;gap:4px;background:#f0f4ff;border-radius:12px;padding:3px;border:1px solid rgba(59,130,246,0.06)}\
+.ez-seg{flex:1;height:40px;border-radius:9px;border:none;cursor:pointer;font-family:Cairo,sans-serif;font-weight:900;font-size:17px;transition:all 0.2s;background:transparent;color:#64748b}\
+.ez-seg.active{background:#3b82f6;color:#fff}\
+.ez-tog-grid{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.02);direction:rtl;display:grid;grid-template-columns:1fr 1fr;gap:8px}\
+.ez-tog-btn{padding:12px 14px;border-radius:14px;border:none;cursor:pointer;font-family:Cairo,sans-serif;transition:all 0.2s;text-align:right;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.02);outline:2px solid transparent}\
+.ez-tog-btn.on{border:2px solid rgba(99,102,241,0.45)!important;box-shadow:0 0 0 3px rgba(99,102,241,0.1)!important;background:rgba(99,102,241,0.04)!important}\
+.ez-tog-btn .ez-tog-icon{font-size:16px;flex-shrink:0}\
+.ez-tog-btn .ez-tog-lbl{font-size:12px;font-weight:800;color:#94a3b8;flex:1;transition:color 0.2s}\
+.ez-tog-btn.on .ez-tog-lbl{color:var(--tc,#3b82f6)}\
+.ez-tog-btn .ez-tog-dot{width:9px;height:9px;border-radius:5px;flex-shrink:0;transition:all 0.2s;background:#d1d5db}\
+.ez-tog-btn.on .ez-tog-dot{background:var(--tc,#3b82f6)}\
+.auto-tag{font-size:9px;font-weight:800;color:var(--tc,#6366f1);background:rgba(99,102,241,0.08);padding:2px 6px;border-radius:5px;margin-right:4px}\
+.ez-rm-card{border-radius:20px;padding:16px 18px;direction:rtl;transition:all 0.3s;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.02);border:1.5px solid transparent}\
+.ez-rm-card.on{background:linear-gradient(135deg,#fffbeb,#fef3c7);box-shadow:0 2px 12px rgba(245,158,11,0.08);border-color:rgba(251,191,36,0.18)}\
+.ez-rm-toggle{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;font-family:Cairo,sans-serif;padding:0}\
+.ez-rm-toggle .rm-icon{font-size:22px}\
+.ez-rm-toggle .rm-text{font-size:14px;font-weight:800;color:#64748b;flex:1;text-align:right;transition:color 0.3s}\
+.ez-rm-card.on .rm-text{color:#92400e}\
+.ez-rm-sw{width:40px;height:22px;border-radius:11px;position:relative;transition:all 0.3s;background:#cbd5e1;flex-shrink:0}\
+.ez-rm-card.on .ez-rm-sw{background:#f59e0b}\
+.ez-rm-sw .knob{width:18px;height:18px;border-radius:9px;background:#fff;position:absolute;top:2px;right:20px;transition:all 0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.1)}\
+.ez-rm-card.on .ez-rm-sw .knob{right:2px}\
+.ez-rm-expand{margin-top:12px;display:flex;align-items:center;gap:10px}\
+.ez-rm-expand .rm-lbl{font-size:12px;font-weight:700;color:#92400e;white-space:nowrap}\
+.ez-rm-expand input{flex:1;padding:8px 10px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:20px;font-weight:900;text-align:center;font-family:Cairo,sans-serif;outline:none;background:rgba(255,255,255,0.7);color:#92400e;box-sizing:border-box}\
+.ez-actions{display:flex;gap:7px;margin-top:0;padding:8px 16px 10px;flex-shrink:0;border-top:1px solid rgba(99,102,241,0.06)}\
+.ez-btn-primary{flex:1;height:50px;border:none;border-radius:16px;font-size:15px;font-weight:900;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:#3b82f6;box-shadow:0 6px 20px rgba(59,130,246,0.25);transition:all 0.3s;position:relative;overflow:hidden}\
+.ez-btn-primary::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);animation:shimmer 4s ease-in-out infinite}\
+.ez-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(59,130,246,0.35)}\
+.ez-btn-primary:active{transform:translateY(0)}\
+.ez-btn-primary.ez-pulse{box-shadow:0 8px 28px rgba(59,130,246,0.4),0 0 0 3px rgba(59,130,246,0.1)}\
+.ez-btn-doses{width:50px;height:50px;border-radius:16px;border:none;background:#fff;cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}\
+.ez-btn-doses:hover{background:#3b82f6;color:#fff;box-shadow:0 6px 20px rgba(59,130,246,0.25)}\
+.ez-btn-cancel{width:50px;height:50px;border-radius:16px;border:1.5px solid #fecaca;background:#fef2f2;color:#ef4444;cursor:pointer;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-family:Cairo,sans-serif}\
+.ez-btn-cancel:hover{background:#fee2e2;border-color:#fca5a5}\
+.ez-footer{padding:9px;text-align:center;font-size:9px;font-weight:700;letter-spacing:1.2px;flex-shrink:0}\
+.ez-footer span{color:#94a3b8}\
+.ez-content>*{animation:fadeSlideUp 0.4s ease backwards}\
+.ez-content>*:nth-child(1){animation-delay:0.05s}.ez-content>*:nth-child(2){animation-delay:0.1s}.ez-content>*:nth-child(3){animation-delay:0.15s}.ez-content>*:nth-child(4){animation-delay:0.2s}.ez-content>*:nth-child(5){animation-delay:0.25s}\
 .ez-doses-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;z-index:100000;border-radius:20px;background:#fff;box-shadow:0 20px 60px rgba(99,102,241,0.15),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.2);overflow:hidden;font-family:Cairo,sans-serif}\
 .ez-doses-dialog::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a78bfa,#8b5cf6,#6366f1,#8b5cf6,#a78bfa);background-size:200% 100%;animation:barShift 4s ease infinite;z-index:1}\
 .ez-doses-header{padding:14px 22px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(167,139,250,0.03) 0%,transparent 100%)}\
@@ -5334,8 +5193,8 @@ function _ezShowSettingsPanel(){
     e.target.value='';
   };
 }
-/* v146: hasDuplicateNotes detection deferred to after dialog renders for speed */
-var hasDuplicateNotes=false; /* will be set async after dialog appears */
+/* v146: hasDuplicateNotes deferred to after dialog renders for speed */
+var hasDuplicateNotes=false;
 var _rm_setting=savedSettings.ramadanMode||false;
 /* Ramadan mode: post dialog is shown ONLY after processing if actual duplicates were created */
 /* We don't force hasDuplicateNotes=true here anymore */
@@ -5354,79 +5213,118 @@ var _rmToday=_ezRamadanToday();
 var _rmDayNum=_rmToday.dayNum;
 var _rmTodayLeft=_rmToday.daysLeft;
 d_box.innerHTML='\
-<div class="ez-toolbar">\
-  <span class="ez-tb-logo" title="EZ Pill v'+APP_VERSION+'">💊</span>\
-  <span class="ez-tb-sep"></span>\
-  <div class="ez-tb-grp">\
-    <span class="ez-tb-lbl">أشهر</span>\
-    <input type="number" class="ez-tb-inp" id="ez-m-inp" min="1" max="6" value="'+_m+'" onclick="this.select()" />\
-    <span class="ez-tb-x">×</span>\
-    <span class="ez-tb-lbl">أيام</span>\
-    <input type="number" class="ez-tb-inp" id="ez-t-inp" min="1" max="90" value="'+_t+'" onclick="this.select()" />\
+<div class="ez-header">\
+  <div class="ez-logo-group">\
+    <div class="ez-logo">💊</div>\
+    <div class="ez-title-block">\
+      <div class="ez-title">EZ_Pill <span class="ez-brand">Farmadosis</span></div>\
+      <div class="ez-subtitle">معالج الجرعات الذكي · v'+APP_VERSION+'</div>\
+    </div>\
   </div>\
-  <span class="ez-tb-sep"></span>\
-  <button class="ez-tb-go" onclick="window.ezSubmit()">⚡ معالجة</button>\
-  <button class="ez-tb-expand" id="ez-expand-btn" onclick="window.ezToggleExpand()" title="إعدادات إضافية">▼</button>\
-  <span class="ez-tb-ver">v'+APP_VERSION+'</span>\
-</div>\
-<div class="ez-expand-panel" id="ez-expand-panel">\
-  <div class="ez-ep-tog'+(_ad?' on':'')+'" id="ez-tog-ad" onclick="window.ezToggleOpt(this,\'auto-duration\')" style="--tc:#10b981"><span class="ep-dot"></span><span class="ep-lbl">مدة تلقائية</span></div>\
-  <div class="ez-ep-tog'+(_sw?' on':'')+'" id="ez-tog-sw" onclick="window.ezToggleOpt(this,\'show-warnings\')" style="--tc:#f59e0b"><span class="ep-dot"></span><span class="ep-lbl">تنبيهات</span></div>\
-  <div class="ez-ep-tog" id="ez-tog-post" onclick="window.ezToggleOpt(this,\'show-post-dialog\')" style="--tc:#6366f1"><span class="ep-dot"></span><span class="ep-lbl">تقسيم</span></div>\
-  <div class="ez-ep-tog'+(_rm?' on':'')+'" id="ez-tog-rm" onclick="window.ezToggleRm(this)" style="--tc:#f59e0b"><span class="ep-dot"></span><span class="ep-lbl">🌙 رمضان</span></div>\
-  <div class="ez-ep-rm" id="ez-rm-days" style="display:'+(_rm?'flex':'none')+'">\
-    <span class="rm-lbl">باقي</span>\
-    <input type="number" id="ez-rm-days-left" min="1" max="30" value="'+(_rmToday.inRamadan?(_rmAutoLeft||_rmTodayLeft):'')+'" placeholder="?" onclick="this.select()" />\
-    <span class="rm-lbl">يوم</span>\
+  <div class="ez-header-actions">\
+    <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
+    <button class="ez-btn-icon" onclick="window.ezSetupGemini()" title="إعداد الذكاء الاصطناعي">🤖</button>\
+    <button class="ez-btn-icon" onclick="window.ezCloudSettings()" title="الإعدادات السحابية">☁️</button>\
+    <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
+    <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
-<div id="ez-pack-warning" style="display:none;padding:10px 14px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border:1.5px solid #fca5a5;border-radius:10px;margin:0 14px 6px;direction:rtl;transition:all 0.3s"></div>';
-
-/* ══ FAB — Floating Action Button ══ */
-var fab=document.createElement('div');
-fab.className='ez-fab';
-fab.id='ez-fab';
-fab.innerHTML='\
-<div class="ez-fab-menu" id="ez-fab-menu">\
-  <button class="ez-fab-item" onclick="window.ezPreviewAlerts();window.ezFabClose()"><span class="fi-icon">⚠️</span>التنبيهات</button>\
-  <button class="ez-fab-item" onclick="window.ezSaveNotes();window.ezFabClose()"><span class="fi-icon">💾</span>حفظ النوتات</button>\
-  <button class="ez-fab-item" onclick="window.ezPasteNotes();window.ezFabClose()"><span class="fi-icon">📥</span>لصق النوتات</button>\
-  <button class="ez-fab-item" onclick="window.ezDiagnose();window.ezFabClose()"><span class="fi-icon">🔍</span>تشخيص</button>\
-  <button class="ez-fab-item" onclick="window.ezOpenSettings();window.ezFabClose()"><span class="fi-icon">⚙️</span>إعدادات متقدمة</button>\
-  <button class="ez-fab-item danger" onclick="window.ezCancel()"><span class="fi-icon">✕</span>إغلاق الأداة</button>\
+<div class="ez-float-card">\
+    <div class="ez-dur-row">\
+      <div class="ez-dur-col wide">\
+        <div class="ez-dur-label">الأشهر</div>\
+        <div class="ez-seg-group">\
+          <button class="ez-seg '+(_m===1?'active':'')+'" onclick="window.ezSelect(this,\'m\',1)">1</button>\
+          <button class="ez-seg '+(_m===2?'active':'')+'" onclick="window.ezSelect(this,\'m\',2)">2</button>\
+          <button class="ez-seg '+(_m===3?'active':'')+'" onclick="window.ezSelect(this,\'m\',3)">3</button>\
+        </div>\
+      </div>\
+      <div class="ez-dur-divider"></div>\
+      <div class="ez-dur-col">\
+        <div class="ez-dur-label">الأيام</div>\
+        <div class="ez-seg-group">\
+          <button class="ez-seg '+(_t===28?'active':'')+'" onclick="window.ezSelect(this,\'t\',28)">28</button>\
+          <button class="ez-seg '+(_t===30?'active':'')+'" onclick="window.ezSelect(this,\'t\',30)">30</button>\
+        </div>\
+      </div>\
+    </div>\
+  </div>\
+<div class="ez-content">\
+  <div class="ez-tog-grid">\
+    <button class="ez-tog-btn '+(_ad?'on':'')+'" style="--tc:#3b82f6" onclick="var cb=document.getElementById(\'auto-duration\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
+      <input type="checkbox" id="auto-duration" '+(_ad?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">✨</span><span class="ez-tog-lbl">استخراج تلقائي</span><span class="ez-tog-dot"></span>\
+    </button>\
+    <button class="ez-tog-btn '+(_sw?'on':'')+'" style="--tc:#f59e0b" onclick="var cb=document.getElementById(\'show-warnings\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
+      <input type="checkbox" id="show-warnings" '+(_sw?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">⚠️</span><span class="ez-tog-lbl">تحذيرات</span><span class="ez-tog-dot"></span>\
+    </button>\
+    <button class="ez-tog-btn '+(_rm?'on':'')+'" style="--tc:#10b981" onclick="var cb=document.getElementById(\'ramadan-mode\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked);var card=document.getElementById(\'ez-rm-card\');if(card)card.style.display=cb.checked?\'block\':\'none\'">\
+      <input type="checkbox" id="ramadan-mode" '+(_rm?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">🌙</span><span class="ez-tog-lbl">رمضان</span><span class="ez-tog-dot"></span>\
+    </button>\
+    <button class="ez-tog-btn '+(hasDuplicateNotes?'on':'')+'" style="--tc:#6366f1" onclick="var cb=document.getElementById(\'show-post-dialog\');cb.checked=!cb.checked;this.classList.toggle(\'on\',cb.checked)">\
+      <input type="checkbox" id="show-post-dialog" '+(hasDuplicateNotes?'checked':'')+' style="display:none">\
+      <span class="ez-tog-icon">⚙️</span><span class="ez-tog-lbl">خيارات'+(hasDuplicateNotes?' <span class=\"auto-tag\">تقسيم</span>':'')+'</span><span class="ez-tog-dot"></span>\
+    </button>\
+  </div>\
+  <div id="ez-rm-card" style="display:'+(_rm?'block':'none')+';background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:14px;padding:10px 14px;direction:rtl;border:1.5px solid rgba(251,191,36,0.18)">\
+    <div style="display:flex;align-items:center;gap:6px;width:100%">\
+      <span style="font-size:11px;font-weight:800;color:#92400e">باقي</span>\
+      <input type="number" id="ez-rm-days-left" min="1" max="30" value="'+(_rmToday.inRamadan?(_rmAutoLeft||_rmTodayLeft):'')+'" placeholder="?" onclick="this.select()" style="flex:1;text-align:center;padding:6px;border:1.5px solid rgba(251,191,36,0.25);border-radius:10px;font-size:16px;font-weight:900;font-family:Cairo,sans-serif;color:#92400e;background:rgba(255,255,255,0.7)" />\
+      <span style="font-size:11px;font-weight:800;color:#92400e">يوم</span>\
+    </div>\
+    '+(_rmToday.inRamadan?'<div id="ez-rm-info" onclick="var inp=document.getElementById(\'ez-rm-days-left\');inp.value='+(_rmAutoLeft||_rmTodayLeft)+';inp.dispatchEvent(new Event(\'input\'))" style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.12);border-radius:8px;font-size:10px;font-weight:800;color:#059669;text-align:center;cursor:pointer;direction:rtl">📅 اليوم '+_rmDayNum+' رمضان — باقي <strong>'+(_rmAutoLeft||_rmTodayLeft)+'</strong> يوم 👆</div>':(!_rmToday.inRamadan?'<div style="width:100%;margin-top:5px;padding:4px 8px;background:rgba(107,114,128,0.06);border-radius:8px;font-size:9px;font-weight:700;color:#6b7280;text-align:center;direction:rtl">رمضان لم يبدأ بعد</div>':''))+'\
+  </div>\
+  <div id="ez-pack-warning" style="display:none;padding:10px 14px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border:1.5px solid #fca5a5;border-radius:16px;direction:rtl;transition:all 0.3s"></div>\
 </div>\
-<button class="ez-fab-btn" onclick="window.ezFabToggle()" title="أدوات">💊</button>';
-document.body.appendChild(fab);
+<div class="ez-actions">\
+    <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
+    <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
+    <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
+    <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
+    <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+  </div>\
+<div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
 
 document.body.appendChild(d_box);
-/* v146: Input listeners — sync toolbar inputs with data-m/data-t */
-(function(){
-  var mInp=document.getElementById('ez-m-inp');
-  var tInp=document.getElementById('ez-t-inp');
-  if(mInp) mInp.addEventListener('input',function(){var v=parseInt(this.value)||1;d_box.setAttribute('data-m',String(v));try{_renderPackWarningBanner();}catch(e){}});
-  if(tInp) tInp.addEventListener('input',function(){var v=parseInt(this.value)||30;d_box.setAttribute('data-t',String(v));try{_renderPackWarningBanner();}catch(e){}});
-})();
-/* v146: ALL heavy scanning deferred → toolbar opens instantly */
+/* v146: ALL scanning deferred → dialog opens instantly */
 setTimeout(function(){
   try{
     var _dupCheck=scanForDuplicateNotes();
     if(!_dupCheck){var _pnFields=document.querySelectorAll('textarea,input[type="text"]');for(var _pf=0;_pf<_pnFields.length;_pf++){var _pfv=(_pnFields[_pf].value||'').trim();if(_pfv.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv)){_dupCheck=true;break;}}}
     if(_dupCheck){
       hasDuplicateNotes=true;
-      var _togPost=document.getElementById('ez-tog-post');
+      var _togBtn=document.querySelector('.ez-tog-btn[style*="6366f1"]');
       var _togCb=document.getElementById('show-post-dialog');
-      if(_togPost&&!_togPost.classList.contains('on')){_togPost.classList.add('on');if(_togCb)_togCb.checked=true;else{var cb2=document.createElement('input');cb2.type='checkbox';cb2.id='show-post-dialog';cb2.checked=true;cb2.style.display='none';_togPost.appendChild(cb2);}}
+      if(_togBtn&&_togCb&&!_togCb.checked){_togCb.checked=true;_togBtn.classList.add('on');}
     }
     _renderPackWarningBanner();
   }catch(e){console.warn('EZ scan:',e);}
 },80);
 /* Observer: راقب data-t و data-m وأعد رسم التنبيه تلقائياً */
 (function(){var _dlgBox=document.getElementById('ez-dialog-box');if(!_dlgBox)return;var _packObs=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){if(muts[i].attributeName==='data-t'||muts[i].attributeName==='data-m'){try{_renderPackWarningBanner();}catch(e){}break;}}});_packObs.observe(_dlgBox,{attributes:true,attributeFilter:['data-t','data-m']});})();
+/* Pulse effect on primary button */
+setInterval(function(){var btn=document.querySelector('.ez-btn-primary');if(btn){btn.classList.toggle('ez-pulse');}},2000);
 
 document.addEventListener('keydown',function(e){
-  if(e.key==='Enter'){var sub=document.querySelector('.ez-tb-go');if(sub)sub.click();}
+  if(e.key==='Enter'){var sub=document.querySelector('.ez-btn-primary');if(sub)sub.click();}
   else if(e.key==='Escape'){window.ezCancel();}
 });
+
+makeDraggable(d_box);
+/* إضافة حدث input لحقل أيام رمضان */
+(function(){
+  var rmInp=document.getElementById('ez-rm-days-left');
+  var rmPrev=document.getElementById('ez-rm-days-preview');
+  if(rmInp&&rmPrev){
+    rmInp.addEventListener('input',function(){
+      var v=parseInt(this.value)||0;
+      if(v>0&&v<=30)rmPrev.textContent='✅ '+(30-v)+' يوم فات + '+v+' يوم باقي = 30 يوم';
+      else rmPrev.textContent='❌ أدخل رقم بين 1 و 30';
+    });
+  }
+})();
 setTimeout(function(){beautifyPage();showWhatsNew();},100);
 
 /* ☁️ Auto-fetch cloud config */
@@ -5514,7 +5412,6 @@ function extractAndConfirmName(){
         'اعادة','اعاده','إعادة','صرف','الصرف',
         /* للضرورة */
         'للضروره','للضرورة','فرع','لفرع','بالفرع','الفرع',
-        /* v146: كلمات توصيل وعنوان */
         'ارسال','والارسال','الارسال','ايصال','والايصال',
         'محافظة','محافظه','مدينة','مدينه','حي','الحي','حاره','حارة',
         'شقة','شقه','الشقة','الشقه','دور','الدور','عمارة','عماره','العمارة','العماره',
@@ -5666,7 +5563,6 @@ function extractAndConfirmName(){
       var engM=s.match(/(?:باسم|الاسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);
       var _engName=null;
       if(engM&&engM[1]){
-        /* Clean trailing English stop words */
         _engName=engM[1].trim()
           .replace(/\s+(and|or|the|on|to|at|in|for|with|delivery|pharmacy|branch|please|kindly|thanks|thank|you|deliver|send|order)[\s.]*/gi,'')
           .trim();
@@ -5781,11 +5677,11 @@ function extractAndConfirmName(){
           if(!_slashWords[_sw]) continue;
           if(/^0\d{8,}$/.test(_slashWords[_sw])) break;
           if(/^\d{10,}$/.test(_slashWords[_sw])) break;
-          var _swNorm=_ezNormAr(_slashWords[_sw]);
+          var _swNorm=_slashWords[_sw].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').trim();
           if(/^(والتوصيل|التوصيل|توصيل|صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه]|رقم|الرقم|برقم|تواصل|التواصل|للتواصل|جوال|الجوال|بجوال|موبايل|بموبايل|هاتف|بهاتف|بتليفون|واتس|واتساب|برجاء|الرجاء|فرع|بفرع|وتوصيل|وشكرا|شكرا|ملاحظه|ملاحظة)$/i.test(_swNorm)) break;
           if(_slashCleaned.length>0&&/^و/.test(_slashWords[_sw])&&_slashWords[_sw].length>1){
             var _afterW=_slashWords[_sw].substring(1);
-            if(/^(التوصيل|توصيل|شكرا|الصيدلي[ةه]|صيدلي[ةه]|رقم|الرقم|تواصل|التواصل)$/i.test(_ezNormAr(_afterW))) break;
+            if(/^(التوصيل|توصيل|شكرا|الصيدلي[ةه]|صيدلي[ةه]|رقم|الرقم|تواصل|التواصل)$/i.test(_afterW.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه'))) break;
           }
           _slashCleaned.push(_slashWords[_sw]);
         }
