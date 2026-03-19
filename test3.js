@@ -5258,8 +5258,6 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
-    <button class="ez-btn-icon" onclick="window.ezSetupGemini()" title="إعداد الذكاء الاصطناعي">🤖</button>\
-    <button class="ez-btn-icon" onclick="window.ezCloudSettings()" title="الإعدادات السحابية">☁️</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
@@ -5317,11 +5315,15 @@ d_box.innerHTML='\
       <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
       <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
       <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
+      <button class="ez-btn-doses" onclick="window.ezSetupGemini()" title="الذكاء الاصطناعي">🤖</button>\
+      <button class="ez-btn-doses" onclick="window.ezCloudSettings()" title="السحابية">☁️</button>\
       <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
       <button class="ez-btn-doses" onclick="window.ezDiagnose()" title="تشخيص مشاكل">🔍</button>\
+    </div>\
+    <div style="display:flex;gap:7px;width:100%;margin-top:4px">\
+      <button class="ez-btn-primary" style="flex:1" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
       <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
     </div>\
-    <button class="ez-btn-primary" style="width:100%;margin-top:4px" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
   </div>\
 <div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
 
