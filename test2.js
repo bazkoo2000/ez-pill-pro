@@ -1,13 +1,23 @@
 javascript:(function(){
-var APP_VERSION='144.0';
+var APP_VERSION='146.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
-var APP_NAME='EZ_Pill Farmadosis';
+var APP_NAME='ez_pill Jvm';
 
 /* ══════════════════════════════════════════
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '146.0':{    title:'🔧 تحسينات شاملة + دقة محلية',    features:[      {icon:'🚫',text:'عند الحاجة/اللزوم/PRN: يُزال تلقائياً مثل الثلاجة'},      {icon:'🕐',text:'أوقات سعودية جديدة: الضحى/الفجر/بعد صلاة'},      {icon:'⚡',text:'تسريع فتح الدايلوج + تأخير فحص الجدول'},      {icon:'🔤',text:'توحيد تطبيع النصوص العربية في دالة واحدة'},      {icon:'👤',text:'كلمات توقف إضافية لاستخلاص الاسم'},      {icon:'🔧',text:'استبدال أوقات مكتوبة بـ NORMAL_TIMES'}    ]  },
+  '145.0':{
+    title:'🧠 ذكاء استخلاص الاسم + دقة جيميناي',
+    features:[
+      {icon:'🤖',text:'إصلاح أوقات جيميناي: بعد الفطار=9:00 صح (كان 9:30)'},
+      {icon:'👤',text:'استخلاص الاسم الذكي: يوقف عند صيدلية/رقم/توصيل'},
+      {icon:'📱',text:'كشف أرقام التليفون: يوقف جمع الاسم فوراً'},
+      {icon:'🔤',text:'تفريق على الاسم (على الباز) من على حرف الجر (على الرقم)'}
+    ]
+  },
   '144.0':{
     title:'💊 دعم العبوة 56 تلقائياً',
     features:[
@@ -45,23 +55,25 @@ var CHANGELOG={
 
 /* ── helpers: read/write version from localStorage + cookie fallback ── */
 function _ezGetSeenVersion(){
+  if(window._ezWhatsNewShown===APP_VERSION) return APP_VERSION;
   try{
-    var ls=localStorage.getItem('ez_pill_version');
+    var ls=localStorage.getItem('ez_pill_seen_ver');
     if(ls) return ls;
+    var oldLs=localStorage.getItem('ez_pill_version');
+    if(oldLs){localStorage.setItem('ez_pill_seen_ver',oldLs);try{localStorage.removeItem('ez_pill_version');}catch(e){}return oldLs;}
   }catch(e){}
-  /* cookie fallback */
   try{
-    var m=document.cookie.match(/(?:^|;\s*)ez_pill_version=([^;]+)/);
+    var m=document.cookie.match(/(?:^|;\s*)ez_pill_seen_ver=([^;]+)/);
     if(m) return decodeURIComponent(m[1]);
   }catch(e){}
   return null;
 }
 function _ezSetSeenVersion(v){
-  try{localStorage.setItem('ez_pill_version',v);}catch(e){}
-  /* also set cookie with 1-year expiry as fallback */
+  window._ezWhatsNewShown=v;
+  try{localStorage.setItem('ez_pill_seen_ver',v);}catch(e){}
   try{
     var exp=new Date();exp.setFullYear(exp.getFullYear()+1);
-    document.cookie='ez_pill_version='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
+    document.cookie='ez_pill_seen_ver='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
   }catch(e){}
 }
 
@@ -72,6 +84,9 @@ function showWhatsNew(){
     var info=CHANGELOG[APP_VERSION];
     /* No changelog entry for this version → silently mark as seen and skip */
     if(!info){_ezSetSeenVersion(APP_VERSION);return;}
+
+    /* v146: Mark as seen IMMEDIATELY */
+    _ezSetSeenVersion(APP_VERSION);
 
     /* Build features HTML */
     var featuresHtml='';
@@ -114,8 +129,6 @@ function showWhatsNew(){
     .ez-wn-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}\
     .ez-wn-btn::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transition:0.5s}\
     .ez-wn-btn:hover::after{left:100%}\
-    .ez-wn-skip{display:block;text-align:center;margin-top:8px;font-size:11px;font-weight:700;color:#a5b4fc;cursor:pointer;font-family:Cairo,sans-serif;transition:color 0.2s;background:none;border:none;width:100%}\
-    .ez-wn-skip:hover{color:#6366f1}\
     </style>\
     <div class="ez-wn-card">\
       <div class="ez-wn-confetti" id="ez-wn-confetti"></div>\
@@ -130,7 +143,6 @@ function showWhatsNew(){
       </div>\
       <div class="ez-wn-footer">\
         <button class="ez-wn-btn" id="ez-wn-ok">تمام، يلا نبدأ 🚀</button>\
-        <button class="ez-wn-skip" id="ez-wn-skip">عدم الإظهار لهذا التحديث</button>\
       </div>\
     </div>';
     document.body.appendChild(overlay);
@@ -147,12 +159,10 @@ function showWhatsNew(){
 
     /* Close handlers */
     function closeWN(){
-      _ezSetSeenVersion(APP_VERSION);
       overlay.style.animation='ezWnFadeIn 0.3s ease reverse';
       setTimeout(function(){overlay.remove();},300);
     }
     document.getElementById('ez-wn-ok').addEventListener('click',closeWN);
-    document.getElementById('ez-wn-skip').addEventListener('click',closeWN);
     overlay.addEventListener('click',function(e){if(e.target===overlay)closeWN();});
   }catch(e){
     /* localStorage not available or error - skip silently */
@@ -225,116 +235,7 @@ function ezBeep(type){
    🤖 GEMINI AI FALLBACK - للجرعات غير المفهومة فقط
    لا يتم إرسال أي بيانات شخصية — فقط نص الجرعة
    ══════════════════════════════════════════ */
-function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}
-
-
-/* ══════════════════════════════════════════
-   AI PROVIDER SELECTION (Gemini / Groq)
-   ══════════════════════════════════════════ */
-function _ezGetAIProvider(){
-  try{ return localStorage.getItem('ez_ai_provider') || 'gemini'; }
-  catch(e){ return 'gemini'; }
-}
-function _ezSetAIProvider(p){
-  try{ localStorage.setItem('ez_ai_provider', p); } catch(e){}
-}
-
-function _ezGetGroqKey(){
-  try{ return localStorage.getItem('ez_groq_key') || ''; } catch(e){ return ''; }
-}
-function _ezSetGroqKey(k){
-  try{ localStorage.setItem('ez_groq_key', k); } catch(e){}
-}
-
-function _ezGetGroqModel(){
-  try{ return localStorage.getItem('ez_groq_model') || 'mixtral-8x7b-32768'; } catch(e){ return 'mixtral-8x7b-32768'; }
-}
-function _ezSetGroqModel(m){
-  try{ localStorage.setItem('ez_groq_model', m); } catch(e){}
-}
-
-async function _ezGroqBatch(notes){
-  var key = _ezGetGroqKey();
-  if(!key || notes.length===0){ console.log('🤖 Groq: no key or empty notes'); return []; }
-  console.log('🤖 Groq: sending '+notes.length+' notes to Groq (model: '+_ezGetGroqModel()+')...');
-  
-  var prompt = _GEMINI_PROMPT + '\n\nParse ALL notes below. Return ONLY a JSON ARRAY (no markdown). One object per note, same order.\nIMPORTANT: ALWAYS provide startTime and every fields. If unsure, make your best guess.\n\n';
-  for(var i=0; i<notes.length; i++) prompt += (i+1) + '. "' + notes[i] + '"\n';
-  
-  var model = _ezGetGroqModel();
-  var url = 'https://api.groq.com/openai/v1/chat/completions';
-  
-  var body = {
-    model: model,
-    messages: [
-      { role: 'system', content: 'You are a pharmacy dose interpreter. Return valid JSON only.' },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.1,
-    max_tokens: 2048,
-    response_format: { type: 'json_object' }
-  };
-  
-  var resp = null;
-  for(var _retry=0; _retry<3; _retry++){
-    try{
-      resp = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + key
-        },
-        body: JSON.stringify(body)
-      });
-    } catch(e){
-      console.log('🤖 Groq fetch error on attempt '+(_retry+1)+':', e);
-      if(_retry===2) throw e;
-      continue;
-    }
-    console.log('🤖 Groq attempt '+(_retry+1)+': status='+resp.status);
-    if(resp.status !== 429) break;
-    if(_retry<2){ console.log('🤖 Groq rate limited, waiting 3s...'); await new Promise(r => setTimeout(r,3000)); }
-  }
-  
-  if(!resp || !resp.ok){
-    var errText = resp ? await resp.text() : 'No response';
-    console.error('🤖 Groq API Error:', errText);
-    throw new Error('Groq API '+(resp?resp.status:'?')+': '+(errText||'').substring(0,100));
-  }
-  
-  var data = await resp.json();
-  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if(!content){
-    console.error('🤖 Groq no content in response', data);
-    throw new Error('Groq returned empty response');
-  }
-  
-  var text = content.replace(/\`\`\`json|\`\`\`/g, '').trim();
-  console.log('🤖 Groq extracted text:', text);
-  
-  /* Try parsing — if truncated, try to fix */
-  var parsed;
-  try{ parsed = JSON.parse(text); } catch(pe){
-    console.warn('🤖 Groq JSON parse failed, trying to fix truncated response...');
-    var fixed = text;
-    if(!fixed.endsWith(']')) fixed += '}]';
-    else if(!fixed.endsWith('}')) fixed += '}';
-    try{ parsed = JSON.parse(fixed); } catch(pe2){
-      var objs = [];
-      var re = /\{[^{}]*"count"\s*:\s*\d[^{}]*\}/g;
-      var m;
-      while((m = re.exec(text)) !== null){
-        try{ objs.push(JSON.parse(m[0])); } catch(e3){}
-      }
-      if(objs.length > 0){ parsed = objs; console.log('🤖 Groq recovered '+objs.length+' objects from truncated JSON'); }
-      else { throw new Error('Cannot parse Groq response'); }
-    }
-  }
-  
-  if(!Array.isArray(parsed)) parsed = [parsed];
-  return parsed;
-}
-catch(e){return '';}}
+function _ezGetGeminiKey(){try{return localStorage.getItem('ez_gemini_key')||'';}catch(e){return '';}}
 function _ezGetGeminiModel(){try{return localStorage.getItem('ez_gemini_model')||'gemini-flash-latest';}catch(e){return 'gemini-flash-latest';}}
 function _ezSetGeminiModel(m){try{localStorage.setItem('ez_gemini_model',m);}catch(e){}}
 function _ezSetGeminiKey(k){try{localStorage.setItem('ez_gemini_key',k);}catch(e){}}
@@ -412,215 +313,133 @@ async function _ezGeminiBatch(notes){
 }
 
 /* UI: Setup Gemini key (called from settings) */
-window.
-/* ══════════════════════════════════════════
-   🤖 AI SETUP UI (Gemini + Groq)
-   ══════════════════════════════════════════ */
-window.ezSetupAI = function(){
-  try{
-    var currentProvider = _ezGetAIProvider();
-    var geminiKey = _ezGetGeminiKey();
-    var geminiModel = _ezGetGeminiModel();
-    var groqKey = _ezGetGroqKey();
-    var groqModel = _ezGetGroqModel();
+window.ezSetupGemini=function(){
+  var current=_ezGetGeminiKey();
+  var masked=current?String.fromCharCode(8226).repeat(20)+current.slice(-6):'لم يتم التعيين';
+  var statusColor=current?'#059669':'#dc2626';
+  var statusText=current?'✅ مفعّل ('+_ezGetGeminiModel()+')':'❌ غير مفعّل';
+  var overlay=document.createElement('div');
+  overlay.id='ez-gemini-setup';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+  var card=document.createElement('div');
+  card.style.cssText='width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
+  /* Header */
+  var hdr=document.createElement('div');
+  hdr.style.cssText='padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
+  hdr.innerHTML='<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">جيميناي — لفهم الجرعات غير المعروفة</div></div>';
+  card.appendChild(hdr);
+  /* Body */
+  var body=document.createElement('div');
+  body.style.cssText='padding:16px 22px;direction:rtl';
+  body.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">الحالة: <b style="color:'+statusColor+'">'+statusText+'</b></div><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:8px">'+masked+'</div>';
+  /* Model selector */
+  var modelLabel=document.createElement('div');
+  modelLabel.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';
+  modelLabel.textContent='الموديل:';
+  body.appendChild(modelLabel);
+  var modelSel=document.createElement('select');
+  modelSel.id='ez-gemini-model-select';
+  modelSel.style.cssText='width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box';
+  var models=[
+    {value:'gemini-flash-latest',label:'gemini-flash-latest (المستقر ✅)'},
+    {value:'gemini-flash-lite-latest',label:'gemini-flash-lite-latest (خفيف)'},
+    {value:'gemini-2.5-flash',label:'gemini-2.5-flash (الأحدث)'},
+    {value:'gemini-2.5-flash-lite',label:'gemini-2.5-flash-lite (سريع)'},
+    {value:'gemini-2.0-flash',label:'gemini-2.0-flash'},
+    {value:'gemini-2.0-flash-001',label:'gemini-2.0-flash-001'},
+    {value:'gemini-2.0-flash-lite-001',label:'gemini-2.0-flash-lite-001'},
+    {value:'gemini-3-flash-preview',label:'gemini-3-flash-preview (تجريبي)'},
+    {value:'gemini-pro-latest',label:'gemini-pro-latest (متقدم)'},
+    {value:'gemini-2.5-pro',label:'gemini-2.5-pro (متقدم)'}
+  ];
+  var currentModel=_ezGetGeminiModel();
+  for(var mi=0;mi<models.length;mi++){
+    var opt=document.createElement('option');
+    opt.value=models[mi].value;opt.textContent=models[mi].label;
+    if(models[mi].value===currentModel) opt.selected=true;
+    modelSel.appendChild(opt);
+  }
+  body.appendChild(modelSel);
 
-    var maskedGemini = geminiKey ? '•'.repeat(20) + geminiKey.slice(-6) : 'لم يتم التعيين';
-    var maskedGroq = groqKey ? '•'.repeat(20) + groqKey.slice(-6) : 'لم يتم التعيين';
-
-    var overlay = document.createElement('div');
-    overlay.id = 'ez-ai-setup';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
-
-    var card = document.createElement('div');
-    card.style.cssText = 'width:480px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(99,102,241,0.2);border:2px solid rgba(129,140,248,0.12)';
-
-    /* Header */
-    var hdr = document.createElement('div');
-    hdr.style.cssText = 'padding:18px 22px;border-bottom:1px solid rgba(129,140,248,0.08);display:flex;align-items:center;gap:10px';
-    hdr.innerHTML = '<div style="font-size:24px">🤖</div><div><div style="font-size:15px;font-weight:900;color:#1e1b4b">إعداد الذكاء الاصطناعي</div><div style="font-size:10px;font-weight:700;color:#64748b">اختر المزود وأدخل المفتاح</div></div>';
-    card.appendChild(hdr);
-
-    /* Tabs */
-    var tabsDiv = document.createElement('div');
-    tabsDiv.style.cssText = 'display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid rgba(129,140,248,0.08)';
-    tabsDiv.innerHTML = `
-      <button class="ez-ai-tab" data-provider="gemini" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='gemini'?'linear-gradient(145deg,#6366f1,#4f46e5)':'rgba(148,163,184,0.08)'};color:${currentProvider==='gemini'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Gemini</button>
-      <button class="ez-ai-tab" data-provider="groq" style="flex:1;padding:8px 0;border:none;border-radius:8px 8px 0 0;background:${currentProvider==='groq'?'linear-gradient(145deg,#10b981,#059669)':'rgba(148,163,184,0.08)'};color:${currentProvider==='groq'?'#fff':'#64748b'};font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">Groq</button>
-    `;
-    card.appendChild(tabsDiv);
-
-    /* Panels container */
-    var panelsDiv = document.createElement('div');
-    panelsDiv.style.cssText = 'padding:16px 22px';
-
-    /* Gemini Panel */
-    var geminiPanel = document.createElement('div');
-    geminiPanel.className = 'ez-ai-panel';
-    geminiPanel.style.display = currentProvider==='gemini' ? 'block' : 'none';
-    geminiPanel.innerHTML = `
-      <div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:${geminiKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${geminiKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
-          <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGemini}</span>
-        </div>
-        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
-        <select id="ez-gemini-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
-          <option value="gemini-flash-latest" ${geminiModel==='gemini-flash-latest'?'selected':''}>gemini-flash-latest (المستقر ✅)</option>
-          <option value="gemini-flash-lite-latest" ${geminiModel==='gemini-flash-lite-latest'?'selected':''}>gemini-flash-lite-latest (خفيف)</option>
-          <option value="gemini-2.5-flash" ${geminiModel==='gemini-2.5-flash'?'selected':''}>gemini-2.5-flash (الأحدث)</option>
-          <option value="gemini-2.5-flash-lite" ${geminiModel==='gemini-2.5-flash-lite'?'selected':''}>gemini-2.5-flash-lite (سريع)</option>
-          <option value="gemini-2.0-flash" ${geminiModel==='gemini-2.0-flash'?'selected':''}>gemini-2.0-flash</option>
-          <option value="gemini-2.0-flash-001" ${geminiModel==='gemini-2.0-flash-001'?'selected':''}>gemini-2.0-flash-001</option>
-          <option value="gemini-2.0-flash-lite-001" ${geminiModel==='gemini-2.0-flash-lite-001'?'selected':''}>gemini-2.0-flash-lite-001</option>
-          <option value="gemini-3-flash-preview" ${geminiModel==='gemini-3-flash-preview'?'selected':''}>gemini-3-flash-preview (تجريبي)</option>
-          <option value="gemini-pro-latest" ${geminiModel==='gemini-pro-latest'?'selected':''}>gemini-pro-latest (متقدم)</option>
-          <option value="gemini-2.5-pro" ${geminiModel==='gemini-2.5-pro'?'selected':''}>gemini-2.5-pro (متقدم)</option>
-        </select>
-        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
-        <input type="password" id="ez-gemini-key-input" placeholder="الصق مفتاح Gemini API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
-        <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
-          🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
-          📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>
-        </div>
-      </div>
-    `;
-    panelsDiv.appendChild(geminiPanel);
-
-    /* Groq Panel */
-    var groqPanel = document.createElement('div');
-    groqPanel.className = 'ez-ai-panel';
-    groqPanel.style.display = currentProvider==='groq' ? 'block' : 'none';
-    groqPanel.innerHTML = `
-      <div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الحالة:</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:${groqKey?'#10b981':'#dc2626'};color:#fff;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800">${groqKey?'✅ مفعّل':'❌ غير مفعّل'}</span>
-          <span style="font-size:10px;color:#94a3b8;direction:ltr">${maskedGroq}</span>
-        </div>
-        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">الموديل:</div>
-        <select id="ez-groq-model-select" style="width:100%;padding:8px 12px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;margin-bottom:10px;direction:ltr;outline:none;box-sizing:border-box">
-          <option value="mixtral-8x7b-32768" ${groqModel==='mixtral-8x7b-32768'?'selected':''}>Mixtral 8x7B (سريع)</option>
-          <option value="llama2-70b-4096" ${groqModel==='llama2-70b-4096'?'selected':''}>Llama 2 70B (دقيق)</option>
-          <option value="gemma2-9b-it" ${groqModel==='gemma2-9b-it'?'selected':''}>Gemma 2 9B (خفيف)</option>
-          <option value="llama3-70b-8192" ${groqModel==='llama3-70b-8192'?'selected':''}>Llama 3 70B (أحدث)</option>
-        </select>
-        <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">مفتاح API:</div>
-        <input type="password" id="ez-groq-key-input" placeholder="الصق مفتاح Groq API هنا" value="" style="width:100%;padding:10px 14px;border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box">
-        <div style="font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px">
-          🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>
-          📎 <a href="https://console.groq.com/keys" target="_blank" style="color:#10b981;text-decoration:underline">احصل على مفتاح مجاني من Groq Console</a>
-        </div>
-      </div>
-    `;
-    panelsDiv.appendChild(groqPanel);
-    card.appendChild(panelsDiv);
-
-    /* Buttons */
-    var foot = document.createElement('div');
-    foot.style.cssText = 'padding:10px 22px 16px;display:flex;gap:8px;flex-wrap:wrap';
-
-    var saveBtn = document.createElement('button');
-    saveBtn.textContent = '💾 حفظ';
-    saveBtn.style.cssText = 'flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
-    saveBtn.addEventListener('click', function(){
-      try{
-        var provider = currentProvider;
-        if(provider === 'gemini'){
-          var key = document.getElementById('ez-gemini-key-input').value.trim();
-          var model = document.getElementById('ez-gemini-model-select').value;
-          _ezSetGeminiModel(model);
-          if(key) _ezSetGeminiKey(key);
-          window.ezShowToast('✅ تم حفظ إعدادات Gemini','success');
-        } else {
-          var key = document.getElementById('ez-groq-key-input').value.trim();
-          var model = document.getElementById('ez-groq-model-select').value;
-          _ezSetGroqModel(model);
-          if(key) _ezSetGroqKey(key);
-          window.ezShowToast('✅ تم حفظ إعدادات Groq','success');
-        }
-        _ezSetAIProvider(provider);
-        overlay.remove();
-      } catch(e){ console.warn('EZ save error',e); }
+  var keyLabel=document.createElement('div');
+  keyLabel.style.cssText='font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px';
+  keyLabel.textContent='مفتاح API:';
+  body.appendChild(keyLabel);
+  var inp=document.createElement('input');
+  inp.id='ez-gemini-key-input';inp.type='password';inp.placeholder='الصق مفتاح Gemini API هنا';
+  inp.style.cssText='width:100%;padding:10px 14px;border:1.5px solid rgba(129,140,248,0.2);border-radius:10px;font-size:13px;font-weight:700;font-family:Cairo,sans-serif;direction:ltr;text-align:left;outline:none;margin-bottom:8px;box-sizing:border-box';
+  body.appendChild(inp);
+  var info=document.createElement('div');
+  info.style.cssText='font-size:9px;font-weight:600;color:#94a3b8;line-height:1.6;margin-bottom:12px';
+  info.innerHTML='🔒 المفتاح يُحفظ في متصفحك فقط — فقط نص الجرعة يتم إرساله<br>📎 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6366f1;text-decoration:underline">احصل على مفتاح مجاني من Google AI Studio</a>';
+  body.appendChild(info);
+  card.appendChild(body);
+  /* Buttons */
+  var foot=document.createElement('div');
+  foot.style.cssText='padding:10px 22px 16px;display:flex;gap:8px';
+  var saveBtn=document.createElement('button');
+  saveBtn.textContent='💾 حفظ';
+  saveBtn.style.cssText='flex:1;height:40px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669)';
+  saveBtn.addEventListener('click',function(){
+    var k=document.getElementById('ez-gemini-key-input').value.trim();
+    var selModel=document.getElementById('ez-gemini-model-select').value;
+    _ezSetGeminiModel(selModel);
+    if(k){_ezSetGeminiKey(k);window.ezShowToast('✅ تم حفظ المفتاح ('+selModel+')','success');overlay.remove();}
+    else if(current){_ezSetGeminiModel(selModel);window.ezShowToast('✅ تم تغيير الموديل إلى '+selModel,'success');overlay.remove();}
+    else{window.ezShowToast('❌ ادخل المفتاح','error');}
+  });
+  foot.appendChild(saveBtn);
+  /* زر حذف — يظهر فقط لو فيه مفتاح محفوظ */
+  if(current){
+    var delBtn=document.createElement('button');
+    delBtn.textContent='🗑️ حذف';
+    delBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#dc2626;background:rgba(239,68,68,0.04)';
+    delBtn.addEventListener('click',function(){
+      _ezSetGeminiKey('');window.ezShowToast('تم حذف المفتاح','info');overlay.remove();
     });
-    foot.appendChild(saveBtn);
-
-    var cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'إلغاء';
-    cancelBtn.style.cssText = 'height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
-    cancelBtn.addEventListener('click', function(){ overlay.remove(); });
-    foot.appendChild(cancelBtn);
-
-    var testBtn = document.createElement('button');
-    testBtn.textContent = '🧪 اختبار الاتصال';
-    testBtn.style.cssText = 'width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
-    testBtn.addEventListener('click', function(){
-      try{
-        var provider = currentProvider;
-        if(provider === 'gemini'){
-          var key = document.getElementById('ez-gemini-key-input').value.trim() || _ezGetGeminiKey();
-          if(!key){ window.ezShowToast('❌ أدخل مفتاح Gemini أولاً','error'); return; }
-          var model = document.getElementById('ez-gemini-model-select').value;
-          testBtn.textContent = '⏳ جاري الاختبار (Gemini)...'; testBtn.disabled = true;
-          fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+key, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({contents:[{parts:[{text:'Return JSON: {"test":"ok"}'}]}], generationConfig:{responseMimeType:'application/json'}})
-          }).then(r=>r.json()).then(d=>{
-            testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
-            window.ezShowToast('✅ Gemini يعمل','success');
-          }).catch(e=>{
-            testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
-            window.ezShowToast('❌ خطأ: '+e.message,'error');
-          });
-        } else {
-          var key = document.getElementById('ez-groq-key-input').value.trim() || _ezGetGroqKey();
-          if(!key){ window.ezShowToast('❌ أدخل مفتاح Groq أولاً','error'); return; }
-          var model = document.getElementById('ez-groq-model-select').value;
-          testBtn.textContent = '⏳ جاري الاختبار (Groq)...'; testBtn.disabled = true;
-          fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method:'POST',
-            headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+key},
-            body:JSON.stringify({model:model, messages:[{role:'user', content:'Return JSON: {"test":"ok"}'}], temperature:0.1, max_tokens:50})
-          }).then(r=>r.json()).then(d=>{
-            testBtn.textContent = '✅ ناجح'; testBtn.disabled = false;
-            window.ezShowToast('✅ Groq يعمل','success');
-          }).catch(e=>{
-            testBtn.textContent = '❌ فشل'; testBtn.disabled = false;
-            window.ezShowToast('❌ خطأ: '+e.message,'error');
-          });
-        }
-      } catch(e){ console.warn('EZ test error',e); }
+    foot.appendChild(delBtn);
+  }
+  /* زر إلغاء — يظهر دائماً */
+  var cancelBtn=document.createElement('button');
+  cancelBtn.textContent='إلغاء';
+  cancelBtn.style.cssText='height:40px;padding:0 16px;border:1px solid rgba(148,163,184,0.2);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#64748b;background:#fff';
+  cancelBtn.addEventListener('click',function(){overlay.remove();});
+  foot.appendChild(cancelBtn);
+  /* Test button */
+  var testBtn=document.createElement('button');
+  testBtn.textContent='🧪 اختبار الاتصال';
+  testBtn.style.cssText='width:100%;height:36px;border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#6366f1;background:rgba(99,102,241,0.04);margin-top:8px';
+  testBtn.addEventListener('click',function(){
+    var testKey=document.getElementById('ez-gemini-key-input').value.trim()||_ezGetGeminiKey();
+    if(!testKey){window.ezShowToast('❌ ادخل المفتاح أولاً','error');return;}
+    var selModel=document.getElementById('ez-gemini-model-select').value;
+    testBtn.textContent='⏳ جاري الاختبار ('+selModel+')...';testBtn.disabled=true;
+    testBtn.style.color='#6366f1';testBtn.style.borderColor='rgba(99,102,241,0.2)';
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/'+selModel+':generateContent?key='+testKey,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'You are a pharmacy dose interpreter. Parse this dose: "twice daily after meals". Return JSON: {"count":2,"startTime":"09:00","every":12,"isBefore":false,"dose":1,"confidence":"high","readable_ar":"مرتين بعد الأكل"}'}]}],generationConfig:{temperature:0.1,maxOutputTokens:512,responseMimeType:'application/json'}})
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(data){
+      var text=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text)||'';
+      testBtn.textContent='✅ ناجح ('+selModel+') — اضغط لإعادة الاختبار';testBtn.style.color='#059669';testBtn.style.borderColor='#059669';testBtn.disabled=false;
+      window.ezShowToast('✅ جيميناي يعمل! الرد: '+text.substring(0,60),'success');
+      console.log('🤖 Test response:',text);
+    }).catch(function(err){
+      testBtn.textContent='❌ فشل — غيّر الموديل واضغط للإعادة';testBtn.style.color='#dc2626';testBtn.style.borderColor='#dc2626';testBtn.disabled=false;
+      window.ezShowToast('❌ خطأ: '+err.message,'error');
+      console.error('🤖 Test error:',err);
     });
-    foot.appendChild(testBtn);
-
-    card.appendChild(foot);
-    overlay.appendChild(card);
-
-    /* Tab switching */
-    var tabs = overlay.querySelectorAll('.ez-ai-tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', function(){
-        var prov = this.getAttribute('data-provider');
-        currentProvider = prov;
-        tabs.forEach(t => {
-          t.style.background = 'rgba(148,163,184,0.08)';
-          t.style.color = '#64748b';
-        });
-        this.style.background = prov==='gemini' ? 'linear-gradient(145deg,#6366f1,#4f46e5)' : 'linear-gradient(145deg,#10b981,#059669)';
-        this.style.color = '#fff';
-        overlay.querySelectorAll('.ez-ai-panel').forEach(p => p.style.display = 'none');
-        overlay.querySelector(prov==='gemini' ? '.ez-ai-panel:first-child' : '.ez-ai-panel:last-child').style.display = 'block';
-      });
-    });
-
-    overlay.addEventListener('click', function(e){ if(e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-    if(currentProvider === 'gemini') document.getElementById('ez-gemini-key-input').focus();
-    else document.getElementById('ez-groq-key-input').focus();
-  } catch(e){ console.warn('EZ setupAI error',e); }
+  });
+  body.appendChild(testBtn);
+  card.appendChild(foot);
+  overlay.appendChild(card);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+  inp.focus();
 };
-;
 
 
 /* ══════════════════════════════════════════
@@ -948,7 +767,7 @@ var _defaultFixedSizeCodes={
   '103683617':30
 };
 var _defaultWeeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
-var _defaultNormalTimes={empty:'07:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:30',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'15:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:30',bed:'22:00',defaultTime:'09:00'};
+var _defaultNormalTimes={empty:'08:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:00',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'14:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:00',bed:'22:00',defaultTime:'09:00'};
 var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00',afterTarawih:'23:00'};
 
 /* Merge defaults with custom overrides */
@@ -1357,6 +1176,20 @@ function _ezNormL(txt){
     .trim();
 }
 
+/* ══ v146: Unified Arabic Normalization ══ */
+function _ezNormAr(txt){
+  return(txt||'').toLowerCase()
+    .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي')
+    .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
+    .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
+    .replace(/\s+/g,' ').trim();
+}
+
+function _ezIsPRN(note){
+  var s=_ezNormAr(note);
+  return /عند\s*(الحاج[ةه]|اللزوم|الضرور[ةه]|الالم|الازوم|اللازوم)|حسب\s*(الحاج[ةه]|اللزوم)|وقت\s*(الحاج[ةه]|الالم|اللزوم)|prn|p\.r\.n|as\s*needed|when\s*needed|sos|if\s*needed|on\s*demand|pro\s*re\s*nata/i.test(s);
+}
+
 function _ezGet(td){
   if(!td) return '';
   var i=td.querySelector('input,textarea,select');
@@ -1491,6 +1324,41 @@ window.ezShowToast=function(msg,type){
 window.ezCancel=function(){
   var d=document.getElementById('ez-dialog-box');
   if(d) d.remove();
+};
+
+/* ══ v146: أداة تشخيص المشاكل ══ */
+window.ezDiagnose=function(){
+  var html='<div style="direction:rtl;font-family:Cairo,sans-serif;max-height:70vh;overflow-y:auto;padding:10px">';
+  html+='<h3 style="color:#4f46e5;margin:0 0 10px">🔍 تقرير التشخيص</h3>';
+  html+='<div style="background:#f0fdf4;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bbf7d0">';
+  html+='<b style="color:#166534">📦 الإعدادات المحفوظة:</b><br>';
+  try{var s=localStorage.getItem('ez_pill_settings');var sObj=s?JSON.parse(s):{};html+='أشهر: <b>'+(sObj.m||'?')+'</b> | أيام: <b>'+(sObj.t||'?')+'</b> | رمضان: <b>'+(sObj.ramadanMode?'مفعّل':'معطّل')+'</b>';}catch(e){html+='خطأ';}
+  html+='</div>';
+  html+='<div style="background:#eff6ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bfdbfe">';
+  html+='<b style="color:#1e40af">⚙️ أكواد مخصصة:</b><br>';
+  try{var c=localStorage.getItem('ez_pill_custom');var cObj=c?JSON.parse(c):{};if(cObj.fixedSizeCodes&&Object.keys(cObj.fixedSizeCodes).length>0){for(var k in cObj.fixedSizeCodes)html+='كود <b>'+k+'</b> ← حجم <b>'+cObj.fixedSizeCodes[k]+'</b><br>';}else{html+='لا يوجد';}if(cObj.removedCodes&&cObj.removedCodes.length>0)html+='<br>محذوفة: '+cObj.removedCodes.join(' , ');}catch(e){html+='خطأ';}
+  html+='</div>';
+  html+='<div style="background:#fefce8;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #fef08a">';
+  html+='<b style="color:#854d0e">📋 أصناف الجدول:</b><br>';
+  try{var tb=null;var allTb=document.querySelectorAll('table');for(var i=0;i<allTb.length;i++){var txt=allTb[i].innerText.toLowerCase();if(txt.indexOf('code')>-1&&txt.indexOf('name')>-1){tb=allTb[i];break;}}
+  if(tb){var hdr=tb.querySelectorAll('tr')[0];var ths=hdr?hdr.querySelectorAll('th,td'):[];var ci=-1,ni=-1,si=-1,noti=-1;for(var h=0;h<ths.length;h++){var ht=ths[h].textContent.trim().toLowerCase();if(ht.indexOf('code')>-1)ci=h;if(ht.indexOf('name')>-1)ni=h;if(ht.indexOf('size')>-1||ht.indexOf('qty')>-1)si=h;if(ht.indexOf('note')>-1)noti=h;}
+  var rows=tb.querySelectorAll('tr');for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<3)continue;var code=ci>=0?(_ezGet(tds[ci]).match(/\d+/)||[''])[0]:'';var name=ni>=0?_ezGet(tds[ni]):'';var size=si>=0?_ezGet(tds[si]):'';var note=noti>=0?_ezGet(tds[noti]):'';if(!code&&!name)continue;var pack=_extractPackFromName(name);var isFixed=!!(fixedSizeCodes&&fixedSizeCodes[code]);var fixedVal=isFixed?fixedSizeCodes[code]:null;var isPRN=_ezIsPRN(note);
+  html+='<div style="background:#fff;padding:6px 8px;border-radius:8px;margin:4px 0;border:1px solid #e5e7eb;font-size:12px">';
+  html+='<b>'+code+'</b> | '+name.substring(0,40)+'<br>';
+  html+='الحجم: <b style="color:#dc2626">'+size+'</b>';
+  if(pack)html+=' | عبوة: <b style="color:#7c3aed">'+pack+'</b>';
+  if(isFixed)html+=' | <span style="background:#fbbf24;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:900">ثابت: '+fixedVal+'</span>';
+  if(isPRN)html+=' | <span style="background:#ef4444;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">عند الحاجة</span>';
+  if(note)html+='<br><span style="color:#6b7280;font-size:10px">'+note.substring(0,60)+'</span>';
+  html+='</div>';}}else{html+='لم يتم العثور على الجدول';}}catch(e){html+='خطأ: '+e.message;}
+  html+='</div>';
+  html+='<div style="background:#f5f3ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #ddd6fe">';
+  html+='<b style="color:#5b21b6">ℹ️ معلومات:</b><br>النسخة: <b>'+APP_VERSION+'</b><br>';
+  try{var allKeys=[];for(var ki=0;ki<localStorage.length;ki++){var lk=localStorage.key(ki);if(lk.indexOf('ez_')===0)allKeys.push(lk);}html+='مفاتيح: <b>'+allKeys.join(' , ')+'</b>';}catch(e){}
+  html+='</div></div>';
+  var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;width:500px;max-width:90vw;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)"><div style="padding:16px 20px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-weight:900;font-size:16px;text-align:center;direction:rtl">🔍 تقرير التشخيص</div><div style="padding:12px;overflow-y:auto;max-height:65vh">'+html+'</div><div style="padding:12px;text-align:center;border-top:1px solid #e5e7eb"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:8px 30px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;font-family:Cairo,sans-serif">إغلاق</button></div></div>';
+  document.body.appendChild(ov);
 };
 
 window.ezClosePost=function(){
@@ -1770,12 +1638,14 @@ window.ezPreviewAlerts=function(){
     if(monthMatch) details.push('🗓️ عدد الأشهر: '+monthMatch[1]);
     /* اسم الضيف */
     var namePatterns=[
-      /(?:تغيير\s*(?:ال)?اسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
-      /(?:باسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?))\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:تغيير\s*(?:ال)?اسم?\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:باسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?))\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
       /(?:الاسم\s*(?:يكون|هو)?)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
     ];
     var extractedName=null;
-    for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
+    for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى|برقم|رقم|التواصل|صيدلية|صيدليه).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
+    /* v146: English name fallback */
+    if(!extractedName){var _engPrev=prescNote.match(/(?:باسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);if(_engPrev&&_engPrev[1]){extractedName=_engPrev[1].trim().replace(/\s+(and|or|delivery|pharmacy|branch|please|kindly|thanks|send|order)[\s.]*/gi,'').trim();if(extractedName.length<2)extractedName=null;}}
     if(extractedName) details.push('👤 اسم الضيف: '+extractedName);
     /* صيدلية التوصيل */
     var pharmaMatch=prescNote.match(/(?:صيدلي[ةه]|لصيدلي[ةه]|فرع)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,2})/i);
@@ -3203,86 +3073,20 @@ function extractDayOfWeek(note){
   return null;
 }
 
-
 function extractDuration(note){
-  var s = note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه')
+  var s=note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه')
     .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .trim();
-  
-  var result = { hasDuration: false, days: null, isPRN: false, isUntilFinish: false, original: note };
-  
-  if(/عند الحاجه|عند اللزوم|prn|as\s*needed|when\s*needed|sos|عند الضرورة|if\s*needed|p\.r\.n/i.test(s)){
-    result.isPRN = true; return result;
-  }
-  
-  if(/حتى (نفاد|انتهاء|انهاء|الشفاء)|until\s*(finish|complete|symptom|gone|resolved)|till\s*finish/i.test(s)){
-    result.isUntilFinish = true; return result;
-  }
-  
-  /* أنماط الأيام */
-  var dayPatterns = [
-    {r: /لمده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i, g:1},
-    {r: /مده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i, g:1},
-    {r: /(\d+)\s*(يوم(?!ي)|ايام)\s*فقط/i, g:1},
-    {r: /(\d+)\s*(يوم(?!ي)|ايام)/i, g:1},
-    {r: /(\d+)\s*days?(?!\s*supply)/i, g:1},
-    {r: /for\s*(\d+)\s*days?/i, g:1},
-    {r: /x\s*(\d+)\s*days?/i, g:1},
-    {r: /duration[:s]*(\d+)\s*days?/i, g:1},
-    {r: /(\d+)\s*D/i, g:1}  // "10D" اختصار
-  ];
-  
-  for(var i=0; i<dayPatterns.length; i++){
-    var m = s.match(dayPatterns[i].r);
-    if(m){
-      var _dd = parseInt(m[dayPatterns[i].g]);
-      if(_dd <= 1) continue;
-      result.hasDuration = true;
-      result.days = _dd;
-      return result;
-    }
-  }
-  
-  /* أنماط الأسابيع والشهور */
-  var weekPatterns = [
-    {r: /اسبوع واحد|واحد اسبوع|1\s*اسبوع|one\s*week|1\s*week/i, d:7},
-    {r: /اسبوعين|2\s*اسبوع|two\s*weeks?|2\s*weeks?/i, d:14},
-    {r: /ثلاث(ه)?\s*اسابيع|3\s*اسابيع|three\s*weeks?|3\s*weeks?/i, d:21},
-    {r: /اربع(ه)?\s*اسابيع|4\s*اسابيع|four\s*weeks?|4\s*weeks?/i, d:28},
-    {r: /شهر واحد|واحد شهر|1\s*شهر|one\s*month|1\s*month/i, d:30},
-    {r: /شهرين|2\s*شهر|two\s*months?|2\s*months?/i, d:60},
-    {r: /ثلاث(ه)?\s*اشهر|3\s*اشهر|three\s*months?|3\s*months?/i, d:90},
-    {r: /اربع(ه)?\s*اشهر|4\s*اشهر|four\s*months?|4\s*months?/i, d:120}
-  ];
-  
-  for(var i=0; i<weekPatterns.length; i++){
-    if(weekPatterns[i].r.test(s)){
-      result.hasDuration = true;
-      result.days = weekPatterns[i].d;
-      return result;
-    }
-  }
-  
-  /* أنماط مكتوبة بالأحرف (عشرة أيام) */
-  var wordNumbers = {
-    'واحد':1, 'واحدة':1, 'اثنين':2, 'اثنان':2, 'ثلاث':3, 'ثلاثة':3,
-    'اربع':4, 'اربعة':4, 'أربع':4, 'أربعة':4, 'خمس':5, 'خمسة':5,
-    'ست':6, 'ستة':6, 'سبع':7, 'سبعة':7, 'ثمان':8, 'ثمانية':8,
-    'تسع':9, 'تسعة':9, 'عشر':10, 'عشرة':10
-  };
-  for(var num in wordNumbers){
-    var r = new RegExp(num + '\\s*(ايام|أيام|يوم)', 'i');
-    if(r.test(s)){
-      result.hasDuration = true;
-      result.days = wordNumbers[num];
-      return result;
-    }
-  }
-  
+  var result={hasDuration:false,days:null,isPRN:false,isUntilFinish:false,original:note};
+  if(/عند الحاجه|عند اللزوم|prn|as\s*needed|when\s*needed|sos|عند الضرورة|if\s*needed|p\.r\.n/i.test(s)){result.isPRN=true;return result;}
+  if(/حتى (نفاد|انتهاء|انهاء|الشفاء)|until\s*(finish|complete|symptom|gone|resolved)|till\s*finish/i.test(s)){result.isUntilFinish=true;return result;}
+  var dayPatterns=[{r:/لمده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/مده?\s*(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/(\d+)\s*(يوم(?!ي)|ايام)\s*فقط/i,g:1},{r:/(\d+)\s*(يوم(?!ي)|ايام)/i,g:1},{r:/(\d+)\s*days?(?!\s*supply)/i,g:1},{r:/for\s*(\d+)\s*days?/i,g:1},{r:/x\s*(\d+)\s*days?/i,g:1},{r:/duration[:\s]*(\d+)\s*days?/i,g:1}];
+  for(var i=0;i<dayPatterns.length;i++){var m=s.match(dayPatterns[i].r);if(m){var _dd=parseInt(m[dayPatterns[i].g]);if(_dd<=1)continue;result.hasDuration=true;result.days=_dd;return result;}}
+  var weekPatterns=[{r:/اسبوع واحد|واحد اسبوع|1\s*اسبوع|one\s*week|1\s*week/i,d:7},{r:/اسبوعين|2\s*اسبوع|two\s*weeks?|2\s*weeks?/i,d:14},{r:/ثلاث(ه)?\s*اسابيع|3\s*اسابيع|three\s*weeks?|3\s*weeks?/i,d:21},{r:/اربع(ه)?\s*اسابيع|4\s*اسابيع|four\s*weeks?|4\s*weeks?/i,d:28},{r:/شهر واحد|واحد شهر|1\s*شهر|one\s*month|1\s*month/i,d:30},{r:/شهرين|2\s*شهر|two\s*months?|2\s*months?/i,d:60},{r:/ثلاث(ه)?\s*اشهر|3\s*اشهر|three\s*months?|3\s*months?/i,d:90}];
+  for(var i=0;i<weekPatterns.length;i++){if(weekPatterns[i].r.test(s)){result.hasDuration=true;result.days=weekPatterns[i].d;return result;}}
   return result;
 }
-
 
 function extractHourlyInterval(note){
   var s=note.toLowerCase()
@@ -3343,7 +3147,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-consolidate-btn" onclick="window.ezConsolidateForPrint()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">🖨️ تجميع للطباعة</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-consolidate-btn" onclick="window.ezConsolidateForPrint()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">🖨️ تجميع للطباعة</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">ez_pill Jvm · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -3364,171 +3168,92 @@ function makeDraggable(el){
 /* ══════════════════════════════════════════
    DOSE RECOGNIZER - ENHANCED v2
    ══════════════════════════════════════════ */
-
 function smartDoseRecognizer(note){
-  var raw = note;
+  var raw=note;
   /* Normalize: Arabic chars + Arabic numerals ٠١٢٣٤٥٦٧٨٩ → 0123456789 */
   var s=(note||'').toLowerCase()
     .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي')
     .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
     .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
     .replace(/\s+/g,' ').trim();
-
-  /* Strip duration phrases BEFORE frequency detection */
+  /* FIX v141: Strip duration phrases BEFORE frequency detection
+     "3 شهور" / "3 اشهر" / "30 يوم" = duration, NOT frequency
+     Without this, "بعد الاكل 3 شهور" gets detected as 3 times */
   s=s.replace(/\d+\s*(شهر|شهور|اشهر|شهرين|month|months)/gi,'')
     .replace(/\d+\s*(يوم|ايام|اسبوع|اسابيع|day|days|week|weeks)/gi,'')
     .replace(/لمد[ةه]?\s*\d+/gi,'')
     .replace(/و(قرص|حبه|حبة|كبسوله|كبسولة)/gi,' و ')
     .replace(/(^|\s)(قرص|حبه|حبة|كبسوله|كبسولة|اقراص|حبوب)(\s|$)/gi,'$1$3')
     .replace(/\s+/g,' ').trim();
+  var res={count:1,hasB:false,hasL:false,hasD:false,isBefore:false,hasM:false,hasN:false,hasA:false,hasE:false,hasBed:false,hasEmpty:false,language:'arabic',confidence:'high',rawFrequency:null};
+  res.language=detectLanguage(raw);
 
-  var res = {
-    count: 1,
-    hasB: false, hasL: false, hasD: false, isBefore: false,
-    hasM: false, hasN: false, hasA: false, hasE: false, hasBed: false, hasEmpty: false,
-    language: 'arabic', confidence: 'high', rawFrequency: null
-  };
-  res.language = detectLanguage(raw);
-
-  /* Step 1: Detect meal/time keywords */
-  res.hasB  = /\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار|مع\s*(ال)?(فطار|فطور|افطار)/i.test(s);
-  res.hasL  = /\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|عداء|العداء|مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/i.test(s);
-  res.hasD  = /\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|العشى|سحور|السحور|سحر|مع\s*(ال)?(عشا|عشاء|سحور|سحر)/i.test(s);
-  res.hasM  = /\b(morning|am|morn|a\.m|mane)\b|صباح|الصباح|صبح/i.test(s);
-  res.hasN  = /\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/i.test(s);
-  res.hasA  = /\b(asr|afternoon)\b|عصر|العصر/i.test(s);
-  res.hasE  = /\b(evening|eve|night|pm|p\.m)\b|مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|المسا|ليل|الليل|ليلا|ليلاً/i.test(s);
-  res.hasBed = /\b(bed|bedtime|sleep|sle|hs|h\.s|nocte)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
-  res.hasEmpty = /\b(empty|fasting)\b|ريق|الريق|الريج|الريئ|على الريق|معده فارغه|empty\s*stomach/i.test(s);
-  res.isBefore = /\b(before|bef|pre|ac|a\.c)\b|قبل/i.test(s);
-
+  /* ── Step 1: Detect meal/time keywords ── */
+  /* In non-Ramadan mode: سحور = عشاء (dinner), فطار/افطار = فطار (breakfast) */
+  res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار|مع\s*(ال)?(فطار|فطور|افطار)/i.test(s);
+  res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|عداء|العداء|مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/i.test(s);
+  res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|العشى|سحور|السحور|سحر|مع\s*(ال)?(عشا|عشاء|سحور|سحر)/i.test(s);
+  res.hasM=/\b(morning|am|morn|a\.m|mane)\b|صباح|الصباح|صبح/i.test(s);
+  res.hasN=/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/i.test(s);
+  res.hasA=/\b(asr|afternoon)\b|عصر|العصر/i.test(s);
+  res.hasE=/\b(evening|eve|night|pm|p\.m)\b|مساء|مسا|مساءا|مساءً|مسائا|مسأ|المساء|المسا|ليل|الليل|ليلا|ليلاً/i.test(s);
+  res.hasBed=/\b(bed|bedtime|sleep|sle|hs|h\.s|nocte)\b|نوم|النوم|قبل النوم|عند النوم|وقت النوم/i.test(s);
+  res.hasEmpty=/\b(empty|fasting)\b|ريق|الريق|الريج|الريئ|على الريق|معده فارغه|empty\s*stomach/i.test(s);
+  res.isBefore=/\b(before|befor|bef|pre|ac|a\.c)\b|قبل/i.test(s);
   /* FIX: مساءا قبل النوم = single bedtime */
-  if(res.hasBed && res.hasE && !res.hasB && !res.hasL && !res.hasD && !res.hasM && !res.hasN && !res.hasA){
-    res.hasE = false;
-  }
+  if(res.hasBed&&res.hasE&&!res.hasB&&!res.hasL&&!res.hasD&&!res.hasM&&!res.hasN&&!res.hasA){res.hasE=false;}
 
-  /* Step 2: Explicit frequency abbreviations (highest priority) */
-  if(/\bqid\b|\bqds\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){
-    res.count = 4; res.rawFrequency = 'QID'; return res;
-  }
-  if(/\btid\b|\btds\b|t\.i\.d|ثلاث مرات|تلات مرات|3\s*مرات|three\s*times?\s*(a\s*day|daily|يوميا)?|3\s*times?\s*(a\s*day|daily)?|thrice\s*(daily)?/i.test(s)){
-    res.count = 3; res.rawFrequency = 'TID'; return res;
-  }
-  if(/\bam\s*[&\/,\s]+\s*pm\b|\bpm\s*[&\/,\s]+\s*am\b|\ba\.?\s*m\.?\s*[&\/,\s]+\s*p\.?\s*m\.?\b/i.test(s)){
-    res.count = 2; res.rawFrequency = 'BID'; return res;
-  }
-  if(/\bbid\b|\bbd\b|b\.i\.d|مرتين|مرتان|twice\s*(a\s*day|daily)?|2\s*times?\s*(a\s*day|daily|يوميا)?/i.test(s)){
-    res.count = 2; res.rawFrequency = 'BID'; return res;
-  }
-  if(/\bod\b|o\.d|\bqd\b|q\.d|once\s*(a\s*day|daily)?|مره واحده يوميا|مره واحده|حبه يوميا|حبه واحده يوميا/i.test(s)){
-    res.count = 1; res.rawFrequency = 'OD'; return res;
-  }
+  /* ── Step 2: Explicit frequency abbreviations (highest priority) ── */
+  if(/\bqid\b|\bqds\b|q\.i\.d|اربع مرات|4\s*مرات|four\s*times?\s*(a\s*day|daily|يوميا)?|4\s*times?\s*(a\s*day|daily)?/i.test(s)){res.count=4;res.rawFrequency='QID';return res;}
+  if(/\btid\b|\btds\b|t\.i\.d|ثلاث مرات|تلات مرات|3\s*مرات|three\s*times?\s*(a\s*day|daily|يوميا)?|3\s*times?\s*(a\s*day|daily)?|thrice\s*(daily)?/i.test(s)){res.count=3;res.rawFrequency='TID';return res;}
+  if(/\bam\s*[&\/,\s]+\s*pm\b|\bpm\s*[&\/,\s]+\s*am\b|\ba\.?\s*m\.?\s*[&\/,\s]+\s*p\.?\s*m\.?\b/i.test(s)){res.count=2;res.rawFrequency='BID';return res;}
+  if(/\bbid\b|\bbd\b|b\.i\.d|مرتين|مرتان|twice\s*(a\s*day|daily)?|2\s*times?\s*(a\s*day|daily|يوميا)?/i.test(s)){res.count=2;res.rawFrequency='BID';return res;}
+  if(/\bod\b|o\.d|\bqd\b|q\.d|once\s*(a\s*day|daily)?|مره واحده يوميا|مره واحده|حبه يوميا|حبه واحده يوميا/i.test(s)){res.count=1;res.rawFrequency='OD';return res;}
 
-  /* Step 3: Hourly intervals */
-  if(/كل\s*4\s*ساع|every\s*4\s*h|q4h|q\s*4\s*h/i.test(s)){
-    res.count = 6; res.rawFrequency = 'Q4H'; return res;
-  }
-  if(/كل\s*6\s*(?:ساع)?|every\s*6\s*h|q6h|q\s*6\s*h/i.test(s)){
-    res.count = 4; res.rawFrequency = 'Q6H'; return res;
-  }
-  if(/كل\s*8\s*(?:ساع)?|every\s*8\s*h|q8h|q\s*8\s*h/i.test(s)){
-    res.count = 3; res.rawFrequency = 'Q8H'; return res;
-  }
-  if(/كل\s*12\s*(?:ساع)?|every\s*12\s*h|q12h|q\s*12\s*h/i.test(s)){
-    res.count = 2; res.rawFrequency = 'Q12H'; return res;
-  }
-  if(/كل\s*24\s*(?:ساع)?|every\s*24\s*h|q24h|q\s*24\s*h/i.test(s)){
-    res.count = 1; res.rawFrequency = 'Q24H'; return res;
-  }
-  /* كل يومين / every other day */
-  if(/كل\s*(يومين|يوم ويوم|48\s*ساع)|every\s*other\s*day|alternate\s*day|eod/i.test(s)){
-    res.count = 0.5; res.rawFrequency = 'Q48H'; return res;
-  }
+  /* ── Step 3: Hourly intervals ── */
+  if(/كل\s*4\s*ساع|every\s*4\s*h|q4h|q\s*4\s*h/i.test(s)){res.count=6;res.rawFrequency='Q4H';return res;}
+  if(/كل\s*6\s*(?:ساع)?|every\s*6\s*h|q6h|q\s*6\s*h/i.test(s)){res.count=4;res.rawFrequency='Q6H';return res;}
+  if(/كل\s*8\s*(?:ساع)?|every\s*8\s*h|q8h|q\s*8\s*h/i.test(s)){res.count=3;res.rawFrequency='Q8H';return res;}
+  if(/كل\s*12\s*(?:ساع)?|every\s*12\s*h|q12h|q\s*12\s*h/i.test(s)){res.count=2;res.rawFrequency='Q12H';return res;}
+  if(/كل\s*24\s*(?:ساع)?|every\s*24\s*h|q24h|q\s*24\s*h/i.test(s)){res.count=1;res.rawFrequency='Q24H';return res;}
 
-  /* Step 4: Explicit meal-based counting */
-  if(/قبل\s*(الوجبات|كل\s*(وجبه|وجبه))|قبل\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){
-    res.count = 3; res.isBefore = true; return res;
-  }
-  if(/بعد\s*(الوجبات|كل\s*(وجبه|وجبه))|بعد\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){
-    res.count = 3; return res;
-  }
-  if(/مع\s*(الوجبات|كل\s*(وجبه|وجبه))|مع\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|with\s*(all\s*)?meals/i.test(s)){
-    res.count = 3; return res;
-  }
+  /* ── Step 4: Explicit meal-based counting ── */
+  if(/قبل\s*(الوجبات|كل\s*(وجبه|وجبه))|قبل\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|before\s*(all\s*)?meals|ac\s*meals/i.test(s)){res.count=3;res.isBefore=true;return res;}
+  if(/بعد\s*(الوجبات|كل\s*(وجبه|وجبه))|بعد\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|after\s*(all\s*)?meals|pc\s*meals/i.test(s)){res.count=3;return res;}
+  if(/مع\s*(الوجبات|كل\s*(وجبه|وجبه))|مع\s*(الاكل|الاكل)\s*(الثلاث|ال3|3)|with\s*(all\s*)?meals/i.test(s)){res.count=3;return res;}
 
-  if(/قبل\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*قبل\s*(الاكل|الاكل)|before\s*meals?\s*twice/i.test(s)){
-    res.count = 2; res.isBefore = true; return res;
-  }
-  if(/بعد\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*بعد\s*(الاكل|الاكل)|after\s*meals?\s*twice/i.test(s)){
-    res.count = 2; return res;
-  }
+  if(/قبل\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*قبل\s*(الاكل|الاكل)|before\s*meals?\s*twice/i.test(s)){res.count=2;res.isBefore=true;return res;}
+  if(/بعد\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*بعد\s*(الاكل|الاكل)|after\s*meals?\s*twice/i.test(s)){res.count=2;return res;}
 
-  /* Step 5: Single meal/time keywords */
-  if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s) && !/مرتين|مرات|twice|times|الثلاث/i.test(s)){
-    res.count = 1; res.isBefore = true; return res;
-  }
-  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s) && !/مرتين|مرات|twice|times|الثلاث/i.test(s)){
-    res.count = 1; return res;
-  }
-  if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s) && !/مرتين|مرات|twice|times|الثلاث/i.test(s)){
-    res.count = 1; return res;
-  }
+  if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;res.isBefore=true;return res;}
+  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
+  if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
 
-  /* Step 6: Count from detected meal/time keywords */
-  var mealCount = 0;
-  if(res.hasB || res.hasM) mealCount++;
-  if(res.hasL || res.hasN) mealCount++;
-  if(res.hasD || res.hasE) mealCount++;
-  if(res.hasA && mealCount < 3) mealCount++;
+  /* ── Step 5: Count from detected meal/time keywords ── */
+  var mealCount=0;
+  /* v146: ريق+صباح = وقت واحد، مساء+نوم = وقت واحد */
+  if(res.hasEmpty){mealCount++;}
+  else if(res.hasB||res.hasM){mealCount++;}
+  if(res.hasL||res.hasN) mealCount++;
+  if(res.hasBed&&!res.hasD&&!res.hasE){mealCount++;}
+  else if(res.hasD||res.hasE){mealCount++;}
+  if(res.hasA&&mealCount<3) mealCount++;
 
-  if(mealCount >= 3){ res.count = 3; return res; }
-  var pairDual = /(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
-  if(mealCount === 2 || pairDual.test(s)){ res.count = 2; return res; }
-  if(res.hasEmpty && res.hasBed){ res.count = 2; return res; }
-  if(res.hasBed && mealCount === 0){ res.count = 1; return res; }
-  if(res.hasEmpty && mealCount === 0){ res.count = 1; return res; }
-  if(/\b(يوميا|daily)\b/i.test(s) && !res.rawFrequency){ res.count = 1; return res; }
-
+  if(mealCount>=3){res.count=3;return res;}
+  var pairDual=/(صباح|الصباح|morning).*(مسا|المسا|مساء|المساء|evening)/i;
+  if(mealCount===2||pairDual.test(s)){res.count=2;return res;}
+  if(res.hasEmpty&&res.hasBed){res.count=2;return res;}
+  if(res.hasBed&&mealCount===0){res.count=1;return res;}
+  if(res.hasEmpty&&mealCount===0){res.count=1;return res;}
+  if(/(^|\s)(يوميا|daily)(\s|$)/i.test(s)&&!res.rawFrequency){res.count=1;return res;}
   return res;
 }
 
-
-
 function getTwoPillsPerDoseInfo(n){
-  var s = (n||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
-  
-  // قائمة موسعة للجرعة 2
-  var twoP = [
-    '2 حبه','2 حبة','حبتين','حبتان','2 حبوب','2 قرص','قرصين','قرصان',
-    '2 كبسوله','كبسولتين','كبسولتان','2 pill','2 pills','two pill','two pills',
-    '2 tablet','2 tablets','two tablet','two tablets','2 tab','2 tabs','two tab','two tabs',
-    '2 cap','2 caps','two cap','two caps','double dose','جرعة مضاعفة','ضعف الجرعة',
-    'مضاعف','مزدوج','مرتين الجرعة','2*'
-  ];
-  for(var i=0; i<twoP.length; i++){
-    if(s.indexOf(twoP[i].toLowerCase()) > -1){
-      var is2 = /مرتين|twice|2\s*times|bid|b\.i\.d/i.test(n);
-      var is3 = /ثلاث مرات|3\s*مرات|three\s*times|3\s*times|tid|t\.i\.d/i.test(n);
-      var ml = 1;
-      if(is3) ml = 6;
-      else if(is2) ml = 4;
-      else ml = 2;
-      return {dose: 2, multiplier: ml};
-    }
-  }
-  
-  // جرعة 3
-  var threeP = [
-    '3 حبه','3 حبات','3 حبوب','3 قرص','3 اقراص','3 كبسول','3 كبسولات',
-    '3 tab','3 tabs','3 pill','3 pills','three tab','three pill'
-  ];
-  for(var i=0; i<threeP.length; i++){
-    if(s.indexOf(threeP[i].toLowerCase()) > -1) return {dose: 3, multiplier: 3};
-  }
-  
-  return {dose: 1, multiplier: 1};
-}
-}
+  var s=(n||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+  /* No half/quarter pills - always whole pills */
+  var twoP=['2 حبه','2 حبة','حبتين','حبتان','2 حبوب','2 قرص','قرصين','قرصان','2 كبسوله','كبسولتين','كبسولتان','2 pill','2 pills','two pill','two pills','2 tablet','2 tablets','two tablet','two tablets','2 tab','2 tabs','two tab','two tabs','2 cap','2 caps','two cap','two caps'];
+  for(var i=0;i<twoP.length;i++){if(s.indexOf(twoP[i].toLowerCase())>-1){var is2=/مرتين|twice|2\s*times|bid|b\.i\.d/i.test(n);var is3=/ثلاث مرات|3\s*مرات|three\s*times|3\s*times|tid|t\.i\.d/i.test(n);var ml=1;if(is3)ml=6;else if(is2)ml=4;else ml=2;return{dose:2,multiplier:ml};}}
   var threeP=['3 حبه','3 حبات','3 حبوب','3 قرص','3 اقراص','3 كبسول','3 tab','3 tabs','3 pill','3 pills','three tab','three pill'];
   for(var i=0;i<threeP.length;i++){if(s.indexOf(threeP[i].toLowerCase())>-1)return{dose:3,multiplier:3};}
   return{dose:1,multiplier:1};
@@ -3555,6 +3280,7 @@ function getTimeFromWords(w){
   var st=s.match(/(?:at|الساعه|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
   if(st){var hr=parseInt(st[1]);var min=st[2]?parseInt(st[2]):0;var ap=st[3]||'';if(/pm|مساء/i.test(ap)&&hr<12)hr+=12;if(/am|صباحا/i.test(ap)&&hr===12)hr=0;return{time:('0'+hr).slice(-2)+':'+('0'+min).slice(-2)};}
   var NT=NORMAL_TIMES;
+   s=s.replace(/\bbefor\b/g,'before');
   
   /* CRITICAL FIX: "قبل الأكل مرتين" should be beforeMeal (8:00) not morning (9:30) */
   var beforeMealTwice=/قبل\s*(الاكل|الأكل)\s*مرتين|مرتين\s*قبل\s*(الاكل|الأكل)|before\s*(meal|food)\s*twice|twice\s*before\s*(meal|food)/;
@@ -3591,22 +3317,19 @@ function getTimeFromWords(w){
       if(_hasEve||_hasNight||_hasBed) return {time:NORMAL_TIMES.afterDinner||"21:00"};
     }
   }
-  
-  /* ══ دعم المصطلحات اللاتينية ══ */
-  if(/\bmane\b|\bmane\./i.test(s)){
-    return {time: NORMAL_TIMES.morning || '09:00'};
-  }
-  if(/\bnocte\b|\bnocte\./i.test(s)){
-    return {time: NORMAL_TIMES.bed || '22:00'};
-  }
-  if(/\bstat\b|\bstat\./i.test(s)){
-    var now = new Date();
-    var hours = now.getHours();
-    var minutes = now.getMinutes();
-    return {time: ('0'+hours).slice(-2) + ':' + ('0'+minutes).slice(-2), isStat: true};
-  }
-
-  var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:'15:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:'21:30'}];
+  var NT=NORMAL_TIMES;
+  var rules=[
+  /* ══ v146: Saudi pharmacy terms ══ */
+  {test:/ضحى|الضحى|الضحا|forenoon/,time:'10:00'},
+  {test:/فجر|الفجر|dawn/,time:'05:00'},
+  {test:/بعد صلا[ةه] الفجر|after fajr/,time:'05:30'},
+  {test:/بعد صلا[ةه] الظهر|after dhuhr/,time:'12:30'},
+  {test:/بعد صلا[ةه] العصر|after asr/,time:NT.afternoon||'14:00'},
+  {test:/بعد صلا[ةه] المغرب|after maghrib/,time:NT.maghrib||'18:00'},
+  {test:/بعد صلا[ةه] العشاء|after isha/,time:NT.afterDinner||'21:00'},
+  {test:/الوجب[ةه] الرئيسي[ةه]|main meal/,time:NT.afterBreakfast||'09:00'},
+  /* ══ Standard rules with NORMAL_TIMES ══ */
+  {test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:NT.afterBreakfast||'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:NT.afterLunch||'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:NT.afterDinner||'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:NT.afterBreakfast||'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:NT.empty||'08:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal||'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast||'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:NT.afterBreakfast||'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:NT.morning||'09:00'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:NT.noon||'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:NT.beforeLunch||'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:NT.afterLunch||'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:NT.afternoon||'14:00'},{test:/maghrib|مغرب|المغرب/,time:NT.maghrib||'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:NT.beforeDinner||'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:NT.afterDinner||'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:NT.bed||'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:NT.evening||'21:00'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -3647,11 +3370,13 @@ function getMealTimesFromNote(note){
   var times=[];
   if(hasEmpty) times.push(7);
   if(hasB) times.push(isBefore?8:9);
-  if(hasMorning&&!hasB) times.push(9);
+  /* v146: صباحا + عالريق = وقت واحد (ريق) مش اتنين */
+  if(hasMorning&&!hasB&&!hasEmpty) times.push(9);
   if(hasNoon&&!hasL) times.push(12);
   if(hasL) times.push(isBefore?13:14);
   if(hasAfternoon&&!hasL) times.push(15);
   if(hasD) times.push(isBefore?20:21);
+  /* v146: مساء + قبل النوم = وقت واحد (نوم) مش اتنين */
   if(hasEvening&&!hasD&&!hasBed) times.push(21);
   if(hasBed) times.push(22);
   var unique={};var result=[];
@@ -3673,39 +3398,32 @@ function needsDuplicateByTime(times){
   return (maxG-minG)>0.5;
 }
 
-
 function shouldDuplicateRow(note){
-  var d = smartDoseRecognizer(note);
-  // لا تقسم إذا كانت الجرعة كل يومين (0.5 مرة في اليوم)
-  if(d.count === 0.5) return null;
+  var d=smartDoseRecognizer(note);
+  var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
+  var isEvery8=/كل\s*8|every\s*8|q8h/i.test(s);
+  if(isEvery8||d.count===3)return{type:'three',doseInfo:d,isBefore:d.isBefore};
+  var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
+  if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
 
-  var s = (note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
-
-  var isEvery8 = /كل\s*8|every\s*8|q8h/i.test(s);
-  if(isEvery8 || d.count === 3) return {type:'three', doseInfo:d, isBefore:d.isBefore};
-  
-  var isEvery6 = /كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
-  if(isEvery6) return {type:'q6h', doseInfo:d, isBefore:d.isBefore};
-
-  /* المبدأ الجديد: احسب الأوقات الفعلية وشوف لو منتظمة */
-  var mealTimes = getMealTimesFromNote(note);
-  if(mealTimes.length >= 2 && needsDuplicateByTime(mealTimes)){
-    var dupType = mealTimes.length >= 3 ? 'three' : 'two';
-    return {type:dupType, doseInfo:d, isBefore:d.isBefore};
+  /* ── المبدأ الجديد: احسب الأوقات الفعلية وشوف لو منتظمة ── */
+  var mealTimes=getMealTimesFromNote(note);
+  if(mealTimes.length>=2&&needsDuplicateByTime(mealTimes)){
+    var dupType=mealTimes.length>=3?'three':'two';
+    return{type:dupType,doseInfo:d,isBefore:d.isBefore};
   }
 
-  /* منطق صارم: فقط الأوقات غير المنتظمة تتقسم */
-  if(d.hasBed && (d.hasB || d.hasL || d.hasD || d.hasM || d.hasN || d.hasA)){
-    var _bedMealT = getMealTimesFromNote(note);
-    if(_bedMealT.length >= 2 && needsDuplicateByTime(_bedMealT)) return {type:'two', doseInfo:d, isBefore:d.isBefore};
+  /* ── منطق صارم: فقط الأوقات غير المنتظمة تتقسم ── */
+  if(d.hasBed&&(d.hasB||d.hasL||d.hasD||d.hasM||d.hasN||d.hasA)){
+    var _bedMealT=getMealTimesFromNote(note);
+    if(_bedMealT.length>=2&&needsDuplicateByTime(_bedMealT))return{type:'two',doseInfo:d,isBefore:d.isBefore};
   }
-  if(d.hasEmpty && d.hasBed){
-    var _emBedT = getMealTimesFromNote(note);
-    if(_emBedT.length >= 2 && needsDuplicateByTime(_emBedT)) return {type:'two', doseInfo:d, isBefore:d.isBefore};
+  if(d.hasEmpty&&d.hasBed){
+    var _emBedT=getMealTimesFromNote(note);
+    if(_emBedT.length>=2&&needsDuplicateByTime(_emBedT))return{type:'two',doseInfo:d,isBefore:d.isBefore};
   }
   return null;
 }
-
 
 function scanForDuplicateNotes(){
   var tb=_ezFindTable();
@@ -3782,13 +3500,13 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
       var n1='',t1='',n2='',t2='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasN){n1=m_lbl;t1='09:30';n2=n_lbl;t2='12:00';meals=['الصباح','الظهر'];}
-      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1='12:00';n2=e_lbl;t2='21:30';meals=['الظهر','المساء'];}
-      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';meals=['الصباح','العصر'];}
-      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1='15:00';n2=e_lbl;t2='21:30';meals=['العصر','المساء'];}
-      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
-      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1='13:00';n2=p+dn;t2='20:00';}else{n1=p+ln;t1='14:00';n2=p+dn;t2='21:00';}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
+      if(ni.doseInfo.hasM&&ni.doseInfo.hasN){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=n_lbl;t2=NORMAL_TIMES.noon;meals=['الصباح','الظهر'];}
+      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1=NORMAL_TIMES.noon;n2=e_lbl;t2=NORMAL_TIMES.evening;meals=['الظهر','المساء'];}
+      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=a_lbl;t2=NORMAL_TIMES.afternoon;meals=['الصباح','العصر'];}
+      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1=NORMAL_TIMES.afternoon;n2=e_lbl;t2=NORMAL_TIMES.evening;meals=['العصر','المساء'];}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln;t2=NORMAL_TIMES.beforeLunch;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln;t2=NORMAL_TIMES.afterLunch;}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
+      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1=NORMAL_TIMES.beforeLunch;n2=p+dn;t2=NORMAL_TIMES.beforeDinner;}else{n1=p+ln;t1=NORMAL_TIMES.afterLunch;n2=p+dn;t2=NORMAL_TIMES.afterDinner;}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
+      else{if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+dn;t2=NORMAL_TIMES.beforeDinner;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+dn;t2=NORMAL_TIMES.afterDinner;}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
     } else if(ni.type==='three'){
@@ -3799,8 +3517,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);setDose(nt3[di],tpi.dose);}
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
       var n1='',t1='',n2='',t2='',n3='',t3='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';n3=e_lbl;t3='21:30';meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
+      if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=a_lbl;t2=NORMAL_TIMES.afternoon;n3=e_lbl;t3=NORMAL_TIMES.evening;meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
+      else{if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln;t2=NORMAL_TIMES.beforeLunch;n3=p+dn;t3=NORMAL_TIMES.beforeDinner;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln;t2=NORMAL_TIMES.afterLunch;n3=p+dn;t3=NORMAL_TIMES.afterDinner;}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
     } else if(ni.type==='q6h'){
@@ -3813,8 +3531,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
       var andW=isEn?' & ':' و';var bedLbl=isEn?'Before Bed':'قبل النوم';
       var n1='',t1='',n2='',t2='';
-      if(ni.isBefore){n1=p+bf+andW+dn;t1='08:00';n2=p+ln+andW+bedLbl;t2='13:00';}
-      else{n1=p+bf+andW+dn;t1='09:00';n2=p+ln+andW+bedLbl;t2='14:00';}
+      if(ni.isBefore){n1=p+bf+andW+dn;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln+andW+bedLbl;t2=NORMAL_TIMES.beforeLunch;}
+      else{n1=p+bf+andW+dn;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln+andW+bedLbl;t2=NORMAL_TIMES.afterLunch;}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
       nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
@@ -3939,7 +3657,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
     if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);
       /* Clean brackets from name */
-      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|لصقات|لصقه|لصقة|لاصقه|لاصقة|لزقه|لزقة|لزقات|patch|patches|transdermal|topical|gel\b|جل\b|oint|دهان|دهون|مسحه|مسحة|للجلد|جلديه|جلدية|dermal|lotion|لوشن|فوط|غسول|wash|shampoo|شامبو|تحاميل|حقن|بلاستر|plaster|foam|رغوه|رغوة/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
     var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
     if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
     rtp_list.push(r_node);
@@ -3955,6 +3673,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
     if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
+    /* ══ v146: PRN/عند الحاجة → uncheck like refrigerator items ══ */
+    if(_ezIsPRN(nt_str)||_ezIsPRN(cn_str)){var ck_prn=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck_prn);skp_list.push(r_node);continue;}
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
     /* Clean name field — remove brackets that system rejects */
     if(itemName&&/[()\[\]{}⟨⟩<>«»]/.test(itemName)){
@@ -4071,9 +3791,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   }
 
   /* 🤖 Mark unrecognized notes for Gemini — runs ALWAYS (not just when warnings enabled) */
-  var _aiProvider = _ezGetAIProvider();
-  var _hasAIKey = (_aiProvider === 'gemini') ? _ezGetGeminiKey() : _ezGetGroqKey();
-  if(_hasAIKey){
+  if(_ezGetGeminiKey()){
     for(var _gScan=0;_gScan<allRowsData.length;_gScan++){
       var _gRd=allRowsData[_gScan];
       if(_gRd.note&&_gRd.note.trim().length>=3&&!_gRd.hasFixedSize&&!_gRd.isWeekly){
@@ -4165,6 +3883,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   warningQueue=warningQueue.filter(function(w){return !w.type||!_EZ_WARNING_CONFIG[w.type]||_EZ_WARNING_CONFIG[w.type].enabled;});
 
   /* 🤖 Gemini AI: resolve unrecognized doses before showing warnings */
+
   var _geminiNotes=[];var _geminiIdxMap=[];
   for(var _gi=0;_gi<allRowsData.length;_gi++){
     if(allRowsData[_gi]._needsGemini&&allRowsData[_gi].note){
@@ -4202,19 +3921,23 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
             var _aiDesc=(ai.readable_ar||'').toLowerCase();
             var _localTime=ai.startTime;
             /* Match by keyword in AI description first (most accurate) */
-            if(/صباح|morning/i.test(_aiDesc)) _localTime=NORMAL_TIMES.morning||'09:00';
-            else if(/ريق|empty|fasting/i.test(_aiDesc)) _localTime=NORMAL_TIMES.empty||'08:00';
-            else if(/قبل.*فطار|before.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeBreakfast||'08:00';
-            else if(/بعد.*فطار|after.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
-            else if(/ظهر|noon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.noon||'12:00';
+            /* PRIORITY 1: أوقات الوجبات المحددة — الأهم يتطابق أولاً */
+            if(/ريق|empty|fasting|على الريق/i.test(_aiDesc)) _localTime=NORMAL_TIMES.empty||'07:00';
+            else if(/قبل.*فطار|قبل.*فطور|before.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeBreakfast||'08:00';
+            else if(/بعد.*فطار|بعد.*فطور|after.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
+            else if(/قبل.*(اكل|أكل|وجب)|before.*(meal|food)|\bac\b/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeMeal||'08:00';
+            else if(/بعد.*(اكل|أكل|وجب)|after.*(meal|food)|\bpc\b/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
             else if(/قبل.*غدا|قبل.*غداء|before.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeLunch||'13:00';
             else if(/بعد.*غدا|بعد.*غداء|after.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterLunch||'14:00';
+            else if(/قبل.*عشا|قبل.*عشاء|before.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeDinner||'20:00';
+            else if(/بعد.*عشا|بعد.*عشاء|after.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterDinner||'21:00';
+            else if(/نوم|bed|sleep|قبل النوم/i.test(_aiDesc)) _localTime=NORMAL_TIMES.bed||'22:00';
+            /* PRIORITY 2: أوقات عامة — أقل تحديداً */
+            else if(/صباح|morning/i.test(_aiDesc)) _localTime=NORMAL_TIMES.morning||'09:30';
+            else if(/ظهر|noon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.noon||'12:00';
             else if(/عصر|afternoon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afternoon||'15:00';
             else if(/مغرب/i.test(_aiDesc)) _localTime=NORMAL_TIMES.maghrib||'18:00';
-            else if(/قبل.*عشا|before.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeDinner||'20:00';
-            else if(/بعد.*عشا|after.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterDinner||'21:00';
-            else if(/مساء|evening|ليل|night/i.test(_aiDesc)) _localTime=NORMAL_TIMES.evening||'21:00';
-            else if(/نوم|bed|sleep/i.test(_aiDesc)) _localTime=NORMAL_TIMES.bed||'22:00';
+            else if(/مساء|مسا|evening|ليل|night/i.test(_aiDesc)) _localTime=NORMAL_TIMES.evening||'21:30';
             /* Fallback by hour if no keyword matched */
             else if(_aiH>=5&&_aiH<=7) _localTime=NORMAL_TIMES.empty||'08:00';
             else if(_aiH>=8&&_aiH<10) _localTime=NORMAL_TIMES.morning||'09:00';
@@ -4458,8 +4181,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       /* ── NORMAL MODE (original logic) ── */
       /* v144: 56/60-pack auto BID (note empty/unrecognized) */
       if(rd.pack56Auto&&!rd.hasFixedSize&&!rd.isWeekly&&!rd.dui){
-        setSize(tds_nodes[si_main],56);
-        setEvry(tds_nodes[ei_main],'12');
         setTime(r_node,'09:00');
         if(di_main>=0)setDose(tds_nodes[di_main],1);
         if(qi_main>=0){var _q56m=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],_q56m*m);}
@@ -4512,6 +4233,51 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     for(var i=0;i<rtd_list.length;i++){var it=rtd_list[i];createDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
     /* Ramadan duplicates */
     for(var i=0;i<ramadanRtd.length;i++){var it=ramadanRtd[i];createRamadanDuplicateRows(it.calcDays,it.row,it.info,it.calcDays,ni_main,si_main,ei_main,di_main,ti_main,sdi_main,edi_main,m,it.calcDays,ci_main,qi_main);}
+    /* ★POST56_FINAL★ — إصلاح every=12 للأصناف 56/60 بدون جرعة */
+    (function(){
+      var _STRIP56=/\d+\.?\d*\s*(?:mg|mcg|ml|g\b|iu)/gi;
+      var _SIZES56=[56,60];
+      var _SIZES28=[14,28,56];
+      function _getPackSize(name){
+        if(!name) return null;
+        var cl=(name||"").replace(_STRIP56,"~");
+        var nums=[];var re=/(\d+)/g;var m;
+        while((m=re.exec(cl))!==null){
+          var v=parseInt(m[1]);
+          if(v>=14&&v<=120) nums.push(v);
+        }
+        if(!nums.length) return null;
+        return nums[nums.length-1];
+      }
+      /* هل فيه صنف 28 أو 56 بدون جرعة في الروشتة؟ */
+      var _has28=false;
+      for(var _i=0;_i<allRowsData.length;_i++){
+        var _rr=allRowsData[_i];
+        if(_rr.hasFixedSize||_rr.isWeekly) continue;
+        if(_rr.note&&_rr.note.trim().length>2) continue;
+        var _pp=_getPackSize(_rr.itemName||"");
+        if(_pp===28||_pp===14){_has28=true;break;}
+      }
+      console.log("POST56: has28/56 sibling="+_has28);
+      /* تصحيح كل صنف 56 أو 60 بدون جرعة */
+      for(var _j=0;_j<allRowsData.length;_j++){
+        var _rd=allRowsData[_j];
+        if(_rd.hasFixedSize||_rd.isWeekly||_rd.dui) continue;
+        if(_rd.note&&_rd.note.trim().length>2) continue;
+        var _pk=_getPackSize(_rd.itemName||"");
+        if(_SIZES56.indexOf(_pk)<0) continue;
+        var _tds=_rd.tds;
+        /* Size: 56 لو فيه صنف 28، وإلا الحجم الأصلي للعلبة */
+        var _finalSz=_has28?56:_pk;
+        setSize(_tds[si_main],_finalSz);
+        /* Every: دايماً 12 — 56/60 حبة = مرتين يومياً */
+        setEvry(_tds[ei_main],"12");
+        setTime(_rd.row,"09:00");
+        if(di_main>=0) setDose(_tds[di_main],1);
+        console.log("POST56 FIX: "+_rd.itemName+" → size="+_finalSz+" every=12");
+      }
+    })();
+    /* ★END_POST56_FINAL★ */
     sortRowsByTime(tb_main,ti_main,ei_main);
     _ezColorDupRows(tb_main);
     for(var i=0;i<skp_list.length;i++){var r_node=skp_list[i];var tds_nodes=r_node.querySelectorAll('td');var u_code_skp=getCleanCode(tds_nodes[ci_main]);if(sdi_main>=0&&tds_nodes[sdi_main]){var sdInp2=tds_nodes[sdi_main].querySelector('input');if(sdInp2)sdInp2.style.width='110px';}if(edi_main>=0&&tds_nodes[edi_main]){var edInp2=tds_nodes[edi_main].querySelector('input');if(edInp2)edInp2.style.width='110px';}if(ti_main>=0&&tds_nodes[ti_main]){var tiInp2=tds_nodes[ti_main].querySelector('input');if(tiInp2)tiInp2.style.width='100px';}if(ei_main>=0&&tds_nodes[ei_main]){var eiInp2=tds_nodes[ei_main].querySelector('input,select');if(eiInp2)eiInp2.style.width='90px';}if(ni_main>=0&&tds_nodes[ni_main]){var nInp2=tds_nodes[ni_main].querySelector('input,textarea');var crn=get(tds_nodes[ni_main]);var ccn=cleanNote(crn);if(nInp2){nInp2.style.width='100%';nInp2.style.minWidth='180px';nInp2.value=ccn;fire(nInp2);}else{tds_nodes[ni_main].textContent=ccn;}}tb_main.appendChild(r_node);}
@@ -4529,6 +4295,24 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       rmBadge.innerHTML='<span style="font-size:18px">🌙</span> وضع رمضان مفعّل <span style="font-size:10px;color:rgba(251,191,36,0.6);margin-right:6px">فطار '+RAMADAN_TIMES.afterIftar+' · سحور '+RAMADAN_TIMES.afterSuhoor+'</span>';
       document.body.appendChild(rmBadge);
       setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},10000);
+    }
+    
+    /* JVM: End Date -1 يوم لكل صف */
+    if(edi_main>=0){
+      var _jvmRows=Array.from(tb_main.querySelectorAll('tr')).slice(1);
+      for(var _jvmRi=0;_jvmRi<_jvmRows.length;_jvmRi++){
+        var _jvmTds=_jvmRows[_jvmRi].querySelectorAll('td');
+        if(_jvmTds.length>edi_main){
+          var _jvmEInp=_jvmTds[edi_main].querySelector('input');
+          if(_jvmEInp&&_jvmEInp.value&&/\d{4}-\d{2}-\d{2}/.test(_jvmEInp.value)){
+            var _jvmED=new Date(_jvmEInp.value);
+            _jvmED.setDate(_jvmED.getDate()-1);
+            var _jvmEY=_jvmED.getFullYear(),_jvmEM=('0'+(_jvmED.getMonth()+1)).slice(-2),_jvmEDay=('0'+_jvmED.getDate()).slice(-2);
+            _jvmEInp.value=_jvmEY+'-'+_jvmEM+'-'+_jvmEDay;
+            _ezFire(_jvmEInp);
+          }
+        }
+      }
     }
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
@@ -5403,7 +5187,7 @@ function _ezShowSettingsPanel(){
   document.getElementById('ez-cfg-export').onclick=function(){
     try{
       var exportData={
-        _export:'EZ_Pill_Farmadosis_Settings',
+        _export:'EZ_Pill_Jvm_Settings',
         _version:APP_VERSION,
         _date:new Date().toISOString(),
         custom:loadCustomConfig(),
@@ -5437,7 +5221,7 @@ function _ezShowSettingsPanel(){
     reader.onload=function(ev){
       try{
         var data=JSON.parse(ev.target.result);
-        if(!data._export||data._export!=='EZ_Pill_Farmadosis_Settings'){
+        if(!data._export||data._export!=='EZ_Pill_Jvm_Settings'){
           window.ezShowToast('❌ الملف مش ملف إعدادات EZ_Pill','error');
           ezBeep('error');return;
         }
@@ -5462,8 +5246,8 @@ function _ezShowSettingsPanel(){
     e.target.value='';
   };
 }
-var hasDuplicateNotes=scanForDuplicateNotes();
-if(!hasDuplicateNotes){var _pnFields=document.querySelectorAll('textarea,input[type="text"]');for(var _pf=0;_pf<_pnFields.length;_pf++){var _pfv=(_pnFields[_pf].value||'').trim();if(_pfv.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv)){hasDuplicateNotes=true;break;}}}
+/* v146: hasDuplicateNotes deferred to after dialog renders for speed */
+var hasDuplicateNotes=false;
 var _rm_setting=savedSettings.ramadanMode||false;
 /* Ramadan mode: post dialog is shown ONLY after processing if actual duplicates were created */
 /* We don't force hasDuplicateNotes=true here anymore */
@@ -5486,15 +5270,12 @@ d_box.innerHTML='\
   <div class="ez-logo-group">\
     <div class="ez-logo">💊</div>\
     <div class="ez-title-block">\
-      <div class="ez-title">EZ_Pill <span class="ez-brand">Farmadosis</span></div>\
+      <div class="ez-title">EZ_Pill <span class="ez-brand">Jvm</span></div>\
       <div class="ez-subtitle">معالج الجرعات الذكي · v'+APP_VERSION+'</div>\
     </div>\
   </div>\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
-    <button class="ez-btn-icon" onclick="window.ezSetupAI()" title="إعداد الذكاء الاصطناعي">🤖</button>\
-    <button class="ez-btn-icon" onclick="window.ezCloudSettings()" title="الإعدادات السحابية">☁️</button>\
-    <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
@@ -5547,30 +5328,38 @@ d_box.innerHTML='\
   </div>\
   <div id="ez-pack-warning" style="display:none;padding:10px 14px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border:1.5px solid #fca5a5;border-radius:16px;direction:rtl;transition:all 0.3s"></div>\
 </div>\
-<div class="ez-actions">\
-    <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
-    <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
-    <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
-    <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
-    <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+<div class="ez-actions" style="flex-wrap:wrap">\
+    <div style="display:flex;gap:7px;width:100%;justify-content:center">\
+      <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
+      <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
+      <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
+      <button class="ez-btn-doses" onclick="window.ezSetupGemini()" title="الذكاء الاصطناعي">🤖</button>\
+      <button class="ez-btn-doses" onclick="window.ezCloudSettings()" title="السحابية">☁️</button>\
+      <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
+      <button class="ez-btn-doses" onclick="window.ezDiagnose()" title="تشخيص مشاكل">🔍</button>\
+    </div>\
+    <div style="display:flex;gap:7px;width:100%;margin-top:4px">\
+      <button class="ez-btn-primary" style="flex:1" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
+      <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+    </div>\
   </div>\
-<div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
+<div class="ez-footer"><span>ez_pill Jvm · V'+APP_VERSION+' · علي الباز</span></div>';
 
 document.body.appendChild(d_box);
-/* Async: فحص الجدول بعد ظهور الدايلوج مباشرة */
+/* v146: ALL scanning deferred → dialog opens instantly */
 setTimeout(function(){
   try{
-    /* فحص التقسيم — scanForDuplicateNotes يفحص الصفوف + #epresNotes فقط */
     var _dupCheck=scanForDuplicateNotes();
+    if(!_dupCheck){var _pnFields=document.querySelectorAll('textarea,input[type="text"]');for(var _pf=0;_pf<_pnFields.length;_pf++){var _pfv=(_pnFields[_pf].value||'').trim();if(_pfv.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv)){_dupCheck=true;break;}}}
     if(_dupCheck){
+      hasDuplicateNotes=true;
       var _togBtn=document.querySelector('.ez-tog-btn[style*="6366f1"]');
       var _togCb=document.getElementById('show-post-dialog');
       if(_togBtn&&_togCb&&!_togCb.checked){_togCb.checked=true;_togBtn.classList.add('on');}
     }
-    /* تنبيهات حجم العبوة */
     _renderPackWarningBanner();
   }catch(e){console.warn('EZ scan:',e);}
-},50);
+},80);
 /* Observer: راقب data-t و data-m وأعد رسم التنبيه تلقائياً */
 (function(){var _dlgBox=document.getElementById('ez-dialog-box');if(!_dlgBox)return;var _packObs=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){if(muts[i].attributeName==='data-t'||muts[i].attributeName==='data-m'){try{_renderPackWarningBanner();}catch(e){}break;}}});_packObs.observe(_dlgBox,{attributes:true,attributeFilter:['data-t','data-m']});})();
 /* Pulse effect on primary button */
@@ -5594,7 +5383,108 @@ makeDraggable(d_box);
     });
   }
 })();
-setTimeout(function(){beautifyPage();showWhatsNew();},100);
+setTimeout(function(){beautifyPage();showWhatsNew();_ezEidGreeting();},100);
+
+/* ══ عيد الفطر المبارك 1447 ══ */
+function _ezEidGreeting(){
+  try{
+    var today=new Date();
+    var d=today.getDate(),m=today.getMonth()+1,y=today.getFullYear();
+    /* يظهر يوم 20 مارس 2026 فقط — أول أيام العيد */
+    if(!(y===2026&&m===3&&d===20)) return;
+    /* مرة واحدة فقط */
+    var eidKey='ez_eid_1447_'+APP_NAME.replace(/\s+/g,'_');
+    if(window._ezEidShown) return;
+    try{if(localStorage.getItem(eidKey)==='1') return;}catch(e){}
+    window._ezEidShown=true;
+    try{localStorage.setItem(eidKey,'1');}catch(e){}
+
+    var ov=document.createElement('div');
+    ov.id='ez-eid-overlay';
+    ov.innerHTML='\
+    <style>\
+    #ez-eid-overlay{position:fixed;inset:0;z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;overflow:hidden}\
+    .eid-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,#1a1145 0%,#0c0824 50%,#000 100%)}\
+    .eid-stars{position:absolute;inset:0;overflow:hidden}\
+    .eid-star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:eidTwinkle 2s ease-in-out infinite}\
+    @keyframes eidTwinkle{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}\
+    .eid-card{position:relative;width:420px;max-width:92vw;border-radius:28px;overflow:hidden;animation:eidCardIn 1s cubic-bezier(0.16,1,0.3,1);box-shadow:0 30px 80px rgba(139,92,246,0.3),0 0 200px rgba(251,191,36,0.08)}\
+    @keyframes eidCardIn{from{opacity:0;transform:translateY(60px) scale(0.85)}to{opacity:1;transform:translateY(0) scale(1)}}\
+    .eid-top{background:linear-gradient(160deg,#1e1b4b 0%,#312e81 40%,#4c1d95 100%);padding:36px 28px 28px;text-align:center;position:relative;overflow:hidden}\
+    .eid-top::before{content:"";position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(251,191,36,0.12) 0%,transparent 70%);pointer-events:none}\
+    .eid-moon{font-size:64px;animation:eidMoonGlow 3s ease-in-out infinite;display:inline-block;filter:drop-shadow(0 0 20px rgba(251,191,36,0.4))}\
+    @keyframes eidMoonGlow{0%,100%{transform:scale(1);filter:drop-shadow(0 0 20px rgba(251,191,36,0.4))}50%{transform:scale(1.08);filter:drop-shadow(0 0 35px rgba(251,191,36,0.6))}}\
+    .eid-title{font-size:38px;font-weight:900;color:#fbbf24;margin:12px 0 6px;text-shadow:0 2px 20px rgba(251,191,36,0.3);line-height:1.3;direction:rtl}\
+    .eid-subtitle{font-size:16px;font-weight:700;color:rgba(196,181,253,0.9);direction:rtl;line-height:1.6}\
+    .eid-body{background:linear-gradient(180deg,#1e1b4b,#0f0a28);padding:24px 28px 20px;text-align:center;direction:rtl}\
+    .eid-msg{font-size:14px;font-weight:600;color:rgba(196,181,253,0.8);line-height:2;margin-bottom:16px}\
+    .eid-verse{font-size:13px;font-weight:700;color:rgba(251,191,36,0.7);font-style:italic;margin-bottom:20px;padding:10px 16px;border-right:3px solid rgba(251,191,36,0.3);border-radius:0 8px 8px 0;background:rgba(251,191,36,0.04)}\
+    .eid-lanterns{display:flex;justify-content:center;gap:12px;margin:8px 0 16px}\
+    .eid-lantern{font-size:28px;animation:eidLanternSwing 2s ease-in-out infinite;display:inline-block;transform-origin:top center}\
+    @keyframes eidLanternSwing{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}\
+    .eid-lantern:nth-child(2){animation-delay:0.3s}\
+    .eid-lantern:nth-child(3){animation-delay:0.6s}\
+    .eid-lantern:nth-child(4){animation-delay:0.9s}\
+    .eid-lantern:nth-child(5){animation-delay:1.2s}\
+    .eid-from{font-size:12px;font-weight:800;color:rgba(129,140,248,0.6);margin-bottom:16px;letter-spacing:0.5px}\
+    .eid-btn{width:100%;height:48px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#1e1b4b;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 20px rgba(251,191,36,0.3);transition:all 0.3s}\
+    .eid-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(251,191,36,0.4)}\
+    .eid-confetti{position:absolute;pointer-events:none}\
+    .eid-conf{position:absolute;width:8px;height:8px;border-radius:50%;animation:eidConfFall 3s ease-out forwards}\
+    @keyframes eidConfFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(400px) rotate(720deg)}}\
+    </style>\
+    <div class="eid-bg"></div>\
+    <div class="eid-stars" id="eid-stars"></div>\
+    <div class="eid-confetti" id="eid-confetti"></div>\
+    <div class="eid-card">\
+      <div class="eid-top">\
+        <div class="eid-moon">🌙</div>\
+        <div class="eid-title">عيد فطر مبارك</div>\
+        <div class="eid-subtitle">١ شوّال ١٤٤٧ هـ</div>\
+      </div>\
+      <div class="eid-body">\
+        <div class="eid-lanterns">\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+        </div>\
+        <div class="eid-msg">\
+          تقبّل الله منّا ومنكم صالح الأعمال<br>\
+          كل عام وأنتم بخير وصحة وعافية<br>\
+          أعاده الله علينا وعليكم بالخير واليُمن والبركات\
+        </div>\
+        <div class="eid-verse">« وَلِتُكْمِلُوا الْعِدَّةَ وَلِتُكَبِّرُوا اللَّهَ عَلَىٰ مَا هَدَاكُمْ وَلَعَلَّكُمْ تَشْكُرُونَ »</div>\
+        <div class="eid-from">ez_pill Jvm · علي الباز</div>\
+        <button class="eid-btn" onclick="document.getElementById(\'ez-eid-overlay\').style.opacity=\'0\';document.getElementById(\'ez-eid-overlay\').style.transition=\'opacity 0.5s\';setTimeout(function(){var e=document.getElementById(\'ez-eid-overlay\');if(e)e.remove();},500)">عيدكم مبارك 🎉</button>\
+      </div>\
+    </div>';
+    document.body.appendChild(ov);
+
+    /* Stars */
+    var starsEl=document.getElementById('eid-stars');
+    for(var si=0;si<80;si++){
+      var star=document.createElement('div');
+      star.className='eid-star';
+      star.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(1.5+Math.random()*2)+'s;width:'+(1+Math.random()*2)+'px;height:'+(1+Math.random()*2)+'px';
+      starsEl.appendChild(star);
+    }
+
+    /* Confetti burst */
+    var confEl=document.getElementById('eid-confetti');
+    var confColors=['#fbbf24','#f59e0b','#818cf8','#a78bfa','#4ade80','#f472b6','#38bdf8','#fff'];
+    setTimeout(function(){
+      for(var ci=0;ci<50;ci++){
+        var conf=document.createElement('div');
+        conf.className='eid-conf';
+        var bRad=Math.random()>0.5?'50%':'2px';
+        conf.style.cssText='left:'+((window.innerWidth/2)-100+Math.random()*200)+'px;top:'+(window.innerHeight/2-100)+'px;background:'+confColors[ci%confColors.length]+';animation-delay:'+Math.random()*0.5+'s;animation-duration:'+(2+Math.random()*2)+'s;width:'+(4+Math.random()*6)+'px;height:'+(4+Math.random()*6)+'px;border-radius:'+bRad;
+        confEl.appendChild(conf);
+      }
+    },800);
+  }catch(e){console.log('Eid:',e);}
+}
 
 /* ☁️ Auto-fetch cloud config */
 setTimeout(function(){
@@ -5626,6 +5516,7 @@ function extractAndConfirmName(){
 
       /* Generic title words - NOT actual names */
       var genericWords=['الضيف','الضيفه','الضيفة','ضيف','ضيفه','ضيفة',
+        'الصيف','الصيفه','الصيفة','صيف','صيفه','صيفة', /* typo for الضيف */
         'المريض','المريضه','المريضة','مريض','مريضه','مريضة',
         'العميل','العميله','العميلة','عميل','عميله','عميلة',
         'الزوج','الزوجه','الزوجة','الام','الأم','الاب','الأب'];
@@ -5638,29 +5529,99 @@ function extractAndConfirmName(){
       function isGeneric(w){var n=normG(w);for(var g=0;g<genericWords.length;g++)if(n===normG(genericWords[g]))return true;return false;}
       function isConnector(w){var n=normA(w);for(var c=0;c<connectorWords.length;c++)if(n===normA(connectorWords[c]))return true;return false;}
 
-      /* Stop words - على excluded: handled contextually. connector words (الى/الي) removed from here */
-      var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
-        'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
-        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة',
-        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في','واضافه','واضافة','واضاف','ويوجد','يوجد','بحى','حى','بحي','حي','صيدلية','صيدليه','فرع','التوصيل على','الرجاء','وكتابة'];
+      /* ══ STOP WORDS v145 — expanded with phone/pharmacy/contact detection ══ */
+      var stopWords=[
+        /* توصيل وشحن */
+        'وتوصيل','والتوصيل','التوصيل','توصيل','توصيلهم','ايصال','والايصال','وشحن','شحن','والشحن',
+        /* شكر وتحية */
+        'وشكر','وشكرا','شكرا','وجزاك','جزاك','وجزاكم',
+        /* صيدلية ومكان */
+        'للضيف','للضيفه','للمريض','للمريضه','لصيدلية','لصيدليه',
+        /* تعليمات */
+        'وجعل','والتغيير','بصندوق','بالصندوق','بالحمدانيه','بالحمدانية',
+        'برجاء','الرجاء','يرجى','رجاء','رجاءا','ارجو','أرجو',
+        /* طلبات وبوكسات */
+        'طلبات','طلب','طلبين','طلبان',
+        /* كتابة */
+        'وكتابه','وكتابة','كتابة','كتابه',
+        /* وقت وتوقيت */
+        'عند','اليوم','غدا',
+        /* أشهر وفترات */
+        'شهر','شهرين','لثلاث','لشهر','لمدة','لمده',
+        /* بوكسات وعلب */
+        'بوكس','بوكسات','صندوق','صناديق','علبة','علبه','علب',
+        /* دمج وتجميع */
+        'دمج','دمجهم','دمجهن','تجميع','تجميعهم',
+        'في','واضافه','واضافة','واضاف','ويوجد','يوجد','وبه','وفيه',
+        /* أحياء ومناطق */
+        'بحى','حى','بحي','حي','بمنطقة','بمنطقه','منطقة','منطقه',
+        'شارع','الشارع','طريق','الطريق',
+        /* رقم وتواصل — مهم جداً */
+        'رقم','الرقم','ارقام','أرقام','برقم',
+        'تواصل','التواصل','للتواصل','تليفون','التليفون','بتليفون',
+        'جوال','الجوال','موبايل','الموبايل','هاتف','الهاتف','بجوال','بموبايل','بهاتف',
+        'واتس','واتساب','الواتس','الواتساب',
+        'نمره','نمرة','النمره','النمرة',
+        /* ملاحظات */
+        'ملاحظة','ملاحظه','ملاحظات','ملحوظة','ملحوظه','تنبيه','تنبيهات','مهم',
+        /* أفعال وكلمات ربط */
+        'ويكون','وتكون','ويتم','يتم','وارجو','وأرجو','ونرجو',
+        'مع','بدون','لكن','ولكن','حيث',
+        /* كلمات إعادة صرف */
+        'اعادة','اعاده','إعادة','صرف','الصرف',
+        /* للضرورة */
+        'للضروره','للضرورة','فرع','لفرع','بالفرع','الفرع',
+        'ارسال','والارسال','الارسال','ايصال','والايصال',
+        'محافظة','محافظه','مدينة','مدينه','حي','الحي','حاره','حارة',
+        'شقة','شقه','الشقة','الشقه','دور','الدور','عمارة','عماره','العمارة','العماره',
+        'مبنى','المبنى','بجانب','قريب','امام','خلف',
+        'ومعاه','ومعها','وعنده','وعندها','معاه','معها',
+        'يرجى','مطلوب','برجاء','الرجاء','رجاء'];
 
-      /* على as preposition: only when followed by known location/object word */
-      var alaStopNext=['الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
+      /* على as preposition: only when followed by known context word */
+      var alaStopNext=[
+        /* مواقع وأماكن */
+        'الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
         'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب',
-        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون','الشنطه','الشنطة','صيدلية','صيدليه','الصيدلية','التوصيل','المجمع','الشارع','الحي','الحى','بحى','بحي'];
+        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون',
+        'الشنطه','الشنطة','صيدلية','صيدليه','الصيدلية','الصيدليه',
+        'التوصيل','المجمع','الشارع','الحي','الحى','بحى','بحي',
+        /* رقم وتواصل — حرجي */
+        'الرقم','رقم','التواصل','تواصل','الجوال','جوال',
+        'الموبايل','موبايل','الهاتف','هاتف','التليفون','تليفون',
+        'الواتس','واتس','واتساب','الواتساب',
+        'نمره','نمرة','النمره','النمرة',
+        /* ترتيب ودمج */
+        'الطلبات','الطلب','البوكسات','الصناديق',
+        'ادوية','الادوية','أدوية','الأدوية',
+        'حساب','الحساب','فاتورة','الفاتورة'];
 
       function isStopWord(word,nextWord){
-        /* على: stop ONLY when followed by a known object/location (preposition context) */
-        if(normA(word)==='على'){
-          if(nextWord&&alaStopNext.some(function(x){return normA(nextWord)===normA(x);})) return true;
-          return false; /* otherwise treat as part of name (على الباز، سارة على) */
-        }
         var wn=normA(word);
-        for(var st=0;st<stopWords.length;st++)if(wn===normA(stopWords[st]))return true;
+        /* ══ Phone number detection ══ */
+        if(/^0\d{8,}$/.test(word)) return true;
+        if(/^\d{10,}$/.test(word)) return true;
+        /* ══ على: disambiguation ══ */
+        if(wn==='على'){
+          if(!nextWord) return false;
+          var nn=normA(nextWord);
+          if(alaStopNext.some(function(x){return normA(x)===nn;})) return true;
+          if(/^0\d{4,}/.test(nextWord)) return true;
+          return false;
+        }
+        /* ══ صيدلية/صيدليه — always stop ══ */
+        if(/^(صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه])$/.test(wn)) return true;
+        /* ══ Smart بـ prefix: برقم=ب+رقم, بجوال=ب+جوال, etc. ══ */
+        if(wn.length>2&&wn.charAt(0)==='ب'){
+          var afterBa=wn.substring(1);
+          for(var _bs=0;_bs<stopWords.length;_bs++){if(afterBa===normA(stopWords[_bs]))return true;}
+        }
+        /* ══ Standard stop words check ══ */
+        for(var st=0;st<stopWords.length;st++){if(wn===normA(stopWords[st]))return true;}
         return false;
       }
 
-      /* cleanName: skip leading connectors (الى/الي) and generic titles, stop at stopWords */
+      /* cleanName v145: skip leading connectors/generics, stop at stopWords/phones/و+stop */
       var notNameWords=['اوردات','اوردر','اوردرات','طلبات','طلب','بوكسات','بوكس',
         'صناديق','صندوق','علب','علبه','علبة','حبوب','حبه','حبة','اصناف','صنف',
         'ادويه','ادوية','دواء','شهر','شهور','اشهر','يوم','ايام','اسبوع','اسابيع',
@@ -5672,8 +5633,25 @@ function extractAndConfirmName(){
         'الاكل','النوم','الفطار','السحور','الافطار','الغداء','العشاء',
         'موجود','موجوده','متوفر','متوفره','مطلوب','مطلوبه','اضافي','اضافيه','اضافية',
         'حسب','وصفه','وصفة','روشته','روشتة','روشتته','الوصفه','الروشته',
-        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة','بحى','حى','الحى','حي','الحي','شارع','الشارع','طريق','الطريق','صيدلية','صيدليه','الصيدلية','بالمروه','المروه','الحرمين','الروضه','الروضة','النزهه','النزهة','السلامه','السلامة','الخبر','الدمام','الرياض','جده','جدة','مكه','مكة','المدينه','المدينة','النعيم','الشرق','الغرب','الشمال','الجنوب','منطقه','منطقة','حارة','حاره','المجمع','المول','السوق','سوق','مركز','المركز'];
-      function isNotName(w){var n2=normG(w);var n2bare=n2.replace(/^ال/,'');for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}return false;}
+        'رقم','برقم','نمره','نمرة','تليفون','بتليفون','موبايل','بموبايل','عنوان','جوال','بجوال','هاتف','بهاتف','واتس','واتساب',
+        'تواصل','التواصل','للتواصل','اتصال','الاتصال',
+        'منطقه','منطقة','بحى','حى','الحى','حي','الحي',
+        'شارع','الشارع','طريق','الطريق',
+        'صيدلية','صيدليه','الصيدلية','الصيدليه',
+        'بالمروه','المروه','الحرمين','الروضه','الروضة','النزهه','النزهة',
+        'السلامه','السلامة','الخبر','الدمام','الرياض','جده','جدة',
+        'مكه','مكة','المدينه','المدينة',
+        'النعيم','الشرق','الغرب','الشمال','الجنوب',
+        'حارة','حاره','المجمع','المول','السوق','سوق','مركز','المركز'];
+      function isNotName(w){
+        var n2=normG(w);var n2bare=n2.replace(/^ال/,'');
+        if(/^0\d{8,}$/.test(w)) return true;
+        if(/^\d{7,}$/.test(w)) return true;
+        for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}
+        /* Smart بـ prefix: برقم=ب+رقم */
+        if(n2.length>2&&n2.charAt(0)==='ب'){var afterBa2=n2.substring(1);for(var nn2=0;nn2<notNameWords.length;nn2++){var nw2=normG(notNameWords[nn2]);if(afterBa2===nw2)return true;}}
+        return false;
+      }
 
       function cleanName(raw){
         var words=raw.trim().split(/\s+/);
@@ -5683,10 +5661,30 @@ function extractAndConfirmName(){
           if(cleaned.length===0&&isConnector(words[w])) continue;
           if(cleaned.length===0&&isGeneric(words[w])) continue;
           if(cleaned.length===0&&isNotName(words[w])) return '';
+          /* Phone number → stop */
+          if(/^0\d{8,}$/.test(words[w])) break;
+          if(/^\d{10,}$/.test(words[w])) break;
+          /* Stop word (context-aware على) */
           if(isStopWord(words[w],words[w+1]||null)) break;
+          /* After name started, non-name word → stop */
           if(cleaned.length>0&&isNotName(words[w])) break;
+          /* Single letter after collecting → stop */
           if(words[w].length<=1&&cleaned.length>0) break;
+          /* "و" + stop word → stop (والتوصيل, وشكرا, etc.) */
+          if(cleaned.length>0&&/^و/.test(words[w])&&words[w].length>1){
+            var afterWaw=words[w].substring(1);
+            if(isStopWord(afterWaw,words[w+1]||null)) break;
+            if(isNotName(afterWaw)) break;
+          }
           cleaned.push(words[w]);
+        }
+        /* Post-processing: remove trailing non-name/connector/generic words */
+        while(cleaned.length>0){
+          var last=cleaned[cleaned.length-1];
+          if(last.length<=1){cleaned.pop();continue;}
+          if(isConnector(last)){cleaned.pop();continue;}
+          if(isGeneric(last)){cleaned.pop();continue;}
+          break;
         }
         return cleaned.join(' ');
       }
@@ -5694,11 +5692,11 @@ function extractAndConfirmName(){
       /* PRIORITY 0: تغيير اسم / تغيير الاسم + connector + name (radical patterns) */
       var changePatterns=[
         /* تغيير اسم الضيف الى على الباز */
-        /(?:تغيير\s*اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /(?:تغيير\s*اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* تغيير الاسم الى / تغيير الاسم ل */
         /(?:تغيير\s*الاسم)\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* تغيير اسم (بدون تحديد ضيف/مريض) */
-        /(?:تغيير\s*الاسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /(?:تغيير\s*الاسم?\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* الاسم يكون / الاسم هو */
         /(?:الاسم\s*(?:يكون|هو|هي|بيكون)?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
       ];
@@ -5712,7 +5710,7 @@ function extractAndConfirmName(){
 
       /* PRIORITY 1: name in parentheses after keywords */
       var parenPatterns=[
-        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
+        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
         /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*[:\-]?\s*\(([^)]+)\)/i
       ];
       for(var pp=0;pp<parenPatterns.length;pp++){
@@ -5721,14 +5719,18 @@ function extractAndConfirmName(){
       }
 
       /* PRIORITY 2: English name directly after keyword (no parens) */
-      var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
-      if(engM&&engM[1]&&engM[1].trim().length>=3) var _engName=engM[1].trim();
-      if(/^(the\s+gue?st|guest|the\s+patient|patient)$/i.test(_engName)) _engName=null;
-      if(_engName&&_engName.length>=3) return _engName;
+      var engM=s.match(/(?:باسم|الاسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);
+      var _engName=null;
+      if(engM&&engM[1]){
+        _engName=engM[1].trim()
+          .replace(/\s+(and|or|the|on|to|at|in|for|with|delivery|pharmacy|branch|please|kindly|thanks|thank|you|deliver|send|order)[\s.]*/gi,'')
+          .trim();
+      }
+      if(_engName&&_engName.length>=2) return _engName;
 
       /* PRIORITY 3: Arabic name patterns (with optional connector الى/الي before name) */
       var patterns=[
-        /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?(?:ضيف|صيف)[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل[ـ]?))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
@@ -5821,11 +5823,29 @@ function extractAndConfirmName(){
       if(_slashIdx<0) return;
       /* تأكد إن قبل "/" فيه ذكر للاسم أو الضيف أو الكتابة */  
       var _beforeSlash=notesText.substring(0,_slashIdx);
-      var _hasNameContext=/اسم|ضيف|مريض|عميل|كتاب/i.test(_beforeSlash);
+      var _hasNameContext=/اسم|ضيف|صيف|مريض|عميل|كتاب/i.test(_beforeSlash);
       if(!_hasNameContext) return;
       /* كل اللي بعد "/" = الاسم (بعد حذف المسافات والرموز الزيادة) */
       var _afterSlash=notesText.substring(_slashIdx+1).trim();
       _afterSlash=_afterSlash.replace(/^[\s\-\.،,;:]+|[\s\-\.،,;:]+$/g,"").trim();
+      /* v145: Apply smart name cleaning to slash-extracted name too */
+      if(_afterSlash){
+        var _slashWords=_afterSlash.split(/\s+/);
+        var _slashCleaned=[];
+        for(var _sw=0;_sw<_slashWords.length;_sw++){
+          if(!_slashWords[_sw]) continue;
+          if(/^0\d{8,}$/.test(_slashWords[_sw])) break;
+          if(/^\d{10,}$/.test(_slashWords[_sw])) break;
+          var _swNorm=_slashWords[_sw].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').trim();
+          if(/^(والتوصيل|التوصيل|توصيل|صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه]|رقم|الرقم|برقم|تواصل|التواصل|للتواصل|جوال|الجوال|بجوال|موبايل|بموبايل|هاتف|بهاتف|بتليفون|واتس|واتساب|برجاء|الرجاء|فرع|بفرع|وتوصيل|وشكرا|شكرا|ملاحظه|ملاحظة)$/i.test(_swNorm)) break;
+          if(_slashCleaned.length>0&&/^و/.test(_slashWords[_sw])&&_slashWords[_sw].length>1){
+            var _afterW=_slashWords[_sw].substring(1);
+            if(/^(التوصيل|توصيل|شكرا|الصيدلي[ةه]|صيدلي[ةه]|رقم|الرقم|تواصل|التواصل)$/i.test(_afterW.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه'))) break;
+          }
+          _slashCleaned.push(_slashWords[_sw]);
+        }
+        _afterSlash=_slashCleaned.join(' ').trim();
+      }
       if(_afterSlash.length<2) return;
       /* لو nameField موجود وفيه قيمة مختلفة → نبين البانر */
       if(!nameField) return;
