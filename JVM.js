@@ -1,5 +1,5 @@
 javascript:(function(){
-var APP_VERSION='144.0';
+var APP_VERSION='146.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
 var APP_NAME='ez_pill Jvm';
@@ -8,6 +8,16 @@ var APP_NAME='ez_pill Jvm';
    WHAT'S NEW - CHANGELOG SYSTEM
    ══════════════════════════════════════════ */
 var CHANGELOG={
+  '146.0':{    title:'🔧 تحسينات شاملة + دقة محلية',    features:[      {icon:'🚫',text:'عند الحاجة/اللزوم/PRN: يُزال تلقائياً مثل الثلاجة'},      {icon:'🕐',text:'أوقات سعودية جديدة: الضحى/الفجر/بعد صلاة'},      {icon:'⚡',text:'تسريع فتح الدايلوج + تأخير فحص الجدول'},      {icon:'🔤',text:'توحيد تطبيع النصوص العربية في دالة واحدة'},      {icon:'👤',text:'كلمات توقف إضافية لاستخلاص الاسم'},      {icon:'🔧',text:'استبدال أوقات مكتوبة بـ NORMAL_TIMES'}    ]  },
+  '145.0':{
+    title:'🧠 ذكاء استخلاص الاسم + دقة جيميناي',
+    features:[
+      {icon:'🤖',text:'إصلاح أوقات جيميناي: بعد الفطار=9:00 صح (كان 9:30)'},
+      {icon:'👤',text:'استخلاص الاسم الذكي: يوقف عند صيدلية/رقم/توصيل'},
+      {icon:'📱',text:'كشف أرقام التليفون: يوقف جمع الاسم فوراً'},
+      {icon:'🔤',text:'تفريق على الاسم (على الباز) من على حرف الجر (على الرقم)'}
+    ]
+  },
   '144.0':{
     title:'💊 دعم العبوة 56 تلقائياً',
     features:[
@@ -45,23 +55,25 @@ var CHANGELOG={
 
 /* ── helpers: read/write version from localStorage + cookie fallback ── */
 function _ezGetSeenVersion(){
+  if(window._ezWhatsNewShown===APP_VERSION) return APP_VERSION;
   try{
-    var ls=localStorage.getItem('ez_pill_version');
+    var ls=localStorage.getItem('ez_pill_seen_ver');
     if(ls) return ls;
+    var oldLs=localStorage.getItem('ez_pill_version');
+    if(oldLs){localStorage.setItem('ez_pill_seen_ver',oldLs);try{localStorage.removeItem('ez_pill_version');}catch(e){}return oldLs;}
   }catch(e){}
-  /* cookie fallback */
   try{
-    var m=document.cookie.match(/(?:^|;\s*)ez_pill_version=([^;]+)/);
+    var m=document.cookie.match(/(?:^|;\s*)ez_pill_seen_ver=([^;]+)/);
     if(m) return decodeURIComponent(m[1]);
   }catch(e){}
   return null;
 }
 function _ezSetSeenVersion(v){
-  try{localStorage.setItem('ez_pill_version',v);}catch(e){}
-  /* also set cookie with 1-year expiry as fallback */
+  window._ezWhatsNewShown=v;
+  try{localStorage.setItem('ez_pill_seen_ver',v);}catch(e){}
   try{
     var exp=new Date();exp.setFullYear(exp.getFullYear()+1);
-    document.cookie='ez_pill_version='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
+    document.cookie='ez_pill_seen_ver='+encodeURIComponent(v)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
   }catch(e){}
 }
 
@@ -72,6 +84,9 @@ function showWhatsNew(){
     var info=CHANGELOG[APP_VERSION];
     /* No changelog entry for this version → silently mark as seen and skip */
     if(!info){_ezSetSeenVersion(APP_VERSION);return;}
+
+    /* v146: Mark as seen IMMEDIATELY */
+    _ezSetSeenVersion(APP_VERSION);
 
     /* Build features HTML */
     var featuresHtml='';
@@ -114,8 +129,6 @@ function showWhatsNew(){
     .ez-wn-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}\
     .ez-wn-btn::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transition:0.5s}\
     .ez-wn-btn:hover::after{left:100%}\
-    .ez-wn-skip{display:block;text-align:center;margin-top:8px;font-size:11px;font-weight:700;color:#a5b4fc;cursor:pointer;font-family:Cairo,sans-serif;transition:color 0.2s;background:none;border:none;width:100%}\
-    .ez-wn-skip:hover{color:#6366f1}\
     </style>\
     <div class="ez-wn-card">\
       <div class="ez-wn-confetti" id="ez-wn-confetti"></div>\
@@ -130,7 +143,6 @@ function showWhatsNew(){
       </div>\
       <div class="ez-wn-footer">\
         <button class="ez-wn-btn" id="ez-wn-ok">تمام، يلا نبدأ 🚀</button>\
-        <button class="ez-wn-skip" id="ez-wn-skip">عدم الإظهار لهذا التحديث</button>\
       </div>\
     </div>';
     document.body.appendChild(overlay);
@@ -147,12 +159,10 @@ function showWhatsNew(){
 
     /* Close handlers */
     function closeWN(){
-      _ezSetSeenVersion(APP_VERSION);
       overlay.style.animation='ezWnFadeIn 0.3s ease reverse';
       setTimeout(function(){overlay.remove();},300);
     }
     document.getElementById('ez-wn-ok').addEventListener('click',closeWN);
-    document.getElementById('ez-wn-skip').addEventListener('click',closeWN);
     overlay.addEventListener('click',function(e){if(e.target===overlay)closeWN();});
   }catch(e){
     /* localStorage not available or error - skip silently */
@@ -1166,6 +1176,20 @@ function _ezNormL(txt){
     .trim();
 }
 
+/* ══ v146: Unified Arabic Normalization ══ */
+function _ezNormAr(txt){
+  return(txt||'').toLowerCase()
+    .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ى/g,'ي')
+    .replace(/٠/g,'0').replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4')
+    .replace(/٥/g,'5').replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9')
+    .replace(/\s+/g,' ').trim();
+}
+
+function _ezIsPRN(note){
+  var s=_ezNormAr(note);
+  return /عند\s*(الحاج[ةه]|اللزوم|الضرور[ةه]|الالم|الازوم|اللازوم)|حسب\s*(الحاج[ةه]|اللزوم)|وقت\s*(الحاج[ةه]|الالم|اللزوم)|prn|p\.r\.n|as\s*needed|when\s*needed|sos|if\s*needed|on\s*demand|pro\s*re\s*nata/i.test(s);
+}
+
 function _ezGet(td){
   if(!td) return '';
   var i=td.querySelector('input,textarea,select');
@@ -1300,6 +1324,41 @@ window.ezShowToast=function(msg,type){
 window.ezCancel=function(){
   var d=document.getElementById('ez-dialog-box');
   if(d) d.remove();
+};
+
+/* ══ v146: أداة تشخيص المشاكل ══ */
+window.ezDiagnose=function(){
+  var html='<div style="direction:rtl;font-family:Cairo,sans-serif;max-height:70vh;overflow-y:auto;padding:10px">';
+  html+='<h3 style="color:#4f46e5;margin:0 0 10px">🔍 تقرير التشخيص</h3>';
+  html+='<div style="background:#f0fdf4;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bbf7d0">';
+  html+='<b style="color:#166534">📦 الإعدادات المحفوظة:</b><br>';
+  try{var s=localStorage.getItem('ez_pill_settings');var sObj=s?JSON.parse(s):{};html+='أشهر: <b>'+(sObj.m||'?')+'</b> | أيام: <b>'+(sObj.t||'?')+'</b> | رمضان: <b>'+(sObj.ramadanMode?'مفعّل':'معطّل')+'</b>';}catch(e){html+='خطأ';}
+  html+='</div>';
+  html+='<div style="background:#eff6ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bfdbfe">';
+  html+='<b style="color:#1e40af">⚙️ أكواد مخصصة:</b><br>';
+  try{var c=localStorage.getItem('ez_pill_custom');var cObj=c?JSON.parse(c):{};if(cObj.fixedSizeCodes&&Object.keys(cObj.fixedSizeCodes).length>0){for(var k in cObj.fixedSizeCodes)html+='كود <b>'+k+'</b> ← حجم <b>'+cObj.fixedSizeCodes[k]+'</b><br>';}else{html+='لا يوجد';}if(cObj.removedCodes&&cObj.removedCodes.length>0)html+='<br>محذوفة: '+cObj.removedCodes.join(' , ');}catch(e){html+='خطأ';}
+  html+='</div>';
+  html+='<div style="background:#fefce8;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #fef08a">';
+  html+='<b style="color:#854d0e">📋 أصناف الجدول:</b><br>';
+  try{var tb=null;var allTb=document.querySelectorAll('table');for(var i=0;i<allTb.length;i++){var txt=allTb[i].innerText.toLowerCase();if(txt.indexOf('code')>-1&&txt.indexOf('name')>-1){tb=allTb[i];break;}}
+  if(tb){var hdr=tb.querySelectorAll('tr')[0];var ths=hdr?hdr.querySelectorAll('th,td'):[];var ci=-1,ni=-1,si=-1,noti=-1;for(var h=0;h<ths.length;h++){var ht=ths[h].textContent.trim().toLowerCase();if(ht.indexOf('code')>-1)ci=h;if(ht.indexOf('name')>-1)ni=h;if(ht.indexOf('size')>-1||ht.indexOf('qty')>-1)si=h;if(ht.indexOf('note')>-1)noti=h;}
+  var rows=tb.querySelectorAll('tr');for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<3)continue;var code=ci>=0?(_ezGet(tds[ci]).match(/\d+/)||[''])[0]:'';var name=ni>=0?_ezGet(tds[ni]):'';var size=si>=0?_ezGet(tds[si]):'';var note=noti>=0?_ezGet(tds[noti]):'';if(!code&&!name)continue;var pack=_extractPackFromName(name);var isFixed=!!(fixedSizeCodes&&fixedSizeCodes[code]);var fixedVal=isFixed?fixedSizeCodes[code]:null;var isPRN=_ezIsPRN(note);
+  html+='<div style="background:#fff;padding:6px 8px;border-radius:8px;margin:4px 0;border:1px solid #e5e7eb;font-size:12px">';
+  html+='<b>'+code+'</b> | '+name.substring(0,40)+'<br>';
+  html+='الحجم: <b style="color:#dc2626">'+size+'</b>';
+  if(pack)html+=' | عبوة: <b style="color:#7c3aed">'+pack+'</b>';
+  if(isFixed)html+=' | <span style="background:#fbbf24;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:900">ثابت: '+fixedVal+'</span>';
+  if(isPRN)html+=' | <span style="background:#ef4444;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">عند الحاجة</span>';
+  if(note)html+='<br><span style="color:#6b7280;font-size:10px">'+note.substring(0,60)+'</span>';
+  html+='</div>';}}else{html+='لم يتم العثور على الجدول';}}catch(e){html+='خطأ: '+e.message;}
+  html+='</div>';
+  html+='<div style="background:#f5f3ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #ddd6fe">';
+  html+='<b style="color:#5b21b6">ℹ️ معلومات:</b><br>النسخة: <b>'+APP_VERSION+'</b><br>';
+  try{var allKeys=[];for(var ki=0;ki<localStorage.length;ki++){var lk=localStorage.key(ki);if(lk.indexOf('ez_')===0)allKeys.push(lk);}html+='مفاتيح: <b>'+allKeys.join(' , ')+'</b>';}catch(e){}
+  html+='</div></div>';
+  var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;width:500px;max-width:90vw;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)"><div style="padding:16px 20px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-weight:900;font-size:16px;text-align:center;direction:rtl">🔍 تقرير التشخيص</div><div style="padding:12px;overflow-y:auto;max-height:65vh">'+html+'</div><div style="padding:12px;text-align:center;border-top:1px solid #e5e7eb"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:8px 30px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;font-family:Cairo,sans-serif">إغلاق</button></div></div>';
+  document.body.appendChild(ov);
 };
 
 window.ezClosePost=function(){
@@ -1579,12 +1638,14 @@ window.ezPreviewAlerts=function(){
     if(monthMatch) details.push('🗓️ عدد الأشهر: '+monthMatch[1]);
     /* اسم الضيف */
     var namePatterns=[
-      /(?:تغيير\s*(?:ال)?اسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
-      /(?:باسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?))\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:تغيير\s*(?:ال)?اسم?\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+      /(?:باسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?))\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
       /(?:الاسم\s*(?:يكون|هو)?)\s*[\:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
     ];
     var extractedName=null;
-    for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
+    for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى|برقم|رقم|التواصل|صيدلية|صيدليه).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
+    /* v146: English name fallback */
+    if(!extractedName){var _engPrev=prescNote.match(/(?:باسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);if(_engPrev&&_engPrev[1]){extractedName=_engPrev[1].trim().replace(/\s+(and|or|delivery|pharmacy|branch|please|kindly|thanks|send|order)[\s.]*/gi,'').trim();if(extractedName.length<2)extractedName=null;}}
     if(extractedName) details.push('👤 اسم الضيف: '+extractedName);
     /* صيدلية التوصيل */
     var pharmaMatch=prescNote.match(/(?:صيدلي[ةه]|لصيدلي[ةه]|فرع)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,2})/i);
@@ -3170,9 +3231,12 @@ function smartDoseRecognizer(note){
 
   /* ── Step 5: Count from detected meal/time keywords ── */
   var mealCount=0;
-  if(res.hasB||res.hasM) mealCount++;
+  /* v146: ريق+صباح = وقت واحد، مساء+نوم = وقت واحد */
+  if(res.hasEmpty){mealCount++;}
+  else if(res.hasB||res.hasM){mealCount++;}
   if(res.hasL||res.hasN) mealCount++;
-  if(res.hasD||res.hasE) mealCount++;
+  if(res.hasBed&&!res.hasD&&!res.hasE){mealCount++;}
+  else if(res.hasD||res.hasE){mealCount++;}
   if(res.hasA&&mealCount<3) mealCount++;
 
   if(mealCount>=3){res.count=3;return res;}
@@ -3181,7 +3245,7 @@ function smartDoseRecognizer(note){
   if(res.hasEmpty&&res.hasBed){res.count=2;return res;}
   if(res.hasBed&&mealCount===0){res.count=1;return res;}
   if(res.hasEmpty&&mealCount===0){res.count=1;return res;}
-  if(/\b(يوميا|daily)\b/i.test(s)&&!res.rawFrequency){res.count=1;return res;}
+  if(/(^|\s)(يوميا|daily)(\s|$)/i.test(s)&&!res.rawFrequency){res.count=1;return res;}
   return res;
 }
 
@@ -3253,7 +3317,19 @@ function getTimeFromWords(w){
       if(_hasEve||_hasNight||_hasBed) return {time:NORMAL_TIMES.afterDinner||"21:00"};
     }
   }
-  var rules=[{test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:'08:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:'09:00'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:'14:00'},{test:/maghrib|مغرب|المغرب/,time:'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:'21:00'}];
+  var NT=NORMAL_TIMES;
+  var rules=[
+  /* ══ v146: Saudi pharmacy terms ══ */
+  {test:/ضحى|الضحى|الضحا|forenoon/,time:'10:00'},
+  {test:/فجر|الفجر|dawn/,time:'05:00'},
+  {test:/بعد صلا[ةه] الفجر|after fajr/,time:'05:30'},
+  {test:/بعد صلا[ةه] الظهر|after dhuhr/,time:'12:30'},
+  {test:/بعد صلا[ةه] العصر|after asr/,time:NT.afternoon||'14:00'},
+  {test:/بعد صلا[ةه] المغرب|after maghrib/,time:NT.maghrib||'18:00'},
+  {test:/بعد صلا[ةه] العشاء|after isha/,time:NT.afterDinner||'21:00'},
+  {test:/الوجب[ةه] الرئيسي[ةه]|main meal/,time:NT.afterBreakfast||'09:00'},
+  /* ══ Standard rules with NORMAL_TIMES ══ */
+  {test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:NT.afterBreakfast||'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:NT.afterLunch||'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:NT.afterDinner||'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:NT.afterBreakfast||'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:NT.empty||'08:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal||'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast||'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:NT.afterBreakfast||'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:NT.morning||'09:00'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:NT.noon||'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:NT.beforeLunch||'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:NT.afterLunch||'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:NT.afternoon||'14:00'},{test:/maghrib|مغرب|المغرب/,time:NT.maghrib||'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:NT.beforeDinner||'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:NT.afterDinner||'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:NT.bed||'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:NT.evening||'21:00'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -3294,11 +3370,13 @@ function getMealTimesFromNote(note){
   var times=[];
   if(hasEmpty) times.push(7);
   if(hasB) times.push(isBefore?8:9);
-  if(hasMorning&&!hasB) times.push(9);
+  /* v146: صباحا + عالريق = وقت واحد (ريق) مش اتنين */
+  if(hasMorning&&!hasB&&!hasEmpty) times.push(9);
   if(hasNoon&&!hasL) times.push(12);
   if(hasL) times.push(isBefore?13:14);
   if(hasAfternoon&&!hasL) times.push(15);
   if(hasD) times.push(isBefore?20:21);
+  /* v146: مساء + قبل النوم = وقت واحد (نوم) مش اتنين */
   if(hasEvening&&!hasD&&!hasBed) times.push(21);
   if(hasBed) times.push(22);
   var unique={};var result=[];
@@ -3422,13 +3500,13 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
       var n1='',t1='',n2='',t2='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasN){n1=m_lbl;t1='09:30';n2=n_lbl;t2='12:00';meals=['الصباح','الظهر'];}
-      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1='12:00';n2=e_lbl;t2='21:30';meals=['الظهر','المساء'];}
-      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';meals=['الصباح','العصر'];}
-      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1='15:00';n2=e_lbl;t2='21:30';meals=['العصر','المساء'];}
-      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
-      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1='13:00';n2=p+dn;t2='20:00';}else{n1=p+ln;t1='14:00';n2=p+dn;t2='21:00';}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+dn;t2='20:00';}else{n1=p+bf;t1='09:00';n2=p+dn;t2='21:00';}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
+      if(ni.doseInfo.hasM&&ni.doseInfo.hasN){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=n_lbl;t2=NORMAL_TIMES.noon;meals=['الصباح','الظهر'];}
+      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1=NORMAL_TIMES.noon;n2=e_lbl;t2=NORMAL_TIMES.evening;meals=['الظهر','المساء'];}
+      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=a_lbl;t2=NORMAL_TIMES.afternoon;meals=['الصباح','العصر'];}
+      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1=NORMAL_TIMES.afternoon;n2=e_lbl;t2=NORMAL_TIMES.evening;meals=['العصر','المساء'];}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln;t2=NORMAL_TIMES.beforeLunch;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln;t2=NORMAL_TIMES.afterLunch;}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
+      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1=NORMAL_TIMES.beforeLunch;n2=p+dn;t2=NORMAL_TIMES.beforeDinner;}else{n1=p+ln;t1=NORMAL_TIMES.afterLunch;n2=p+dn;t2=NORMAL_TIMES.afterDinner;}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
+      else{if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+dn;t2=NORMAL_TIMES.beforeDinner;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+dn;t2=NORMAL_TIMES.afterDinner;}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
     } else if(ni.type==='three'){
@@ -3439,8 +3517,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);setDose(nt3[di],tpi.dose);}
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
       var n1='',t1='',n2='',t2='',n3='',t3='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1='09:30';n2=a_lbl;t2='15:00';n3=e_lbl;t3='21:30';meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
-      else{if(ni.isBefore){n1=p+bf;t1='08:00';n2=p+ln;t2='13:00';n3=p+dn;t3='20:00';}else{n1=p+bf;t1='09:00';n2=p+ln;t2='14:00';n3=p+dn;t3='21:00';}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
+      if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=a_lbl;t2=NORMAL_TIMES.afternoon;n3=e_lbl;t3=NORMAL_TIMES.evening;meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
+      else{if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln;t2=NORMAL_TIMES.beforeLunch;n3=p+dn;t3=NORMAL_TIMES.beforeDinner;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln;t2=NORMAL_TIMES.afterLunch;n3=p+dn;t3=NORMAL_TIMES.afterDinner;}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
     } else if(ni.type==='q6h'){
@@ -3453,8 +3531,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
       var andW=isEn?' & ':' و';var bedLbl=isEn?'Before Bed':'قبل النوم';
       var n1='',t1='',n2='',t2='';
-      if(ni.isBefore){n1=p+bf+andW+dn;t1='08:00';n2=p+ln+andW+bedLbl;t2='13:00';}
-      else{n1=p+bf+andW+dn;t1='09:00';n2=p+ln+andW+bedLbl;t2='14:00';}
+      if(ni.isBefore){n1=p+bf+andW+dn;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln+andW+bedLbl;t2=NORMAL_TIMES.beforeLunch;}
+      else{n1=p+bf+andW+dn;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln+andW+bedLbl;t2=NORMAL_TIMES.afterLunch;}
       setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
       nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
@@ -3579,7 +3657,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
     if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);
       /* Clean brackets from name */
-      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|لصقات|لصقه|لصقة|لاصقه|لاصقة|لزقه|لزقة|لزقات|patch|patches|transdermal|topical|gel\b|جل\b|oint|دهان|دهون|مسحه|مسحة|للجلد|جلديه|جلدية|dermal|lotion|لوشن|فوط|غسول|wash|shampoo|شامبو|تحاميل|حقن|بلاستر|plaster|foam|رغوه|رغوة/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
     var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
     if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
     rtp_list.push(r_node);
@@ -3595,6 +3673,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ni_main>=0){var nInp=tds_nodes[ni_main].querySelector('input,textarea');if(nInp){nInp.style.width='100%';nInp.style.minWidth='180px';}}
     var nc=tds_nodes[ni_main];var ni3=nc.querySelector('input,textarea');var nt_str=ni3?ni3.value:nc.textContent;var cn_str=cleanNote(nt_str);
     if(ni3){ni3.value=cn_str;fire(ni3);}else nc.textContent=cn_str;
+    /* ══ v146: PRN/عند الحاجة → uncheck like refrigerator items ══ */
+    if(_ezIsPRN(nt_str)||_ezIsPRN(cn_str)){var ck_prn=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck_prn);skp_list.push(r_node);continue;}
     var itemCode=getCleanCode(tds_nodes[ci_main]);var itemName=nm_main>=0?get(tds_nodes[nm_main]):'';
     /* Clean name field — remove brackets that system rejects */
     if(itemName&&/[()\[\]{}⟨⟩<>«»]/.test(itemName)){
@@ -3841,19 +3921,23 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
             var _aiDesc=(ai.readable_ar||'').toLowerCase();
             var _localTime=ai.startTime;
             /* Match by keyword in AI description first (most accurate) */
-            if(/صباح|morning/i.test(_aiDesc)) _localTime=NORMAL_TIMES.morning||'09:00';
-            else if(/ريق|empty|fasting/i.test(_aiDesc)) _localTime=NORMAL_TIMES.empty||'08:00';
-            else if(/قبل.*فطار|before.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeBreakfast||'08:00';
-            else if(/بعد.*فطار|after.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
-            else if(/ظهر|noon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.noon||'12:00';
+            /* PRIORITY 1: أوقات الوجبات المحددة — الأهم يتطابق أولاً */
+            if(/ريق|empty|fasting|على الريق/i.test(_aiDesc)) _localTime=NORMAL_TIMES.empty||'07:00';
+            else if(/قبل.*فطار|قبل.*فطور|before.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeBreakfast||'08:00';
+            else if(/بعد.*فطار|بعد.*فطور|after.*break/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
+            else if(/قبل.*(اكل|أكل|وجب)|before.*(meal|food)|\bac\b/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeMeal||'08:00';
+            else if(/بعد.*(اكل|أكل|وجب)|after.*(meal|food)|\bpc\b/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterBreakfast||'09:00';
             else if(/قبل.*غدا|قبل.*غداء|before.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeLunch||'13:00';
             else if(/بعد.*غدا|بعد.*غداء|after.*lunch/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterLunch||'14:00';
+            else if(/قبل.*عشا|قبل.*عشاء|before.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeDinner||'20:00';
+            else if(/بعد.*عشا|بعد.*عشاء|after.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterDinner||'21:00';
+            else if(/نوم|bed|sleep|قبل النوم/i.test(_aiDesc)) _localTime=NORMAL_TIMES.bed||'22:00';
+            /* PRIORITY 2: أوقات عامة — أقل تحديداً */
+            else if(/صباح|morning/i.test(_aiDesc)) _localTime=NORMAL_TIMES.morning||'09:30';
+            else if(/ظهر|noon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.noon||'12:00';
             else if(/عصر|afternoon/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afternoon||'15:00';
             else if(/مغرب/i.test(_aiDesc)) _localTime=NORMAL_TIMES.maghrib||'18:00';
-            else if(/قبل.*عشا|before.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.beforeDinner||'20:00';
-            else if(/بعد.*عشا|after.*din/i.test(_aiDesc)) _localTime=NORMAL_TIMES.afterDinner||'21:00';
-            else if(/مساء|evening|ليل|night/i.test(_aiDesc)) _localTime=NORMAL_TIMES.evening||'21:00';
-            else if(/نوم|bed|sleep/i.test(_aiDesc)) _localTime=NORMAL_TIMES.bed||'22:00';
+            else if(/مساء|مسا|evening|ليل|night/i.test(_aiDesc)) _localTime=NORMAL_TIMES.evening||'21:30';
             /* Fallback by hour if no keyword matched */
             else if(_aiH>=5&&_aiH<=7) _localTime=NORMAL_TIMES.empty||'08:00';
             else if(_aiH>=8&&_aiH<10) _localTime=NORMAL_TIMES.morning||'09:00';
@@ -4212,6 +4296,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       document.body.appendChild(rmBadge);
       setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},10000);
     }
+    
     /* JVM: End Date -1 يوم لكل صف */
     if(edi_main>=0){
       var _jvmRows=Array.from(tb_main.querySelectorAll('tr')).slice(1);
@@ -5161,8 +5246,8 @@ function _ezShowSettingsPanel(){
     e.target.value='';
   };
 }
-var hasDuplicateNotes=scanForDuplicateNotes();
-if(!hasDuplicateNotes){var _pnFields=document.querySelectorAll('textarea,input[type="text"]');for(var _pf=0;_pf<_pnFields.length;_pf++){var _pfv=(_pnFields[_pf].value||'').trim();if(_pfv.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv)){hasDuplicateNotes=true;break;}}}
+/* v146: hasDuplicateNotes deferred to after dialog renders for speed */
+var hasDuplicateNotes=false;
 var _rm_setting=savedSettings.ramadanMode||false;
 /* Ramadan mode: post dialog is shown ONLY after processing if actual duplicates were created */
 /* We don't force hasDuplicateNotes=true here anymore */
@@ -5191,9 +5276,6 @@ d_box.innerHTML='\
   </div>\
   <div class="ez-header-actions">\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
-    <button class="ez-btn-icon" onclick="window.ezSetupGemini()" title="إعداد الذكاء الاصطناعي">🤖</button>\
-    <button class="ez-btn-icon" onclick="window.ezCloudSettings()" title="الإعدادات السحابية">☁️</button>\
-    <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
@@ -5246,30 +5328,38 @@ d_box.innerHTML='\
   </div>\
   <div id="ez-pack-warning" style="display:none;padding:10px 14px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border:1.5px solid #fca5a5;border-radius:16px;direction:rtl;transition:all 0.3s"></div>\
 </div>\
-<div class="ez-actions">\
-    <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
-    <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
-    <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
-    <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
-    <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+<div class="ez-actions" style="flex-wrap:wrap">\
+    <div style="display:flex;gap:7px;width:100%;justify-content:center">\
+      <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
+      <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
+      <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
+      <button class="ez-btn-doses" onclick="window.ezSetupGemini()" title="الذكاء الاصطناعي">🤖</button>\
+      <button class="ez-btn-doses" onclick="window.ezCloudSettings()" title="السحابية">☁️</button>\
+      <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
+      <button class="ez-btn-doses" onclick="window.ezDiagnose()" title="تشخيص مشاكل">🔍</button>\
+    </div>\
+    <div style="display:flex;gap:7px;width:100%;margin-top:4px">\
+      <button class="ez-btn-primary" style="flex:1" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
+      <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+    </div>\
   </div>\
 <div class="ez-footer"><span>ez_pill Jvm · V'+APP_VERSION+' · علي الباز</span></div>';
 
 document.body.appendChild(d_box);
-/* Async: فحص الجدول بعد ظهور الدايلوج مباشرة */
+/* v146: ALL scanning deferred → dialog opens instantly */
 setTimeout(function(){
   try{
-    /* فحص التقسيم — scanForDuplicateNotes يفحص الصفوف + #epresNotes فقط */
     var _dupCheck=scanForDuplicateNotes();
+    if(!_dupCheck){var _pnFields=document.querySelectorAll('textarea,input[type="text"]');for(var _pf=0;_pf<_pnFields.length;_pf++){var _pfv=(_pnFields[_pf].value||'').trim();if(_pfv.length>10&&/تقسيم|تقسم|ثلاث.*اشهر|ثلاثه.*شهور|3.*اشهر|3.*شهور|ثلاث.*صناديق|3.*صناديق|ثلاث.*بوكس|3.*بوكس/i.test(_pfv)){_dupCheck=true;break;}}}
     if(_dupCheck){
+      hasDuplicateNotes=true;
       var _togBtn=document.querySelector('.ez-tog-btn[style*="6366f1"]');
       var _togCb=document.getElementById('show-post-dialog');
       if(_togBtn&&_togCb&&!_togCb.checked){_togCb.checked=true;_togBtn.classList.add('on');}
     }
-    /* تنبيهات حجم العبوة */
     _renderPackWarningBanner();
   }catch(e){console.warn('EZ scan:',e);}
-},50);
+},80);
 /* Observer: راقب data-t و data-m وأعد رسم التنبيه تلقائياً */
 (function(){var _dlgBox=document.getElementById('ez-dialog-box');if(!_dlgBox)return;var _packObs=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){if(muts[i].attributeName==='data-t'||muts[i].attributeName==='data-m'){try{_renderPackWarningBanner();}catch(e){}break;}}});_packObs.observe(_dlgBox,{attributes:true,attributeFilter:['data-t','data-m']});})();
 /* Pulse effect on primary button */
@@ -5325,6 +5415,7 @@ function extractAndConfirmName(){
 
       /* Generic title words - NOT actual names */
       var genericWords=['الضيف','الضيفه','الضيفة','ضيف','ضيفه','ضيفة',
+        'الصيف','الصيفه','الصيفة','صيف','صيفه','صيفة', /* typo for الضيف */
         'المريض','المريضه','المريضة','مريض','مريضه','مريضة',
         'العميل','العميله','العميلة','عميل','عميله','عميلة',
         'الزوج','الزوجه','الزوجة','الام','الأم','الاب','الأب'];
@@ -5337,29 +5428,99 @@ function extractAndConfirmName(){
       function isGeneric(w){var n=normG(w);for(var g=0;g<genericWords.length;g++)if(n===normG(genericWords[g]))return true;return false;}
       function isConnector(w){var n=normA(w);for(var c=0;c<connectorWords.length;c++)if(n===normA(connectorWords[c]))return true;return false;}
 
-      /* Stop words - على excluded: handled contextually. connector words (الى/الي) removed from here */
-      var stopWords=['وتوصيل','والتوصيل','وشكر','وشكرا','للضيف','للضيفه','للمريض','للمريضه',
-        'وجعل','والتغيير','بصندوق','بالحمدانيه','بالحمدانية','برجاء','الرجاء','صيدلية','صيدليه',
-        'للضروره','للضرورة','طلبات','طلب','وكتابه','وكتابة',
-        'عند','اليوم','شهر','لثلاث','لشهر','بوكس','دمج','دمجهم','توصيل','توصيلهم','في','واضافه','واضافة','واضاف','ويوجد','يوجد','بحى','حى','بحي','حي','صيدلية','صيدليه','فرع','التوصيل على','الرجاء','وكتابة'];
+      /* ══ STOP WORDS v145 — expanded with phone/pharmacy/contact detection ══ */
+      var stopWords=[
+        /* توصيل وشحن */
+        'وتوصيل','والتوصيل','التوصيل','توصيل','توصيلهم','ايصال','والايصال','وشحن','شحن','والشحن',
+        /* شكر وتحية */
+        'وشكر','وشكرا','شكرا','وجزاك','جزاك','وجزاكم',
+        /* صيدلية ومكان */
+        'للضيف','للضيفه','للمريض','للمريضه','لصيدلية','لصيدليه',
+        /* تعليمات */
+        'وجعل','والتغيير','بصندوق','بالصندوق','بالحمدانيه','بالحمدانية',
+        'برجاء','الرجاء','يرجى','رجاء','رجاءا','ارجو','أرجو',
+        /* طلبات وبوكسات */
+        'طلبات','طلب','طلبين','طلبان',
+        /* كتابة */
+        'وكتابه','وكتابة','كتابة','كتابه',
+        /* وقت وتوقيت */
+        'عند','اليوم','غدا',
+        /* أشهر وفترات */
+        'شهر','شهرين','لثلاث','لشهر','لمدة','لمده',
+        /* بوكسات وعلب */
+        'بوكس','بوكسات','صندوق','صناديق','علبة','علبه','علب',
+        /* دمج وتجميع */
+        'دمج','دمجهم','دمجهن','تجميع','تجميعهم',
+        'في','واضافه','واضافة','واضاف','ويوجد','يوجد','وبه','وفيه',
+        /* أحياء ومناطق */
+        'بحى','حى','بحي','حي','بمنطقة','بمنطقه','منطقة','منطقه',
+        'شارع','الشارع','طريق','الطريق',
+        /* رقم وتواصل — مهم جداً */
+        'رقم','الرقم','ارقام','أرقام','برقم',
+        'تواصل','التواصل','للتواصل','تليفون','التليفون','بتليفون',
+        'جوال','الجوال','موبايل','الموبايل','هاتف','الهاتف','بجوال','بموبايل','بهاتف',
+        'واتس','واتساب','الواتس','الواتساب',
+        'نمره','نمرة','النمره','النمرة',
+        /* ملاحظات */
+        'ملاحظة','ملاحظه','ملاحظات','ملحوظة','ملحوظه','تنبيه','تنبيهات','مهم',
+        /* أفعال وكلمات ربط */
+        'ويكون','وتكون','ويتم','يتم','وارجو','وأرجو','ونرجو',
+        'مع','بدون','لكن','ولكن','حيث',
+        /* كلمات إعادة صرف */
+        'اعادة','اعاده','إعادة','صرف','الصرف',
+        /* للضرورة */
+        'للضروره','للضرورة','فرع','لفرع','بالفرع','الفرع',
+        'ارسال','والارسال','الارسال','ايصال','والايصال',
+        'محافظة','محافظه','مدينة','مدينه','حي','الحي','حاره','حارة',
+        'شقة','شقه','الشقة','الشقه','دور','الدور','عمارة','عماره','العمارة','العماره',
+        'مبنى','المبنى','بجانب','قريب','امام','خلف',
+        'ومعاه','ومعها','وعنده','وعندها','معاه','معها',
+        'يرجى','مطلوب','برجاء','الرجاء','رجاء'];
 
-      /* على as preposition: only when followed by known location/object word */
-      var alaStopNext=['الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
+      /* على as preposition: only when followed by known context word */
+      var alaStopNext=[
+        /* مواقع وأماكن */
+        'الصندوق','العنوان','الطلب','الباب','الرف','الجهه','الجهة',
         'الشمال','اليمين','توصيل','الطريق','المنزل','البيت','الحساب',
-        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون','الشنطه','الشنطة','صيدلية','صيدليه','الصيدلية','التوصيل','المجمع','الشارع','الحي','الحى','بحى','بحي'];
+        'البوكس','العبوه','العبوة','العلبه','العلبة','الكرتون',
+        'الشنطه','الشنطة','صيدلية','صيدليه','الصيدلية','الصيدليه',
+        'التوصيل','المجمع','الشارع','الحي','الحى','بحى','بحي',
+        /* رقم وتواصل — حرجي */
+        'الرقم','رقم','التواصل','تواصل','الجوال','جوال',
+        'الموبايل','موبايل','الهاتف','هاتف','التليفون','تليفون',
+        'الواتس','واتس','واتساب','الواتساب',
+        'نمره','نمرة','النمره','النمرة',
+        /* ترتيب ودمج */
+        'الطلبات','الطلب','البوكسات','الصناديق',
+        'ادوية','الادوية','أدوية','الأدوية',
+        'حساب','الحساب','فاتورة','الفاتورة'];
 
       function isStopWord(word,nextWord){
-        /* على: stop ONLY when followed by a known object/location (preposition context) */
-        if(normA(word)==='على'){
-          if(nextWord&&alaStopNext.some(function(x){return normA(nextWord)===normA(x);})) return true;
-          return false; /* otherwise treat as part of name (على الباز، سارة على) */
-        }
         var wn=normA(word);
-        for(var st=0;st<stopWords.length;st++)if(wn===normA(stopWords[st]))return true;
+        /* ══ Phone number detection ══ */
+        if(/^0\d{8,}$/.test(word)) return true;
+        if(/^\d{10,}$/.test(word)) return true;
+        /* ══ على: disambiguation ══ */
+        if(wn==='على'){
+          if(!nextWord) return false;
+          var nn=normA(nextWord);
+          if(alaStopNext.some(function(x){return normA(x)===nn;})) return true;
+          if(/^0\d{4,}/.test(nextWord)) return true;
+          return false;
+        }
+        /* ══ صيدلية/صيدليه — always stop ══ */
+        if(/^(صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه])$/.test(wn)) return true;
+        /* ══ Smart بـ prefix: برقم=ب+رقم, بجوال=ب+جوال, etc. ══ */
+        if(wn.length>2&&wn.charAt(0)==='ب'){
+          var afterBa=wn.substring(1);
+          for(var _bs=0;_bs<stopWords.length;_bs++){if(afterBa===normA(stopWords[_bs]))return true;}
+        }
+        /* ══ Standard stop words check ══ */
+        for(var st=0;st<stopWords.length;st++){if(wn===normA(stopWords[st]))return true;}
         return false;
       }
 
-      /* cleanName: skip leading connectors (الى/الي) and generic titles, stop at stopWords */
+      /* cleanName v145: skip leading connectors/generics, stop at stopWords/phones/و+stop */
       var notNameWords=['اوردات','اوردر','اوردرات','طلبات','طلب','بوكسات','بوكس',
         'صناديق','صندوق','علب','علبه','علبة','حبوب','حبه','حبة','اصناف','صنف',
         'ادويه','ادوية','دواء','شهر','شهور','اشهر','يوم','ايام','اسبوع','اسابيع',
@@ -5371,8 +5532,25 @@ function extractAndConfirmName(){
         'الاكل','النوم','الفطار','السحور','الافطار','الغداء','العشاء',
         'موجود','موجوده','متوفر','متوفره','مطلوب','مطلوبه','اضافي','اضافيه','اضافية',
         'حسب','وصفه','وصفة','روشته','روشتة','روشتته','الوصفه','الروشته',
-        'رقم','نمره','نمرة','تليفون','موبايل','عنوان','منطقه','منطقة','بحى','حى','الحى','حي','الحي','شارع','الشارع','طريق','الطريق','صيدلية','صيدليه','الصيدلية','بالمروه','المروه','الحرمين','الروضه','الروضة','النزهه','النزهة','السلامه','السلامة','الخبر','الدمام','الرياض','جده','جدة','مكه','مكة','المدينه','المدينة','النعيم','الشرق','الغرب','الشمال','الجنوب','منطقه','منطقة','حارة','حاره','المجمع','المول','السوق','سوق','مركز','المركز'];
-      function isNotName(w){var n2=normG(w);var n2bare=n2.replace(/^ال/,'');for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}return false;}
+        'رقم','برقم','نمره','نمرة','تليفون','بتليفون','موبايل','بموبايل','عنوان','جوال','بجوال','هاتف','بهاتف','واتس','واتساب',
+        'تواصل','التواصل','للتواصل','اتصال','الاتصال',
+        'منطقه','منطقة','بحى','حى','الحى','حي','الحي',
+        'شارع','الشارع','طريق','الطريق',
+        'صيدلية','صيدليه','الصيدلية','الصيدليه',
+        'بالمروه','المروه','الحرمين','الروضه','الروضة','النزهه','النزهة',
+        'السلامه','السلامة','الخبر','الدمام','الرياض','جده','جدة',
+        'مكه','مكة','المدينه','المدينة',
+        'النعيم','الشرق','الغرب','الشمال','الجنوب',
+        'حارة','حاره','المجمع','المول','السوق','سوق','مركز','المركز'];
+      function isNotName(w){
+        var n2=normG(w);var n2bare=n2.replace(/^ال/,'');
+        if(/^0\d{8,}$/.test(w)) return true;
+        if(/^\d{7,}$/.test(w)) return true;
+        for(var nn=0;nn<notNameWords.length;nn++){var nw=normG(notNameWords[nn]);if(n2===nw||n2bare===nw)return true;}
+        /* Smart بـ prefix: برقم=ب+رقم */
+        if(n2.length>2&&n2.charAt(0)==='ب'){var afterBa2=n2.substring(1);for(var nn2=0;nn2<notNameWords.length;nn2++){var nw2=normG(notNameWords[nn2]);if(afterBa2===nw2)return true;}}
+        return false;
+      }
 
       function cleanName(raw){
         var words=raw.trim().split(/\s+/);
@@ -5382,10 +5560,30 @@ function extractAndConfirmName(){
           if(cleaned.length===0&&isConnector(words[w])) continue;
           if(cleaned.length===0&&isGeneric(words[w])) continue;
           if(cleaned.length===0&&isNotName(words[w])) return '';
+          /* Phone number → stop */
+          if(/^0\d{8,}$/.test(words[w])) break;
+          if(/^\d{10,}$/.test(words[w])) break;
+          /* Stop word (context-aware على) */
           if(isStopWord(words[w],words[w+1]||null)) break;
+          /* After name started, non-name word → stop */
           if(cleaned.length>0&&isNotName(words[w])) break;
+          /* Single letter after collecting → stop */
           if(words[w].length<=1&&cleaned.length>0) break;
+          /* "و" + stop word → stop (والتوصيل, وشكرا, etc.) */
+          if(cleaned.length>0&&/^و/.test(words[w])&&words[w].length>1){
+            var afterWaw=words[w].substring(1);
+            if(isStopWord(afterWaw,words[w+1]||null)) break;
+            if(isNotName(afterWaw)) break;
+          }
           cleaned.push(words[w]);
+        }
+        /* Post-processing: remove trailing non-name/connector/generic words */
+        while(cleaned.length>0){
+          var last=cleaned[cleaned.length-1];
+          if(last.length<=1){cleaned.pop();continue;}
+          if(isConnector(last)){cleaned.pop();continue;}
+          if(isGeneric(last)){cleaned.pop();continue;}
+          break;
         }
         return cleaned.join(' ');
       }
@@ -5393,11 +5591,11 @@ function extractAndConfirmName(){
       /* PRIORITY 0: تغيير اسم / تغيير الاسم + connector + name (radical patterns) */
       var changePatterns=[
         /* تغيير اسم الضيف الى على الباز */
-        /(?:تغيير\s*اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /(?:تغيير\s*اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* تغيير الاسم الى / تغيير الاسم ل */
         /(?:تغيير\s*الاسم)\s*(?:الى|إلى|الي|إلي|ل)?\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* تغيير اسم (بدون تحديد ضيف/مريض) */
-        /(?:تغيير\s*الاسم?\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
+        /(?:تغيير\s*الاسم?\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?)?)\s*(?:الى|إلى|الي|إلي|ل)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i,
         /* الاسم يكون / الاسم هو */
         /(?:الاسم\s*(?:يكون|هو|هي|بيكون)?)\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4})/i
       ];
@@ -5411,7 +5609,7 @@ function extractAndConfirmName(){
 
       /* PRIORITY 1: name in parentheses after keywords */
       var parenPatterns=[
-        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
+        /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?)\s*\(([^)]+)\)/i,
         /(?:اسم|كتاب[ةه]\s*اسم|وكتاب[ةه]\s*اسم|باسم)\s*[:\-]?\s*\(([^)]+)\)/i
       ];
       for(var pp=0;pp<parenPatterns.length;pp++){
@@ -5420,14 +5618,18 @@ function extractAndConfirmName(){
       }
 
       /* PRIORITY 2: English name directly after keyword (no parens) */
-      var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
-      if(engM&&engM[1]&&engM[1].trim().length>=3) var _engName=engM[1].trim();
-      if(/^(the\s+gue?st|guest|the\s+patient|patient)$/i.test(_engName)) _engName=null;
-      if(_engName&&_engName.length>=3) return _engName;
+      var engM=s.match(/(?:باسم|الاسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);
+      var _engName=null;
+      if(engM&&engM[1]){
+        _engName=engM[1].trim()
+          .replace(/\s+(and|or|the|on|to|at|in|for|with|delivery|pharmacy|branch|please|kindly|thanks|thank|you|deliver|send|order)[\s.]*/gi,'')
+          .trim();
+      }
+      if(_engName&&_engName.length>=2) return _engName;
 
       /* PRIORITY 3: Arabic name patterns (with optional connector الى/الي before name) */
       var patterns=[
-        /(?:اسم\s*(?:ال)?ضيف[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
+        /(?:اسم\s*(?:ال)?(?:ضيف|صيف)[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?مريض[ةه]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:اسم\s*(?:ال)?عمي[لة]?)\s*[:\-]?\s*(?:الى|إلى|الي|إلي|ل)?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
         /(?:تغيير\s*الاسم\s*(?:ال[يى]|ل[ـ]?))\s*[:\-]?\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,3})/i,
@@ -5520,11 +5722,29 @@ function extractAndConfirmName(){
       if(_slashIdx<0) return;
       /* تأكد إن قبل "/" فيه ذكر للاسم أو الضيف أو الكتابة */  
       var _beforeSlash=notesText.substring(0,_slashIdx);
-      var _hasNameContext=/اسم|ضيف|مريض|عميل|كتاب/i.test(_beforeSlash);
+      var _hasNameContext=/اسم|ضيف|صيف|مريض|عميل|كتاب/i.test(_beforeSlash);
       if(!_hasNameContext) return;
       /* كل اللي بعد "/" = الاسم (بعد حذف المسافات والرموز الزيادة) */
       var _afterSlash=notesText.substring(_slashIdx+1).trim();
       _afterSlash=_afterSlash.replace(/^[\s\-\.،,;:]+|[\s\-\.،,;:]+$/g,"").trim();
+      /* v145: Apply smart name cleaning to slash-extracted name too */
+      if(_afterSlash){
+        var _slashWords=_afterSlash.split(/\s+/);
+        var _slashCleaned=[];
+        for(var _sw=0;_sw<_slashWords.length;_sw++){
+          if(!_slashWords[_sw]) continue;
+          if(/^0\d{8,}$/.test(_slashWords[_sw])) break;
+          if(/^\d{10,}$/.test(_slashWords[_sw])) break;
+          var _swNorm=_slashWords[_sw].replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').trim();
+          if(/^(والتوصيل|التوصيل|توصيل|صيدلي[ةه]|الصيدلي[ةه]|لصيدلي[ةه]|رقم|الرقم|برقم|تواصل|التواصل|للتواصل|جوال|الجوال|بجوال|موبايل|بموبايل|هاتف|بهاتف|بتليفون|واتس|واتساب|برجاء|الرجاء|فرع|بفرع|وتوصيل|وشكرا|شكرا|ملاحظه|ملاحظة)$/i.test(_swNorm)) break;
+          if(_slashCleaned.length>0&&/^و/.test(_slashWords[_sw])&&_slashWords[_sw].length>1){
+            var _afterW=_slashWords[_sw].substring(1);
+            if(/^(التوصيل|توصيل|شكرا|الصيدلي[ةه]|صيدلي[ةه]|رقم|الرقم|تواصل|التواصل)$/i.test(_afterW.replace(/[أإآ]/g,'ا').replace(/ة/g,'ه'))) break;
+          }
+          _slashCleaned.push(_slashWords[_sw]);
+        }
+        _afterSlash=_slashCleaned.join(' ').trim();
+      }
       if(_afterSlash.length<2) return;
       /* لو nameField موجود وفيه قيمة مختلفة → نبين البانر */
       if(!nameField) return;
