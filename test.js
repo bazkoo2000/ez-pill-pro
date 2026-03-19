@@ -192,11 +192,11 @@ javascript:(function(){
 
   function createSafeLabel(inv,args){var label=document.createElement('label');label.style.cssText='cursor:pointer;color:'+IOS.accent+';text-decoration:underline;font-weight:bold';label.textContent=inv;if(args){label.addEventListener('click',function(){getDetails(args[0],args[1],args[2],args[3])})}return label}
 
-  // ✅ دالة موحّدة لجلب صفحة (بدل تكرار المنطق)
-  function fetchPageOrders(pn,cs){
+  // ✅ نفس الدالة الأصلية — res.json() بدون أي تغيير
+  async function fetchPageOrders(pn,cs){
     var bu=window.location.origin+"/ez_pill_web/";
-    return fetchWithRetry(bu+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:cs,pageSelected:pn,searchby:''})})
-      .then(function(r){return safeParseJSON(r)});
+    var res=await fetch(bu+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:cs,pageSelected:pn,searchby:''})});
+    return await res.json();
   }
 
   function buildOrderRow(item,tpl){var inv=item.Invoice||'';var onl=item.onlineNumber||'';var ty=item.typee!==undefined?item.typee:'';var hid=item.head_id!==undefined?item.head_id:'';var args=null;if(onl!==''&&inv!=='')args=[onl.replace(/ERX/gi,''),inv,ty,hid];var cl;if(tpl){cl=tpl.cloneNode(true);var cs=cl.querySelectorAll('td');if(cs.length>3){cs[0].innerHTML='';cs[0].appendChild(createSafeLabel(inv,args));cs[1].textContent=onl;cs[2].textContent=item.guestName||'';cs[3].textContent=item.guestMobile||item.mobile||''}}else{cl=document.createElement('tr');var t0=document.createElement('td'),t1=document.createElement('td'),t2=document.createElement('td'),t3=document.createElement('td');t0.appendChild(createSafeLabel(inv,args));t1.textContent=onl;t2.textContent=item.guestName||'';t3.textContent=item.guestMobile||item.mobile||'';cl.appendChild(t0);cl.appendChild(t1);cl.appendChild(t2);cl.appendChild(t3)}return{id:inv,onl:onl,node:cl,args:args,hasArgs:args!==null}}
@@ -215,12 +215,12 @@ javascript:(function(){
       var tbody=tt.querySelector('tbody')||tt;var tpl=tbody.querySelector('tr');
 
       var data1=await fetchPageOrders(1,cs);
-      if(data1&&data1.total_orders){
+      if(data1.total_orders){
         var et=parseInt(data1.total_orders)||0;
         if(et>0){mp=Math.ceil(et/10);document.getElementById('p_lim').value=mp}
       }
       var orders1=[];
-      if(data1){try{orders1=typeof data1.orders_list==='string'?JSON.parse(data1.orders_list):data1.orders_list}catch(e){}}
+      try{orders1=typeof data1.orders_list==='string'?JSON.parse(data1.orders_list):data1.orders_list}catch(e){}
       if(orders1&&orders1.length>0){
         var nac1=0;
         for(var i1=0;i1<orders1.length;i1++){
@@ -246,7 +246,6 @@ javascript:(function(){
           (function(pageNum){
             batch.push(
               fetchPageOrders(pageNum,cs).then(function(data){
-                if(!data) return;
                 var orders=[];
                 try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
                 if(!orders||orders.length===0)return;
@@ -300,12 +299,12 @@ javascript:(function(){
       var so=new Map();var mp=parseInt(document.getElementById('p_lim').value)||1;
 
       var fd=await fetchPageOrders(1,cs);
-      if(fd&&fd.total_orders){
+      if(fd.total_orders){
         var et=parseInt(fd.total_orders)||0;
         if(et>0){mp=Math.ceil(et/10);document.getElementById('p_lim').value=mp}
       }
       var fo=[];
-      if(fd){try{fo=typeof fd.orders_list==='string'?JSON.parse(fd.orders_list):fd.orders_list}catch(e){}}
+      try{fo=typeof fd.orders_list==='string'?JSON.parse(fd.orders_list):fd.orders_list}catch(e){}
       if(fo&&fo.length>0){
         for(var fi=0;fi<fo.length;fi++){
           var fI=fo[fi].Invoice||'';
@@ -323,7 +322,6 @@ javascript:(function(){
           (function(pageNum){
             batch.push(
               fetchPageOrders(pageNum,cs).then(function(data){
-                if(!data) return;
                 var orders=[];
                 try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
                 if(!orders||orders.length===0)return;
@@ -401,11 +399,136 @@ javascript:(function(){
   function finishScan(isSync){state.isProcessing=false;state.isSyncing=false;var tables=document.querySelectorAll('table');var tt=tables[0];for(var t=0;t<tables.length;t++){if(tables[t].innerText.length>tt.innerText.length)tt=tables[t]}state.tbody=tt.querySelector('tbody')||tt;state.tbody.innerHTML='';for(var i=0;i<state.savedRows.length;i++){state.savedRows[i].node.style.cursor='pointer';state.tbody.appendChild(state.savedRows[i].node)}updateStats(state.savedRows.length);if(totalNoArgs>0)showToast(totalNoArgs+' طلب بدون بيانات فتح','warning');if(isSync){setStatus('تمت المزامنة — '+state.savedRows.length+' طلب','done');showToast('تمت المزامنة: '+state.savedRows.length+' طلب','success')}else{setStatus('تم التجميع — '+state.savedRows.length+' طلب جاهز','done');showToast('تم تجميع '+state.savedRows.length+' طلب بنجاح','success')}buildSearchUI()}
 
   function buildSearchUI(){var da=document.getElementById('ali_dynamic_area');
-    da.innerHTML='<div class="ios-grp" style="padding:14px 16px"><div style="position:relative;margin-bottom:8px"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:900;color:'+IOS.muted+';pointer-events:none;font-family:monospace">0</span><input type="text" id="ali_sI" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="padding-left:30px;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace;font-weight:700"></div><div style="position:relative"><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none">🔗</span><input type="text" id="ali_sO" class="ios-input" placeholder="بحث برقم الطلب (ERX)..." style="padding-right:36px;direction:rtl"></div></div><div id="ali_search_count" style="font-size:11px;color:'+IOS.muted+';text-align:center;font-weight:600;padding:2px 0 10px">عرض '+state.savedRows.length+' من '+state.savedRows.length+' نتيجة</div><button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button><button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 مزامنة ذكية</button>';
-    var sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open'),cm=[];
-    function fr(){var ri=sI.value.trim();var is=ri!==''?'0'+ri:'';var os=sO.value.trim().toLowerCase();state.tbody.innerHTML='';var sh=0;cm=[];var hf=is!==''||os!=='';for(var i=0;i<state.savedRows.length;i++){var rw=state.savedRows[i];var mi=is!==''&&rw.id.startsWith(is);var mo=os!==''&&rw.onl.toLowerCase().indexOf(os)!==-1;var s=hf?(mi||mo):true;if(s){state.tbody.appendChild(rw.node);sh++;if(hf)cm.push(rw)}}sc.innerText='عرض '+sh+' من '+state.savedRows.length+' نتيجة';updateStats(sh);if(hf&&cm.length>0){var op=cm.filter(function(r){return r.args!==null}).length;ob.innerHTML='⚡ فتح المطابق ('+op+' طلب)';ob.style.opacity='1';ob.style.cursor='pointer'}else if(hf&&cm.length===0){ob.innerHTML='⚡ لا توجد نتائج';ob.style.opacity='0.5';ob.style.cursor='not-allowed'}else{ob.innerHTML='⚡ ابحث أولاً ثم افتح المطابق';ob.style.opacity='0.7';ob.style.cursor='not-allowed'}sI.className='ios-input'+(ri.length>0?(sh>0?' match':' nomatch'):'');sO.className='ios-input'+(os.length>0?(sh>0?' match':' nomatch'):'')}
+    // ✅ عداد الدفعات — يتصفر مع كل بحث جديد
+    var batchOffset=0;
+    da.innerHTML=
+      '<div class="ios-grp" style="padding:14px 16px">'+
+        '<div style="position:relative;margin-bottom:8px"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:900;color:'+IOS.muted+';pointer-events:none;font-family:monospace">0</span><input type="text" id="ali_sI" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="padding-left:30px;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace;font-weight:700"></div>'+
+        '<div style="position:relative"><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none">🔗</span><input type="text" id="ali_sO" class="ios-input" placeholder="بحث برقم الطلب (ERX)..." style="padding-right:36px;direction:rtl"></div>'+
+      '</div>'+
+      '<div id="ali_search_count" style="font-size:11px;color:'+IOS.muted+';text-align:center;font-weight:600;padding:2px 0 10px">عرض '+state.savedRows.length+' من '+state.savedRows.length+' نتيجة</div>'+
+      // ✅ خانة التحكم في عدد التابات + أزرار سريعة
+      '<div class="ios-grp" style="padding:12px 16px;margin-bottom:8px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+          '<span style="font-size:12px;font-weight:700;color:'+IOS.text+'">عدد التابات لكل دفعة:</span>'+
+          '<input type="number" id="ali_batch_size" class="ios-input" value="" placeholder="الكل" min="1" style="width:65px;padding:6px;text-align:center;font-size:14px;font-weight:900;color:'+IOS.accent+'">'+
+        '</div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button id="ali_q5" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:'+IOS.font+';background:rgba(99,102,241,0.08);color:'+IOS.accent+';transition:all 0.2s">5 تابات</button>'+
+          '<button id="ali_q10" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:'+IOS.font+';background:rgba(99,102,241,0.08);color:'+IOS.accent+';transition:all 0.2s">10 تابات</button>'+
+          '<button id="ali_qall" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:'+IOS.font+';background:rgba(34,197,94,0.08);color:'+IOS.success+';transition:all 0.2s">الكل</button>'+
+        '</div>'+
+        '<div id="ali_batch_status" style="font-size:10px;color:'+IOS.muted+';text-align:center;font-weight:600;margin-top:6px;min-height:14px"></div>'+
+      '</div>'+
+      '<button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button>'+
+      '<button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 مزامنة ذكية</button>';
+
+    var sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open'),bsInput=document.getElementById('ali_batch_size'),bsStatus=document.getElementById('ali_batch_status'),cm=[];
+
+    // ✅ أزرار سريعة
+    function setBS(v){bsInput.value=v;bsInput.style.color=IOS.accent;updateBatchUI()}
+    document.getElementById('ali_q5').addEventListener('click',function(){setBS(5)});
+    document.getElementById('ali_q10').addEventListener('click',function(){setBS(10)});
+    document.getElementById('ali_qall').addEventListener('click',function(){bsInput.value='';bsInput.style.color=IOS.accent;updateBatchUI()});
+
+    function getBatchSize(){var v=parseInt(bsInput.value);return(v>0)?v:0} // 0 = الكل
+    function getOpenable(){return cm.filter(function(r){return r.args!==null})}
+
+    function updateBatchUI(){
+      var op=getOpenable();
+      var bs=getBatchSize();
+      var remaining=op.length-batchOffset;
+      if(remaining<0)remaining=0;
+      if(op.length===0){bsStatus.textContent='';return}
+      if(bs===0){
+        bsStatus.textContent='سيتم فتح الكل ('+remaining+' طلب متبقي)';
+      }else{
+        var willOpen=Math.min(bs,remaining);
+        bsStatus.textContent='الدفعة التالية: '+willOpen+' من '+op.length+' | تم فتح: '+batchOffset+' | متبقي: '+remaining;
+      }
+    }
+
+    bsInput.addEventListener('input',function(){updateBatchUI()});
+
+    function fr(){
+      var ri=sI.value.trim();var is=ri!==''?'0'+ri:'';var os=sO.value.trim().toLowerCase();state.tbody.innerHTML='';var sh=0;cm=[];var hf=is!==''||os!=='';
+      // ✅ تصفير العداد مع كل بحث جديد
+      batchOffset=0;
+      for(var i=0;i<state.savedRows.length;i++){var rw=state.savedRows[i];var mi=is!==''&&rw.id.startsWith(is);var mo=os!==''&&rw.onl.toLowerCase().indexOf(os)!==-1;var s=hf?(mi||mo):true;if(s){state.tbody.appendChild(rw.node);sh++;if(hf)cm.push(rw)}}
+      sc.innerText='عرض '+sh+' من '+state.savedRows.length+' نتيجة';updateStats(sh);
+      if(hf&&cm.length>0){
+        var op=getOpenable().length;
+        ob.innerHTML='⚡ فتح المطابق ('+op+' طلب)';ob.style.opacity='1';ob.style.cursor='pointer';
+      }else if(hf&&cm.length===0){
+        ob.innerHTML='⚡ لا توجد نتائج';ob.style.opacity='0.5';ob.style.cursor='not-allowed';
+      }else{
+        ob.innerHTML='⚡ ابحث أولاً ثم افتح المطابق';ob.style.opacity='0.7';ob.style.cursor='not-allowed';
+      }
+      sI.className='ios-input'+(ri.length>0?(sh>0?' match':' nomatch'):'');
+      sO.className='ios-input'+(os.length>0?(sh>0?' match':' nomatch'):'');
+      updateBatchUI();
+    }
     var df=debounce(fr,150);sI.addEventListener('input',df);sO.addEventListener('input',df);
-    ob.addEventListener('click',async function(){var ri=sI.value.trim();var os=sO.value.trim().toLowerCase();var hf=ri!==''||os!=='';if(!hf){showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!','warning');sI.focus();sI.style.animation='aliBlink 0.5s 3';setTimeout(function(){sI.style.animation=''},1500);return}var op=cm.filter(function(r){return r.args!==null});var sk=cm.length-op.length;if(op.length===0){showToast(sk>0?sk+' طلب مطابق لكن بدون بيانات فتح!':'لا توجد طلبات مطابقة!',sk>0?'error':'warning');return}if(sk>0)showToast('⚠️ تم تخطي '+sk+' طلب بدون بيانات فتح','warning');ob.disabled=true;ob.style.opacity='0.6';ob.style.cursor='not-allowed';var opened=0,failed=0,blocked=0;var base=window.location.origin+"/ez_pill_web/getEZPill_Details";for(var idx=0;idx<op.length;idx++){var it=op[idx];var url=base+"?onlineNumber="+encodeURIComponent(it.args[0])+"&Invoice="+encodeURIComponent(it.args[1])+"&typee="+encodeURIComponent(it.args[2])+"&head_id="+encodeURIComponent(it.args[3]);try{var w=window.open(url,"_blank");if(w){opened++;state.openedCount++;window.focus();try{w.blur()}catch(e){}}else{blocked++;if(blocked===1)showToast('المتصفح يحظر النوافذ — اسمح بالنوافذ المنبثقة!','warning')}}catch(e){failed++}ob.innerHTML='🚀 جاري الفتح ('+(idx+1)+'/'+op.length+')';setStatus('فتح '+(idx+1)+' من '+op.length+': '+(it.onl||it.id),'working');updateStats();if(idx<op.length-1)await sleep(1200)}var msg='تم فتح '+opened+' طلب';if(blocked>0)msg+=' ('+blocked+' محظور)';if(failed>0)msg+=' ('+failed+' فشل)';showToast(msg,opened>0?'success':'error');setStatus('تم فتح '+opened+' — الإجمالي: '+state.openedCount,'done');ob.disabled=false;ob.innerHTML='⚡ فتح المطابق ('+op.length+' طلب)';fr()});
+
+    ob.addEventListener('click',async function(){
+      var ri=sI.value.trim();var os=sO.value.trim().toLowerCase();var hf=ri!==''||os!=='';
+      if(!hf){showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!','warning');sI.focus();sI.style.animation='aliBlink 0.5s 3';setTimeout(function(){sI.style.animation=''},1500);return}
+      var op=getOpenable();
+      var sk=cm.length-op.length;
+      if(op.length===0){showToast(sk>0?sk+' طلب مطابق لكن بدون بيانات فتح!':'لا توجد طلبات مطابقة!',sk>0?'error':'warning');return}
+
+      // ✅ حساب الدفعة
+      var bs=getBatchSize();
+      var remaining=op.length-batchOffset;
+      if(remaining<=0){
+        showToast('تم فتح كل الطلبات! ابحث من جديد أو اضغط إعادة','info');
+        batchOffset=0;updateBatchUI();return;
+      }
+      var startIdx=batchOffset;
+      var endIdx=bs>0?Math.min(batchOffset+bs,op.length):op.length;
+      var toOpen=op.slice(startIdx,endIdx);
+
+      if(sk>0&&batchOffset===0)showToast('⚠️ تم تخطي '+sk+' طلب بدون بيانات فتح','warning');
+      ob.disabled=true;ob.style.opacity='0.6';ob.style.cursor='not-allowed';
+      var opened=0,failed=0,blocked=0;
+      var base=window.location.origin+"/ez_pill_web/getEZPill_Details";
+      for(var idx=0;idx<toOpen.length;idx++){
+        var it=toOpen[idx];
+        var url=base+"?onlineNumber="+encodeURIComponent(it.args[0])+"&Invoice="+encodeURIComponent(it.args[1])+"&typee="+encodeURIComponent(it.args[2])+"&head_id="+encodeURIComponent(it.args[3]);
+        try{
+          var w=window.open(url,"_blank");
+          if(w){opened++;state.openedCount++;window.focus();try{w.blur()}catch(e){}}
+          else{blocked++;if(blocked===1)showToast('المتصفح يحظر النوافذ — اسمح بالنوافذ المنبثقة!','warning')}
+        }catch(e){failed++}
+        ob.innerHTML='🚀 جاري الفتح ('+(idx+1)+'/'+toOpen.length+')';
+        setStatus('فتح '+(startIdx+idx+1)+' من '+op.length+': '+(it.onl||it.id),'working');
+        updateStats();
+        if(idx<toOpen.length-1)await sleep(1200);
+      }
+
+      // ✅ تحديث العداد بعد الفتح
+      batchOffset=endIdx;
+      var newRemaining=op.length-batchOffset;
+
+      var msg='تم فتح '+opened+' طلب';
+      if(blocked>0)msg+=' ('+blocked+' محظور)';
+      if(failed>0)msg+=' ('+failed+' فشل)';
+      if(newRemaining>0)msg+=' — متبقي '+newRemaining;
+      showToast(msg,opened>0?'success':'error');
+
+      if(newRemaining>0){
+        var nextBatch=bs>0?Math.min(bs,newRemaining):newRemaining;
+        setStatus('تم فتح '+batchOffset+' من '+op.length+' — اضغط مرة أخرى لفتح '+nextBatch+' التالية','done');
+        ob.innerHTML='⚡ فتح الدفعة التالية ('+nextBatch+' طلب)';
+      }else{
+        setStatus('تم فتح الكل — '+state.openedCount+' إجمالي','done');
+        ob.innerHTML='✅ تم فتح الكل ('+op.length+')';
+        batchOffset=0; // إعادة تعيين للجولة القادمة
+      }
+      ob.disabled=false;ob.style.opacity='1';ob.style.cursor='pointer';
+      updateBatchUI();
+    });
+
     document.getElementById('ali_btn_sync').addEventListener('click',async function(){if(state.isSyncing||state.isProcessing){showToast('المزامنة شغالة — انتظر!','warning');return}var sb=this;var oc=state.savedRows.length;var result=await showDialog({icon:'🔄',title:'المزامنة الذكية',desc:'هيتم مقارنة بياناتك مع الخادم',badges:[{text:'حذف المُغلق',active:true},{text:'إضافة الجديد',active:true},{text:'تحديث البيانات',active:true}],info:[{label:'الطلبات الحالية',value:oc.toString(),color:'#6366f1'},{label:'العملية',value:'مقارنة + تحديث',color:'#3b82f6'}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 بدء المزامنة',value:'confirm',primary:true}]});if(result!=='confirm')return;sb.disabled=true;sb.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري المزامنة...';sb.style.color=IOS.accent;await smartSync();buildSearchUI()})}
 
   document.getElementById('ali_start').addEventListener('click',function(){if(state.isProcessing)return;this.disabled=true;this.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...';this.style.opacity='0.7';this.style.cursor='not-allowed';totalNoArgs=0;scanPage(false)});
