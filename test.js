@@ -5383,7 +5383,108 @@ makeDraggable(d_box);
     });
   }
 })();
-setTimeout(function(){beautifyPage();showWhatsNew();},100);
+setTimeout(function(){beautifyPage();showWhatsNew();_ezEidGreeting();},100);
+
+/* ══ عيد الفطر المبارك 1447 ══ */
+function _ezEidGreeting(){
+  try{
+    var today=new Date();
+    var d=today.getDate(),m=today.getMonth()+1,y=today.getFullYear();
+    /* يظهر يوم 20 مارس 2026 فقط — أول أيام العيد */
+    if(!(y===2026&&m===3&&d===20)) return;
+    /* مرة واحدة فقط */
+    var eidKey='ez_eid_1447';
+    if(window._ezEidShown) return;
+    try{if(localStorage.getItem(eidKey)==='1') return;}catch(e){}
+    window._ezEidShown=true;
+    try{localStorage.setItem(eidKey,'1');}catch(e){}
+
+    var ov=document.createElement('div');
+    ov.id='ez-eid-overlay';
+    ov.innerHTML='\
+    <style>\
+    #ez-eid-overlay{position:fixed;inset:0;z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;overflow:hidden}\
+    .eid-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,#1a1145 0%,#0c0824 50%,#000 100%)}\
+    .eid-stars{position:absolute;inset:0;overflow:hidden}\
+    .eid-star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:eidTwinkle 2s ease-in-out infinite}\
+    @keyframes eidTwinkle{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}\
+    .eid-card{position:relative;width:420px;max-width:92vw;border-radius:28px;overflow:hidden;animation:eidCardIn 1s cubic-bezier(0.16,1,0.3,1);box-shadow:0 30px 80px rgba(139,92,246,0.3),0 0 200px rgba(251,191,36,0.08)}\
+    @keyframes eidCardIn{from{opacity:0;transform:translateY(60px) scale(0.85)}to{opacity:1;transform:translateY(0) scale(1)}}\
+    .eid-top{background:linear-gradient(160deg,#1e1b4b 0%,#312e81 40%,#4c1d95 100%);padding:36px 28px 28px;text-align:center;position:relative;overflow:hidden}\
+    .eid-top::before{content:"";position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(251,191,36,0.12) 0%,transparent 70%);pointer-events:none}\
+    .eid-moon{font-size:64px;animation:eidMoonGlow 3s ease-in-out infinite;display:inline-block;filter:drop-shadow(0 0 20px rgba(251,191,36,0.4))}\
+    @keyframes eidMoonGlow{0%,100%{transform:scale(1);filter:drop-shadow(0 0 20px rgba(251,191,36,0.4))}50%{transform:scale(1.08);filter:drop-shadow(0 0 35px rgba(251,191,36,0.6))}}\
+    .eid-title{font-size:38px;font-weight:900;color:#fbbf24;margin:12px 0 6px;text-shadow:0 2px 20px rgba(251,191,36,0.3);line-height:1.3;direction:rtl}\
+    .eid-subtitle{font-size:16px;font-weight:700;color:rgba(196,181,253,0.9);direction:rtl;line-height:1.6}\
+    .eid-body{background:linear-gradient(180deg,#1e1b4b,#0f0a28);padding:24px 28px 20px;text-align:center;direction:rtl}\
+    .eid-msg{font-size:14px;font-weight:600;color:rgba(196,181,253,0.8);line-height:2;margin-bottom:16px}\
+    .eid-verse{font-size:13px;font-weight:700;color:rgba(251,191,36,0.7);font-style:italic;margin-bottom:20px;padding:10px 16px;border-right:3px solid rgba(251,191,36,0.3);border-radius:0 8px 8px 0;background:rgba(251,191,36,0.04)}\
+    .eid-lanterns{display:flex;justify-content:center;gap:12px;margin:8px 0 16px}\
+    .eid-lantern{font-size:28px;animation:eidLanternSwing 2s ease-in-out infinite;display:inline-block;transform-origin:top center}\
+    @keyframes eidLanternSwing{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}\
+    .eid-lantern:nth-child(2){animation-delay:0.3s}\
+    .eid-lantern:nth-child(3){animation-delay:0.6s}\
+    .eid-lantern:nth-child(4){animation-delay:0.9s}\
+    .eid-lantern:nth-child(5){animation-delay:1.2s}\
+    .eid-from{font-size:12px;font-weight:800;color:rgba(129,140,248,0.6);margin-bottom:16px;letter-spacing:0.5px}\
+    .eid-btn{width:100%;height:48px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#1e1b4b;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 20px rgba(251,191,36,0.3);transition:all 0.3s}\
+    .eid-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(251,191,36,0.4)}\
+    .eid-confetti{position:absolute;pointer-events:none}\
+    .eid-conf{position:absolute;width:8px;height:8px;border-radius:50%;animation:eidConfFall 3s ease-out forwards}\
+    @keyframes eidConfFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(400px) rotate(720deg)}}\
+    </style>\
+    <div class="eid-bg"></div>\
+    <div class="eid-stars" id="eid-stars"></div>\
+    <div class="eid-confetti" id="eid-confetti"></div>\
+    <div class="eid-card">\
+      <div class="eid-top">\
+        <div class="eid-moon">🌙</div>\
+        <div class="eid-title">عيد فطر مبارك</div>\
+        <div class="eid-subtitle">١ شوّال ١٤٤٧ هـ</div>\
+      </div>\
+      <div class="eid-body">\
+        <div class="eid-lanterns">\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+          <span class="eid-lantern">🏮</span>\
+        </div>\
+        <div class="eid-msg">\
+          تقبّل الله منّا ومنكم صالح الأعمال<br>\
+          كل عام وأنتم بخير وصحة وعافية<br>\
+          أعاده الله علينا وعليكم بالخير واليُمن والبركات\
+        </div>\
+        <div class="eid-verse">« وَلِتُكْمِلُوا الْعِدَّةَ وَلِتُكَبِّرُوا اللَّهَ عَلَىٰ مَا هَدَاكُمْ وَلَعَلَّكُمْ تَشْكُرُونَ »</div>\
+        <div class="eid-from">ez_pill Jvm · علي الباز</div>\
+        <button class="eid-btn" onclick="document.getElementById(\'ez-eid-overlay\').style.opacity=\'0\';document.getElementById(\'ez-eid-overlay\').style.transition=\'opacity 0.5s\';setTimeout(function(){var e=document.getElementById(\'ez-eid-overlay\');if(e)e.remove();},500)">عيدكم مبارك 🎉</button>\
+      </div>\
+    </div>';
+    document.body.appendChild(ov);
+
+    /* Stars */
+    var starsEl=document.getElementById('eid-stars');
+    for(var si=0;si<80;si++){
+      var star=document.createElement('div');
+      star.className='eid-star';
+      star.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(1.5+Math.random()*2)+'s;width:'+(1+Math.random()*2)+'px;height:'+(1+Math.random()*2)+'px';
+      starsEl.appendChild(star);
+    }
+
+    /* Confetti burst */
+    var confEl=document.getElementById('eid-confetti');
+    var confColors=['#fbbf24','#f59e0b','#818cf8','#a78bfa','#4ade80','#f472b6','#38bdf8','#fff'];
+    setTimeout(function(){
+      for(var ci=0;ci<50;ci++){
+        var conf=document.createElement('div');
+        conf.className='eid-conf';
+        var bRad=Math.random()>0.5?'50%':'2px';
+        conf.style.cssText='left:'+((window.innerWidth/2)-100+Math.random()*200)+'px;top:'+(window.innerHeight/2-100)+'px;background:'+confColors[ci%confColors.length]+';animation-delay:'+Math.random()*0.5+'s;animation-duration:'+(2+Math.random()*2)+'s;width:'+(4+Math.random()*6)+'px;height:'+(4+Math.random()*6)+'px;border-radius:'+bRad;
+        confEl.appendChild(conf);
+      }
+    },800);
+  }catch(e){console.log('Eid:',e);}
+}
 
 /* ☁️ Auto-fetch cloud config */
 setTimeout(function(){
