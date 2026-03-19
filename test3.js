@@ -1,17 +1,16 @@
 (function(){
   'use strict';
-  const PANEL_ID='ali_sys_v5';const VERSION='6.0';
+  const PANEL_ID='ali_sys_v5';const VERSION='6.2';
   if(document.getElementById(PANEL_ID)){document.getElementById(PANEL_ID).remove();return}
   const MAX_PER_FILE=49;
-  const FETCH_TIMEOUT=30000; // 30 ثانية timeout
-  const MAX_RETRIES=2;       // عدد محاولات إعادة الجلب
+  const FETCH_TIMEOUT=30000;
+  const MAX_RETRIES=2;
   const state={savedRows:[],visitedSet:new Set(),isProcessing:false,isSyncing:false,htmlBuffer:''};
   const IOS={bg:'rgba(243,244,246,0.92)',card:'#ffffff',text:'#1f2937',muted:'#9ca3af',accent:'#6366f1',accent2:'#818cf8',success:'#22c55e',error:'#ef4444',warn:'#f59e0b',blue:'#3b82f6',shadow:'0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)',font:'-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif'};
 
   const bodyText=document.body?document.body.innerText:'';const packedMatch=bodyText.match(/packed\s*\n*\s*(\d+)/i);const totalPacked=packedMatch?parseInt(packedMatch[1]):0;const defaultPages=totalPacked>0?Math.ceil(totalPacked/10):1;
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;')}
 
-  // ✅ fetch مع timeout و AbortController
   function fetchWithTimeout(url,options={},timeout=FETCH_TIMEOUT){
     const controller=new AbortController();
     const timer=setTimeout(()=>controller.abort(),timeout);
@@ -20,7 +19,6 @@
       .catch(err=>{clearTimeout(timer);throw err});
   }
 
-  // ✅ fetch مع retry تلقائي
   async function fetchWithRetry(url,options={},retries=MAX_RETRIES){
     for(let attempt=0;attempt<=retries;attempt++){
       try{
@@ -28,12 +26,11 @@
         return res;
       }catch(err){
         if(attempt===retries) throw err;
-        await sleep(500*(attempt+1)); // انتظار تدريجي
+        await sleep(500*(attempt+1));
       }
     }
   }
 
-  // ✅ تحليل JSON بأمان
   function safeParseJSON(res){
     return res.text().then(txt=>{
       try{return JSON.parse(txt)}
@@ -41,7 +38,6 @@
     });
   }
 
-  // ✅ حفظ واسترجاع من sessionStorage
   function saveToSession(){
     try{
       const lite=state.savedRows.map(r=>({id:r.id,onl:r.onl,st:r.st,typee:r.typee,guestName:r.guestName,guestMobile:r.guestMobile,src:r.src,hid:r.hid}));
@@ -85,6 +81,8 @@
     @keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
     @keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}
     @keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}
+    @keyframes aliRingGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(99,102,241,0.3))}50%{filter:drop-shadow(0 0 12px rgba(99,102,241,0.6))}}
+    @keyframes aliDotPulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
     #${PANEL_ID}{position:fixed;top:14px;right:14px;width:380px;max-height:92vh;background:${IOS.bg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:22px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);z-index:9999999;font-family:${IOS.font};direction:rtl;color:${IOS.text};overflow:hidden;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.5s cubic-bezier(0.16,1,0.3,1)}
     #${PANEL_ID}.ali-minimized{width:56px!important;height:56px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;box-shadow:0 8px 24px rgba(99,102,241,0.3)!important;animation:aliPulse 2s infinite;overflow:hidden}
     #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
@@ -129,12 +127,34 @@
         <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">✅</div><div id="stat_done" style="font-size:20px;font-weight:900;color:#3b82f6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">المنجز</div></div>
         <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📊</div><div id="stat_total" style="font-size:20px;font-weight:900;color:#8b5cf6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">إجمالي</div></div>
       </div>
-      <div class="ios-grp" style="padding:14px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:700">📄 نطاق الفحص</span>
-          <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:${IOS.muted};font-weight:600">صفحة</span><input type="number" id="p_lim" value="${defaultPages}" min="1" class="ios-input" style="width:60px;padding:8px;text-align:center;font-size:15px;font-weight:900;color:${IOS.accent}"></div>
+      <div class="ios-grp" style="padding:16px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="position:relative;width:80px;height:80px;flex-shrink:0">
+            <svg id="ali_ring_svg" width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="6"/>
+              <circle id="ali_ring_track" cx="40" cy="40" r="34" fill="none" stroke="url(#aliGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" style="transition:stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1)"/>
+              <defs><linearGradient id="aliGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div id="ali_ring_pct" style="font-size:18px;font-weight:900;color:${IOS.accent};line-height:1;font-family:monospace">0%</div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:13px;font-weight:700">📄 نطاق الفحص</span>
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:${IOS.muted};font-weight:600">صفحة</span><input type="number" id="p_lim" value="${defaultPages}" min="1" class="ios-input" style="width:55px;padding:6px;text-align:center;font-size:14px;font-weight:900;color:${IOS.accent}"></div>
+            </div>
+            <div style="font-size:11px;color:${IOS.muted};font-weight:600;line-height:1.8">
+              <div style="display:flex;justify-content:space-between"><span>الصفحات</span><span id="ali_prog_p_val">0 / 0</span></div>
+              <div style="display:flex;justify-content:space-between"><span>السجلات</span><span id="ali_prog_r_val" style="color:${IOS.accent};font-weight:800">0</span></div>
+            </div>
+            <div id="ali_prog_dots" style="display:flex;gap:3px;margin-top:6px;justify-content:center;opacity:0;transition:opacity 0.3s">
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.accent};animation:aliDotPulse 1s infinite 0s"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.accent2};animation:aliDotPulse 1s infinite 0.2s"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.success};animation:aliDotPulse 1s infinite 0.4s"></div>
+            </div>
+          </div>
         </div>
-        <div style="height:6px;background:rgba(0,0,0,0.04);border-radius:6px;overflow:hidden"><div id="p-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:6px;transition:width 0.2s"></div></div>
       </div>
       <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.06);color:#22c55e"><span>✅</span><span>النظام في وضع الاستعداد</span></div>
       <div id="ali_dynamic_area"><button id="ali_start" class="ios-btn ios-primary" style="font-size:15px;padding:16px">🚀 بدء عملية البحث والاستعلام</button></div>
@@ -146,27 +166,48 @@
   function setStatus(text,type){const el=document.getElementById('status-msg');if(!el)return;const cf={ready:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'✅'},working:{color:'#6366f1',bg:'rgba(99,102,241,0.06)',icon:'spinner'},error:{color:'#ef4444',bg:'rgba(239,68,68,0.06)',icon:'❌'},done:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'✅'}};const c=cf[type]||cf.ready;const ih=c.icon==='spinner'?`<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:${IOS.accent};border-radius:50%;animation:aliSpin 0.5s linear infinite;flex-shrink:0"></div>`:`<span>${c.icon}</span>`;el.style.cssText=`display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:${c.bg};color:${c.color};transition:all 0.3s`;el.innerHTML=`${ih}<span>${esc(text)}</span>`}
   function animNum(id,val){const el=document.getElementById(id);if(!el||el.innerText===String(val))return;requestAnimationFrame(()=>{el.innerText=val;el.style.animation='aliCountUp 0.4s';setTimeout(()=>el.style.animation='',400)})}
 
-  // ✅ دالة حساب عدد الـ received المتبقي (تشمل fulfilled)
   function getReceivedCount(){
     return state.savedRows.filter(r=>r.st==='received').length;
   }
 
-  // ✅ تحديث خانة العدد تلقائياً
   function syncReceivedInput(){
     const inp=document.getElementById('ali_open_count');
     if(inp){
       const count=getReceivedCount();
       inp.value=count;
-      // تحديث اللون حسب العدد
       inp.style.color=count>0?IOS.error:IOS.success;
     }
+  }
+
+  // ✅ تحديث الحلقة الدائرية
+  function updateProgress(current,total,recordCount){
+    const CIRCUMFERENCE=213.6;
+    const ring=document.getElementById('ali_ring_track');
+    const pctEl=document.getElementById('ali_ring_pct');
+    const pVal=document.getElementById('ali_prog_p_val');
+    const rVal=document.getElementById('ali_prog_r_val');
+    const dots=document.getElementById('ali_prog_dots');
+    const svg=document.getElementById('ali_ring_svg');
+    const pct=total>0?Math.round((current/total)*100):0;
+    const offset=CIRCUMFERENCE-(pct/100)*CIRCUMFERENCE;
+    if(ring) ring.style.strokeDashoffset=offset;
+    if(pctEl){pctEl.textContent=pct+'%';pctEl.style.color=pct>=100?IOS.success:IOS.accent}
+    if(pVal) pVal.textContent=current+' / '+total;
+    if(rVal) rVal.textContent=recordCount!==undefined?recordCount:state.savedRows.length;
+    if(dots) dots.style.opacity=pct>0&&pct<100?'1':'0';
+    if(svg) svg.style.animation=pct>0&&pct<100?'aliRingGlow 1.5s ease-in-out infinite':'none';
+  }
+
+  function resetProgress(){
+    updateProgress(0,0,0);
+    const svg=document.getElementById('ali_ring_svg');
+    if(svg) svg.style.animation='none';
   }
 
   function updateStats(){
     let rec=0,done=0,packed=0;
     state.savedRows.forEach(r=>{if(r.st==='received')rec++;if(r.st==='processed')done++;if(r.st==='packed')packed++});
     animNum('stat_rec',rec);animNum('stat_pack',packed);animNum('stat_done',done);animNum('stat_total',state.savedRows.length);
-    // ✅ مزامنة خانة الـ received مع كل تحديث
     syncReceivedInput();
   }
 
@@ -190,9 +231,8 @@
 
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
-  // ✅ processData — fulfilled تُعامَل كـ received
   function processData(data){
-    if(!data){return} // ✅ حماية من null
+    if(!data){return}
     let orders=[];
     try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
     if(!orders||orders.length===0)return;
@@ -226,23 +266,23 @@
     }
   }
 
+  // ✅ نفس منطق الجلب الأصلي بدون أي تغيير في السرعة — فقط الحلقة الدائرية
   async function scanAllPages(){
     state.isProcessing=true;
-    const fill=document.getElementById('p-fill');
     const baseUrl=window.location.origin+"/ez_pill_web/";
     const currentStatus='packed';
     setStatus('جاري الاتصال بقاعدة البيانات...','working');
     let maxPages=parseInt(document.getElementById('p_lim').value)||1;
     state.savedRows=[];state.visitedSet.clear();state.htmlBuffer='';
-    let failedPages=[]; // ✅ تتبع الصفحات الفاشلة
+    let failedPages=[];
+    resetProgress();
 
     try {
-      // ✅ استخدام fetchWithRetry و safeParseJSON
       const res1=await fetchWithRetry(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:1,searchby:''})});
       const data1=await safeParseJSON(res1);
       if(data1&&data1.total_orders){const et=parseInt(data1.total_orders)||0;if(et>0){maxPages=Math.ceil(et/10);document.getElementById('p_lim').value=maxPages}}
       processData(data1);updateStats();
-      if(fill) fill.style.width=((1/maxPages)*100)+'%';
+      updateProgress(1,maxPages,state.savedRows.length);
 
       const BATCH_SIZE=5;
       for(let i=2;i<=maxPages;i+=BATCH_SIZE){
@@ -255,12 +295,13 @@
           );
         }
         await Promise.all(batch);
-        if(fill) fill.style.width=((Math.min(i+BATCH_SIZE-1,maxPages)/maxPages)*100)+'%';
+        const done=Math.min(i+BATCH_SIZE-1,maxPages);
+        updateProgress(done,maxPages,state.savedRows.length);
+        setStatus(`جاري الجلب... ${done}/${maxPages} صفحة`,'working');
         if(i+BATCH_SIZE<=maxPages) await sleep(250);
       }
     } catch(err){
       console.error(err);
-      // ✅ محاولة تحميل من النسخة الاحتياطية
       const backup=loadFromSession();
       if(backup&&backup.length>0){
         showToast('فشل الاتصال — تم تحميل آخر نسخة محفوظة','warning');
@@ -272,18 +313,19 @@
       setStatus('خطأ في الاتصال بالخادم','error');showToast('فشل الاتصال بالخادم','error');state.isProcessing=false;return;
     }
 
-    // ✅ إبلاغ عن الصفحات الفاشلة
     if(failedPages.length>0){
       showToast(`تنبيه: ${failedPages.length} صفحة لم تُجلب بعد المحاولات`,'warning');
     }
 
-    // ✅ حفظ نسخة احتياطية
     saveToSession();
     finishScan();
   }
 
   function finishScan(fromBackup){
     state.isProcessing=false;
+    // ✅ حلقة مكتملة
+    const maxP=parseInt(document.getElementById('p_lim').value)||1;
+    updateProgress(maxP,maxP,state.savedRows.length);
 
     if(!fromBackup){
       const tables=document.querySelectorAll('table');
@@ -336,7 +378,7 @@
       <div class="ios-grp" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700">الطلبات القابلة للتسليم:</span>
         <div style="display:flex;align-items:center;gap:6px">
-          <span id="ali_rec_live" style="font-size:11px;color:${IOS.muted};font-weight:600">المتبقي:</span>
+          <span style="font-size:11px;color:${IOS.muted};font-weight:600">المتبقي:</span>
           <input type="number" id="ali_open_count" value="${recCount}" class="ios-input" style="width:70px;padding:8px;text-align:center;font-size:15px;font-weight:900;color:${recCount>0?IOS.error:IOS.success}" onfocus="this.value=''">
         </div>
       </div>
@@ -345,7 +387,6 @@
       <button id="ali_btn_export" class="ios-btn ios-warn" style="margin-bottom:8px">📦 تصدير بيانات الطلبات (Packed)</button>
       <button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 إعادة فحص البيانات</button>`;
 
-    // ✅ مزامنة أولية
     syncReceivedInput();
 
     const sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open');
@@ -393,7 +434,6 @@
           if(w){
             opened++;window.focus();try{w.blur()}catch(e){}
           }else{
-            // ✅ كشف حظر النوافذ
             blocked++;
             if(blocked===1){
               showToast('المتصفح يحظر النوافذ — اسمح بالنوافذ المنبثقة!','warning');
@@ -404,7 +444,6 @@
         setStatus(`فتح ${idx+1} من ${cm.length}: ${it.onl||it.id}`,'working');
         if(idx<cm.length-1) await sleep(1200);
       }
-      // ✅ رسالة تفصيلية عن النتيجة
       let msg=`تم فتح ${opened} طلب`;
       if(blocked>0) msg+=` (${blocked} محظور)`;
       if(failed>0) msg+=` (${failed} فشل)`;
@@ -413,7 +452,6 @@
       ob.disabled=false;ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;fr();
     });
 
-    // ✅ زر التسليم مع تحديث تلقائي للعداد بعد كل عملية
     document.getElementById('ali_btn_deliver_silent').addEventListener('click',async()=>{
       const list=state.savedRows.filter(r=>r.st==='received');
       const count=parseInt(document.getElementById('ali_open_count').value)||list.length;
@@ -438,13 +476,11 @@
           params.append('invoice_num',it.id);
           params.append('patienName',it.guestName);
           params.append('mobile',it.guestMobile);
-          // ✅ استخدام fetchWithTimeout بدلاً من fetch العادي
           const r=await fetchWithTimeout(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});
           if(r.ok){
             sc2++;
             it.st='processed';
             if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl) stEl.textContent='processed'}
-            // ✅ تحديث العداد بعد كل عملية ناجحة
             updateStats();
           }
         }catch(e){console.warn('فشل:',it.id,e)}
@@ -452,7 +488,6 @@
         await sleep(50);
       }
 
-      // ✅ حفظ الحالة المحدثة
       saveToSession();
 
       await showDialog({
