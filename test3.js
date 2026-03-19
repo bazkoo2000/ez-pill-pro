@@ -1326,6 +1326,41 @@ window.ezCancel=function(){
   if(d) d.remove();
 };
 
+/* ══ v146: أداة تشخيص المشاكل ══ */
+window.ezDiagnose=function(){
+  var html='<div style="direction:rtl;font-family:Cairo,sans-serif;max-height:70vh;overflow-y:auto;padding:10px">';
+  html+='<h3 style="color:#4f46e5;margin:0 0 10px">🔍 تقرير التشخيص</h3>';
+  html+='<div style="background:#f0fdf4;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bbf7d0">';
+  html+='<b style="color:#166534">📦 الإعدادات المحفوظة:</b><br>';
+  try{var s=localStorage.getItem('ez_pill_settings');var sObj=s?JSON.parse(s):{};html+='أشهر: <b>'+(sObj.m||'?')+'</b> | أيام: <b>'+(sObj.t||'?')+'</b> | رمضان: <b>'+(sObj.ramadanMode?'مفعّل':'معطّل')+'</b>';}catch(e){html+='خطأ';}
+  html+='</div>';
+  html+='<div style="background:#eff6ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #bfdbfe">';
+  html+='<b style="color:#1e40af">⚙️ أكواد مخصصة:</b><br>';
+  try{var c=localStorage.getItem('ez_pill_custom');var cObj=c?JSON.parse(c):{};if(cObj.fixedSizeCodes&&Object.keys(cObj.fixedSizeCodes).length>0){for(var k in cObj.fixedSizeCodes)html+='كود <b>'+k+'</b> ← حجم <b>'+cObj.fixedSizeCodes[k]+'</b><br>';}else{html+='لا يوجد';}if(cObj.removedCodes&&cObj.removedCodes.length>0)html+='<br>محذوفة: '+cObj.removedCodes.join(' , ');}catch(e){html+='خطأ';}
+  html+='</div>';
+  html+='<div style="background:#fefce8;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #fef08a">';
+  html+='<b style="color:#854d0e">📋 أصناف الجدول:</b><br>';
+  try{var tb=null;var allTb=document.querySelectorAll('table');for(var i=0;i<allTb.length;i++){var txt=allTb[i].innerText.toLowerCase();if(txt.indexOf('code')>-1&&txt.indexOf('name')>-1){tb=allTb[i];break;}}
+  if(tb){var hdr=tb.querySelectorAll('tr')[0];var ths=hdr?hdr.querySelectorAll('th,td'):[];var ci=-1,ni=-1,si=-1,noti=-1;for(var h=0;h<ths.length;h++){var ht=ths[h].textContent.trim().toLowerCase();if(ht.indexOf('code')>-1)ci=h;if(ht.indexOf('name')>-1)ni=h;if(ht.indexOf('size')>-1||ht.indexOf('qty')>-1)si=h;if(ht.indexOf('note')>-1)noti=h;}
+  var rows=tb.querySelectorAll('tr');for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<3)continue;var code=ci>=0?(_ezGet(tds[ci]).match(/\d+/)||[''])[0]:'';var name=ni>=0?_ezGet(tds[ni]):'';var size=si>=0?_ezGet(tds[si]):'';var note=noti>=0?_ezGet(tds[noti]):'';if(!code&&!name)continue;var pack=_extractPackFromName(name);var isFixed=!!(fixedSizeCodes&&fixedSizeCodes[code]);var fixedVal=isFixed?fixedSizeCodes[code]:null;var isPRN=_ezIsPRN(note);
+  html+='<div style="background:#fff;padding:6px 8px;border-radius:8px;margin:4px 0;border:1px solid #e5e7eb;font-size:12px">';
+  html+='<b>'+code+'</b> | '+name.substring(0,40)+'<br>';
+  html+='الحجم: <b style="color:#dc2626">'+size+'</b>';
+  if(pack)html+=' | عبوة: <b style="color:#7c3aed">'+pack+'</b>';
+  if(isFixed)html+=' | <span style="background:#fbbf24;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:900">ثابت: '+fixedVal+'</span>';
+  if(isPRN)html+=' | <span style="background:#ef4444;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px">عند الحاجة</span>';
+  if(note)html+='<br><span style="color:#6b7280;font-size:10px">'+note.substring(0,60)+'</span>';
+  html+='</div>';}}else{html+='لم يتم العثور على الجدول';}}catch(e){html+='خطأ: '+e.message;}
+  html+='</div>';
+  html+='<div style="background:#f5f3ff;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:1px solid #ddd6fe">';
+  html+='<b style="color:#5b21b6">ℹ️ معلومات:</b><br>النسخة: <b>'+APP_VERSION+'</b><br>';
+  try{var allKeys=[];for(var ki=0;ki<localStorage.length;ki++){var lk=localStorage.key(ki);if(lk.indexOf('ez_')===0)allKeys.push(lk);}html+='مفاتيح: <b>'+allKeys.join(' , ')+'</b>';}catch(e){}
+  html+='</div></div>';
+  var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(15,15,35,0.6);backdrop-filter:blur(8px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;width:500px;max-width:90vw;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)"><div style="padding:16px 20px;background:linear-gradient(145deg,#6366f1,#4f46e5);color:#fff;font-weight:900;font-size:16px;text-align:center;direction:rtl">🔍 تقرير التشخيص</div><div style="padding:12px;overflow-y:auto;max-height:65vh">'+html+'</div><div style="padding:12px;text-align:center;border-top:1px solid #e5e7eb"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:8px 30px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;font-family:Cairo,sans-serif">إغلاق</button></div></div>';
+  document.body.appendChild(ov);
+};
+
 window.ezClosePost=function(){
   var d=document.getElementById('ez-post-dialog');
   if(d) d.remove();
@@ -5225,7 +5260,6 @@ d_box.innerHTML='\
     <button class="ez-btn-icon" onclick="window.ezOpenSettings()" title="إعدادات متقدمة">⚙️</button>\
     <button class="ez-btn-icon" onclick="window.ezSetupGemini()" title="إعداد الذكاء الاصطناعي">🤖</button>\
     <button class="ez-btn-icon" onclick="window.ezCloudSettings()" title="الإعدادات السحابية">☁️</button>\
-    <button class="ez-btn-icon" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
     <button class="ez-btn-icon" onclick="window.ezMinimize()">−</button>\
   </div>\
 </div>\
@@ -5278,12 +5312,16 @@ d_box.innerHTML='\
   </div>\
   <div id="ez-pack-warning" style="display:none;padding:10px 14px;background:linear-gradient(135deg,#fef2f2,#fff1f2);border:1.5px solid #fca5a5;border-radius:16px;direction:rtl;transition:all 0.3s"></div>\
 </div>\
-<div class="ez-actions">\
-    <button class="ez-btn-primary" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
-    <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
-    <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
-    <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
-    <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+<div class="ez-actions" style="flex-wrap:wrap">\
+    <div style="display:flex;gap:7px;width:100%;justify-content:center">\
+      <button class="ez-btn-doses" onclick="window.ezPreviewAlerts()" title="التنبيهات">⚠️</button>\
+      <button class="ez-btn-doses" onclick="window.ezSaveNotes()" title="حفظ النوتات">💾</button>\
+      <button class="ez-btn-doses" onclick="window.ezPasteNotes()" title="لصق النوتات">📥</button>\
+      <button class="ez-btn-doses" onclick="window.ezShowDoses()" title="عرض الجرعات">📋</button>\
+      <button class="ez-btn-doses" onclick="window.ezDiagnose()" title="تشخيص مشاكل">🔍</button>\
+      <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
+    </div>\
+    <button class="ez-btn-primary" style="width:100%;margin-top:4px" onclick="window.ezSubmit()">⚡ بدء المعالجة</button>\
   </div>\
 <div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
 
