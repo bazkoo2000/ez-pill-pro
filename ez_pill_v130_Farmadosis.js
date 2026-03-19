@@ -1629,6 +1629,8 @@ window.ezPreviewAlerts=function(){
     ];
     var extractedName=null;
     for(var np=0;np<namePatterns.length;np++){var nm=prescNote.match(namePatterns[np]);if(nm){extractedName=nm[1].replace(/\s*(وشكرا|شكرا|وتوصيل|والتوصيل|وايصال|برجاء|يرجى|برقم|رقم|التواصل|صيدلية|صيدليه).*/i,'').trim();if(extractedName.length>=3)break;else extractedName=null;}}
+    /* v146: English name fallback for preview */
+    if(!extractedName){var _engPrev=prescNote.match(/(?:باسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);if(_engPrev&&_engPrev[1]){extractedName=_engPrev[1].trim().replace(/\s+(and|or|delivery|pharmacy|branch|please|kindly|thanks|send|order)[\s.]*/gi,'').trim();if(extractedName.length<2)extractedName=null;}}
     if(extractedName) details.push('👤 اسم الضيف: '+extractedName);
     /* صيدلية التوصيل */
     var pharmaMatch=prescNote.match(/(?:صيدلي[ةه]|لصيدلي[ةه]|فرع)\s*([\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,2})/i);
@@ -5564,10 +5566,15 @@ function extractAndConfirmName(){
       }
 
       /* PRIORITY 2: English name directly after keyword (no parens) */
-      var engM=s.match(/(?:باسم|الاسم|اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s]{2,})/i);
-      if(engM&&engM[1]&&engM[1].trim().length>=3) var _engName=engM[1].trim();
-      if(/^(the\s+gue?st|guest|the\s+patient|patient)$/i.test(_engName)) _engName=null;
-      if(_engName&&_engName.length>=3) return _engName;
+      var engM=s.match(/(?:باسم|الاسم|(?:و?كتاب[ةه]\s*)?اسم\s*(?:ال)?(?:ضيف[ةه]?|صيف[ةه]?|مريض[ةه]?|عمي[لة]?))\s*[:\-]?\s*([A-Za-z][A-Za-z\s.]{1,})/i);
+      var _engName=null;
+      if(engM&&engM[1]){
+        /* Clean trailing English stop words */
+        _engName=engM[1].trim()
+          .replace(/\s+(and|or|the|on|to|at|in|for|with|delivery|pharmacy|branch|please|kindly|thanks|thank|you|deliver|send|order)[\s.]*/gi,'')
+          .trim();
+      }
+      if(_engName&&_engName.length>=2) return _engName;
 
       /* PRIORITY 3: Arabic name patterns (with optional connector الى/الي before name) */
       var patterns=[
