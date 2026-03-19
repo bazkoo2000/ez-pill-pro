@@ -392,7 +392,7 @@ javascript:(function(){
     }finally{
       state.isSyncing=false;state.isProcessing=false;
       var sb=document.getElementById('ali_btn_sync');
-      if(sb){sb.disabled=false;sb.innerHTML='🔄 مزامنة ذكية';sb.className='ios-btn ios-ghost'}
+      if(sb){sb.disabled=false;sb.innerHTML='🔄 تحديث ومزامنة';sb.className='ios-btn ios-ghost'}
     }
   }
 
@@ -421,7 +421,7 @@ javascript:(function(){
         '<div id="ali_batch_status" style="font-size:10px;color:'+IOS.muted+';text-align:center;font-weight:600;margin-top:6px;min-height:14px"></div>'+
       '</div>'+
       '<button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button>'+
-      '<button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 مزامنة ذكية</button>';
+      '<button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 تحديث ومزامنة</button>';
 
     var sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open'),bsInput=document.getElementById('ali_batch_size'),bsStatus=document.getElementById('ali_batch_status'),cm=[];
 
@@ -529,7 +529,34 @@ javascript:(function(){
       updateBatchUI();
     });
 
-    document.getElementById('ali_btn_sync').addEventListener('click',async function(){if(state.isSyncing||state.isProcessing){showToast('المزامنة شغالة — انتظر!','warning');return}var sb=this;var oc=state.savedRows.length;var result=await showDialog({icon:'🔄',title:'المزامنة الذكية',desc:'هيتم مقارنة بياناتك مع الخادم',badges:[{text:'حذف المُغلق',active:true},{text:'إضافة الجديد',active:true},{text:'تحديث البيانات',active:true}],info:[{label:'الطلبات الحالية',value:oc.toString(),color:'#6366f1'},{label:'العملية',value:'مقارنة + تحديث',color:'#3b82f6'}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 بدء المزامنة',value:'confirm',primary:true}]});if(result!=='confirm')return;sb.disabled=true;sb.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري المزامنة...';sb.style.color=IOS.accent;await smartSync();buildSearchUI()})}
+    document.getElementById('ali_btn_sync').addEventListener('click',async function(){
+      if(state.isSyncing||state.isProcessing){showToast('المزامنة شغالة — انتظر!','warning');return}
+      var sb=this;var oc=state.savedRows.length;
+      var result=await showDialog({icon:'🔄',title:'تحديث ومزامنة',desc:'سيتم تحديث الصفحة بالكامل ثم إعادة جلب البيانات تلقائياً',badges:[{text:'تحديث الصفحة',active:true},{text:'جلب البيانات الجديدة',active:true}],info:[{label:'الطلبات الحالية',value:oc.toString(),color:'#6366f1'},{label:'العملية',value:'تحديث + إعادة فحص',color:'#3b82f6'}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 تحديث الآن',value:'confirm',primary:true}]});
+      if(result!=='confirm')return;
+      // ✅ حفظ علامة في sessionStorage ثم تحديث الصفحة
+      try{sessionStorage.setItem('ali_auto_rescan','true')}catch(e){}
+      showToast('جاري تحديث الصفحة...','info');
+      setTimeout(function(){location.reload()},500);
+    })}
 
   document.getElementById('ali_start').addEventListener('click',function(){if(state.isProcessing)return;this.disabled=true;this.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...';this.style.opacity='0.7';this.style.cursor='not-allowed';totalNoArgs=0;scanPage(false)});
+
+  // ✅ فحص تلقائي بعد تحديث الصفحة (المزامنة)
+  try{
+    if(sessionStorage.getItem('ali_auto_rescan')==='true'){
+      sessionStorage.removeItem('ali_auto_rescan');
+      showToast('تم تحديث الصفحة — جاري إعادة الفحص تلقائياً...','info');
+      // بدء الفحص تلقائي بعد ثانية (انتظار تحميل الصفحة)
+      setTimeout(function(){
+        var startBtn=document.getElementById('ali_start');
+        if(startBtn&&!state.isProcessing){
+          startBtn.disabled=true;
+          startBtn.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص التلقائي...';
+          startBtn.style.opacity='0.7';startBtn.style.cursor='not-allowed';
+          totalNoArgs=0;scanPage(false);
+        }
+      },800);
+    }
+  }catch(e){}
 })();
