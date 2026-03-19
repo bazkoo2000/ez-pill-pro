@@ -283,21 +283,30 @@
       if(data1&&data1.total_orders){const et=parseInt(data1.total_orders)||0;if(et>0){maxPages=Math.ceil(et/10);document.getElementById('p_lim').value=maxPages}}
       processData(data1);updateStats();
       updateProgress(1,maxPages,state.savedRows.length);
+      setStatus(`جاري الجلب... 1/${maxPages} صفحة`,'working');
 
       const BATCH_SIZE=5;
+      let pagesCompleted=1; // ✅ عداد لايف — يتحدث مع كل صفحة فردية
       for(let i=2;i<=maxPages;i+=BATCH_SIZE){
         const batch=[];
         for(let j=i;j<i+BATCH_SIZE&&j<=maxPages;j++){
           batch.push(
             fetchWithRetry(baseUrl+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:currentStatus,pageSelected:j,searchby:''})})
-            .then(r=>safeParseJSON(r)).then(data=>{if(data){processData(data);updateStats()}})
-            .catch(err=>{console.warn('فشل صفحة '+j+' (بعد المحاولات)',err);failedPages.push(j)})
+            .then(r=>safeParseJSON(r)).then(data=>{
+              if(data){processData(data);updateStats()}
+              // ✅ تحديث فوري مع كل صفحة تخلص
+              pagesCompleted++;
+              updateProgress(pagesCompleted,maxPages,state.savedRows.length);
+              setStatus(`جاري الجلب... ${pagesCompleted}/${maxPages} صفحة`,'working');
+            })
+            .catch(err=>{
+              console.warn('فشل صفحة '+j+' (بعد المحاولات)',err);failedPages.push(j);
+              pagesCompleted++;
+              updateProgress(pagesCompleted,maxPages,state.savedRows.length);
+            })
           );
         }
         await Promise.all(batch);
-        const done=Math.min(i+BATCH_SIZE-1,maxPages);
-        updateProgress(done,maxPages,state.savedRows.length);
-        setStatus(`جاري الجلب... ${done}/${maxPages} صفحة`,'working');
         if(i+BATCH_SIZE<=maxPages) await sleep(250);
       }
     } catch(err){
