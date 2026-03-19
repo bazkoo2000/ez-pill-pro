@@ -4296,6 +4296,24 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       document.body.appendChild(rmBadge);
       setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},10000);
     }
+    
+    /* JVM: End Date -1 يوم لكل صف */
+    if(edi_main>=0){
+      var _jvmRows=Array.from(tb_main.querySelectorAll('tr')).slice(1);
+      for(var _jvmRi=0;_jvmRi<_jvmRows.length;_jvmRi++){
+        var _jvmTds=_jvmRows[_jvmRi].querySelectorAll('td');
+        if(_jvmTds.length>edi_main){
+          var _jvmEInp=_jvmTds[edi_main].querySelector('input');
+          if(_jvmEInp&&_jvmEInp.value&&/\d{4}-\d{2}-\d{2}/.test(_jvmEInp.value)){
+            var _jvmED=new Date(_jvmEInp.value);
+            _jvmED.setDate(_jvmED.getDate()-1);
+            var _jvmEY=_jvmED.getFullYear(),_jvmEM=('0'+(_jvmED.getMonth()+1)).slice(-2),_jvmEDay=('0'+_jvmED.getDate()).slice(-2);
+            _jvmEInp.value=_jvmEY+'-'+_jvmEM+'-'+_jvmEDay;
+            _ezFire(_jvmEInp);
+          }
+        }
+      }
+    }
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
     ezBeep('success');
