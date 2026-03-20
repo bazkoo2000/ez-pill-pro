@@ -11,292 +11,417 @@ javascript: (function () {
   const css=d.createElement('style');css.id='nz-css';
   css.textContent=`
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
-@keyframes nzSlide{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-@keyframes nzFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@keyframes nzSpin{to{transform:rotate(360deg)}}
-@keyframes nzPopIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 
-#nz-panel,#nz-panel *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-
-#nz-panel{
-  position:fixed;top:0;right:0;bottom:0;width:480px;max-width:100vw;
-  background:#f8f9fb;z-index:999999;direction:rtl;
-  font-family:'Tajawal',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  display:flex;flex-direction:column;
-  box-shadow:-8px 0 40px rgba(0,0,0,0.07),-2px 0 8px rgba(0,0,0,0.02);
-  animation:nzSlide .4s cubic-bezier(.22,1,.36,1) both;
-  border-left:1px solid #e8eaed
+@keyframes nzModalEnter {
+  from { opacity: 0; transform: scale(0.96) translateY(15px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes nzBackdropEnter {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(5px); }
+}
+@keyframes nzSpin {
+  to { transform: rotate(360deg); }
 }
 
-/* ── DIALOG SYSTEM ── */
-.nz-dlg-overlay{
-  position:fixed;inset:0;background:rgba(26,26,46,0.4);
-  backdrop-filter:blur(4px);z-index:1000000;
-  display:flex;align-items:center;justify-content:center;padding:20px;
-  animation:nzFade .3s ease both
+#nz-panel, #nz-panel * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
 }
-.nz-dlg-box{
-  background:#fff;width:100%;max-width:400px;border-radius:20px;
-  padding:32px;box-shadow:0 20px 50px rgba(0,0,0,0.15);
-  animation:nzPopIn .4s cubic-bezier(.22,1,.36,1) both;
-  text-align:center;border:1px solid rgba(255,255,255,0.2)
+
+#nz-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 999999;
+  direction: rtl;
+  font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: nzBackdropEnter 0.4s ease forwards;
 }
-.nz-dlg-icon{
-  width:60px;height:60px;border-radius:18px;margin:0 auto 20px;
-  display:flex;align-items:center;justify-content:center
+
+.nz-dialog {
+  background: #ffffff;
+  width: 540px;
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  display: flex;
+  flex-direction: column;
+  animation: nzModalEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
 }
-.nz-dlg-icon svg{width:30px;height:30px}
-.nz-dlg-t{font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:12px}
-.nz-dlg-m{font-size:15px;color:#6b7280;line-height:1.6;margin-bottom:28px}
-.nz-dlg-btns{display:flex;gap:12px}
-.nz-dlg-btn{
-  flex:1;height:48px;border-radius:12px;font-family:inherit;font-weight:700;
-  cursor:pointer;transition:all .2s;border:none;font-size:15px
-}
-.nz-dlg-btn-primary{background:#4f6cf7;color:#fff;box-shadow:0 4px 12px rgba(79,108,247,0.2)}
-.nz-dlg-btn-primary:hover{background:#3d59e6;transform:translateY(-1px)}
-.nz-dlg-btn-secondary{background:#f3f4f6;color:#4b5563}
-.nz-dlg-btn-secondary:hover{background:#e5e7eb}
 
 /* ── HEADER ── */
-.nz-hd{
-  padding:22px 36px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid #ecedf0;flex-shrink:0;background:#fff
+.nz-hd {
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  flex-shrink: 0;
 }
-.nz-hd-r{display:flex;align-items:center;gap:14px}
-.nz-hd-dot{
-  width:11px;height:11px;border-radius:50%;
-  background:linear-gradient(135deg,#4f6cf7,#7c5cf5);
-  box-shadow:0 0 0 3px rgba(79,108,247,0.12);flex-shrink:0
+.nz-hd-r {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
-.nz-hd-t{font-size:18px;font-weight:800;color:#1a1a2e;letter-spacing:-.3px}
-.nz-close{
-  width:36px;height:36px;border-radius:10px;border:1px solid #ecedf0;
-  background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  color:#aaa;transition:all .2s
+.nz-hd-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1e293b, #334155);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
 }
-.nz-close:hover{background:#f5f5f7;color:#777;border-color:#ddd}
-.nz-close:active{transform:scale(.9)}
-.nz-close svg{width:15px;height:15px}
+.nz-hd-icon svg { width: 22px; height: 22px; }
+.nz-hd-text-wrap { display: flex; flex-direction: column; }
+.nz-hd-t { font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+.nz-hd-sub { font-size: 13px; color: #64748b; font-weight: 500; margin-top: 2px; }
+.nz-close {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+.nz-close:hover { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
+.nz-close svg { width: 18px; height: 18px; }
 
-/* ── SEARCH ── */
-.nz-search{
-  padding:28px 36px;border-bottom:1px solid #ecedf0;flex-shrink:0;background:#fff
+/* ── BODY & SEARCH ── */
+.nz-body {
+  padding: 32px;
+  background: #f8fafc;
+  flex-shrink: 0;
 }
-.nz-field{margin-bottom:16px;position:relative}
-.nz-field:last-of-type{margin-bottom:20px}
-.nz-label{
-  display:block;font-size:13px;font-weight:700;color:#7a7f8e;
-  margin-bottom:8px;letter-spacing:.2px
+.nz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
 }
-.nz-input{
-  width:100%;height:50px;padding:0 18px;
-  background:#f5f6f8;border:1.5px solid #ecedf0;border-radius:12px;
-  font-size:15px;font-weight:600;color:#1a1a2e;font-family:inherit;
-  outline:none;transition:all .2s;direction:ltr;text-align:left
+.nz-field.full { grid-column: span 2; }
+.nz-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 10px;
 }
-.nz-input::placeholder{color:#c5c8d0;font-weight:500}
-.nz-input:hover{border-color:#d8dae0;background:#f0f1f4}
-.nz-input:focus{border-color:#4f6cf7;background:#fff;box-shadow:0 0 0 4px rgba(79,108,247,0.07)}
+.nz-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.nz-input-wrap svg {
+  position: absolute;
+  right: 16px;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.nz-input {
+  width: 100%;
+  height: 54px;
+  padding: 0 46px 0 16px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+  direction: ltr;
+  text-align: right;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.nz-input::placeholder { color: #94a3b8; font-weight: 500; }
+.nz-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
+.nz-erx-tag {
+  position: absolute;
+  left: 16px;
+  font-size: 13px;
+  font-weight: 800;
+  background: #eff6ff;
+  color: #3b82f6;
+  padding: 4px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+}
 
-.nz-input-erx{padding-right:65px}
-.nz-erx-tag{
-  position:absolute;right:18px;top:50%;transform:translateY(-50%);margin-top:14px;
-  font-size:15px;font-weight:900;color:#4f6cf7;pointer-events:none
+/* ── BUTTONS ── */
+.nz-actions {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+.nz-go {
+  flex: 1;
+  height: 56px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 800;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #1e293b;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.25);
+}
+.nz-go:not(:disabled):hover { background: #0f172a; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3); }
+.nz-go:not(:disabled):active { transform: translateY(0); }
+.nz-go:disabled { opacity: 0.6; cursor: not-allowed; }
+.nz-go svg { width: 22px; height: 22px; }
+
+.nz-cancel {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid #fecaca;
+  cursor: pointer;
+  background: #fef2f2;
+  color: #ef4444;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.nz-cancel:hover { background: #fee2e2; }
+.nz-cancel svg { width: 24px; height: 24px; }
+
+/* ── STATUS & ALERTS ── */
+.nz-status {
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+.nz-spin {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: nzSpin 0.7s linear infinite;
+  display: none;
+}
+.nz-st { font-size: 14px; color: #475569; font-weight: 600; flex: 1; }
+.nz-st b { color: #3b82f6; font-weight: 800; }
+.nz-st .err { color: #ef4444; }
+
+.nz-alt {
+  grid-column: span 2;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: none;
+  font-size: 14px;
+  color: #b91c1c;
+  font-weight: 700;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.nz-go-wrap{position:relative}
-.nz-go{
-  width:100%;height:52px;border:none;border-radius:12px;cursor:pointer;
-  font-size:16px;font-weight:800;font-family:inherit;letter-spacing:-.1px;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  background:linear-gradient(135deg,#4f6cf7 0%,#6558f5 100%);color:#fff;
-  box-shadow:0 4px 14px rgba(79,108,247,0.25);
-  transition:all .25s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden
+/* ── INFO BAR ── */
+.nz-cbar {
+  padding: 16px 32px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
 }
-.nz-go::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.12),transparent 60%);pointer-events:none}
-.nz-go:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(79,108,247,0.3)}
-.nz-go:not(:disabled):active{transform:translateY(0) scale(.985)}
-.nz-go:disabled{opacity:.5;cursor:not-allowed}
-.nz-go svg{width:19px;height:19px}
-
-.nz-cancel{
-  position:absolute;left:10px;top:50%;transform:translateY(-50%);
-  width:34px;height:34px;border-radius:9px;border:none;cursor:pointer;
-  background:rgba(255,255,255,0.18);color:#fff;
-  display:none;align-items:center;justify-content:center;font-size:0;
-  transition:all .15s;z-index:1
+.nz-ctxt { font-size: 15px; font-weight: 700; color: #1e293b; }
+.nz-ctxt b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #3b82f6;
+  color: #ffffff;
+  padding: 2px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 0 6px;
 }
-.nz-cancel:hover{background:rgba(255,255,255,0.28)}
-.nz-cancel svg{width:14px;height:14px}
-
-/* ── STATUS ── */
-.nz-status{
-  padding:14px 36px;display:flex;align-items:center;gap:10px;
-  min-height:20px;flex-shrink:0;background:#f8f9fb
-}
-.nz-spin{
-  width:15px;height:15px;border:2px solid #e0e2e8;
-  border-top-color:#4f6cf7;border-radius:50%;
-  animation:nzSpin .6s linear infinite;display:none;flex-shrink:0
-}
-.nz-st{font-size:13px;color:#9a9fae;font-weight:600;flex:1}
-.nz-st b{color:#4f6cf7}
-.nz-st .err{color:#ef4444}
-.nz-st .ok{color:#22c55e}
-
-/* ── COUNT ── */
-.nz-cbar{
-  padding:14px 36px;display:none;align-items:center;justify-content:space-between;
-  background:#fff;border-bottom:1px solid #ecedf0;flex-shrink:0
-}
-.nz-ctxt{font-size:14px;font-weight:700;color:#1a1a2e}
-.nz-ctxt b{
-  display:inline-flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,#4f6cf7,#6558f5);color:#fff;
-  min-width:26px;height:26px;border-radius:8px;font-size:13px;font-weight:800;
-  padding:0 7px;margin:0 5px
-}
-.nz-chint{font-size:11px;color:#c5c8d0;font-weight:500}
-
-/* ── ALERT ── */
-.nz-alt{
-  margin:0 0 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;
-  padding:12px 16px;display:none;font-size:13px;color:#dc2626;font-weight:600;text-align:center
-}
+.nz-chint { font-size: 13px; color: #64748b; font-weight: 600; }
 
 /* ── RESULTS ── */
-.nz-results{flex:1;overflow-y:auto;padding:0;background:#f8f9fb}
-.nz-results::-webkit-scrollbar{width:0}
+.nz-results {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  max-height: 45vh;
+}
+.nz-results::-webkit-scrollbar { width: 6px; }
+.nz-results::-webkit-scrollbar-track { background: transparent; }
+.nz-results::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-.nz-list{
-  display:flex;flex-direction:column;gap:10px;
-  padding:20px 32px
+.nz-list {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px;
+  gap: 14px;
 }
 
-.nz-row{
-  display:grid;grid-template-columns:1.1fr 1fr auto;
-  align-items:center;gap:20px;padding:16px 20px;
-  background:#fff;cursor:pointer;transition:all .2s;
-  animation:nzFade .3s ease both;border-radius:12px;
-  border:1px solid #ecedf0
+.nz-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
 }
-.nz-row:hover{border-color:#d5d7e0;box-shadow:0 4px 16px rgba(0,0,0,0.04);transform:translateY(-1px)}
-.nz-row:active{transform:translateY(0) scale(.99)}
-
-.nz-row-order{font-size:15px;font-weight:800;color:#1a1a2e;letter-spacing:-.2px}
-.nz-row-sub{font-size:11px;color:#b8bcc8;font-weight:500;margin-top:4px}
-.nz-row-name{font-size:13px;font-weight:700;color:#4a4e5a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-.nz-row-arrow{
-  width:32px;height:32px;border-radius:9px;background:#f0f1f5;
-  display:flex;align-items:center;justify-content:center;
-  transition:all .25s;flex-shrink:0
+.nz-row:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
-.nz-row-arrow svg{width:15px;height:15px;color:#b8bcc8;transition:all .25s}
-.nz-row:hover .nz-row-arrow{background:#4f6cf7;box-shadow:0 3px 10px rgba(79,108,247,0.2)}
-.nz-row:hover .nz-row-arrow svg{color:#fff;transform:translate(-1px,-1px)}
+.nz-row-info { flex: 1; }
+.nz-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.nz-row-order { font-size: 16px; font-weight: 800; color: #0f172a; }
+.nz-row-inv { font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; }
+.nz-row-details { display: flex; gap: 16px; font-size: 14px; color: #475569; font-weight: 600; }
+.nz-row-details div { display: flex; align-items: center; gap: 6px; }
+.nz-row-details svg { width: 16px; height: 16px; color: #94a3b8; }
 
-/* ── EMPTY ── */
-.nz-empty{text-align:center;padding:60px 28px}
-.nz-empty-ico{
-  width:68px;height:68px;border-radius:18px;background:#f0f1f5;
-  display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px
+.nz-row-arrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-right: 20px;
+  border: 1px solid #f1f5f9;
 }
-.nz-empty-ico svg{width:28px;height:28px;color:#c5c8d0}
-.nz-empty-t{font-size:16px;color:#4a4e5a;font-weight:700;margin-bottom:6px}
-.nz-empty-s{font-size:13px;color:#9a9fae;font-weight:500}
+.nz-row:hover .nz-row-arrow { background: #1e293b; border-color: #1e293b; }
+.nz-row:hover .nz-row-arrow svg { color: #ffffff; transform: translateX(-3px); }
+.nz-row-arrow svg { width: 20px; height: 20px; color: #64748b; transition: all 0.2s ease; }
 
-/* ── MOBILE ── */
-@media(max-width:520px){
-  #nz-panel{width:100%}
-  .nz-row{grid-template-columns:1fr 1fr auto;gap:12px;padding:14px 16px}
-  .nz-list{padding:16px 20px}
-  .nz-search{padding:20px 24px}
-  .nz-hd{padding:18px 24px}
-  .nz-status{padding:12px 24px}
-  .nz-cbar{padding:12px 24px}
+/* ── EMPTY STATE ── */
+.nz-empty { text-align: center; padding: 60px 20px; }
+.nz-empty-ico {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: #f1f5f9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
 }
+.nz-empty-ico svg { width: 36px; height: 36px; color: #94a3b8; }
+.nz-empty-t { font-size: 18px; color: #0f172a; font-weight: 800; margin-bottom: 8px; }
+.nz-empty-s { font-size: 14px; color: #64748b; font-weight: 600; }
   `;
   d.head.appendChild(css);
 
-  const panel=d.createElement('div');panel.id='nz-panel';
+  const panel=d.createElement('div');
+  panel.id='nz-panel';
   panel.innerHTML=`
-<div class="nz-hd">
-  <div class="nz-hd-r">
-    <div class="nz-hd-dot"></div>
-    <div class="nz-hd-t">البحث الشامل</div>
+<div class="nz-dialog">
+  <div class="nz-hd">
+    <div class="nz-hd-r">
+      <div class="nz-hd-icon">
+        <svg fill="none" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="nz-hd-text-wrap">
+        <div class="nz-hd-t">نظام الاستعلام المتقدم</div>
+        <div class="nz-hd-sub">إدارة الطلبات والسجلات الطبية</div>
+      </div>
+    </div>
+    <button class="nz-close" id="nz-x"><svg fill="none" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
   </div>
-  <button class="nz-close" id="nz-x"><svg fill="none" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
-</div>
 
-<div class="nz-search">
-  <div class="nz-alt" id="nz-alt">انتهت الجلسة — سجّل دخولك مرة أخرى</div>
-  <div class="nz-field">
-    <label class="nz-label">رقم الفاتورة</label>
-    <input class="nz-input" id="f-inv" placeholder="INV-12345" autocomplete="off">
-  </div>
-  <div class="nz-field" style="position:relative">
-    <label class="nz-label">رقم الطلب</label>
-    <input class="nz-input nz-input-erx" id="f-ord" placeholder="أدخل الرقم" autocomplete="off">
-    <span class="nz-erx-tag">ERX</span>
-  </div>
-  <div class="nz-field">
-    <label class="nz-label">رقم الجوال</label>
-    <input class="nz-input" id="f-mob" placeholder="05xxxxxxxx" autocomplete="off">
-  </div>
-  <div class="nz-go-wrap">
-    <button class="nz-go" id="nz-go">
-      <svg fill="none" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-      بحث
-    </button>
-    <button class="nz-cancel" id="nz-stop"><svg fill="none" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
-  </div>
-</div>
+  <div class="nz-body">
+    <div class="nz-alt" id="nz-alt" style="display:none;">
+      <svg fill="none" viewBox="0 0 24 24" width="20" height="20"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      انتهت صلاحية الجلسة النظامية، يُرجى إعادة تسجيل الدخول.
+    </div>
+    
+    <div class="nz-grid">
+      <div class="nz-field full">
+        <label class="nz-label">معرّف الطلب</label>
+        <div class="nz-input-wrap">
+          <svg fill="none" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <input class="nz-input" id="f-ord" placeholder="أدخل معرّف الطلب هنا" autocomplete="off" style="padding-left: 60px;">
+          <span class="nz-erx-tag">ERX</span>
+        </div>
+      </div>
+      <div class="nz-field">
+        <label class="nz-label">معرّف الفاتورة</label>
+        <div class="nz-input-wrap">
+          <svg fill="none" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <input class="nz-input" id="f-inv" placeholder="مثال: INV-123" autocomplete="off">
+        </div>
+      </div>
+      <div class="nz-field">
+        <label class="nz-label">رقم الهاتف المحمول</label>
+        <div class="nz-input-wrap">
+          <svg fill="none" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <input class="nz-input" id="f-mob" placeholder="05xxxxxxxx" autocomplete="off">
+        </div>
+      </div>
+    </div>
 
-<div class="nz-status"><div class="nz-spin" id="nz-spin"></div><div class="nz-st" id="nz-st"></div></div>
+    <div class="nz-actions">
+      <button class="nz-go" id="nz-go">
+        تنفيذ الاستعلام
+      </button>
+      <button class="nz-cancel" id="nz-stop"><svg fill="none" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
 
-<div class="nz-cbar" id="nz-cbar">
-  <div class="nz-ctxt" id="nz-ctxt"></div>
-  <div class="nz-chint">اضغط على أي طلب لفتحه</div>
-</div>
+  <div class="nz-status">
+    <div class="nz-spin" id="nz-spin"></div>
+    <div class="nz-st" id="nz-st">في انتظار تحديد معايير البحث...</div>
+  </div>
 
-<div class="nz-results" id="nz-results">
-  <div class="nz-list" id="nz-list"></div>
+  <div class="nz-cbar" id="nz-cbar">
+    <div class="nz-ctxt" id="nz-ctxt"></div>
+    <div class="nz-chint">انقر على السجل لعرض التفاصيل الكاملة</div>
+  </div>
+
+  <div class="nz-results" id="nz-results">
+    <div class="nz-list" id="nz-list"></div>
+  </div>
 </div>`;
   d.body.appendChild(panel);
-
-  /* ═══════ DYNAMIC DIALOG UTILITY ═══════ */
-  const nzDialog = ({ title, message, type = 'info', confirmText = 'موافق', onConfirm }) => {
-    const overlay = d.createElement('div');
-    overlay.className = 'nz-dlg-overlay';
-    
-    const colors = {
-      info: { bg: '#eff6ff', icon: '#3b82f6', svg: '<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' },
-      success: { bg: '#f0fdf4', icon: '#22c55e', svg: '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' },
-      error: { bg: '#fef2f2', icon: '#ef4444', svg: '<path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' }
-    };
-
-    overlay.innerHTML = `
-      <div class="nz-dlg-box">
-        <div class="nz-dlg-icon" style="background:${colors[type].bg}; color:${colors[type].icon}">
-          <svg fill="none" viewBox="0 0 24 24">${colors[type].svg}</svg>
-        </div>
-        <div class="nz-dlg-t">${title}</div>
-        <div class="nz-dlg-m">${message}</div>
-        <div class="nz-dlg-btns">
-          <button class="nz-dlg-btn nz-dlg-btn-primary" id="nz-dlg-ok">${confirmText}</button>
-          ${onConfirm ? '<button class="nz-dlg-btn nz-dlg-btn-secondary" id="nz-dlg-no">إلغاء</button>' : ''}
-        </div>
-      </div>`;
-
-    d.body.appendChild(overlay);
-    const close = () => overlay.remove();
-    
-    d.getElementById('nz-dlg-ok').onclick = () => { if(onConfirm) onConfirm(); close(); };
-    if(onConfirm) d.getElementById('nz-dlg-no').onclick = close;
-    overlay.onclick = (e) => { if(e.target === overlay) close(); };
-  };
 
   /* ═══════ CORE ═══════ */
   const $=id=>d.getElementById(id);
@@ -312,11 +437,7 @@ javascript: (function () {
   const checkSession=async()=>{
     try{const c=new AbortController();setTimeout(()=>c.abort(),5000);
     const r=await fetch(BASE_URL+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'readypack',pageSelected:1,searchby:'___test___'}),signal:c.signal});
-    if(r.status===401||r.status===403||r.redirected){
-        nzDialog({ title: 'انتهت الجلسة', message: 'يرجى تسجيل الدخول مرة أخرى لمتابعة البحث.', type: 'error' });
-        $('nz-alt').style.display='block';
-        return false;
-    }
+    if(r.status===401||r.status===403||r.redirected){$('nz-alt').style.display='flex';return false;}
     $('nz-alt').style.display='none';return true;}catch{return true;}
   };
 
@@ -330,7 +451,7 @@ javascript: (function () {
     while(pg<=MAX_PAGES){
       if(signal?.aborted)break;
       const r=await fetchTO(BASE_URL+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status,pageSelected:pg,searchby:val}),signal});
-      if(!r.ok){if(r.status===401||r.status===403){$('nz-alt').style.display='block';throw new Error('SESSION');}throw new Error('HTTP '+r.status);}
+      if(!r.ok){if(r.status===401||r.status===403){$('nz-alt').style.display='flex';throw new Error('SESSION');}throw new Error('HTTP '+r.status);}
       const data=await r.json();let ord;try{ord=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list;}catch{ord=[];}
       if(!Array.isArray(ord)||!ord.length)break;
       all=all.concat(ord);if(ord.length<10)break;pg++;
@@ -343,17 +464,25 @@ javascript: (function () {
     const url=sanitizeURL(BASE_URL+`getEZPill_Details?onlineNumber=${encodeURIComponent(num)}&Invoice=${encodeURIComponent(item.Invoice||'')}&typee=${encodeURIComponent(item.typee||'')}&head_id=${encodeURIComponent(item.head_id||'')}`);
     links.push({url});
     const row=d.createElement('div');row.className='nz-row';
-    row.style.animationDelay=(idx*0.04)+'s';
+    row.style.animation=`nzModalEnter 0.4s cubic-bezier(0.16,1,0.3,1) ${(idx*0.05)}s both`;
     row.innerHTML=`
-      <div>
-        <div class="nz-row-order">${esc(item.onlineNumber||'—')}</div>
-        <div class="nz-row-sub">${esc(item.Invoice||'')}</div>
+      <div class="nz-row-info">
+        <div class="nz-row-header">
+          <span class="nz-row-order">${esc(item.onlineNumber||'—')}</span>
+          <span class="nz-row-inv">${esc(item.Invoice||'—')}</span>
+        </div>
+        <div class="nz-row-details">
+          <div>
+            <svg fill="none" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${esc(item.guestName||'غير مسجل')}
+          </div>
+          <div style="direction:ltr">
+            <svg fill="none" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${esc(item.guestMobile||item.mobile||'—')}
+          </div>
+        </div>
       </div>
-      <div>
-        <div class="nz-row-name">${esc(item.guestName||'—')}</div>
-        <div class="nz-row-sub" style="direction:ltr;text-align:left">${esc(item.guestMobile||item.mobile||'—')}</div>
-      </div>
-      <div class="nz-row-arrow"><svg fill="none" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+      <div class="nz-row-arrow"><svg fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
     row.onclick=()=>window.open(url,'_blank');
     $('nz-list').appendChild(row);
   };
@@ -361,21 +490,18 @@ javascript: (function () {
   const runSearch=async()=>{
     if(busy)return;
     const val=getVal();const st=$('nz-st');
-    if(!val){
-        nzDialog({ title: 'تنبيه', message: 'يرجى إدخال قيمة للبحث (رقم الفاتورة، الجوال، أو الطلب).', type: 'info' });
-        return;
-    }
+    if(!val){st.innerHTML='<span class="err">يُرجى إدخال معيار للبحث أولاً.</span>';return;}
     $('nz-list').innerHTML='';$('nz-cbar').style.display='none';$('nz-alt').style.display='none';
     links=[];
     const ok=await checkSession();if(!ok){setLoad(false);return;}
     ctrl=new AbortController();setLoad(true);
-    st.innerHTML='جاري البحث ...';
+    st.innerHTML='جاري معالجة الاستعلام واستخراج السجلات...';
     try{sessionStorage.setItem('nz_q',JSON.stringify({inv:$('f-inv').value,ord:$('f-ord').value,mob:$('f-mob').value}));}catch{}
 
     const results=await Promise.allSettled(
       STATUS_KEYS.map(sk=>fetchAll(sk,val,ctrl.signal).then(orders=>({sk,orders})))
     );
-    if(ctrl.signal.aborted){setLoad(false);st.innerHTML='<span class="err">تم الإلغاء</span>';return;}
+    if(ctrl.signal.aborted){setLoad(false);st.innerHTML='<span class="err">تم إلغاء عملية الاستعلام.</span>';return;}
 
     let count=0;const seen=new Set();let hasErr=false;
     for(const r of results){
@@ -389,16 +515,20 @@ javascript: (function () {
     setLoad(false);
 
     if(count>0){
-      st.innerHTML='';
+      st.innerHTML='اكتمل الاستعلام بنجاح.';
       $('nz-cbar').style.display='flex';
-      $('nz-ctxt').innerHTML=`النتائج <b>${count}</b>`;
+      $('nz-ctxt').innerHTML=`إجمالي السجلات المطابقة: <b>${count}</b>`;
     }else{
-      $('nz-list').innerHTML=`<div class="nz-empty"><div class="nz-empty-ico"><svg fill="none" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div class="nz-empty-t">لا توجد نتائج</div><div class="nz-empty-s">لم نجد طلبات مطابقة</div></div>`;
-      st.innerHTML=hasErr?'<span class="err">حدث خطأ — حاول مرة أخرى</span>':'';
+      $('nz-list').innerHTML=`<div class="nz-empty"><div class="nz-empty-ico"><svg fill="none" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div class="nz-empty-t">لا توجد سجلات مطابقة</div><div class="nz-empty-s">لم يتم العثور على أي بيانات تطابق معايير البحث المدخلة.</div></div>`;
+      st.innerHTML=hasErr?'<span class="err">حدث خطأ أثناء الاتصال بالنظام — يُرجى المحاولة لاحقاً.</span>':'';
     }
   };
 
-  $('nz-x').onclick=()=>{panel.style.animation='nzSlide .3s cubic-bezier(.22,1,.36,1) reverse both';setTimeout(()=>{panel.remove();d.getElementById('nz-css')?.remove();},300);};
+  $('nz-x').onclick=()=>{
+    panel.style.animation='nzBackdropEnter 0.3s reverse forwards';
+    panel.querySelector('.nz-dialog').style.animation='nzModalEnter 0.3s reverse forwards';
+    setTimeout(()=>{panel.remove();d.getElementById('nz-css')?.remove();},300);
+  };
   $('nz-go').onclick=runSearch;
   $('nz-stop').onclick=()=>{if(ctrl)ctrl.abort();};
   d.querySelectorAll('#nz-panel .nz-input').forEach(el=>{el.onkeypress=e=>{if(e.key==='Enter')runSearch();};});
