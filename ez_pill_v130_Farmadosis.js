@@ -1935,8 +1935,15 @@ window.showWarnings=function(warnings,callback){
         html+='<input type="time" id="edit-time-'+i+'" value="'+w.currentTime+'" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
         html+='</div>';
       } else if(w.type==='unrecognized_dose'){
-        /* Smart UI for unrecognized_dose: size + every + time */
-        html+='<div style="font-size:11px;font-weight:800;color:#92400e;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:8px;padding:8px 10px;margin-bottom:8px;direction:rtl">📝 الجرعة المكتوبة: <span style="color:#1e1b4b;font-size:12px">'+w.currentNote+'</span></div>';
+        /* Smart UI for unrecognized_dose: editable note + size + every + time */
+        html+='<div style="margin-bottom:8px;direction:rtl">';
+        html+='<label style="display:block;font-size:10px;font-weight:800;color:#92400e;margin-bottom:3px">✏️ صحّح الجرعة هنا (ثم اضغط تحليل أو تطبيق)</label>';
+        html+='<div style="display:flex;gap:6px;align-items:center">';
+        html+='<input type="text" id="edit-note-'+i+'" value="'+_ezEsc(w.currentNote)+'" style="flex:1;padding:8px 12px;border:2px solid #f59e0b;border-radius:10px;font-size:14px;font-weight:800;color:#1e1b4b;background:#fffbeb;font-family:Cairo,sans-serif;outline:none;direction:rtl" />';
+        html+='<button onclick="window.reAnalyzeNote('+i+')" style="height:38px;padding:0 12px;border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#8b5cf6,#6d28d9);box-shadow:0 2px 8px rgba(139,92,246,0.25);white-space:nowrap">🔍 تحليل</button>';
+        html+='</div>';
+        html+='<div id="note-analysis-'+i+'" style="margin-top:4px;font-size:10px;font-weight:700;color:#6b7280;direction:rtl"></div>';
+        html+='</div>';
         html+='<div style="display:flex;gap:8px;direction:rtl;margin-bottom:8px;flex-wrap:wrap">';
         html+='<div style="flex:1;min-width:100px"><label style="display:block;font-size:10px;font-weight:800;color:'+lc.labelColor+';margin-bottom:3px">الحجم (Size)</label>';
         html+='<input type="number" id="edit-size-'+i+'" value="'+w.currentSize+'" min="1" max="9999" style="width:100%;padding:8px 10px;border:1.5px solid '+lc.bdr+';border-radius:8px;font-size:13px;font-weight:800;color:#1e1b4b;background:#fff;font-family:Cairo,sans-serif;outline:none;text-align:center" /></div>';
@@ -1994,6 +2001,37 @@ window.showWarnings=function(warnings,callback){
   window.warningCallback=callback;
 };
 
+/* v146: Re-analyze corrected note text */
+window.reAnalyzeNote=function(idx){
+  var noteInp=document.getElementById('edit-note-'+idx);
+  if(!noteInp) return;
+  var corrected=noteInp.value.trim();
+  if(!corrected){return;}
+  var timeResult=getTimeFromWords(corrected);
+  var doseResult=smartDoseRecognizer(corrected);
+  var analysisEl=document.getElementById('note-analysis-'+idx);
+  /* Update time */
+  var timeInp=document.getElementById('edit-time-'+idx);
+  if(timeInp&&timeResult.time) timeInp.value=timeResult.time;
+  /* Update every based on dose count */
+  var everyInp=document.getElementById('edit-every-'+idx);
+  if(everyInp){
+    if(doseResult.count>=4) everyInp.value='6';
+    else if(doseResult.count===3) everyInp.value='8';
+    else if(doseResult.count===2) everyInp.value='12';
+    else everyInp.value='24';
+  }
+  /* Show analysis result */
+  if(analysisEl){
+    if(timeResult.isUnrecognized){
+      analysisEl.innerHTML='<span style="color:#ef4444;font-weight:800">❌ لسه غير مفهومة — عدّل الوقت والتكرار يدوياً أو صحّح النص</span>';
+    } else {
+      var evryTxt={24:'مرة يومياً',12:'مرتين',8:'3 مرات',6:'4 مرات'}[everyInp?everyInp.value:'24']||'';
+      analysisEl.innerHTML='<span style="color:#059669;font-weight:800">✅ تم الفهم: الوقت '+timeResult.time+' | '+evryTxt+' | '+doseResult.count+' مرة يومياً</span>';
+    }
+  }
+};
+
 window.applyWarning=function(idx){
   var w=warningQueue[idx];
   if(!w) return;
@@ -2033,12 +2071,30 @@ window.applyWarning=function(idx){
     var everySelUD=document.getElementById('edit-every-'+idx);
     var timeInpUD=document.getElementById('edit-time-'+idx);
     var sizeInpUD=document.getElementById('edit-size-'+idx);
+    var noteInpUD=document.getElementById('edit-note-'+idx);
     if(everySelUD&&timeInpUD){
+      /* v146: If note was corrected, re-analyze and update the actual row note */
+      if(noteInpUD&&noteInpUD.value.trim()!==w.currentNote){
+        var correctedNote=noteInpUD.value.trim();
+        var reTime=getTimeFromWords(correctedNote);
+        var reDose=smartDoseRecognizer(correctedNote);
+        /* Auto-apply analyzed values if recognized */
+        if(!reTime.isUnrecognized){
+          timeInpUD.value=reTime.time;
+          if(reDose.count>=4) everySelUD.value='6';
+          else if(reDose.count===3) everySelUD.value='8';
+          else if(reDose.count===2) everySelUD.value='12';
+          else everySelUD.value='24';
+        }
+        /* Update note in actual row */
+        var rd2=window._ezRows?window._ezRows[w.rowIndex]:null;
+        if(rd2){rd2.note=correctedNote;rd2.correctedNote=correctedNote;}
+      }
       var newEvery2=parseInt(everySelUD.value);
       var newTime2=timeInpUD.value;
       var newSize2=sizeInpUD?parseInt(sizeInpUD.value):0;
       w.onEdit(newEvery2,newTime2,newSize2);
-      window.ezShowToast('✅ تم تطبيق Every='+newEvery2+'h, Time='+newTime2+(newSize2>0?', Size='+newSize2:''),'success');
+      window.ezShowToast('✅ تم: الوقت '+newTime2+' | كل '+newEvery2+' ساعة'+(newSize2>0?' | الحجم '+newSize2:''),'success');
     }
   }
 
@@ -2150,6 +2206,15 @@ window.ezApplyAllWarnings=function(){
       var evSel2=document.getElementById('edit-every-'+i);
       var tmInp2=document.getElementById('edit-time-'+i);
       var szInp2=document.getElementById('edit-size-'+i);
+      var ntInp2=document.getElementById('edit-note-'+i);
+      /* v146: Re-analyze corrected note on apply all */
+      if(ntInp2&&ntInp2.value.trim()!==w.currentNote){
+        var cn2=ntInp2.value.trim();var rt2=getTimeFromWords(cn2);var rd2b=smartDoseRecognizer(cn2);
+        if(!rt2.isUnrecognized&&tmInp2) tmInp2.value=rt2.time;
+        if(evSel2){if(rd2b.count>=4)evSel2.value='6';else if(rd2b.count===3)evSel2.value='8';else if(rd2b.count===2)evSel2.value='12';else evSel2.value='24';}
+        var rd2c=window._ezRows?window._ezRows[w.rowIndex]:null;
+        if(rd2c){rd2c.note=cn2;rd2c.correctedNote=cn2;}
+      }
       if(evSel2&&tmInp2) w.onEdit(parseInt(evSel2.value),tmInp2.value,szInp2?parseInt(szInp2.value):0);
     }
   }
@@ -4137,6 +4202,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var ramadanRtd=[];/* Ramadan duplicate list */
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];var r_node=rd.row;var tds_nodes=rd.tds;
+      /* v146: Write corrected note back to table if user edited it */
+      if(rd.correctedNote&&ni_main>=0&&tds_nodes[ni_main]){var _cnInp=tds_nodes[ni_main].querySelector('input,textarea');if(_cnInp){_cnInp.value=rd.correctedNote;fire(_cnInp);}}
 
       /* ── RAMADAN MODE: Ramadan duplicate (فطار + سحور) ── */
       if(ramadanMode&&rd.dui&&rd.dui.type==='ramadan_two'){
