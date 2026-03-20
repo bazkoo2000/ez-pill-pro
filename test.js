@@ -2,7 +2,7 @@ javascript:(function(){
 var APP_VERSION='146.0';
 /* Load font non-blocking (single request) */
 if(!document.getElementById('ez-cairo-font')){var _lnk=document.createElement('link');_lnk.id='ez-cairo-font';_lnk.rel='stylesheet';_lnk.href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap';document.head.appendChild(_lnk);}
-var APP_NAME='ez_pill Jvm';
+var APP_NAME='EZ_Pill Farmadosis';
 
 /* ══════════════════════════════════════════
    WHAT'S NEW - CHANGELOG SYSTEM
@@ -767,7 +767,7 @@ var _defaultFixedSizeCodes={
   '103683617':30
 };
 var _defaultWeeklyInjections=['102785890','101133232','101943745','101049031','101528656'];
-var _defaultNormalTimes={empty:'08:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:00',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'14:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:00',bed:'22:00',defaultTime:'09:00'};
+var _defaultNormalTimes={empty:'07:00',beforeMeal:'08:00',beforeBreakfast:'08:00',afterBreakfast:'09:00',morning:'09:30',noon:'12:00',beforeLunch:'13:00',afterLunch:'14:00',afternoon:'15:00',maghrib:'18:00',beforeDinner:'20:00',afterDinner:'21:00',evening:'21:30',bed:'22:00',defaultTime:'09:00'};
 var _defaultRamadanTimes={beforeIftar:'18:30',afterIftar:'19:00',beforeSuhoor:'03:00',afterSuhoor:'04:00',afterTarawih:'23:00'};
 
 /* Merge defaults with custom overrides */
@@ -867,7 +867,7 @@ function ramadanMapNote(note){
   /* ── CRITICAL: Check Suhoor BEFORE dinner mapping ── */
   /* ── "مع" = "بعد" unified logic (مع الوجبة = بعد الوجبة) ── */
   if(/مع\s*(ال)?(سحور|سحر)/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
-  if(/مع\s*(ال)?(فطار|فطور|افطار)/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  if(/مع\s*(ال)?(فطار|فطور|افطار|فكار)/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
   if(/مع\s*(ال)?(عشا|عشاء)/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   if(/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/i.test(note)) return {meal:'afterTarawih',label_ar:'بعد التراويح',label_en:'After Tarawih',time:RAMADAN_TIMES.afterTarawih||'23:00'};
   if(/مع\s*(ال)?(اكل|أكل|وجب)/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
@@ -878,9 +878,9 @@ function ramadanMapNote(note){
 
   /* ── Check Iftar (Breakfast in Ramadan) ── */
   /* قبل الفطار / before iftar */
-  if(/قبل.*فطار|قبل.*فطور|قبل.*افطار|before.*iftar|before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  if(/قبل.*فطار|قبل.*فطور|قبل.*افطار|قبل.*فكار|before.*iftar|before.*breakfast/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد الفطار / after iftar */
-  if(/بعد.*فطار|بعد.*فطور|بعد.*افطار|after.*iftar|after.*breakfast/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  if(/بعد.*فطار|بعد.*فطور|بعد.*افطار|بعد.*فكار|after.*iftar|after.*breakfast/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
 
   /* ── Map dinner → Suhoor (NOT Iftar) ── */
   /* قبل العشاء / before dinner → قبل السحور */
@@ -889,9 +889,9 @@ function ramadanMapNote(note){
   if(/بعد.*عشا|بعد.*عشو|بعد.*عشاء|after.*din|after.*sup|after.*dinner|after.*asha/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   if(/بعد.*سحور|بعد.*سحر|after.*suhoor|after.*sahoor|after.*sahor/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   /* قبل الفطار / before iftar (explicit) */
-  if(/قبل.*فطار|قبل.*فطر|قبل.*فطور|قبل.*افطار|before.*iftar|before.*bre/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
+  if(/قبل.*فطار|قبل.*فطر|قبل.*فطور|قبل.*افطار|قبل.*فكار|before.*iftar|before.*bre/i.test(note)) return {meal:'beforeIftar',label_ar:'قبل الفطار',label_en:'Before Iftar',time:RAMADAN_TIMES.beforeIftar};
   /* بعد الفطار / after iftar / breakfast */
-  if(/بعد.*فطار|بعد.*فطر|بعد.*فطور|بعد.*افطار|after.*iftar|after.*bre/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
+  if(/بعد.*فطار|بعد.*فطر|بعد.*فطور|بعد.*افطار|بعد.*فكار|after.*iftar|after.*bre/i.test(note)) return {meal:'afterIftar',label_ar:'بعد الفطار',label_en:'After Iftar',time:RAMADAN_TIMES.afterIftar};
   /* Morning / صباح → بعد السحور */
   if(/صباح|الصباح|morning|am\b/i.test(note)) return {meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
   /* Evening / مساء / bed / نوم → بعد السحور (مثل بعد العشاء) */
@@ -3147,7 +3147,7 @@ function showPostProcessDialog(){
   var dialog=document.createElement('div');
   dialog.id='ez-post-dialog';
   dialog.style.cssText='position:fixed;top:80px;right:20px;z-index:99998;width:280px;border-radius:20px;background:#fff;box-shadow:0 16px 48px rgba(99,102,241,0.12),0 4px 16px rgba(0,0,0,0.06);border:2px solid rgba(129,140,248,0.15);overflow:hidden;';
-  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-consolidate-btn" onclick="window.ezConsolidateForPrint()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">🖨️ تجميع للطباعة</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">ez_pill Jvm · V'+APP_VERSION+'</div>';
+  dialog.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818cf8,#a78bfa,#818cf8);background-size:200% 100%;animation:barShift 4s ease infinite"></div><div class="ez-post-header" style="padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(129,140,248,0.1);cursor:move;background:linear-gradient(180deg,rgba(129,140,248,0.03) 0%,transparent 100%)"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(99,102,241,0.25)">⚙️</div><div style="font-size:15px;font-weight:800;color:#1e1b4b;font-family:Cairo,sans-serif">خيارات إضافية</div></div><div style="display:flex;gap:4px"><button class="ez-post-min-btn" onclick="window.ezMinimizePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif;transition:all 0.25s">−</button><button onclick="window.ezClosePost()" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(129,140,248,0.12);background:rgba(129,140,248,0.05);color:#818cf8;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s">×</button></div></div><div class="ez-post-body" style="padding:14px 18px 16px;font-family:Cairo,sans-serif">'+dupInfo+'<button id="ez-undo-btn" onclick="window.ezUndoDuplicates()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#fbbf24,#f59e0b);box-shadow:0 4px 14px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 إلغاء التقسيم</button><button id="ez-next-month-btn" onclick="window.ezNextMonth()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#22d3ee,#06b6d4);box-shadow:0 4px 14px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -2px 0 rgba(0,0,0,0.1);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🗓️ الشهر التالي</button><button id="ez-consolidate-btn" onclick="window.ezConsolidateForPrint()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">🖨️ تجميع للطباعة</button><button id="ez-dl-intercept-btn" onclick="window.ezToggleDownloadIntercept()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 4px 14px rgba(100,116,139,0.2);transition:all 0.3s;margin:4px 0" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">🔄 تعديل رقم الفاتورة عند التحميل</button>'+(window._ramadanMode?'<button id="ez-ramadan-tonormal-btn" onclick="window.ezRamadanToNormal()" style="width:100%;height:42px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;background:linear-gradient(145deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.2);transition:all 0.3s;margin:4px 0">↩️ إلغاء جرعات رمضان</button>':'')+'</div><div class="ez-post-foot" style="padding:6px 18px;text-align:center;font-size:9px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;border-top:1px solid rgba(129,140,248,0.08);background:rgba(241,245,249,0.4)">EZ_PILL FARMADOSIS · V'+APP_VERSION+'</div>';
   document.body.appendChild(dialog);
   makeDraggable(dialog);
 }
@@ -3190,7 +3190,7 @@ function smartDoseRecognizer(note){
 
   /* ── Step 1: Detect meal/time keywords ── */
   /* In non-Ramadan mode: سحور = عشاء (dinner), فطار/افطار = فطار (breakfast) */
-  res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار|مع\s*(ال)?(فطار|فطور|افطار)/i.test(s);
+  res.hasB=/\b(bre|breakfast|fatur|ftor|iftar)\b|فطر|فطار|فطور|افطار|الافطار|الفطور|الفطار|فكار|الفكار|مع\s*(ال)?(فطار|فطور|افطار|فكار)/i.test(s);
   res.hasL=/\b(lun|lunch|lau)\b|غدا|غداء|الغدا|الغداء|غذا|غذاء|الغذا|الغذاء|عداء|العداء|مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/i.test(s);
   res.hasD=/\b(din|dinner|sup|supper|asha|isha|suhoor|sahoor|sahor)\b|عشا|عشو|تعشى|عشاء|العشاء|العشا|العشى|سحور|السحور|سحر|مع\s*(ال)?(عشا|عشاء|سحور|سحر)/i.test(s);
   res.hasM=/\b(morning|am|morn|a\.m|mane)\b|صباح|الصباح|صبح/i.test(s);
@@ -3324,12 +3324,12 @@ function getTimeFromWords(w){
   {test:/فجر|الفجر|dawn/,time:'05:00'},
   {test:/بعد صلا[ةه] الفجر|after fajr/,time:'05:30'},
   {test:/بعد صلا[ةه] الظهر|after dhuhr/,time:'12:30'},
-  {test:/بعد صلا[ةه] العصر|after asr/,time:NT.afternoon||'14:00'},
+  {test:/بعد صلا[ةه] العصر|after asr/,time:NT.afternoon||'15:00'},
   {test:/بعد صلا[ةه] المغرب|after maghrib/,time:NT.maghrib||'18:00'},
   {test:/بعد صلا[ةه] العشاء|after isha/,time:NT.afterDinner||'21:00'},
   {test:/الوجب[ةه] الرئيسي[ةه]|main meal/,time:NT.afterBreakfast||'09:00'},
   /* ══ Standard rules with NORMAL_TIMES ══ */
-  {test:/مع\s*(ال)?(فطار|فطور|افطار)/,time:NT.afterBreakfast||'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:NT.afterLunch||'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:NT.afterDinner||'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:NT.afterBreakfast||'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:NT.empty||'08:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal||'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار/,time:NT.beforeBreakfast||'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار/,time:NT.afterBreakfast||'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:NT.morning||'09:00'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:NT.noon||'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:NT.beforeLunch||'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:NT.afterLunch||'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:NT.afternoon||'14:00'},{test:/maghrib|مغرب|المغرب/,time:NT.maghrib||'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:NT.beforeDinner||'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:NT.afterDinner||'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:NT.bed||'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:NT.evening||'21:00'}];
+  {test:/مع\s*(ال)?(فطار|فطور|افطار|فكار)/,time:NT.afterBreakfast||'09:00'},{test:/مع\s*(ال)?(غدا|غداء|غذا|غذاء|عداء)/,time:NT.afterLunch||'14:00'},{test:/مع\s*(ال)?(عشا|عشاء|سحور|سحر)/,time:NT.afterDinner||'21:00'},{test:/مع\s*(ال)?(اكل|أكل|وجب|طعام)/,time:NT.afterBreakfast||'09:00'},{test:/empty|stomach|ريق|الريق|الريج|الريئ|على الريق|fasting/,time:NT.empty||'07:00'},{test:/قبل\s*(الاكل|الأكل|meal)|before\s*(meal|food)/,time:NT.beforeMeal||'08:00'},{test:/before.*bre|before.*fatur|before.*breakfast|before.*iftar|قبل.*فطر|قبل.*فطار|قبل.*فطور|قبل.*افطار|قبل.*فكار/,time:NT.beforeBreakfast||'08:00'},{test:/after.*bre|after.*fatur|after.*breakfast|after.*iftar|[بي]عد.*فطر|[بي]عد.*فطار|[بي]عد.*فطور|[بي]عد.*افطار|[بي]عد.*فكار/,time:NT.afterBreakfast||'09:00'},{test:/\b(morning|am|a\.m|mane)\b|صباح|الصباح|صبح/,time:NT.morning||'09:30'},{test:/\b(noon|midday)\b|ظهر|الظهر|ظهرا|ظهراً/,time:NT.noon||'12:00'},{test:/before.*lun|before.*lunch|قبل.*غدا|قبل.*غداء|قبل.*غذا|قبل.*غذاء|قبل.*عداء|قبل.*العداء/,time:NT.beforeLunch||'13:00'},{test:/after.*lun|after.*lunch|[بي]عد.*غدا|[بي]عد.*غداء|[بي]عد.*غذا|[بي]عد.*غذاء|[بي]عد.*عداء|[بي]عد.*العداء/,time:NT.afterLunch||'14:00'},{test:/\b(asr|afternoon)\b|عصر|العصر|عصرا|عصراً/,time:NT.afternoon||'15:00'},{test:/maghrib|مغرب|المغرب/,time:NT.maghrib||'18:00'},{test:/before.*din|before.*sup|before.*dinner|before.*asha|before.*suhoor|before.*sahoor|قبل.*عشا|قبل.*عشو|قبل.*عشاء|قبل.*سحور|قبل.*سحر/,time:NT.beforeDinner||'20:00'},{test:/after.*din|after.*sup|after.*dinner|after.*asha|after.*suhoor|after.*sahoor|[بي]عد.*عشا|[بي]عد.*عشو|[بي]عد.*عشاء|بعد.*سحور|بعد.*سحر/,time:NT.afterDinner||'21:00'},{test:/bed|sleep|sle|نوم|النوم|نووم|hs|h\.s|nocte/,time:NT.bed||'22:00'},{test:/مساء|مسا|مساءا|مساءً|مسائا|مسأ|evening|eve|night|nocte|pm|p\.m|ليل|الليل|ليلا|ليلاً/,time:NT.evening||'21:30'}];
   /* Custom time rules from settings (checked FIRST for priority) */
   if(customConfig.customTimeRules){for(var i=0;i<customConfig.customTimeRules.length;i++){var cr=customConfig.customTimeRules[i];try{var nPat=cr.pattern.replace(/[أإآ]/g,'ا').replace(/ة/g,'[ةه]').replace(/ى/g,'[يى]');var nPat2=nPat.replace(/^ال/,'(ال)?');if(new RegExp(nPat,'i').test(s)||new RegExp(nPat2,'i').test(s))return{time:cr.time};}catch(e){}}}
   for(var i=0;i<rules.length;i++){if(rules[i].test.test(s))return{time:rules[i].time};}
@@ -3358,7 +3358,7 @@ function getCodeAwareTime(timeResult,itemCode){
 function getMealTimesFromNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
   var isBefore=/قبل/i.test(s);
-  var hasB=/فطر|فطار|فطور|افطار|الفطار|breakfast|fatur|ftor/i.test(s);
+  var hasB=/فطر|فطار|فطور|افطار|الفطار|فكار|الفكار|breakfast|fatur|ftor/i.test(s);
   var hasL=/غدا|غداء|الغدا|الغداء|الغدى|غذا|غذاء|الغذا|الغذاء|عداء|العداء|lunch/i.test(s);
   var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
   var hasNoon=/ظهر|الظهر|ظهرا|ظهراً|noon|midday/i.test(s);
@@ -3715,7 +3715,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           var twResult=getTimeFromWords(fn_str);
           /* CRITICAL FIX: Check explicit Ramadan meal keywords BEFORE hour-based mapping.
              فطار = iftar (19:00) NOT breakfast→suhoor. سحور = suhoor (04:00) NOT dinner→iftar. */
-          var _exFutur2=/فطار|فطور|افطار|iftar|breakfast/i.test(fn_str);
+          var _exFutur2=/فطار|فطور|افطار|فكار|iftar|breakfast/i.test(fn_str);
           var _exSuhoor2=/سحور|سحر|suhoor|sahoor/i.test(fn_str);
           var _exDinner2=/عشا|عشاء|dinner|asha/i.test(fn_str);
           if(_exSuhoor2){
@@ -3737,7 +3737,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         }
         if(!noteMapR && (doseRec.hasB||doseRec.hasL||doseRec.hasD||doseRec.hasM||doseRec.hasN||doseRec.hasA||doseRec.hasE||doseRec.hasBed||doseRec.hasEmpty)){
           /* CRITICAL FIX: Check explicit Ramadan keywords before generic hasB/hasD mapping */
-          var _hasExplicitFutur=/فطار|فطور|افطار|iftar|breakfast/i.test(fn_str);
+          var _hasExplicitFutur=/فطار|فطور|افطار|فكار|iftar|breakfast/i.test(fn_str);
           var _hasExplicitSuhoor=/سحور|سحر|suhoor|sahoor/i.test(fn_str);
           var _hasExplicitDinner=/عشا|عشاء|dinner|asha/i.test(fn_str);
           if(_hasExplicitSuhoor) noteMapR={meal:'afterSuhoor',label_ar:'بعد السحور',label_en:'After Suhoor',time:RAMADAN_TIMES.afterSuhoor};
@@ -3794,7 +3794,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
   if(_ezGetGeminiKey()){
     for(var _gScan=0;_gScan<allRowsData.length;_gScan++){
       var _gRd=allRowsData[_gScan];
-      if(_gRd.note&&_gRd.note.trim().length>=3&&!_gRd.hasFixedSize&&!_gRd.isWeekly){
+      /* v146: Fixed size items still need Gemini for TIME resolution */
+      if(_gRd.note&&_gRd.note.trim().length>=3&&!_gRd.isWeekly){
         var _gTime=getTimeFromWords(_gRd.note);
         if(_gTime.isUnrecognized) _gRd._needsGemini=true;
       }
@@ -3805,8 +3806,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     for(var i=0;i<allRowsData.length;i++){
       var rd=allRowsData[i];
       
-      /* Check for unrecognized time patterns - skip fixed/weekly (handled separately) */
-      if(rd.note&&rd.note.trim().length>=3&&!rd.hasFixedSize&&!rd.isWeekly){
+      /* Check for unrecognized time patterns - v146: fixed items still need time warnings */
+      if(rd.note&&rd.note.trim().length>=3&&!rd.isWeekly){
         var timeResult=getTimeFromWords(rd.note);
         if(timeResult.isUnrecognized){
           var curEvery=rd.hourlyInfo&&rd.hourlyInfo.hasInterval?rd.hourlyInfo.hours:24;
@@ -3892,14 +3893,28 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     }
   }
   console.log('🤖 Gemini check: '+allRowsData.length+' total rows');
-  for(var _dbg=0;_dbg<allRowsData.length;_dbg++){if(allRowsData[_dbg]._needsGemini)console.log('🤖 Row '+_dbg+' needs Gemini: "'+allRowsData[_dbg].note+'"');}
-  console.log('🤖 Gemini: '+_geminiNotes.length+' unrecognized notes, key='+(!!_ezGetGeminiKey()));
+  /* v146 DEBUG: toast for unrecognized count */
+  var _unrecCount=0;
+  for(var _dbg=0;_dbg<allRowsData.length;_dbg++){
+    if(allRowsData[_dbg]._needsGemini){
+      console.log('🤖 Row '+_dbg+' needs Gemini: "'+allRowsData[_dbg].note+'"');
+      _unrecCount++;
+    }
+  }
+  var _hasKey=!!_ezGetGeminiKey();
+  console.log('🤖 Gemini: '+_geminiNotes.length+' unrecognized notes, key='+_hasKey);
   if(_geminiNotes.length>0){console.log('🤖 Notes to send:',_geminiNotes);}
+  /* v146: Show diagnostic toast */
+  if(_unrecCount>0){
+    window.ezShowToast('🔍 '+_unrecCount+' جرعة غير مفهومة'+(_hasKey?' — جاري إرسال لجيميناي':' — مفتاح جيميناي غير موجود'),'info');
+  }
+  console.log('🤖 warningQueue length: '+warningQueue.length+', enableWarnings: '+enableWarnings);
   if(_geminiNotes.length>0&&_ezGetGeminiKey()){
     console.log('🤖 CALLING Gemini with '+_geminiNotes.length+' notes...');
     window.ezShowToast('🤖 جاري تحليل '+_geminiNotes.length+' جرعة بالذكاء الاصطناعي...','info');
     _ezGeminiBatch(_geminiNotes).then(function(results){
       console.log('🤖 Gemini returned successfully');
+      window.ezShowToast('🤖 جيميناي رد بنجاح!','success');
       console.log('🤖 Gemini response:',results);
       if(results&&results.length>0){
         var resolved=0;
@@ -4295,24 +4310,6 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       rmBadge.innerHTML='<span style="font-size:18px">🌙</span> وضع رمضان مفعّل <span style="font-size:10px;color:rgba(251,191,36,0.6);margin-right:6px">فطار '+RAMADAN_TIMES.afterIftar+' · سحور '+RAMADAN_TIMES.afterSuhoor+'</span>';
       document.body.appendChild(rmBadge);
       setTimeout(function(){if(document.getElementById('ez-ramadan-active-badge')){rmBadge.style.opacity='0';rmBadge.style.transition='opacity 0.5s';setTimeout(function(){rmBadge.remove();},500);}},10000);
-    }
-    
-    /* JVM: End Date -1 يوم لكل صف */
-    if(edi_main>=0){
-      var _jvmRows=Array.from(tb_main.querySelectorAll('tr')).slice(1);
-      for(var _jvmRi=0;_jvmRi<_jvmRows.length;_jvmRi++){
-        var _jvmTds=_jvmRows[_jvmRi].querySelectorAll('td');
-        if(_jvmTds.length>edi_main){
-          var _jvmEInp=_jvmTds[edi_main].querySelector('input');
-          if(_jvmEInp&&_jvmEInp.value&&/\d{4}-\d{2}-\d{2}/.test(_jvmEInp.value)){
-            var _jvmED=new Date(_jvmEInp.value);
-            _jvmED.setDate(_jvmED.getDate()-1);
-            var _jvmEY=_jvmED.getFullYear(),_jvmEM=('0'+(_jvmED.getMonth()+1)).slice(-2),_jvmEDay=('0'+_jvmED.getDate()).slice(-2);
-            _jvmEInp.value=_jvmEY+'-'+_jvmEM+'-'+_jvmEDay;
-            _ezFire(_jvmEInp);
-          }
-        }
-      }
     }
     checkEndDateConsistency();
     window.ezShowToast('تمت المعالجة بنجاح ✅','success');
@@ -5187,7 +5184,7 @@ function _ezShowSettingsPanel(){
   document.getElementById('ez-cfg-export').onclick=function(){
     try{
       var exportData={
-        _export:'EZ_Pill_Jvm_Settings',
+        _export:'EZ_Pill_Farmadosis_Settings',
         _version:APP_VERSION,
         _date:new Date().toISOString(),
         custom:loadCustomConfig(),
@@ -5221,7 +5218,7 @@ function _ezShowSettingsPanel(){
     reader.onload=function(ev){
       try{
         var data=JSON.parse(ev.target.result);
-        if(!data._export||data._export!=='EZ_Pill_Jvm_Settings'){
+        if(!data._export||data._export!=='EZ_Pill_Farmadosis_Settings'){
           window.ezShowToast('❌ الملف مش ملف إعدادات EZ_Pill','error');
           ezBeep('error');return;
         }
@@ -5270,7 +5267,7 @@ d_box.innerHTML='\
   <div class="ez-logo-group">\
     <div class="ez-logo">💊</div>\
     <div class="ez-title-block">\
-      <div class="ez-title">EZ_Pill <span class="ez-brand">Jvm</span></div>\
+      <div class="ez-title">EZ_Pill <span class="ez-brand">Farmadosis</span></div>\
       <div class="ez-subtitle">معالج الجرعات الذكي · v'+APP_VERSION+'</div>\
     </div>\
   </div>\
@@ -5343,7 +5340,7 @@ d_box.innerHTML='\
       <button class="ez-btn-cancel" onclick="window.ezCancel()">✕</button>\
     </div>\
   </div>\
-<div class="ez-footer"><span>ez_pill Jvm · V'+APP_VERSION+' · علي الباز</span></div>';
+<div class="ez-footer"><span>EZ_PILL FARMADOSIS · V'+APP_VERSION+' · علي الباز</span></div>';
 
 document.body.appendChild(d_box);
 /* v146: ALL scanning deferred → dialog opens instantly */
@@ -5393,7 +5390,7 @@ function _ezEidGreeting(){
     /* يظهر يوم 20 مارس 2026 فقط — أول أيام العيد */
     if(!(y===2026&&m===3&&d===20)) return;
     /* مرة واحدة فقط */
-    var eidKey='ez_eid_1447';
+    var eidKey='ez_eid_1447_'+APP_NAME.replace(/\s+/g,'_');
     if(window._ezEidShown) return;
     try{if(localStorage.getItem(eidKey)==='1') return;}catch(e){}
     window._ezEidShown=true;
@@ -5456,7 +5453,7 @@ function _ezEidGreeting(){
           أعاده الله علينا وعليكم بالخير واليُمن والبركات\
         </div>\
         <div class="eid-verse">« وَلِتُكْمِلُوا الْعِدَّةَ وَلِتُكَبِّرُوا اللَّهَ عَلَىٰ مَا هَدَاكُمْ وَلَعَلَّكُمْ تَشْكُرُونَ »</div>\
-        <div class="eid-from">ez_pill Jvm · علي الباز</div>\
+        <div class="eid-from">EZ_Pill Farmadosis · علي الباز</div>\
         <button class="eid-btn" onclick="document.getElementById(\'ez-eid-overlay\').style.opacity=\'0\';document.getElementById(\'ez-eid-overlay\').style.transition=\'opacity 0.5s\';setTimeout(function(){var e=document.getElementById(\'ez-eid-overlay\');if(e)e.remove();},500)">عيدكم مبارك 🎉</button>\
       </div>\
     </div>';
