@@ -14,6 +14,7 @@ javascript: (function () {
 @keyframes nzSlide{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes nzFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes nzSpin{to{transform:rotate(360deg)}}
+@keyframes nzPopIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 
 #nz-panel,#nz-panel *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 
@@ -27,9 +28,39 @@ javascript: (function () {
   border-left:1px solid #e8eaed
 }
 
+/* ── DIALOG SYSTEM ── */
+.nz-dlg-overlay{
+  position:fixed;inset:0;background:rgba(26,26,46,0.4);
+  backdrop-filter:blur(4px);z-index:1000000;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  animation:nzFade .3s ease both
+}
+.nz-dlg-box{
+  background:#fff;width:100%;max-width:400px;border-radius:20px;
+  padding:32px;box-shadow:0 20px 50px rgba(0,0,0,0.15);
+  animation:nzPopIn .4s cubic-bezier(.22,1,.36,1) both;
+  text-align:center;border:1px solid rgba(255,255,255,0.2)
+}
+.nz-dlg-icon{
+  width:60px;height:60px;border-radius:18px;margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center
+}
+.nz-dlg-icon svg{width:30px;height:30px}
+.nz-dlg-t{font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:12px}
+.nz-dlg-m{font-size:15px;color:#6b7280;line-height:1.6;margin-bottom:28px}
+.nz-dlg-btns{display:flex;gap:12px}
+.nz-dlg-btn{
+  flex:1;height:48px;border-radius:12px;font-family:inherit;font-weight:700;
+  cursor:pointer;transition:all .2s;border:none;font-size:15px
+}
+.nz-dlg-btn-primary{background:#4f6cf7;color:#fff;box-shadow:0 4px 12px rgba(79,108,247,0.2)}
+.nz-dlg-btn-primary:hover{background:#3d59e6;transform:translateY(-1px)}
+.nz-dlg-btn-secondary{background:#f3f4f6;color:#4b5563}
+.nz-dlg-btn-secondary:hover{background:#e5e7eb}
+
 /* ── HEADER ── */
 .nz-hd{
-  padding:22px 28px;display:flex;align-items:center;justify-content:space-between;
+  padding:22px 36px;display:flex;align-items:center;justify-content:space-between;
   border-bottom:1px solid #ecedf0;flex-shrink:0;background:#fff
 }
 .nz-hd-r{display:flex;align-items:center;gap:14px}
@@ -50,7 +81,7 @@ javascript: (function () {
 
 /* ── SEARCH ── */
 .nz-search{
-  padding:24px 28px;border-bottom:1px solid #ecedf0;flex-shrink:0;background:#fff
+  padding:28px 36px;border-bottom:1px solid #ecedf0;flex-shrink:0;background:#fff
 }
 .nz-field{margin-bottom:16px;position:relative}
 .nz-field:last-of-type{margin-bottom:20px}
@@ -101,7 +132,7 @@ javascript: (function () {
 
 /* ── STATUS ── */
 .nz-status{
-  padding:14px 28px;display:flex;align-items:center;gap:10px;
+  padding:14px 36px;display:flex;align-items:center;gap:10px;
   min-height:20px;flex-shrink:0;background:#f8f9fb
 }
 .nz-spin{
@@ -116,7 +147,7 @@ javascript: (function () {
 
 /* ── COUNT ── */
 .nz-cbar{
-  padding:14px 28px;display:none;align-items:center;justify-content:space-between;
+  padding:14px 36px;display:none;align-items:center;justify-content:space-between;
   background:#fff;border-bottom:1px solid #ecedf0;flex-shrink:0
 }
 .nz-ctxt{font-size:14px;font-weight:700;color:#1a1a2e}
@@ -139,8 +170,8 @@ javascript: (function () {
 .nz-results::-webkit-scrollbar{width:0}
 
 .nz-list{
-  display:flex;flex-direction:column;gap:8px;
-  padding:20px 24px
+  display:flex;flex-direction:column;gap:10px;
+  padding:20px 32px
 }
 
 .nz-row{
@@ -180,11 +211,11 @@ javascript: (function () {
 @media(max-width:520px){
   #nz-panel{width:100%}
   .nz-row{grid-template-columns:1fr 1fr auto;gap:12px;padding:14px 16px}
-  .nz-list{padding:16px}
-  .nz-search{padding:20px}
-  .nz-hd{padding:18px 20px}
-  .nz-status{padding:12px 20px}
-  .nz-cbar{padding:12px 20px}
+  .nz-list{padding:16px 20px}
+  .nz-search{padding:20px 24px}
+  .nz-hd{padding:18px 24px}
+  .nz-status{padding:12px 24px}
+  .nz-cbar{padding:12px 24px}
 }
   `;
   d.head.appendChild(css);
@@ -235,6 +266,38 @@ javascript: (function () {
 </div>`;
   d.body.appendChild(panel);
 
+  /* ═══════ DYNAMIC DIALOG UTILITY ═══════ */
+  const nzDialog = ({ title, message, type = 'info', confirmText = 'موافق', onConfirm }) => {
+    const overlay = d.createElement('div');
+    overlay.className = 'nz-dlg-overlay';
+    
+    const colors = {
+      info: { bg: '#eff6ff', icon: '#3b82f6', svg: '<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' },
+      success: { bg: '#f0fdf4', icon: '#22c55e', svg: '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' },
+      error: { bg: '#fef2f2', icon: '#ef4444', svg: '<path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' }
+    };
+
+    overlay.innerHTML = `
+      <div class="nz-dlg-box">
+        <div class="nz-dlg-icon" style="background:${colors[type].bg}; color:${colors[type].icon}">
+          <svg fill="none" viewBox="0 0 24 24">${colors[type].svg}</svg>
+        </div>
+        <div class="nz-dlg-t">${title}</div>
+        <div class="nz-dlg-m">${message}</div>
+        <div class="nz-dlg-btns">
+          <button class="nz-dlg-btn nz-dlg-btn-primary" id="nz-dlg-ok">${confirmText}</button>
+          ${onConfirm ? '<button class="nz-dlg-btn nz-dlg-btn-secondary" id="nz-dlg-no">إلغاء</button>' : ''}
+        </div>
+      </div>`;
+
+    d.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    
+    d.getElementById('nz-dlg-ok').onclick = () => { if(onConfirm) onConfirm(); close(); };
+    if(onConfirm) d.getElementById('nz-dlg-no').onclick = close;
+    overlay.onclick = (e) => { if(e.target === overlay) close(); };
+  };
+
   /* ═══════ CORE ═══════ */
   const $=id=>d.getElementById(id);
   const getVal=()=>$('f-mob').value.trim()||$('f-inv').value.trim()||$('f-ord').value.trim()||'';
@@ -249,7 +312,11 @@ javascript: (function () {
   const checkSession=async()=>{
     try{const c=new AbortController();setTimeout(()=>c.abort(),5000);
     const r=await fetch(BASE_URL+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'readypack',pageSelected:1,searchby:'___test___'}),signal:c.signal});
-    if(r.status===401||r.status===403||r.redirected){$('nz-alt').style.display='block';return false;}
+    if(r.status===401||r.status===403||r.redirected){
+        nzDialog({ title: 'انتهت الجلسة', message: 'يرجى تسجيل الدخول مرة أخرى لمتابعة البحث.', type: 'error' });
+        $('nz-alt').style.display='block';
+        return false;
+    }
     $('nz-alt').style.display='none';return true;}catch{return true;}
   };
 
@@ -294,7 +361,10 @@ javascript: (function () {
   const runSearch=async()=>{
     if(busy)return;
     const val=getVal();const st=$('nz-st');
-    if(!val){st.innerHTML='<span class="err">أدخل قيمة بحث أولاً</span>';return;}
+    if(!val){
+        nzDialog({ title: 'تنبيه', message: 'يرجى إدخال قيمة للبحث (رقم الفاتورة، الجوال، أو الطلب).', type: 'info' });
+        return;
+    }
     $('nz-list').innerHTML='';$('nz-cbar').style.display='none';$('nz-alt').style.display='none';
     links=[];
     const ok=await checkSession();if(!ok){setLoad(false);return;}
