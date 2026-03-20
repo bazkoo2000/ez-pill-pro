@@ -17,7 +17,7 @@
     var _EZ_DRUGS_FILE='ez_drugs_enc.dat';
     var _EZ_RAW_URL='https://raw.githubusercontent.com/'+_EZ_REPO+'/main/'+_EZ_DRUGS_FILE;
     var _EZ_API_URL='https://api.github.com/repos/'+_EZ_REPO+'/contents/'+_EZ_DRUGS_FILE;
-    var _EZ_ADMIN_HASH='5f4b5012fb171e0235de82950959243e98fc4ff110e74c38b3da1960fc1a904e';
+    var _EZ_ADMIN_HASH='5cbc023289bf7794bfecfd3a80c3f9e36e23c9d8a2766d764d2cf020e0426e81';
     var _EK=[69,90,80,73,76,76,50,48,50,54,83,69,67,82,69,84];
     var FETCH_TIMEOUT=30000;
     var MAX_RETRIES=2;
