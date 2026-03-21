@@ -3722,7 +3722,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
     if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);
       /* Clean brackets from name */
-      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|لصقات|لصقه|لصقة|لاصقه|لاصقة|لزقه|لزقة|لزقات|patch|patches|transdermal|topical|gel\b|جل\b|oint|دهان|دهون|مسحه|مسحة|للجلد|جلديه|جلدية|dermal|lotion|لوشن|فوط|غسول|wash|shampoo|شامبو|تحاميل|حقن|بلاستر|plaster|foam|رغوه|رغوة/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol\b|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|لصقات|لصقه|لصقة|لاصقه|لاصقة|لزقه|لزقة|لزقات|patch|patches|transdermal|topical|gel\b|جل\b|ointment|دهان|دهون|مسحه|مسحة|للجلد|جلديه|جلدية|dermal|lotion|لوشن|فوط|غسول|wash|shampoo|شامبو|تحاميل|حقن|بلاستر|plaster|foam|رغوه|رغوة/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
     var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
     if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
     rtp_list.push(r_node);
@@ -4134,14 +4134,15 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       }
       console.log('PACK PROCESS: nonFixedDays='+JSON.stringify(_nonFixedDays)+' has28NonFixed='+_has28NonFixed);
       /* FIX v144: 56/60-pack in item NAME triggers 28-policy */
+      /* v146: Also check pack=28 in name */
       if(!_has28NonFixed){
         for(var _chk56=0;_chk56<allRowsData.length;_chk56++){
           var _rChk=allRowsData[_chk56];
-          if(!_rChk.hasFixedSize&&!_rChk.isWeekly){
+          if(!_rChk.isWeekly){
             var _pChk=_extractPackFromName(_rChk.itemName||'');
-            if(_pChk===56||_pChk===60){
+            if(_pChk===28||_pChk===56||_pChk===60){
               _has28NonFixed=true;
-              console.log('PACK56: found '+_pChk+' in name "'+_rChk.itemName+'" → triggers 28-policy');
+              console.log('PACK NAME: found '+_pChk+' in "'+_rChk.itemName+'" → triggers 28-policy');
               break;
             }
           }
@@ -4194,6 +4195,19 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           if(!_nChk56||_nChk56.length<3||_tChk56.isEmpty||_tChk56.isUnrecognized){
             _rd.pack56Auto=true;
             console.log('PACK56 AUTO: "'+_rd.itemName+'" → Size=56 Every=12 Time=09:00');
+          }
+        }
+
+        /* v146: Item with pack=28 in name → always 28 regardless of dialog or fixedSize */
+        if(_rdPack===28&&!_rd.isWeekly){
+          _rd.calculatedDays=28;_rd.calculatedSize=28;
+          console.log('PACK28 NAME: "'+_rdName+'" → forced 28 from name');
+        }
+        /* v146: When 28-day policy active, override ALL non-fixed/non-weekly/non-14choice items to 28 */
+        if(_has28NonFixed&&!_rd.hasFixedSize&&!_rd.isWeekly&&!_rd.pack14Choice&&_rdPack!==28){
+          if(_rd.calculatedSize===t&&t!==28){
+            _rd.calculatedDays=28;_rd.calculatedSize=28;
+            console.log('PACK28 POLICY: "'+_rdName+'" size '+t+' → 28');
           }
         }
       }
