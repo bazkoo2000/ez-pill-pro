@@ -4193,20 +4193,20 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           var _tChk56=_nChk56.length>=3?getTimeFromWords(_nChk56):{isEmpty:true,isUnrecognized:false};
           if(!_nChk56||_nChk56.length<3||_tChk56.isEmpty||_tChk56.isUnrecognized){
             _rd.pack56Auto=true;
-
-        /* v146: When 28-day policy active, override ALL non-fixed/non-weekly items to 28 */
-        if(_has28NonFixed&&!_rd.hasFixedSize&&!_rd.isWeekly&&!_rd.pack14Choice){
-          if(_rd.calculatedSize===t&&t!==28){
-            _rd.calculatedDays=28;_rd.calculatedSize=28;
-            console.log('PACK28 POLICY: "'+_rdName+'" size '+t+' → 28');
+            console.log('PACK56 AUTO: "'+_rd.itemName+'" → Size=56 Every=12 Time=09:00');
           }
         }
+
         /* v146: Item with pack=28 in name → always 28 regardless of dialog */
         if(_rdPack===28&&!_rd.hasFixedSize&&!_rd.isWeekly){
           _rd.calculatedDays=28;_rd.calculatedSize=28;
           console.log('PACK28 NAME: "'+_rdName+'" → forced 28 from name');
         }
-            console.log('PACK56 AUTO: "'+_rd.itemName+'" → Size=56 Every=12 Time=09:00');
+        /* v146: When 28-day policy active, override ALL non-fixed/non-weekly/non-14choice items to 28 */
+        if(_has28NonFixed&&!_rd.hasFixedSize&&!_rd.isWeekly&&!_rd.pack14Choice&&_rdPack!==28){
+          if(_rd.calculatedSize===t&&t!==28){
+            _rd.calculatedDays=28;_rd.calculatedSize=28;
+            console.log('PACK28 POLICY: "'+_rdName+'" size '+t+' → 28');
           }
         }
       }
