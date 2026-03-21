@@ -5922,6 +5922,9 @@ function extractAndConfirmName(){
       /* كل اللي بعد "/" = الاسم (بعد حذف المسافات والرموز الزيادة) */
       var _afterSlash=notesText.substring(_slashIdx+1).trim();
       _afterSlash=_afterSlash.replace(/^[\s\-\.،,;:]+|[\s\-\.،,;:]+$/g,"").trim();
+      /* v146: Skip order/reference numbers — not names */
+      if(/^[A-Z]{1,4}\d{5,}/i.test(_afterSlash)) return; /* ERX11328940, RX12345, etc. */
+      if(/^\d{6,}/.test(_afterSlash)) return; /* Pure long number */
       /* v145: Apply smart name cleaning to slash-extracted name too */
       if(_afterSlash){
         var _slashWords=_afterSlash.split(/\s+/);
