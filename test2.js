@@ -34,7 +34,7 @@ javascript: (function () {
 #nz-panel {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.4);
   z-index: 999999;
   direction: rtl;
   font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -46,26 +46,29 @@ javascript: (function () {
 
 .nz-dialog {
   background: #ffffff;
-  width: 540px;
+  width: 560px;
   max-width: 95vw;
   max-height: 90vh;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  border-radius: 28px;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(226, 232, 240, 0.7);
   display: flex;
   flex-direction: column;
   animation: nzModalEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   overflow: hidden;
+  padding: 16px; /* Inset space between frame and internal parts */
 }
 
 /* ── HEADER ── */
 .nz-hd {
-  padding: 24px 32px;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #f1f5f9;
   background: #ffffff;
   flex-shrink: 0;
+  border-radius: 18px;
+  margin-bottom: 12px;
+  border: 1px solid #f1f5f9;
 }
 .nz-hd-r {
   display: flex;
@@ -76,16 +79,16 @@ javascript: (function () {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #1e293b, #334155);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 .nz-hd-icon svg { width: 22px; height: 22px; }
 .nz-hd-text-wrap { display: flex; flex-direction: column; }
-.nz-hd-t { font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+.nz-hd-t { font-size: 19px; font-weight: 800; color: #1e40af; letter-spacing: -0.5px; }
 .nz-hd-sub { font-size: 13px; color: #64748b; font-weight: 500; margin-top: 2px; }
 .nz-close {
   width: 38px;
@@ -105,9 +108,11 @@ javascript: (function () {
 
 /* ── BODY & SEARCH ── */
 .nz-body {
-  padding: 32px;
+  padding: 24px;
   background: #f8fafc;
   flex-shrink: 0;
+  border-radius: 18px;
+  border: 1px solid #f1f5f9;
 }
 .nz-grid {
   display: grid;
@@ -186,12 +191,12 @@ javascript: (function () {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: #1e293b;
+  background: #2563eb;
   color: #ffffff;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
-.nz-go:not(:disabled):hover { background: #0f172a; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3); }
+.nz-go:not(:disabled):hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(29, 78, 216, 0.3); }
 .nz-go:not(:disabled):active { transform: translateY(0); }
 .nz-go:disabled { opacity: 0.6; cursor: not-allowed; }
 .nz-go svg { width: 22px; height: 22px; }
@@ -214,12 +219,14 @@ javascript: (function () {
 
 /* ── STATUS & ALERTS ── */
 .nz-status {
-  padding: 16px 32px;
+  padding: 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   background: #ffffff;
-  border-bottom: 1px solid #f1f5f9;
+  border-radius: 14px;
+  margin-top: 12px;
+  border: 1px solid #f1f5f9;
 }
 .nz-spin {
   width: 20px;
@@ -253,14 +260,16 @@ javascript: (function () {
 
 /* ── INFO BAR ── */
 .nz-cbar {
-  padding: 16px 32px;
+  padding: 14px 20px;
   display: none;
   align-items: center;
   justify-content: space-between;
   background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  margin-top: 12px;
 }
-.nz-ctxt { font-size: 15px; font-weight: 700; color: #1e293b; }
+.nz-ctxt { font-size: 15px; font-weight: 700; color: #1e40af; }
 .nz-ctxt b {
   display: inline-flex;
   align-items: center;
@@ -279,7 +288,10 @@ javascript: (function () {
   flex: 1;
   overflow-y: auto;
   background: #ffffff;
-  max-height: 45vh;
+  max-height: 40vh;
+  border-radius: 18px;
+  border: 1px solid #f1f5f9;
+  margin-top: 12px;
 }
 .nz-results::-webkit-scrollbar { width: 6px; }
 .nz-results::-webkit-scrollbar-track { background: transparent; }
@@ -288,65 +300,65 @@ javascript: (function () {
 .nz-list {
   display: flex;
   flex-direction: column;
-  padding: 24px 32px;
-  gap: 14px;
+  padding: 20px;
+  gap: 12px;
 }
 
 .nz-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  padding: 18px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(0,0,0,0.02);
 }
 .nz-row:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.06);
   transform: translateY(-2px);
 }
 .nz-row-info { flex: 1; }
 .nz-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.nz-row-order { font-size: 16px; font-weight: 800; color: #0f172a; }
+.nz-row-order { font-size: 16px; font-weight: 800; color: #1e3a8a; }
 .nz-row-inv { font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; }
 .nz-row-details { display: flex; gap: 16px; font-size: 14px; color: #475569; font-weight: 600; }
 .nz-row-details div { display: flex; align-items: center; gap: 6px; }
 .nz-row-details svg { width: 16px; height: 16px; color: #94a3b8; }
 
 .nz-row-arrow {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
   background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  margin-right: 20px;
+  margin-right: 16px;
   border: 1px solid #f1f5f9;
 }
-.nz-row:hover .nz-row-arrow { background: #1e293b; border-color: #1e293b; }
+.nz-row:hover .nz-row-arrow { background: #2563eb; border-color: #2563eb; }
 .nz-row:hover .nz-row-arrow svg { color: #ffffff; transform: translateX(-3px); }
-.nz-row-arrow svg { width: 20px; height: 20px; color: #64748b; transition: all 0.2s ease; }
+.nz-row-arrow svg { width: 18px; height: 18px; color: #64748b; transition: all 0.2s ease; }
 
 /* ── EMPTY STATE ── */
-.nz-empty { text-align: center; padding: 60px 20px; }
+.nz-empty { text-align: center; padding: 50px 20px; }
 .nz-empty-ico {
-  width: 80px;
-  height: 80px;
-  border-radius: 24px;
-  background: #f1f5f9;
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  background: #eff6ff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
 }
-.nz-empty-ico svg { width: 36px; height: 36px; color: #94a3b8; }
-.nz-empty-t { font-size: 18px; color: #0f172a; font-weight: 800; margin-bottom: 8px; }
+.nz-empty-ico svg { width: 32px; height: 32px; color: #60a5fa; }
+.nz-empty-t { font-size: 18px; color: #1e3a8a; font-weight: 800; margin-bottom: 8px; }
 .nz-empty-s { font-size: 14px; color: #64748b; font-weight: 600; }
   `;
   d.head.appendChild(css);
@@ -379,7 +391,7 @@ javascript: (function () {
         <label class="nz-label">معرّف الطلب</label>
         <div class="nz-input-wrap">
           <svg fill="none" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <input class="nz-input" id="f-ord" placeholder="أدخل معرّف الطلب هنا" autocomplete="off" style="padding-left: 60px;">
+          <input class="nz-input" id="f-ord" placeholder="" autocomplete="off" style="padding-left: 60px;">
           <span class="nz-erx-tag">ERX</span>
         </div>
       </div>
@@ -387,14 +399,14 @@ javascript: (function () {
         <label class="nz-label">معرّف الفاتورة</label>
         <div class="nz-input-wrap">
           <svg fill="none" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <input class="nz-input" id="f-inv" placeholder="مثال: INV-123" autocomplete="off">
+          <input class="nz-input" id="f-inv" placeholder="" autocomplete="off">
         </div>
       </div>
       <div class="nz-field">
         <label class="nz-label">رقم الهاتف المحمول</label>
         <div class="nz-input-wrap">
           <svg fill="none" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <input class="nz-input" id="f-mob" placeholder="05xxxxxxxx" autocomplete="off">
+          <input class="nz-input" id="f-mob" placeholder="" autocomplete="off">
         </div>
       </div>
     </div>
