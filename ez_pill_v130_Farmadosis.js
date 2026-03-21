@@ -4133,14 +4133,13 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         if(_nonFixedDays[_pi3]===28||_nonFixedDays[_pi3]===14){_has28NonFixed=true;break;}
       }
       console.log('PACK PROCESS: nonFixedDays='+JSON.stringify(_nonFixedDays)+' has28NonFixed='+_has28NonFixed);
-      /* FIX v144: 56/60-pack in item NAME triggers 28-policy */
-      /* v146: Also check pack=28 in name */
+      /* v146: pack=28 or 56 in name triggers 28-policy. NOT 60 (60=30×2 BID = 30 days) */
       if(!_has28NonFixed){
         for(var _chk56=0;_chk56<allRowsData.length;_chk56++){
           var _rChk=allRowsData[_chk56];
           if(!_rChk.isWeekly){
             var _pChk=_extractPackFromName(_rChk.itemName||'');
-            if(_pChk===28||_pChk===56||_pChk===60){
+            if(_pChk===28||_pChk===56){
               _has28NonFixed=true;
               console.log('PACK NAME: found '+_pChk+' in "'+_rChk.itemName+'" → triggers 28-policy');
               break;
