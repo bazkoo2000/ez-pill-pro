@@ -13,7 +13,7 @@
   panel.innerHTML = '\
     <style>\
       #fd-bulk-panel {\
-        position: fixed; top: 0; right: 0; width: 400px; height: 100vh;\
+        position: fixed; top: 0; right: 0; width: 420px; height: 100vh;\
         background: #fff; border-left: 3px solid #f57c00; z-index: 999999;\
         font-family: Arial, sans-serif; font-size: 14px; overflow-y: auto;\
         box-shadow: -4px 0 20px rgba(0,0,0,0.3);\
@@ -29,10 +29,15 @@
       }\
       #fd-bulk-panel .fd-body { padding: 15px; }\
       #fd-bulk-panel label { display: block; margin: 10px 0 4px; font-weight: bold; color: #333; }\
-      #fd-bulk-panel input[type="date"] {\
+      #fd-bulk-panel input[type="date"],\
+      #fd-bulk-panel input[type="number"] {\
         width: 100%; padding: 8px; border: 1px solid #ccc;\
         border-radius: 4px; font-size: 14px; box-sizing: border-box;\
       }\
+      #fd-bulk-panel .fd-row {\
+        display: flex; gap: 10px; align-items: flex-end;\
+      }\
+      #fd-bulk-panel .fd-row > div { flex: 1; }\
       #fd-bulk-panel .fd-btn {\
         width: 100%; padding: 12px; margin-top: 12px; border: none;\
         border-radius: 6px; font-size: 15px; font-weight: bold;\
@@ -51,8 +56,7 @@
       #fd-bulk-panel .fd-log .ok { color: green; }\
       #fd-bulk-panel .fd-log .err { color: red; }\
       #fd-bulk-panel .fd-log .info { color: #1976d2; }\
-      #fd-bulk-panel .fd-log .warn { color: #e65100; }\
-      #fd-bulk-panel .fd-treatments { margin-top: 10px; max-height: 300px; overflow-y: auto; }\
+      #fd-bulk-panel .fd-treatments { margin-top: 10px; max-height: 250px; overflow-y: auto; }\
       #fd-bulk-panel .fd-treat-item {\
         display: flex; align-items: center; padding: 8px 4px;\
         border-bottom: 1px solid #eee; gap: 8px;\
@@ -64,6 +68,30 @@
       #fd-bulk-panel .fd-inactive { color: red; font-size: 11px; font-weight: bold; }\
       #fd-bulk-panel .fd-filter { margin: 10px 0; padding: 8px; background: #e3f2fd; border-radius: 4px; font-size: 13px; }\
       #fd-bulk-panel .fd-filter label { display: inline; margin: 0 10px 0 0; font-weight: normal; }\
+      #fd-bulk-panel .fd-progress { background: #e0e0e0; border-radius: 4px; height: 6px; margin: 8px 0; }\
+      #fd-bulk-panel .fd-progress-bar { background: #f57c00; height: 6px; border-radius: 4px; transition: width 0.3s; }\
+      #fd-bulk-panel .fd-calc-box {\
+        margin-top: 10px; padding: 12px; background: #fff3e0; border: 1px solid #ffcc80;\
+        border-radius: 6px;\
+      }\
+      #fd-bulk-panel .fd-calc-box .fd-calc-title {\
+        font-weight: bold; color: #e65100; margin-bottom: 8px; font-size: 13px;\
+      }\
+      #fd-bulk-panel .fd-calc-result {\
+        margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px;\
+        font-weight: bold; color: #2e7d32; text-align: center; font-size: 14px;\
+        border: 1px dashed #a5d6a7; display: none;\
+      }\
+      #fd-bulk-panel .fd-or-divider {\
+        text-align: center; color: #999; margin: 12px 0; font-size: 12px;\
+        position: relative;\
+      }\
+      #fd-bulk-panel .fd-or-divider::before,\
+      #fd-bulk-panel .fd-or-divider::after {\
+        content: ""; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd;\
+      }\
+      #fd-bulk-panel .fd-or-divider::before { left: 0; }\
+      #fd-bulk-panel .fd-or-divider::after { right: 0; }\
     </style>\
     <div class="fd-header">\
       <span>Bulk Date Update</span>\
@@ -76,10 +104,36 @@
       </div>\
       <div id="fd-treat-list" class="fd-treatments"></div>\
       <div id="fd-date-section" style="display:none;">\
-        <label>New Start Date:</label>\
+        <label>Start Date:</label>\
         <input type="date" id="fd-start-date" />\
-        <label>New End Date:</label>\
+\
+        <div class="fd-calc-box">\
+          <div class="fd-calc-title">Auto-Calculate End Date (QTY &times; Size)</div>\
+          <div class="fd-row">\
+            <div>\
+              <label style="font-size:12px; margin:0 0 4px;">QTY</label>\
+              <input type="number" id="fd-qty" value="1" min="1" />\
+            </div>\
+            <div>\
+              <label style="font-size:12px; margin:0 0 4px;">Size</label>\
+              <input type="number" id="fd-size" value="30" min="1" />\
+            </div>\
+            <div>\
+              <label style="font-size:12px; margin:0 0 4px;">Days</label>\
+              <input type="number" id="fd-total-days" readonly style="background:#eee; font-weight:bold;" />\
+            </div>\
+          </div>\
+          <div class="fd-calc-result" id="fd-calc-result"></div>\
+        </div>\
+\
+        <div class="fd-or-divider">OR set manually</div>\
+\
+        <label>End Date:</label>\
         <input type="date" id="fd-end-date" />\
+\
+        <div id="fd-progress-wrap" style="display:none;">\
+          <div class="fd-progress"><div class="fd-progress-bar" id="fd-progress-bar" style="width:0%"></div></div>\
+        </div>\
         <button class="fd-btn fd-btn-update" id="fd-update-btn">2. Update Selected</button>\
         <button class="fd-btn fd-btn-refresh" id="fd-refresh-btn" style="display:none;">Reload Treatments</button>\
       </div>\
@@ -87,7 +141,6 @@
     </div>';
   document.body.appendChild(panel);
 
-  // Close
   document.getElementById("fd-close-btn").onclick = function () {
     document.getElementById("fd-bulk-panel").remove();
     if (window._fd_origFetch) { window.fetch = window._fd_origFetch; window._fd_origFetch = null; }
@@ -103,6 +156,9 @@
     logEl.scrollTop = logEl.scrollHeight;
   }
   function clearLog() { logEl.innerHTML = ""; }
+  function setProgress(pct) {
+    document.getElementById("fd-progress-bar").style.width = pct + "%";
+  }
 
   function getAuthToken() {
     if (window._fd_capturedToken) return window._fd_capturedToken;
@@ -132,15 +188,11 @@
     return { installationId: match[1], centerId: match[2], patientId: match[3] };
   }
 
-  // Extract date from various formats the API might return
   function extractDate(obj) {
-    if (!obj) return "N/A";
-    if (typeof obj === "string") return obj;
-    if (obj.date) {
-      // "2026-03-22 21:00:00.000000" -> "2026-03-23"
-      return obj.date.substring(0, 10);
-    }
-    return "N/A";
+    if (!obj) return null;
+    if (typeof obj === "string" && obj.length >= 10) return obj.substring(0, 10);
+    if (obj.date) return obj.date.substring(0, 10);
+    return null;
   }
 
   function toUTCDate(dateStr, isEnd) {
@@ -158,6 +210,43 @@
         date: d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0") + " 21:00:00.000000",
         timezone_type: 3, timezone: "UTC"
       };
+    }
+  }
+
+  function addDays(dateStr, days) {
+    var parts = dateStr.split("-");
+    var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    d.setDate(d.getDate() + days - 1); // -1 as per requirement
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var dd = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + dd;
+  }
+
+  function formatDateDisplay(dateStr) {
+    if (!dateStr) return "";
+    var parts = dateStr.split("-");
+    return parts[2] + "/" + parts[1] + "/" + parts[0]; // DD/MM/YYYY
+  }
+
+  // ============ AUTO-CALCULATE END DATE ============
+  function recalcEndDate() {
+    var startDate = document.getElementById("fd-start-date").value;
+    var qty = parseInt(document.getElementById("fd-qty").value) || 0;
+    var size = parseInt(document.getElementById("fd-size").value) || 0;
+    var totalDays = qty * size;
+    var resultEl = document.getElementById("fd-calc-result");
+    var totalEl = document.getElementById("fd-total-days");
+
+    totalEl.value = totalDays > 0 ? totalDays : "";
+
+    if (startDate && totalDays > 0) {
+      var endDate = addDays(startDate, totalDays);
+      document.getElementById("fd-end-date").value = endDate;
+      resultEl.style.display = "block";
+      resultEl.innerHTML = "End Date: " + formatDateDisplay(endDate) + " (" + totalDays + " days)";
+    } else {
+      resultEl.style.display = "none";
     }
   }
 
@@ -199,56 +288,33 @@
 
   log("Patient ID: " + ids.patientId, "info");
 
+  // ============ BIND EVENTS for auto-calc ============
+  document.getElementById("fd-start-date").addEventListener("change", recalcEndDate);
+  document.getElementById("fd-qty").addEventListener("input", recalcEndDate);
+  document.getElementById("fd-size").addEventListener("input", recalcEndDate);
+
   // ============ LOAD TREATMENTS ============
   async function loadTreatments() {
     clearLog();
-    log("Loading treatments...", "info");
+    log("Loading...", "info");
 
     var token = getAuthToken();
     if (!token) {
       log("Token not found. Click any link in the app, then try again.", "err");
       return false;
     }
-    log("Auth token found", "ok");
 
     try {
       var resp = await apiFetch(API_BASE + "/treatments", {
         headers: { Authorization: "Bearer " + token, Accept: "application/json, text/plain, */*" },
       });
 
-      if (!resp.ok) { log("Failed to load: " + resp.status, "err"); return false; }
+      if (!resp.ok) { log("Failed: " + resp.status, "err"); return false; }
 
       var data = await resp.json();
-      var allTreatments = Array.isArray(data) ? data : (data.data || data.treatments || []);
+      window._fd_allTreatments = Array.isArray(data) ? data : (data.data || data.treatments || []);
 
-      log("Total from API: " + allTreatments.length, "info");
-
-      // For each treatment, fetch full details to get dates
-      var detailed = [];
-      for (var i = 0; i < allTreatments.length; i++) {
-        var t = allTreatments[i];
-        try {
-          var detResp = await apiFetch(API_BASE + "/treatments/" + t.id, {
-            headers: { Authorization: "Bearer " + token, Accept: "application/json, text/plain, */*" },
-          });
-          if (detResp.ok) {
-            var detData = await detResp.json();
-            detailed.push(detData);
-          } else {
-            detailed.push(t);
-          }
-        } catch (e) {
-          detailed.push(t);
-        }
-        // Small delay
-        if (i < allTreatments.length - 1) {
-          await new Promise(function (r) { setTimeout(r, 200); });
-        }
-      }
-
-      window._fd_allTreatments = detailed;
-      log("Loaded details for " + detailed.length + " treatments", "ok");
-
+      log("Found " + window._fd_allTreatments.length + " total", "ok");
       renderList();
       return true;
     } catch (err) {
@@ -261,7 +327,6 @@
     var activeOnly = document.getElementById("fd-filter-active").checked;
     var list = window._fd_allTreatments || [];
 
-    // Filter
     var filtered = list.filter(function (t) {
       if (activeOnly && t.is_active === false) return false;
       return true;
@@ -272,18 +337,18 @@
     var listEl = document.getElementById("fd-treat-list");
     listEl.innerHTML = "";
 
-    var html = '<label><input type="checkbox" id="fd-select-all" checked /> <b>Select All (' + filtered.length + ' treatments)</b></label>';
+    var html = '<label><input type="checkbox" id="fd-select-all" checked /> <b>Select All (' + filtered.length + ')</b></label>';
 
     filtered.forEach(function (t, i) {
       var name = (t.medicine ? t.medicine.name : t.medicine_code) || "Unknown";
-      var startDate = t.starts_at || extractDate(t.starts_at_8601);
-      var endDate = t.ends_at || extractDate(t.ends_at_8601);
+      var startDate = extractDate(t.starts_at) || extractDate(t.starts_at_8601) || "—";
+      var endDate = extractDate(t.ends_at) || extractDate(t.ends_at_8601) || "—";
       var activeTag = t.is_active ? "" : ' <span class="fd-inactive">[INACTIVE]</span>';
 
       html += '<div class="fd-treat-item">' +
         '<input type="checkbox" class="fd-treat-cb" data-index="' + i + '" checked />' +
         '<div><strong>' + name + '</strong>' + activeTag +
-        '<br/><span class="fd-tid">ID: ' + t.id + '</span>' +
+        '<br/><span class="fd-tid">ID: ' + t.id + ' | Code: ' + (t.medicine_code || "") + '</span>' +
         '<br/><span class="fd-dates">' + startDate + ' &rarr; ' + endDate + '</span>' +
         '</div></div>';
     });
@@ -293,29 +358,17 @@
     document.getElementById("fd-filter-section").style.display = "block";
     document.getElementById("fd-refresh-btn").style.display = "none";
 
-    log("Showing " + filtered.length + " treatments" + (activeOnly ? " (active only)" : " (all)"), "info");
+    log("Showing " + filtered.length + (activeOnly ? " active" : "") + " treatments", "info");
 
-    // Set default dates
-    if (filtered[0]) {
-      var defStart = filtered[0].starts_at || extractDate(filtered[0].starts_at_8601);
-      var defEnd = filtered[0].ends_at || extractDate(filtered[0].ends_at_8601);
-      if (defStart !== "N/A") document.getElementById("fd-start-date").value = defStart;
-      if (defEnd !== "N/A") document.getElementById("fd-end-date").value = defEnd;
-    }
-
-    // Select all toggle
     document.getElementById("fd-select-all").onchange = function () {
       var cbs = document.querySelectorAll(".fd-treat-cb");
       for (var c = 0; c < cbs.length; c++) cbs[c].checked = this.checked;
     };
   }
 
-  // ============ FILTER CHANGE ============
-  document.getElementById("fd-filter-active").onchange = function () {
-    renderList();
-  };
+  document.getElementById("fd-filter-active").onchange = function () { renderList(); };
 
-  // ============ BUTTON HANDLERS ============
+  // ============ BUTTONS ============
   document.getElementById("fd-load-btn").onclick = async function () {
     this.disabled = true;
     await loadTreatments();
@@ -340,34 +393,41 @@
     var selected = document.querySelectorAll(".fd-treat-cb:checked");
     if (selected.length === 0) { log("No treatments selected", "err"); return; }
 
-    if (!confirm("Update " + selected.length + " treatments?\nStart: " + newStart + "\nEnd: " + newEnd)) return;
+    var qty = document.getElementById("fd-qty").value;
+    var size = document.getElementById("fd-size").value;
+    var confirmMsg = "Update " + selected.length + " treatments?\n" +
+      "Start: " + newStart + "\nEnd: " + newEnd;
+    if (qty && size) confirmMsg += "\n(QTY: " + qty + " x Size: " + size + " = " + (qty * size) + " days)";
+
+    if (!confirm(confirmMsg)) return;
 
     this.disabled = true;
     document.getElementById("fd-load-btn").disabled = true;
+    document.getElementById("fd-progress-wrap").style.display = "block";
     clearLog();
     log("Updating " + selected.length + " treatments...", "info");
 
-    var success = 0, failed = 0;
+    var success = 0, failed = 0, total = selected.length;
 
     for (var s = 0; s < selected.length; s++) {
       var idx = parseInt(selected[s].getAttribute("data-index"));
       var t = window._fd_treatments[idx];
       var tName = (t.medicine ? t.medicine.name : t.medicine_code) || "Unknown";
 
+      setProgress(Math.round(((s + 1) / total) * 100));
+
       try {
-        // Fetch FRESH data before each update
         var getResp = await apiFetch(API_BASE + "/treatments/" + t.id, {
           headers: { Authorization: "Bearer " + token, Accept: "application/json, text/plain, */*" },
         });
 
         if (!getResp.ok) {
-          log("[" + tName + "] Failed to load: " + getResp.status, "err");
+          log("[" + tName + "] Load failed: " + getResp.status, "err");
           failed++; continue;
         }
 
         var freshData = await getResp.json();
 
-        // Update dates
         freshData.starts_at = newStart;
         freshData.ends_at = newEnd;
         freshData.starts_at_8601 = toUTCDate(newStart, false);
@@ -379,7 +439,6 @@
         sd.setUTCHours(21, 0, 0, 0);
         freshData.startsAtLocal = sd.toISOString();
 
-        // PUT update
         var putResp = await apiFetch(API_BASE + "/treatments/" + t.id + "/update", {
           method: "PUT",
           headers: {
@@ -391,11 +450,11 @@
         });
 
         if (putResp.ok) {
-          log("[" + tName + "] (ID:" + t.id + ") Updated", "ok");
+          log("(" + (s + 1) + "/" + total + ") [" + tName + "] Done", "ok");
           success++;
         } else {
           var errText = await putResp.text();
-          log("[" + tName + "] Error " + putResp.status + ": " + errText.substring(0, 150), "err");
+          log("[" + tName + "] Error " + putResp.status, "err");
           failed++;
         }
       } catch (err) {
@@ -403,7 +462,7 @@
         failed++;
       }
 
-      await new Promise(function (r) { setTimeout(r, 500); });
+      await new Promise(function (r) { setTimeout(r, 300); });
     }
 
     log("", "info");
@@ -412,8 +471,8 @@
 
     this.disabled = false;
     document.getElementById("fd-load-btn").disabled = false;
+    document.getElementById("fd-progress-wrap").style.display = "none";
     document.getElementById("fd-refresh-btn").style.display = "block";
-    log("Click 'Reload Treatments' to verify.", "info");
   };
 
   log("Ready! Click 'Load Treatments'.", "ok");
