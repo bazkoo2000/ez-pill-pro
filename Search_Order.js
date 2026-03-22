@@ -3,7 +3,7 @@ javascript:(function(){
   const PANEL_ID='ali_sys_v4';const VERSION='5.0';
   if(document.getElementById(PANEL_ID)){document.getElementById(PANEL_ID).remove();return}
   const FETCH_TIMEOUT=30000;const MAX_RETRIES=2;
-  const state={savedRows:[],visitedSet:new Set(),isProcessing:false,isSyncing:false,openedCount:0,tbody:null,noNewStreak:0};
+  const state={savedRows:[],visitedSet:new Set(),openedSet:new Set(),isProcessing:false,isSyncing:false,openedCount:0,tbody:null,noNewStreak:0};
   const IOS={bg:'rgba(243,244,246,0.92)',card:'#ffffff',border:'rgba(0,0,0,0.04)',text:'#1f2937',muted:'#9ca3af',accent:'#6366f1',accent2:'#818cf8',success:'#22c55e',error:'#ef4444',warn:'#f59e0b',shadow:'0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)',font:'-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif'};
 
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;')}
@@ -399,15 +399,12 @@ javascript:(function(){
   function finishScan(isSync){state.isProcessing=false;state.isSyncing=false;var tables=document.querySelectorAll('table');var tt=tables[0];for(var t=0;t<tables.length;t++){if(tables[t].innerText.length>tt.innerText.length)tt=tables[t]}state.tbody=tt.querySelector('tbody')||tt;state.tbody.innerHTML='';for(var i=0;i<state.savedRows.length;i++){state.savedRows[i].node.style.cursor='pointer';state.tbody.appendChild(state.savedRows[i].node)}updateStats(state.savedRows.length);if(totalNoArgs>0)showToast(totalNoArgs+' طلب بدون بيانات فتح','warning');if(isSync){setStatus('تمت المزامنة — '+state.savedRows.length+' طلب','done');showToast('تمت المزامنة: '+state.savedRows.length+' طلب','success')}else{setStatus('تم التجميع — '+state.savedRows.length+' طلب جاهز','done');showToast('تم تجميع '+state.savedRows.length+' طلب بنجاح','success')}buildSearchUI()}
 
   function buildSearchUI(){var da=document.getElementById('ali_dynamic_area');
-    // ✅ عداد الدفعات — يتصفر مع كل بحث جديد
-    var batchOffset=0;
     da.innerHTML=
       '<div class="ios-grp" style="padding:14px 16px">'+
         '<div style="position:relative;margin-bottom:8px"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:900;color:'+IOS.muted+';pointer-events:none;font-family:monospace">0</span><input type="text" id="ali_sI" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="padding-left:30px;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace;font-weight:700"></div>'+
         '<div style="position:relative"><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none">🔗</span><input type="text" id="ali_sO" class="ios-input" placeholder="بحث برقم الطلب (ERX)..." style="padding-right:36px;direction:rtl"></div>'+
       '</div>'+
       '<div id="ali_search_count" style="font-size:11px;color:'+IOS.muted+';text-align:center;font-weight:600;padding:2px 0 10px">عرض '+state.savedRows.length+' من '+state.savedRows.length+' نتيجة</div>'+
-      // ✅ خانة التحكم في عدد التابات + أزرار سريعة
       '<div class="ios-grp" style="padding:12px 16px;margin-bottom:8px">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
           '<span style="font-size:12px;font-weight:700;color:'+IOS.text+'">عدد التابات لكل دفعة:</span>'+
@@ -421,30 +418,39 @@ javascript:(function(){
         '<div id="ali_batch_status" style="font-size:10px;color:'+IOS.muted+';text-align:center;font-weight:600;margin-top:6px;min-height:14px"></div>'+
       '</div>'+
       '<button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button>'+
-      '<button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 تحديث ومزامنة</button>';
+      '<div style="display:flex;gap:8px;margin-bottom:8px">'+
+        '<button id="ali_btn_refresh" class="ios-btn ios-ghost" style="flex:1;font-size:12px;padding:12px">🔄 تحديث الصفحة</button>'+
+        '<button id="ali_btn_sync" class="ios-btn ios-ghost" style="flex:1;font-size:12px;padding:12px">🔃 مزامنة ذكية</button>'+
+      '</div>';
 
     var sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open'),bsInput=document.getElementById('ali_batch_size'),bsStatus=document.getElementById('ali_batch_status'),cm=[];
 
-    // ✅ أزرار سريعة
     function setBS(v){bsInput.value=v;bsInput.style.color=IOS.accent;updateBatchUI()}
     document.getElementById('ali_q5').addEventListener('click',function(){setBS(5)});
     document.getElementById('ali_q10').addEventListener('click',function(){setBS(10)});
     document.getElementById('ali_qall').addEventListener('click',function(){bsInput.value='';bsInput.style.color=IOS.accent;updateBatchUI()});
 
-    function getBatchSize(){var v=parseInt(bsInput.value);return(v>0)?v:0} // 0 = الكل
+    function getBatchSize(){var v=parseInt(bsInput.value);return(v>0)?v:0}
     function getOpenable(){return cm.filter(function(r){return r.args!==null})}
+    // ✅ فلترة الطلبات اللي ما اتفتحتش — ذاكرة شاملة عبر كل الأبحاث
+    function getUnopened(){return getOpenable().filter(function(r){return !state.openedSet.has(r.id)})}
 
     function updateBatchUI(){
-      var op=getOpenable();
+      var unopened=getUnopened();
+      var totalOp=getOpenable().length;
       var bs=getBatchSize();
-      var remaining=op.length-batchOffset;
-      if(remaining<0)remaining=0;
-      if(op.length===0){bsStatus.textContent='';return}
-      if(bs===0){
-        bsStatus.textContent='سيتم فتح الكل ('+remaining+' طلب متبقي)';
+      if(totalOp===0){bsStatus.textContent='';return}
+      var alreadyOpened=totalOp-unopened.length;
+      if(unopened.length===0){
+        bsStatus.textContent='تم فتح الكل ('+totalOp+' طلب) — ابحث عن صيدلية أخرى';
+        bsStatus.style.color=IOS.success;
+      }else if(bs===0){
+        bsStatus.textContent='سيتم فتح '+unopened.length+' طلب'+(alreadyOpened>0?' | سبق فتح: '+alreadyOpened:'');
+        bsStatus.style.color=IOS.muted;
       }else{
-        var willOpen=Math.min(bs,remaining);
-        bsStatus.textContent='الدفعة التالية: '+willOpen+' من '+op.length+' | تم فتح: '+batchOffset+' | متبقي: '+remaining;
+        var willOpen=Math.min(bs,unopened.length);
+        bsStatus.textContent='الدفعة التالية: '+willOpen+' | سبق فتح: '+alreadyOpened+' | متبقي: '+unopened.length;
+        bsStatus.style.color=IOS.muted;
       }
     }
 
@@ -452,13 +458,15 @@ javascript:(function(){
 
     function fr(){
       var ri=sI.value.trim();var is=ri!==''?'0'+ri:'';var os=sO.value.trim().toLowerCase();state.tbody.innerHTML='';var sh=0;cm=[];var hf=is!==''||os!=='';
-      // ✅ تصفير العداد مع كل بحث جديد
-      batchOffset=0;
       for(var i=0;i<state.savedRows.length;i++){var rw=state.savedRows[i];var mi=is!==''&&rw.id.startsWith(is);var mo=os!==''&&rw.onl.toLowerCase().indexOf(os)!==-1;var s=hf?(mi||mo):true;if(s){state.tbody.appendChild(rw.node);sh++;if(hf)cm.push(rw)}}
       sc.innerText='عرض '+sh+' من '+state.savedRows.length+' نتيجة';updateStats(sh);
       if(hf&&cm.length>0){
-        var op=getOpenable().length;
-        ob.innerHTML='⚡ فتح المطابق ('+op+' طلب)';ob.style.opacity='1';ob.style.cursor='pointer';
+        var unopened=getUnopened();
+        if(unopened.length>0){
+          ob.innerHTML='⚡ فتح المطابق ('+unopened.length+' طلب جديد)';ob.style.opacity='1';ob.style.cursor='pointer';
+        }else{
+          ob.innerHTML='✅ تم فتح كل المطابق';ob.style.opacity='0.6';ob.style.cursor='pointer';
+        }
       }else if(hf&&cm.length===0){
         ob.innerHTML='⚡ لا توجد نتائج';ob.style.opacity='0.5';ob.style.cursor='not-allowed';
       }else{
@@ -473,22 +481,19 @@ javascript:(function(){
     ob.addEventListener('click',async function(){
       var ri=sI.value.trim();var os=sO.value.trim().toLowerCase();var hf=ri!==''||os!=='';
       if(!hf){showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!','warning');sI.focus();sI.style.animation='aliBlink 0.5s 3';setTimeout(function(){sI.style.animation=''},1500);return}
-      var op=getOpenable();
-      var sk=cm.length-op.length;
-      if(op.length===0){showToast(sk>0?sk+' طلب مطابق لكن بدون بيانات فتح!':'لا توجد طلبات مطابقة!',sk>0?'error':'warning');return}
-
-      // ✅ حساب الدفعة
-      var bs=getBatchSize();
-      var remaining=op.length-batchOffset;
-      if(remaining<=0){
-        showToast('تم فتح كل الطلبات! ابحث من جديد أو اضغط إعادة','info');
-        batchOffset=0;updateBatchUI();return;
+      var sk=cm.length-getOpenable().length;
+      // ✅ الطلبات اللي ما اتفتحتش بس
+      var unopened=getUnopened();
+      if(unopened.length===0&&getOpenable().length>0){
+        showToast('كل الطلبات تم فتحها بالفعل!','info');return;
       }
-      var startIdx=batchOffset;
-      var endIdx=bs>0?Math.min(batchOffset+bs,op.length):op.length;
-      var toOpen=op.slice(startIdx,endIdx);
+      if(unopened.length===0){showToast(sk>0?sk+' طلب مطابق لكن بدون بيانات فتح!':'لا توجد طلبات مطابقة!',sk>0?'error':'warning');return}
+      if(sk>0)showToast('⚠️ تم تخطي '+sk+' طلب بدون بيانات فتح','warning');
 
-      if(sk>0&&batchOffset===0)showToast('⚠️ تم تخطي '+sk+' طلب بدون بيانات فتح','warning');
+      // ✅ حساب الدفعة من الطلبات الغير مفتوحة
+      var bs=getBatchSize();
+      var toOpen=bs>0?unopened.slice(0,bs):unopened;
+
       ob.disabled=true;ob.style.opacity='0.6';ob.style.cursor='not-allowed';
       var opened=0,failed=0,blocked=0;
       var base=window.location.origin+"/ez_pill_web/getEZPill_Details";
@@ -497,47 +502,52 @@ javascript:(function(){
         var url=base+"?onlineNumber="+encodeURIComponent(it.args[0])+"&Invoice="+encodeURIComponent(it.args[1])+"&typee="+encodeURIComponent(it.args[2])+"&head_id="+encodeURIComponent(it.args[3]);
         try{
           var w=window.open(url,"_blank");
-          if(w){opened++;state.openedCount++;window.focus();try{w.blur()}catch(e){}}
-          else{blocked++;if(blocked===1)showToast('المتصفح يحظر النوافذ — اسمح بالنوافذ المنبثقة!','warning')}
+          if(w){
+            opened++;state.openedCount++;
+            // ✅ تسجيل الطلب في الذاكرة الشاملة
+            state.openedSet.add(it.id);
+            window.focus();try{w.blur()}catch(e){}
+          }else{blocked++;if(blocked===1)showToast('المتصفح يحظر النوافذ — اسمح بالنوافذ المنبثقة!','warning')}
         }catch(e){failed++}
         ob.innerHTML='🚀 جاري الفتح ('+(idx+1)+'/'+toOpen.length+')';
-        setStatus('فتح '+(startIdx+idx+1)+' من '+op.length+': '+(it.onl||it.id),'working');
+        setStatus('فتح '+(idx+1)+' من '+toOpen.length+': '+(it.onl||it.id),'working');
         updateStats();
         if(idx<toOpen.length-1)await sleep(1200);
       }
 
-      // ✅ تحديث العداد بعد الفتح
-      batchOffset=endIdx;
-      var newRemaining=op.length-batchOffset;
-
+      // ✅ حساب المتبقي بعد الفتح
+      var stillUnopened=getUnopened();
       var msg='تم فتح '+opened+' طلب';
       if(blocked>0)msg+=' ('+blocked+' محظور)';
       if(failed>0)msg+=' ('+failed+' فشل)';
-      if(newRemaining>0)msg+=' — متبقي '+newRemaining;
+      if(stillUnopened.length>0)msg+=' — متبقي '+stillUnopened.length;
       showToast(msg,opened>0?'success':'error');
 
-      if(newRemaining>0){
-        var nextBatch=bs>0?Math.min(bs,newRemaining):newRemaining;
-        setStatus('تم فتح '+batchOffset+' من '+op.length+' — اضغط مرة أخرى لفتح '+nextBatch+' التالية','done');
+      if(stillUnopened.length>0){
+        var nextBatch=bs>0?Math.min(bs,stillUnopened.length):stillUnopened.length;
+        setStatus('تم فتح '+opened+' — اضغط مرة أخرى لفتح '+nextBatch+' التالية','done');
         ob.innerHTML='⚡ فتح الدفعة التالية ('+nextBatch+' طلب)';
       }else{
         setStatus('تم فتح الكل — '+state.openedCount+' إجمالي','done');
-        ob.innerHTML='✅ تم فتح الكل ('+op.length+')';
-        batchOffset=0; // إعادة تعيين للجولة القادمة
+        ob.innerHTML='✅ تم فتح الكل';
       }
       ob.disabled=false;ob.style.opacity='1';ob.style.cursor='pointer';
       updateBatchUI();
     });
 
-    document.getElementById('ali_btn_sync').addEventListener('click',async function(){
-      if(state.isSyncing||state.isProcessing){showToast('المزامنة شغالة — انتظر!','warning');return}
-      var sb=this;var oc=state.savedRows.length;
-      var result=await showDialog({icon:'🔄',title:'تحديث ومزامنة',desc:'سيتم تحديث الصفحة بالكامل ثم إعادة جلب البيانات تلقائياً',badges:[{text:'تحديث الصفحة',active:true},{text:'جلب البيانات الجديدة',active:true}],info:[{label:'الطلبات الحالية',value:oc.toString(),color:'#6366f1'},{label:'العملية',value:'تحديث + إعادة فحص',color:'#3b82f6'}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 تحديث الآن',value:'confirm',primary:true}]});
-      if(result!=='confirm')return;
-      // ✅ حفظ علامة في sessionStorage ثم تحديث الصفحة
+    // ✅ زر التحديث — reload الصفحة + إعادة فحص تلقائي
+    document.getElementById('ali_btn_refresh').addEventListener('click',function(){
       try{sessionStorage.setItem('ali_auto_rescan','true')}catch(e){}
       showToast('جاري تحديث الصفحة...','info');
-      setTimeout(function(){location.reload()},500);
+      setTimeout(function(){location.reload()},400);
+    });
+
+    // ✅ زر المزامنة الذكية — شيل المقفول وضيف الجديد (بدون reload)
+    document.getElementById('ali_btn_sync').addEventListener('click',async function(){
+      if(state.isSyncing||state.isProcessing){showToast('المزامنة شغالة — انتظر!','warning');return}
+      var sb=this;
+      sb.disabled=true;sb.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> مزامنة...';sb.style.color=IOS.accent;
+      await smartSync();buildSearchUI();
     })}
 
   document.getElementById('ali_start').addEventListener('click',function(){if(state.isProcessing)return;this.disabled=true;this.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...';this.style.opacity='0.7';this.style.cursor='not-allowed';totalNoArgs=0;scanPage(false)});
