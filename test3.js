@@ -2,12 +2,8 @@
   // ============ FULL CLEANUP on re-run ============
   var oldPanel = document.getElementById("fd-bulk-panel");
   if (oldPanel) oldPanel.remove();
-
-  // Restore original fetch/XHR if we overrode them before
   if (window._fd_origFetch) window.fetch = window._fd_origFetch;
   if (window._fd_origSetHeader) XMLHttpRequest.prototype.setRequestHeader = window._fd_origSetHeader;
-
-  // Clear old state
   window._fd_treatments = [];
   window._fd_capturedToken = null;
 
@@ -17,7 +13,7 @@
   panel.innerHTML = '\
     <style>\
       #fd-bulk-panel {\
-        position: fixed; top: 0; right: 0; width: 380px; height: 100vh;\
+        position: fixed; top: 0; right: 0; width: 400px; height: 100vh;\
         background: #fff; border-left: 3px solid #f57c00; z-index: 999999;\
         font-family: Arial, sans-serif; font-size: 14px; overflow-y: auto;\
         box-shadow: -4px 0 20px rgba(0,0,0,0.3);\
@@ -38,7 +34,7 @@
         border-radius: 4px; font-size: 14px; box-sizing: border-box;\
       }\
       #fd-bulk-panel .fd-btn {\
-        width: 100%; padding: 12px; margin-top: 15px; border: none;\
+        width: 100%; padding: 12px; margin-top: 12px; border: none;\
         border-radius: 6px; font-size: 15px; font-weight: bold;\
         cursor: pointer; color: #fff;\
       }\
@@ -49,18 +45,26 @@
       #fd-bulk-panel .fd-btn:disabled { background: #ccc; cursor: not-allowed; }\
       #fd-bulk-panel .fd-log {\
         margin-top: 15px; padding: 10px; background: #f5f5f5;\
-        border-radius: 4px; max-height: 250px; overflow-y: auto;\
+        border-radius: 4px; max-height: 200px; overflow-y: auto;\
         font-size: 12px; line-height: 1.6; direction: ltr;\
       }\
       #fd-bulk-panel .fd-log .ok { color: green; }\
       #fd-bulk-panel .fd-log .err { color: red; }\
       #fd-bulk-panel .fd-log .info { color: #1976d2; }\
-      #fd-bulk-panel .fd-treatments { margin-top: 10px; }\
+      #fd-bulk-panel .fd-treatments { margin-top: 10px; max-height: 300px; overflow-y: auto; }\
       #fd-bulk-panel .fd-treat-item {\
-        display: flex; align-items: center; padding: 6px 0;\
+        display: flex; align-items: center; padding: 8px 4px;\
         border-bottom: 1px solid #eee; gap: 8px;\
       }\
+      #fd-bulk-panel .fd-treat-item:hover { background: #f9f9f9; }\
       #fd-bulk-panel .fd-treat-item input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; }\
+      #fd-bulk-panel .fd-tid { color: #999; font-size: 11px; }\
+      #fd-bulk-panel .fd-dates { color: #1976d2; font-size: 12px; }\
+      #fd-bulk-panel .fd-inactive { color: red; font-size: 11px; font-weight: bold; }\
+      #fd-bulk-panel .fd-filter { margin: 10px 0; padding: 8px; background: #e3f2fd; border-radius: 4px; font-size: 13px; }\
+      #fd-bulk-panel .fd-filter label { display: inline; margin: 0 10px 0 0; font-weight: normal; }\
+      #fd-bulk-panel .fd-progress { background: #e0e0e0; border-radius: 4px; height: 6px; margin: 8px 0; }\
+      #fd-bulk-panel .fd-progress-bar { background: #f57c00; height: 6px; border-radius: 4px; transition: width 0.3s; }\
     </style>\
     <div class="fd-header">\
       <span>Bulk Date Update</span>\
@@ -68,12 +72,18 @@
     </div>\
     <div class="fd-body">\
       <button class="fd-btn fd-btn-load" id="fd-load-btn">1. Load Treatments</button>\
+      <div id="fd-filter-section" style="display:none;" class="fd-filter">\
+        <label><input type="checkbox" id="fd-filter-active" checked /> Active only</label>\
+      </div>\
       <div id="fd-treat-list" class="fd-treatments"></div>\
       <div id="fd-date-section" style="display:none;">\
         <label>New Start Date:</label>\
         <input type="date" id="fd-start-date" />\
         <label>New End Date:</label>\
         <input type="date" id="fd-end-date" />\
+        <div id="fd-progress-wrap" style="display:none;">\
+          <div class="fd-progress"><div class="fd-progress-bar" id="fd-progress-bar" style="width:0%"></div></div>\
+        </div>\
         <button class="fd-btn fd-btn-update" id="fd-update-btn">2. Update Selected</button>\
         <button class="fd-btn fd-btn-refresh" id="fd-refresh-btn" style="display:none;">Reload Treatments</button>\
       </div>\
@@ -81,7 +91,6 @@
     </div>';
   document.body.appendChild(panel);
 
-  // Close button - full cleanup
   document.getElementById("fd-close-btn").onclick = function () {
     document.getElementById("fd-bulk-panel").remove();
     if (window._fd_origFetch) { window.fetch = window._fd_origFetch; window._fd_origFetch = null; }
@@ -92,13 +101,15 @@
 
   // ============ HELPERS ============
   var logEl = document.getElementById("fd-log");
-
   function log(msg, cls) {
     logEl.innerHTML += '<div class="' + (cls || "info") + '">' + msg + "</div>";
     logEl.scrollTop = logEl.scrollHeight;
   }
-
   function clearLog() { logEl.innerHTML = ""; }
+
+  function setProgress(pct) {
+    document.getElementById("fd-progress-bar").style.width = pct + "%";
+  }
 
   function getAuthToken() {
     if (window._fd_capturedToken) return window._fd_capturedToken;
@@ -128,6 +139,13 @@
     return { installationId: match[1], centerId: match[2], patientId: match[3] };
   }
 
+  function extractDate(obj) {
+    if (!obj) return null;
+    if (typeof obj === "string" && obj.length >= 10) return obj.substring(0, 10);
+    if (obj.date) return obj.date.substring(0, 10);
+    return null;
+  }
+
   function toUTCDate(dateStr, isEnd) {
     var parts = dateStr.split("-");
     var d = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
@@ -146,7 +164,7 @@
     }
   }
 
-  // ============ INTERCEPT AUTH TOKEN (only if not already done) ============
+  // ============ INTERCEPT AUTH TOKEN ============
   if (!window._fd_origFetch) {
     window._fd_origFetch = window.fetch;
     window.fetch = function () {
@@ -163,7 +181,6 @@
       return window._fd_origFetch.apply(this, args);
     };
   }
-
   if (!window._fd_origSetHeader) {
     window._fd_origSetHeader = XMLHttpRequest.prototype.setRequestHeader;
     XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
@@ -174,7 +191,6 @@
     };
   }
 
-  // Use original fetch for our API calls (bypass interceptor)
   var apiFetch = window._fd_origFetch || window.fetch;
 
   // ============ STATE ============
@@ -186,62 +202,29 @@
 
   log("Patient ID: " + ids.patientId, "info");
 
-  // ============ LOAD TREATMENTS (reusable) ============
+  // ============ LOAD TREATMENTS (fast - single API call) ============
   async function loadTreatments() {
     clearLog();
-    log("Loading treatments...", "info");
+    log("Loading...", "info");
 
     var token = getAuthToken();
     if (!token) {
       log("Token not found. Click any link in the app, then try again.", "err");
       return false;
     }
-    log("Auth token found", "ok");
 
     try {
       var resp = await apiFetch(API_BASE + "/treatments", {
         headers: { Authorization: "Bearer " + token, Accept: "application/json, text/plain, */*" },
       });
 
-      if (!resp.ok) { log("Failed to load: " + resp.status, "err"); return false; }
+      if (!resp.ok) { log("Failed: " + resp.status, "err"); return false; }
 
       var data = await resp.json();
-      window._fd_treatments = Array.isArray(data) ? data : (data.data || data.treatments || []);
+      window._fd_allTreatments = Array.isArray(data) ? data : (data.data || data.treatments || []);
 
-      if (window._fd_treatments.length === 0) { log("No treatments found", "err"); return false; }
-
-      log("Found " + window._fd_treatments.length + " treatments", "ok");
-
-      // Render list (always fresh)
-      var listEl = document.getElementById("fd-treat-list");
-      listEl.innerHTML = "";
-
-      var html = '<label><input type="checkbox" id="fd-select-all" checked /> <b>Select All (' + window._fd_treatments.length + ')</b></label>';
-
-      window._fd_treatments.forEach(function (t, i) {
-        var name = (t.medicine ? t.medicine.name : t.medicine_code) || "Unknown";
-        var start = t.starts_at || "N/A";
-        var end = t.ends_at || "N/A";
-        html += '<div class="fd-treat-item">' +
-          '<input type="checkbox" class="fd-treat-cb" data-index="' + i + '" checked />' +
-          '<div><strong>' + name + '</strong><br/>' +
-          '<small style="color:#666">' + start + ' &rarr; ' + end + '</small></div></div>';
-      });
-
-      listEl.innerHTML = html;
-      document.getElementById("fd-date-section").style.display = "block";
-      document.getElementById("fd-refresh-btn").style.display = "none";
-
-      if (window._fd_treatments[0]) {
-        document.getElementById("fd-start-date").value = window._fd_treatments[0].starts_at || "";
-        document.getElementById("fd-end-date").value = window._fd_treatments[0].ends_at || "";
-      }
-
-      document.getElementById("fd-select-all").onchange = function () {
-        var cbs = document.querySelectorAll(".fd-treat-cb");
-        for (var c = 0; c < cbs.length; c++) cbs[c].checked = this.checked;
-      };
-
+      log("Found " + window._fd_allTreatments.length + " total", "ok");
+      renderList();
       return true;
     } catch (err) {
       log("Error: " + err.message, "err");
@@ -249,7 +232,53 @@
     }
   }
 
-  // ============ BUTTON HANDLERS ============
+  function renderList() {
+    var activeOnly = document.getElementById("fd-filter-active").checked;
+    var list = window._fd_allTreatments || [];
+
+    var filtered = list.filter(function (t) {
+      if (activeOnly && t.is_active === false) return false;
+      return true;
+    });
+
+    window._fd_treatments = filtered;
+
+    var listEl = document.getElementById("fd-treat-list");
+    listEl.innerHTML = "";
+
+    var html = '<label><input type="checkbox" id="fd-select-all" checked /> <b>Select All (' + filtered.length + ')</b></label>';
+
+    filtered.forEach(function (t, i) {
+      var name = (t.medicine ? t.medicine.name : t.medicine_code) || "Unknown";
+      // Try to get dates from available fields
+      var startDate = extractDate(t.starts_at) || extractDate(t.starts_at_8601) || "—";
+      var endDate = extractDate(t.ends_at) || extractDate(t.ends_at_8601) || "—";
+      var activeTag = t.is_active ? "" : ' <span class="fd-inactive">[INACTIVE]</span>';
+
+      html += '<div class="fd-treat-item">' +
+        '<input type="checkbox" class="fd-treat-cb" data-index="' + i + '" checked />' +
+        '<div><strong>' + name + '</strong>' + activeTag +
+        '<br/><span class="fd-tid">ID: ' + t.id + ' | Code: ' + (t.medicine_code || "") + '</span>' +
+        '<br/><span class="fd-dates">' + startDate + ' &rarr; ' + endDate + '</span>' +
+        '</div></div>';
+    });
+
+    listEl.innerHTML = html;
+    document.getElementById("fd-date-section").style.display = "block";
+    document.getElementById("fd-filter-section").style.display = "block";
+    document.getElementById("fd-refresh-btn").style.display = "none";
+
+    log("Showing " + filtered.length + (activeOnly ? " active" : "") + " treatments", "info");
+
+    document.getElementById("fd-select-all").onchange = function () {
+      var cbs = document.querySelectorAll(".fd-treat-cb");
+      for (var c = 0; c < cbs.length; c++) cbs[c].checked = this.checked;
+    };
+  }
+
+  document.getElementById("fd-filter-active").onchange = function () { renderList(); };
+
+  // ============ BUTTONS ============
   document.getElementById("fd-load-btn").onclick = async function () {
     this.disabled = true;
     await loadTreatments();
@@ -278,30 +307,33 @@
 
     this.disabled = true;
     document.getElementById("fd-load-btn").disabled = true;
+    document.getElementById("fd-progress-wrap").style.display = "block";
     clearLog();
     log("Updating " + selected.length + " treatments...", "info");
 
-    var success = 0, failed = 0;
+    var success = 0, failed = 0, total = selected.length;
 
     for (var s = 0; s < selected.length; s++) {
       var idx = parseInt(selected[s].getAttribute("data-index"));
       var t = window._fd_treatments[idx];
       var tName = (t.medicine ? t.medicine.name : t.medicine_code) || "Unknown";
 
+      setProgress(Math.round(((s + 1) / total) * 100));
+
       try {
-        // ALWAYS fetch fresh data before each update
+        // Fetch fresh data only now (at update time)
         var getResp = await apiFetch(API_BASE + "/treatments/" + t.id, {
           headers: { Authorization: "Bearer " + token, Accept: "application/json, text/plain, */*" },
         });
 
         if (!getResp.ok) {
-          log("[" + tName + "] Failed to load: " + getResp.status, "err");
+          log("[" + tName + "] Load failed: " + getResp.status, "err");
           failed++; continue;
         }
 
         var freshData = await getResp.json();
 
-        // Update dates on the FRESH copy
+        // Update dates
         freshData.starts_at = newStart;
         freshData.ends_at = newEnd;
         freshData.starts_at_8601 = toUTCDate(newStart, false);
@@ -313,7 +345,7 @@
         sd.setUTCHours(21, 0, 0, 0);
         freshData.startsAtLocal = sd.toISOString();
 
-        // Send update
+        // PUT
         var putResp = await apiFetch(API_BASE + "/treatments/" + t.id + "/update", {
           method: "PUT",
           headers: {
@@ -325,11 +357,11 @@
         });
 
         if (putResp.ok) {
-          log("[" + tName + "] Updated", "ok");
+          log("(" + (s + 1) + "/" + total + ") [" + tName + "] Done", "ok");
           success++;
         } else {
           var errText = await putResp.text();
-          log("[" + tName + "] Error " + putResp.status + ": " + errText.substring(0, 150), "err");
+          log("[" + tName + "] Error " + putResp.status, "err");
           failed++;
         }
       } catch (err) {
@@ -337,7 +369,7 @@
         failed++;
       }
 
-      await new Promise(function (r) { setTimeout(r, 500); });
+      await new Promise(function (r) { setTimeout(r, 300); });
     }
 
     log("", "info");
@@ -346,9 +378,9 @@
 
     this.disabled = false;
     document.getElementById("fd-load-btn").disabled = false;
+    document.getElementById("fd-progress-wrap").style.display = "none";
     document.getElementById("fd-refresh-btn").style.display = "block";
-    log("Click 'Reload Treatments' to see updated dates.", "info");
   };
 
-  log("Ready! Click 'Load Treatments' to start.", "ok");
+  log("Ready! Click 'Load Treatments'.", "ok");
 })();
