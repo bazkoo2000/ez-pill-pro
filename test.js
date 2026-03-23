@@ -1,357 +1,420 @@
-javascript:(function(){
-  'use strict';
-  const PANEL_ID='ali_search_v2';const VERSION='1.1';
-  if(document.getElementById(PANEL_ID)){document.getElementById(PANEL_ID).remove();return}
-  const state={savedRows:[],visitedSet:new Set(),isProcessing:false};
-  const IOS={bg:'rgba(243,244,246,0.92)',card:'#ffffff',text:'#1f2937',muted:'#9ca3af',accent:'#6366f1',accent2:'#818cf8',success:'#22c55e',error:'#ef4444',shadow:'0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)',font:'-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif'};
+(async function () {
+  var oldPanel = document.getElementById("fd-bulk-panel");
+  if (oldPanel) oldPanel.remove();
+  if (window._fd_origFetch) window.fetch = window._fd_origFetch;
+  if (window._fd_origSetHeader) XMLHttpRequest.prototype.setRequestHeader = window._fd_origSetHeader;
+  window._fd_treatments = [];
+  window._fd_capturedToken = null;
+  var INTAKES = [];
 
-  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;')}
-  function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  var css = '#fd-bulk-panel{position:fixed;top:0;right:0;width:440px;height:100vh;background:#fff;border-left:3px solid #f57c00;z-index:999999;font-family:Arial,sans-serif;font-size:13px;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,.3)}#fd-bulk-panel *{box-sizing:border-box}#fd-bulk-panel .fd-header{background:#f57c00;color:#fff;padding:12px 15px;font-size:16px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}#fd-bulk-panel .fd-close{cursor:pointer;font-size:22px;background:none;border:none;color:#fff;font-weight:bold}#fd-bulk-panel .fd-tabs{display:flex;background:#f5f5f5;border-bottom:2px solid #eee}#fd-bulk-panel .fd-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-weight:bold;color:#666;border:none;background:none;font-size:13px}#fd-bulk-panel .fd-tab.active{color:#f57c00;border-bottom:3px solid #f57c00;background:#fff}#fd-bulk-panel .fd-tab-content{display:none;padding:15px}#fd-bulk-panel .fd-tab-content.active{display:block}#fd-bulk-panel label{display:block;margin:8px 0 3px;font-weight:bold;color:#333;font-size:12px}#fd-bulk-panel input[type=date],#fd-bulk-panel input[type=number],#fd-bulk-panel input[type=text],#fd-bulk-panel select{width:100%;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:13px}#fd-bulk-panel .fd-row{display:flex;gap:8px;align-items:flex-end}#fd-bulk-panel .fd-row>div{flex:1}#fd-bulk-panel .fd-btn{width:100%;padding:10px;margin-top:10px;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;color:#fff}#fd-bulk-panel .fd-btn-blue{background:#1976d2}#fd-bulk-panel .fd-btn-orange{background:#f57c00}#fd-bulk-panel .fd-btn-green{background:#388e3c}#fd-bulk-panel .fd-btn:hover{opacity:.9}#fd-bulk-panel .fd-btn:disabled{background:#ccc;cursor:not-allowed}#fd-bulk-panel .fd-log{margin-top:10px;padding:8px;background:#f5f5f5;border-radius:4px;max-height:180px;overflow-y:auto;font-size:11px;line-height:1.5;direction:ltr;word-break:break-all}#fd-bulk-panel .fd-log .ok{color:green}#fd-bulk-panel .fd-log .err{color:red}#fd-bulk-panel .fd-log .info{color:#1976d2}#fd-bulk-panel .fd-treatments{margin-top:8px;max-height:220px;overflow-y:auto}#fd-bulk-panel .fd-treat-item{display:flex;align-items:center;padding:6px 4px;border-bottom:1px solid #eee;gap:6px}#fd-bulk-panel .fd-treat-item:hover{background:#f9f9f9}#fd-bulk-panel .fd-treat-item input[type=checkbox]{width:16px;height:16px;flex-shrink:0}#fd-bulk-panel .fd-tid{color:#999;font-size:10px}#fd-bulk-panel .fd-dates{color:#1976d2;font-size:11px}#fd-bulk-panel .fd-filter{margin:8px 0;padding:6px;background:#e3f2fd;border-radius:4px;font-size:12px}#fd-bulk-panel .fd-filter label{display:inline;margin:0 8px 0 0;font-weight:normal}#fd-bulk-panel .fd-progress{background:#e0e0e0;border-radius:4px;height:5px;margin:6px 0}#fd-bulk-panel .fd-progress-bar{background:#f57c00;height:5px;border-radius:4px;transition:width .3s}#fd-bulk-panel .fd-calc-box{margin-top:8px;padding:10px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px}#fd-bulk-panel .fd-calc-box .fd-calc-title{font-weight:bold;color:#e65100;margin-bottom:6px;font-size:12px}#fd-bulk-panel .fd-calc-result{margin-top:6px;padding:6px;background:#fff;border-radius:4px;font-weight:bold;color:#2e7d32;text-align:center;font-size:13px;border:1px dashed #a5d6a7;display:none}#fd-bulk-panel .fd-or-divider{text-align:center;color:#999;margin:10px 0;font-size:11px;position:relative}#fd-bulk-panel .fd-or-divider::before,#fd-bulk-panel .fd-or-divider::after{content:"";position:absolute;top:50%;width:38%;height:1px;background:#ddd}#fd-bulk-panel .fd-or-divider::before{left:0}#fd-bulk-panel .fd-or-divider::after{right:0}#fd-bulk-panel .fd-search-results{max-height:150px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;margin-top:5px;display:none}#fd-bulk-panel .fd-search-item{padding:8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:12px}#fd-bulk-panel .fd-search-item:hover{background:#e3f2fd}#fd-bulk-panel .fd-selected-med{margin-top:5px;padding:8px;background:#e8f5e9;border-radius:4px;font-size:12px;color:#2e7d32;display:none}#fd-bulk-panel .fd-intake-grid{max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;margin-top:5px}#fd-bulk-panel .fd-intake-item{display:flex;align-items:center;padding:5px 8px;border-bottom:1px solid #f0f0f0;gap:8px;font-size:12px}#fd-bulk-panel .fd-intake-item:hover{background:#f5f5f5}#fd-bulk-panel .fd-intake-item input[type=checkbox]{width:16px;height:16px}#fd-bulk-panel .fd-intake-time{color:#1976d2;font-weight:bold;min-width:45px}#fd-bulk-panel .fd-intake-dose{width:50px;padding:3px;border:1px solid #ccc;border-radius:3px;text-align:center;font-size:12px}#fd-bulk-panel .fd-token-box{margin:8px 0;padding:8px;background:#fff8e1;border:1px solid #ffd54f;border-radius:4px;font-size:11px}';
 
-  function showToast(msg,type){
-    type=type||'info';var c=document.getElementById('ali-toast-box2');
-    if(!c){c=document.createElement('div');c.id='ali-toast-box2';c.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center';document.body.appendChild(c)}
-    var cl={success:'#22c55e',error:'#ef4444',warning:'#f59e0b',info:'#6366f1'};var ic={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
-    var t=document.createElement('div');t.style.cssText='background:'+IOS.card+';color:'+cl[type]+';padding:12px 22px;border-radius:14px;font-size:13px;font-weight:700;font-family:'+IOS.font+';box-shadow:0 8px 30px rgba(0,0,0,0.1);display:flex;align-items:center;gap:8px;direction:rtl';
-    t.innerHTML='<span>'+ic[type]+'</span> '+esc(msg);c.appendChild(t);
-    setTimeout(function(){t.style.transition='all 0.3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},3500);
-  }
+  var panel = document.createElement("div");
+  panel.id = "fd-bulk-panel";
+  panel.innerHTML = '<style>' + css + '</style>\
+    <div class="fd-header"><span>Farmadosis Tools</span><button class="fd-close" id="fd-close-btn">&times;</button></div>\
+    <div class="fd-tabs">\
+      <button class="fd-tab active" data-tab="update">Update Dates</button>\
+      <button class="fd-tab" data-tab="add">Add Treatment</button>\
+    </div>\
+    <div class="fd-tab-content active" id="fd-tab-update">\
+      <button class="fd-btn fd-btn-blue" id="fd-load-btn">Load Treatments</button>\
+      <div id="fd-filter-section" style="display:none;" class="fd-filter"><label><input type="checkbox" id="fd-filter-active" checked /> Active only</label></div>\
+      <div id="fd-treat-list" class="fd-treatments"></div>\
+      <div id="fd-date-section" style="display:none;">\
+        <label>Start Date:</label><input type="date" id="fd-start-date" />\
+        <div class="fd-calc-box"><div class="fd-calc-title">Auto-Calculate End Date (QTY &times; Size)</div>\
+          <div class="fd-row"><div><label style="font-size:11px;margin:0 0 2px;">QTY</label><input type="number" id="fd-qty" value="1" min="1" /></div>\
+          <div><label style="font-size:11px;margin:0 0 2px;">Size</label><input type="number" id="fd-size" value="30" min="1" /></div>\
+          <div><label style="font-size:11px;margin:0 0 2px;">Days</label><input type="number" id="fd-total-days" readonly style="background:#eee;font-weight:bold;" /></div></div>\
+          <div class="fd-calc-result" id="fd-calc-result"></div></div>\
+        <div class="fd-or-divider">OR set manually</div>\
+        <label>End Date:</label><input type="date" id="fd-end-date" />\
+        <div id="fd-progress-wrap" style="display:none;"><div class="fd-progress"><div class="fd-progress-bar" id="fd-progress-bar" style="width:0%"></div></div></div>\
+        <button class="fd-btn fd-btn-orange" id="fd-update-btn">Update Selected</button>\
+        <button class="fd-btn fd-btn-green" id="fd-refresh-btn" style="display:none;">Reload</button>\
+      </div>\
+      <div class="fd-log" id="fd-log"></div>\
+    </div>\
+    <div class="fd-tab-content" id="fd-tab-add">\
+      <div class="fd-token-box" id="fd-token-status">Token: checking...</div>\
+      <label>Search Medicine (Code or Name):</label>\
+      <input type="text" id="fd-med-search" placeholder="e.g. 101 or Neurobion" />\
+      <div class="fd-search-results" id="fd-search-results"></div>\
+      <div class="fd-selected-med" id="fd-selected-med"></div>\
+      <label>Start Date:</label><input type="date" id="fd-add-start" />\
+      <div class="fd-calc-box"><div class="fd-calc-title">Auto-Calculate End Date</div>\
+        <div class="fd-row"><div><label style="font-size:11px;margin:0 0 2px;">QTY</label><input type="number" id="fd-add-qty" value="1" min="1" /></div>\
+        <div><label style="font-size:11px;margin:0 0 2px;">Size</label><input type="number" id="fd-add-size" value="30" min="1" /></div>\
+        <div><label style="font-size:11px;margin:0 0 2px;">Days</label><input type="number" id="fd-add-total" readonly style="background:#eee;font-weight:bold;" /></div></div>\
+        <div class="fd-calc-result" id="fd-add-calc-result"></div></div>\
+      <div class="fd-or-divider">OR set manually</div>\
+      <label>End Date:</label><input type="date" id="fd-add-end" />\
+      <label>Dose Timing:</label>\
+      <div class="fd-intake-grid" id="fd-intake-grid"></div>\
+      <div class="fd-row" style="margin-top:8px;">\
+        <div><label style="font-size:11px;margin:0 0 2px;">Every</label>\
+          <select id="fd-add-freq">\
+            <option value="720">12 hours</option>\
+            <option value="1440" selected>24 hours (daily)</option>\
+            <option value="2880">48 hours</option>\
+            <option value="4320">72 hours</option>\
+            <option value="10080">Weekly</option>\
+          </select></div>\
+        <div><label style="font-size:11px;margin:0 0 2px;">Notes</label><input type="text" id="fd-add-notes" placeholder="Optional" /></div>\
+      </div>\
+      <button class="fd-btn fd-btn-green" id="fd-add-btn">Add Treatment</button>\
+      <div class="fd-log" id="fd-add-log"></div>\
+    </div>';
 
-  var styleEl=document.createElement('style');styleEl.id='ali-search-css2';
-  styleEl.innerHTML=
-    '@keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.97)}to{opacity:1;transform:translateX(0) scale(1)}}'+
-    '@keyframes aliSpin{to{transform:rotate(360deg)}}'+
-    '@keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}'+
-    '@keyframes aliDotPulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}'+
-    '@keyframes aliRingGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(99,102,241,0.3))}50%{filter:drop-shadow(0 0 12px rgba(99,102,241,0.6))}}'+
-    '#'+PANEL_ID+'{position:fixed;top:14px;right:14px;width:380px;max-height:92vh;background:'+IOS.bg+';backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:22px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1);z-index:9999999;font-family:'+IOS.font+';direction:rtl;color:'+IOS.text+';overflow:hidden;animation:aliSlideIn 0.5s cubic-bezier(0.16,1,0.3,1)}'+
-    '#'+PANEL_ID+' .ios-grp{background:'+IOS.card+';border-radius:14px;overflow:hidden;box-shadow:'+IOS.shadow+';margin-bottom:12px}'+
-    '#'+PANEL_ID+' .ios-btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:14px;font-family:'+IOS.font+';transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}'+
-    '#'+PANEL_ID+' .ios-btn:active{transform:scale(0.98);opacity:0.9}'+
-    '#'+PANEL_ID+' .ios-primary{background:'+IOS.accent+';color:white}'+
-    '#'+PANEL_ID+' .ios-ghost{background:rgba(0,0,0,0.03);color:'+IOS.muted+'}'+
-    '#'+PANEL_ID+' .ios-input{width:100%;padding:12px 16px;border:none;border-radius:12px;font-size:14px;font-family:'+IOS.font+';outline:none;background:rgba(0,0,0,0.03);color:'+IOS.text+';transition:all 0.2s;font-weight:600;box-sizing:border-box}'+
-    '#'+PANEL_ID+' .ios-input:focus{background:rgba(99,102,241,0.04);box-shadow:0 0 0 2px rgba(99,102,241,0.15)}'+
-    '#'+PANEL_ID+' .ios-input.match{background:rgba(34,197,94,0.04);box-shadow:0 0 0 2px rgba(34,197,94,0.15)}'+
-    '#'+PANEL_ID+' .ios-input.nomatch{background:rgba(239,68,68,0.04);box-shadow:0 0 0 2px rgba(239,68,68,0.15)}'+
-    '#'+PANEL_ID+' .res-row{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-bottom:0.5px solid #f3f4f6;cursor:default;transition:background 0.15s}'+
-    '#'+PANEL_ID+' .res-row:hover{background:#f9fafb}'+
-    '#'+PANEL_ID+' .res-row:last-child{border-bottom:none}'+
-    '#'+PANEL_ID+' .res-inv{font-size:14px;font-weight:800;color:'+IOS.accent+';font-family:monospace;letter-spacing:0.5px}'+
-    '#'+PANEL_ID+' .res-meta{font-size:11px;color:'+IOS.muted+';font-weight:600;display:flex;gap:10px;flex-wrap:wrap}'+
-    '#'+PANEL_ID+' .badge{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800}';
-  document.head.appendChild(styleEl);
-
-  // ✅ احسب عدد الصفحات من newCount في الصفحة
-  var calculatedPages=5;
-  try{
-    var nc=document.getElementById('newCount');
-    if(nc){var n=parseInt(nc.innerText||nc.textContent);if(n>0)calculatedPages=Math.ceil(n/10)}
-  }catch(e){}
-
-  var panel=document.createElement('div');panel.id=PANEL_ID;
-  panel.innerHTML=
-    '<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+
-      '<div style="display:flex;align-items:center;gap:10px">'+
-        '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;box-shadow:0 3px 12px rgba(99,102,241,0.25)">🗂</div>'+
-        '<div><div style="font-size:15px;font-weight:800;color:#1f2937">بحث الطلبات الجديدة</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v'+VERSION+' — New Orders Search</div></div>'+
-      '</div>'+
-      '<button id="ali2_close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>'+
-    '</div>'+
-
-    '<div style="padding:10px 16px;overflow-y:auto;max-height:calc(92vh - 60px)" id="ali2_body">'+
-
-      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">'+
-        '<div style="background:'+IOS.card+';border-radius:14px;padding:12px 8px;text-align:center;box-shadow:'+IOS.shadow+'"><div style="font-size:16px;margin-bottom:4px">📦</div><div id="s2_total" style="font-size:22px;font-weight:900;color:#8b5cf6">0</div><div style="font-size:9px;color:#9ca3af;font-weight:700">إجمالي الطلبات</div></div>'+
-        '<div style="background:'+IOS.card+';border-radius:14px;padding:12px 8px;text-align:center;box-shadow:'+IOS.shadow+'"><div style="font-size:16px;margin-bottom:4px">🔍</div><div id="s2_match" style="font-size:22px;font-weight:900;color:#22c55e">0</div><div style="font-size:9px;color:#9ca3af;font-weight:700">نتائج البحث</div></div>'+
-      '</div>'+
-
-      '<div class="ios-grp" style="padding:16px">'+
-        '<div style="display:flex;align-items:center;gap:16px">'+
-          '<div style="position:relative;width:80px;height:80px;flex-shrink:0">'+
-            '<svg id="ali2_ring_svg" width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">'+
-              '<circle cx="40" cy="40" r="34" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="6"/>'+
-              '<circle id="ali2_ring_track" cx="40" cy="40" r="34" fill="none" stroke="url(#aliGrad3)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" style="transition:stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1)"/>'+
-              '<defs><linearGradient id="aliGrad3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs>'+
-            '</svg>'+
-            '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">'+
-              '<div id="ali2_ring_pct" style="font-size:18px;font-weight:900;color:#6366f1;line-height:1;font-family:monospace">0%</div>'+
-            '</div>'+
-          '</div>'+
-          '<div style="flex:1;min-width:0">'+
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
-              '<span style="font-size:13px;font-weight:700">📄 عدد الصفحات</span>'+
-              '<input type="number" id="ali2_p_lim" value="'+calculatedPages+'" min="1" class="ios-input" style="width:55px;padding:6px;text-align:center;font-size:14px;font-weight:900;color:#6366f1">'+
-            '</div>'+
-            '<div style="font-size:11px;color:#9ca3af;font-weight:600;line-height:1.8">'+
-              '<div style="display:flex;justify-content:space-between"><span>الصفحات</span><span id="ali2_prog_p">0 / 0</span></div>'+
-              '<div style="display:flex;justify-content:space-between"><span>السجلات</span><span id="ali2_prog_r" style="color:#6366f1;font-weight:800">0</span></div>'+
-            '</div>'+
-            '<div id="ali2_dots" style="display:flex;gap:3px;margin-top:6px;justify-content:center;opacity:0;transition:opacity 0.3s">'+
-              '<div style="width:5px;height:5px;border-radius:50%;background:#6366f1;animation:aliDotPulse 1s infinite 0s"></div>'+
-              '<div style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;animation:aliDotPulse 1s infinite 0.2s"></div>'+
-              '<div style="width:5px;height:5px;border-radius:50%;background:#22c55e;animation:aliDotPulse 1s infinite 0.4s"></div>'+
-            '</div>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-
-      '<div id="ali2_status" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.06);color:#22c55e"><span>✅</span><span>جاهز للبدء</span></div>'+
-
-      '<div id="ali2_main_area">'+
-        '<button id="ali2_start" class="ios-btn ios-primary" style="font-size:15px;padding:16px;margin-bottom:8px">🚀 جلب كل الطلبات الجديدة</button>'+
-      '</div>'+
-
-      '<div style="text-align:center;padding:8px 0 4px;font-size:9px;color:#9ca3af;font-weight:700;letter-spacing:0.5px">DEVELOPED BY ALI EL-BAZ</div>'+
-    '</div>';
   document.body.appendChild(panel);
 
-  document.getElementById('ali2_close').addEventListener('click',function(){
-    panel.style.transition='all 0.3s';panel.style.opacity='0';panel.style.transform='translateX(40px) scale(0.97)';
-    setTimeout(function(){panel.remove()},300);
+  // TABS
+  panel.querySelectorAll(".fd-tab").forEach(function(tab){
+    tab.onclick=function(){
+      panel.querySelectorAll(".fd-tab").forEach(function(t){t.classList.remove("active");});
+      panel.querySelectorAll(".fd-tab-content").forEach(function(c){c.classList.remove("active");});
+      tab.classList.add("active");
+      document.getElementById("fd-tab-"+tab.getAttribute("data-tab")).classList.add("active");
+    };
   });
+  document.getElementById("fd-close-btn").onclick=function(){
+    document.getElementById("fd-bulk-panel").remove();
+    if(window._fd_origFetch){window.fetch=window._fd_origFetch;window._fd_origFetch=null;}
+    if(window._fd_origSetHeader){XMLHttpRequest.prototype.setRequestHeader=window._fd_origSetHeader;window._fd_origSetHeader=null;}
+  };
 
-  function updateProgress(current,total,records){
-    var CIRC=213.6;
-    var ring=document.getElementById('ali2_ring_track');
-    var pctEl=document.getElementById('ali2_ring_pct');
-    var pVal=document.getElementById('ali2_prog_p');
-    var rVal=document.getElementById('ali2_prog_r');
-    var dots=document.getElementById('ali2_dots');
-    var svg=document.getElementById('ali2_ring_svg');
-    var pct=total>0?Math.round((current/total)*100):0;
-    var offset=CIRC-(pct/100)*CIRC;
-    if(ring)ring.style.strokeDashoffset=offset;
-    if(pctEl){pctEl.textContent=pct+'%';pctEl.style.color=pct>=100?IOS.success:IOS.accent}
-    if(pVal)pVal.textContent=current+' / '+total;
-    if(rVal)rVal.textContent=records!==undefined?records:state.savedRows.length;
-    if(dots)dots.style.opacity=(pct>0&&pct<100)?'1':'0';
-    if(svg)svg.style.animation=(pct>0&&pct<100)?'aliRingGlow 1.5s ease-in-out infinite':'none';
+  // HELPERS
+  function logTo(id,m,c){var e=document.getElementById(id);e.innerHTML+='<div class="'+(c||"info")+'">'+m+"</div>";e.scrollTop=e.scrollHeight;}
+  function log(m,c){logTo("fd-log",m,c);}
+  function addLog(m,c){logTo("fd-add-log",m,c);}
+  function clearLog(id){document.getElementById(id||"fd-log").innerHTML="";}
+  function setProgress(p){document.getElementById("fd-progress-bar").style.width=p+"%";}
+
+  // TOKEN - try XHR intercept to get the actual token used by the app
+  function getAuthToken(){
+    if(window._fd_capturedToken) return window._fd_capturedToken;
+    // Search all storage
+    var storages=[localStorage,sessionStorage];
+    for(var si=0;si<storages.length;si++){
+      var store=storages[si];
+      for(var j=0;j<store.length;j++){
+        var key=store.key(j);
+        var v=store.getItem(key);
+        try{var p=JSON.parse(v);
+          if(p&&typeof p==="object"){
+            if(p.token) return p.token;
+            if(p.access_token) return p.access_token;
+            // Check nested
+            if(p.data&&p.data.token) return p.data.token;
+            if(p.auth&&p.auth.token) return p.auth.token;
+          }
+        }catch(e){
+          if(v&&v.length>30&&v.length<1000&&/^[A-Za-z0-9._-]+$/.test(v)) return v;
+        }
+      }
+    }
+    // Try cookies
+    var cookies=document.cookie.split(";");
+    for(var ci=0;ci<cookies.length;ci++){
+      var c=cookies[ci].trim();
+      if(c.indexOf("token=")===0||c.indexOf("access_token=")===0||c.indexOf("auth_token=")===0){
+        return c.split("=").slice(1).join("=");
+      }
+    }
+    return null;
   }
 
-  function setStatus(text,type){
-    var el=document.getElementById('ali2_status');if(!el)return;
-    var cf={ready:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'✅'},working:{color:'#6366f1',bg:'rgba(99,102,241,0.06)',icon:'spinner'},error:{color:'#ef4444',bg:'rgba(239,68,68,0.06)',icon:'❌'},done:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'🎉'}};
-    var c=cf[type]||cf.ready;
-    var ih=c.icon==='spinner'?'<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:aliSpin 0.5s linear infinite;flex-shrink:0"></div>':'<span>'+c.icon+'</span>';
-    el.style.cssText='display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:'+c.bg+';color:'+c.color+';transition:all 0.3s';
-    el.innerHTML=ih+'<span>'+esc(text)+'</span>';
+  function getIdsFromUrl(){
+    var match=window.location.href.match(/installations\/(\d+)\/centers\/(\d+)\/patients\/(\d+)/);
+    if(!match) return null;
+    return {installationId:match[1],centerId:match[2],patientId:match[3]};
   }
+  function extractDate(o){if(!o)return null;if(typeof o==="string"&&o.length>=10)return o.substring(0,10);if(o.date)return o.date.substring(0,10);return null;}
+  function toUTCDate(d,isEnd){var p=d.split("-");var dt=new Date(Date.UTC(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])));if(isEnd){dt.setUTCDate(dt.getUTCDate()-1);return{date:dt.getUTCFullYear()+"-"+String(dt.getUTCMonth()+1).padStart(2,"0")+"-"+String(dt.getUTCDate()).padStart(2,"0")+" 20:59:59.000000",timezone_type:3,timezone:"UTC"};}else{dt.setUTCDate(dt.getUTCDate()-1);return{date:dt.getUTCFullYear()+"-"+String(dt.getUTCMonth()+1).padStart(2,"0")+"-"+String(dt.getUTCDate()).padStart(2,"0")+" 21:00:00.000000",timezone_type:3,timezone:"UTC"};}}
+  function addDays(d,days){var p=d.split("-");var dt=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));dt.setDate(dt.getDate()+days-1);return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");}
+  function formatDateDisplay(s){if(!s)return"";var p=s.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
 
-  function animNum(id,val){
-    var el=document.getElementById(id);if(!el||el.innerText===String(val))return;
-    el.innerText=val;el.style.animation='aliCountUp 0.4s';setTimeout(function(){el.style.animation=''},400);
+  // INTERCEPT TOKEN
+  if(!window._fd_origFetch){
+    window._fd_origFetch=window.fetch;
+    window.fetch=function(){
+      var args=arguments;
+      if(args[1]&&args[1].headers){
+        var h=args[1].headers;var av=null;
+        if(h instanceof Headers){av=h.get("Authorization");}
+        else if(typeof h==="object"){av=h["Authorization"]||h["authorization"];}
+        if(av&&av.indexOf("Bearer")>-1){window._fd_capturedToken=av.replace("Bearer ","");}
+      }
+      return window._fd_origFetch.apply(this,args);
+    };
   }
-
-  function debounce(fn,d){var t;return function(){clearTimeout(t);t=setTimeout(fn,d)}}
-
-  async function fetchPageOrders(pn,cs){
-    var bu=window.location.origin+"/ez_pill_web/";
-    var res=await fetch(bu+'Home/getOrders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:cs,pageSelected:pn,searchby:''})});
-    return await res.json();
-  }
-
-  function parseRow(item){
-    return{
-      id:item.Invoice||'',
-      onl:item.onlineNumber||'',
-      name:item.guestName||'',
-      mobile:item.guestMobile||item.mobile||''
+  if(!window._fd_origSetHeader){
+    window._fd_origSetHeader=XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader=function(n,v){
+      if(n.toLowerCase()==="authorization"&&v.indexOf("Bearer")>-1){window._fd_capturedToken=v.replace("Bearer ","");}
+      return window._fd_origSetHeader.apply(this,arguments);
     };
   }
 
-  async function fetchAll(){
-    state.isProcessing=true;state.savedRows=[];state.visitedSet.clear();
-    var cs='new';
-    var failedPages=[];
-    updateProgress(0,0,0);
+  var apiFetch=window._fd_origFetch||window.fetch;
+  var ids=getIdsFromUrl();
+  if(!ids){log("Navigate to patient Treatments page first!","err");return;}
+  var API_BASE="https://amcoplusapi.farmadosis.com/api/installations/"+ids.installationId+"/centers/"+ids.centerId+"/patients/"+ids.patientId;
+  var API_ROOT="https://amcoplusapi.farmadosis.com/api/installations/"+ids.installationId;
+  log("Patient ID: "+ids.patientId,"info");
 
+  // Force token capture - make a dummy request using the app's own XHR
+  function triggerTokenCapture(){
     try{
-      setStatus('جاري الجلب المبدئي...','working');
-      var mp=parseInt(document.getElementById('ali2_p_lim').value)||1;
+      var xhr=new XMLHttpRequest();
+      xhr.open("GET",API_BASE,true);
+      xhr.setRequestHeader("Authorization","Bearer "+(getAuthToken()||""));
+      xhr.send();
+    }catch(e){}
+  }
 
-      var fd=await fetchPageOrders(1,cs);
-      if(fd.total_orders){var et=parseInt(fd.total_orders)||0;if(et>0){mp=Math.ceil(et/10);document.getElementById('ali2_p_lim').value=mp}}
+  // Update token status display
+  function updateTokenStatus(){
+    var token=getAuthToken();
+    var el=document.getElementById("fd-token-status");
+    if(token){
+      el.innerHTML="Token: <span style='color:green'>Found</span> ("+token.substring(0,15)+"...)";
+      el.style.borderColor="#4caf50";
+    }else{
+      el.innerHTML="Token: <span style='color:red'>Not found!</span> — Click any link in the app to capture it, then come back.";
+      el.style.borderColor="#f44336";
+    }
+  }
+  // Check token periodically
+  setInterval(updateTokenStatus, 2000);
+  updateTokenStatus();
 
-      var fo=[];try{fo=typeof fd.orders_list==='string'?JSON.parse(fd.orders_list):fd.orders_list}catch(e){}
-      if(fo&&fo.length>0){
-        for(var fi=0;fi<fo.length;fi++){
-          var fI=fo[fi].Invoice||'';
-          if(fI.length>2&&!state.visitedSet.has(fI)){state.visitedSet.add(fI);state.savedRows.push(parseRow(fo[fi]))}
+  // INTAKES
+  async function loadIntakes(){
+    var token=getAuthToken();if(!token)return;
+    try{
+      var resp=await apiFetch(API_ROOT+"/centers/"+ids.centerId+"/intakes-association",{headers:{Authorization:"Bearer "+token,Accept:"application/json, text/plain, */*"}});
+      if(resp.ok){var data=await resp.json();INTAKES=(Array.isArray(data)?data:data.data||[]).filter(function(i){return i.is_active;}).sort(function(a,b){return(a.hour*60+a.minute)-(b.hour*60+b.minute);});renderIntakeGrid();addLog("Loaded "+INTAKES.length+" dose times","ok");}
+    }catch(e){addLog("Intakes error: "+e.message,"err");}
+  }
+  function renderIntakeGrid(){
+    var g=document.getElementById("fd-intake-grid"),h="";
+    INTAKES.forEach(function(i){var ts=String(i.hour).padStart(2,"0")+":"+String(i.minute).padStart(2,"0");h+='<div class="fd-intake-item"><input type="checkbox" class="fd-intake-cb" data-id="'+i.id+'" data-hour="'+i.hour+'" data-minute="'+i.minute+'" /><span class="fd-intake-time">'+ts+'</span><span>'+i.name+'</span><input type="number" class="fd-intake-dose" value="1" min="0.25" step="0.25" title="Dose" /></div>';});
+    g.innerHTML=h;
+  }
+
+  // AUTO-CALC
+  function recalcEndDate(){var s=document.getElementById("fd-start-date").value,q=parseInt(document.getElementById("fd-qty").value)||0,sz=parseInt(document.getElementById("fd-size").value)||0,t=q*sz;document.getElementById("fd-total-days").value=t>0?t:"";var r=document.getElementById("fd-calc-result");if(s&&t>0){var e=addDays(s,t);document.getElementById("fd-end-date").value=e;r.style.display="block";r.innerHTML="End: "+formatDateDisplay(e)+" ("+t+" days)";}else{r.style.display="none";}}
+  function recalcAddEndDate(){var s=document.getElementById("fd-add-start").value,q=parseInt(document.getElementById("fd-add-qty").value)||0,sz=parseInt(document.getElementById("fd-add-size").value)||0,t=q*sz;document.getElementById("fd-add-total").value=t>0?t:"";var r=document.getElementById("fd-add-calc-result");if(s&&t>0){var e=addDays(s,t);document.getElementById("fd-add-end").value=e;r.style.display="block";r.innerHTML="End: "+formatDateDisplay(e)+" ("+t+" days)";}else{r.style.display="none";}}
+  document.getElementById("fd-start-date").addEventListener("change",recalcEndDate);
+  document.getElementById("fd-qty").addEventListener("input",recalcEndDate);
+  document.getElementById("fd-size").addEventListener("input",recalcEndDate);
+  document.getElementById("fd-add-start").addEventListener("change",recalcAddEndDate);
+  document.getElementById("fd-add-qty").addEventListener("input",recalcAddEndDate);
+  document.getElementById("fd-add-size").addEventListener("input",recalcAddEndDate);
+  var today=new Date();document.getElementById("fd-add-start").value=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+
+  // MEDICINE SEARCH - use XHR like the app does (not fetch)
+  var searchTimeout=null;
+  var selectedMedicine=null;
+
+  document.getElementById("fd-med-search").addEventListener("input",function(){
+    var q=this.value.trim();
+    if(q.length<3){document.getElementById("fd-search-results").style.display="none";return;}
+    clearTimeout(searchTimeout);
+    searchTimeout=setTimeout(function(){searchMedicine(q);},500);
+  });
+
+  async function searchMedicine(query){
+    var token=getAuthToken();
+    if(!token){addLog("Token not found! Click any link in Farmadosis app first.","err");return;}
+
+    clearLog("fd-add-log");
+    addLog("Searching: "+query,"info");
+
+    var url=API_ROOT+"/medicines/search?query="+encodeURIComponent(query)+"&with_count=false";
+    addLog("URL: "+url,"info");
+
+    // Try with fetch first
+    try{
+      var resp=await apiFetch(url,{
+        method:"GET",
+        headers:{
+          "Authorization":"Bearer "+token,
+          "Accept":"application/json, text/plain, */*",
+          "Accept-Language":"en-US,en;q=0.9"
+        }
+      });
+
+      addLog("Status: "+resp.status,"info");
+
+      if(resp.ok){
+        var text=await resp.text();
+        addLog("Response length: "+text.length,"info");
+
+        var data;
+        try{data=JSON.parse(text);}catch(e){addLog("Parse error: "+e.message,"err");return;}
+
+        var results=Array.isArray(data)?data:(data.data||[]);
+        addLog("Results count: "+results.length,"info");
+
+        var resultsEl=document.getElementById("fd-search-results");
+        if(results.length===0){
+          resultsEl.innerHTML='<div style="padding:10px;color:#999;text-align:center;">No results</div>';
+          resultsEl.style.display="block";
+          return;
+        }
+
+        var html="";
+        results.slice(0,20).forEach(function(med){
+          // Log first result for debug
+          if(html==="") addLog("First result keys: "+Object.keys(med).join(", "),"info");
+
+          var medData={
+            id:med.id, code:med.code, name:med.name,
+            pills_per_pack:med.pills_per_pack||1,
+            medicine_id:med.medicine_id||med.id,
+            imported_medicine_id:med.id
+          };
+          if(med.medicine&&med.medicine.id){medData.medicine_id=med.medicine.id;medData.imported_medicine_id=med.id;}
+
+          html+='<div class="fd-search-item" data-med=\''+JSON.stringify(medData).replace(/'/g,"&#39;")+'\'><strong>'+(med.code||"")+'</strong> - '+med.name+'</div>';
+        });
+        resultsEl.innerHTML=html;
+        resultsEl.style.display="block";
+        resultsEl.querySelectorAll(".fd-search-item").forEach(function(item){
+          item.onclick=function(){
+            selectedMedicine=JSON.parse(this.getAttribute("data-med"));
+            document.getElementById("fd-selected-med").style.display="block";
+            document.getElementById("fd-selected-med").innerHTML="Selected: <strong>"+selectedMedicine.code+"</strong> - "+selectedMedicine.name+"<br/><small>med_id:"+selectedMedicine.medicine_id+" imp_id:"+selectedMedicine.imported_medicine_id+"</small>";
+            document.getElementById("fd-search-results").style.display="none";
+            document.getElementById("fd-med-search").value=selectedMedicine.code+" - "+selectedMedicine.name;
+            if(selectedMedicine.pills_per_pack>1){document.getElementById("fd-add-size").value=selectedMedicine.pills_per_pack;recalcAddEndDate();}
+            addLog("Selected: "+selectedMedicine.code+" (med:"+selectedMedicine.medicine_id+" imp:"+selectedMedicine.imported_medicine_id+")","ok");
+          };
+        });
+      }else{
+        var errText=await resp.text();
+        addLog("Error: "+resp.status+" "+errText.substring(0,200),"err");
+
+        // If 401, token is bad
+        if(resp.status===401){
+          addLog("Token expired! Navigate in the app to get a new one.","err");
+          window._fd_capturedToken=null;
+          updateTokenStatus();
         }
       }
-      var done=1;updateProgress(1,mp,state.savedRows.length);
-
-      var BATCH=5;
-      for(var pg=2;pg<=mp;pg+=BATCH){
-        var batch=[];
-        for(var j=pg;j<pg+BATCH&&j<=mp;j++){
-          (function(pn){
-            batch.push(
-              fetchPageOrders(pn,cs).then(function(data){
-                var orders=[];try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
-                if(!orders||orders.length===0)return;
-                for(var i=0;i<orders.length;i++){
-                  var inv=orders[i].Invoice||'';
-                  if(inv.length>2&&!state.visitedSet.has(inv)){state.visitedSet.add(inv);state.savedRows.push(parseRow(orders[i]))}
-                }
-                done++;updateProgress(done,mp,state.savedRows.length);
-                setStatus('جلب '+done+'/'+mp+' صفحة...','working');
-              }).catch(function(e){console.warn('فشل صفحة '+pn,e);failedPages.push(pn);done++;updateProgress(done,mp,state.savedRows.length)})
-            );
-          })(j);
-        }
-        await Promise.all(batch);
-        if(pg+BATCH<=mp)await sleep(250);
-      }
-
-      updateProgress(mp,mp,state.savedRows.length);
-      if(failedPages.length>0)showToast('تنبيه: '+failedPages.length+' صفحة لم تُجلب','warning');
-      setStatus('تم جلب '+state.savedRows.length+' طلب جديد','done');
-      showToast('تم جلب '+state.savedRows.length+' طلب بنجاح','success');
-      animNum('s2_total',state.savedRows.length);animNum('s2_match',state.savedRows.length);
-      buildSearchUI();
     }catch(err){
-      console.error(err);setStatus('خطأ في الاتصال بالخادم','error');showToast('مشكلة في جلب البيانات!','error');
-    }finally{state.isProcessing=false}
+      addLog("Fetch error: "+err.message,"err");
+
+      // Fallback: try XHR
+      addLog("Trying XHR fallback...","info");
+      try{
+        var result=await new Promise(function(resolve,reject){
+          var xhr=new XMLHttpRequest();
+          xhr.open("GET",url,true);
+          xhr.setRequestHeader("Authorization","Bearer "+token);
+          xhr.setRequestHeader("Accept","application/json, text/plain, */*");
+          xhr.onload=function(){resolve({status:xhr.status,text:xhr.responseText});};
+          xhr.onerror=function(){reject(new Error("XHR failed"));};
+          xhr.send();
+        });
+        addLog("XHR status: "+result.status,"info");
+        if(result.status===200){
+          var xdata=JSON.parse(result.text);
+          var xresults=Array.isArray(xdata)?xdata:(xdata.data||[]);
+          addLog("XHR results: "+xresults.length,"ok");
+        }
+      }catch(xe){addLog("XHR error: "+xe.message,"err");}
+    }
   }
 
-  function buildSearchUI(){
-    var ma=document.getElementById('ali2_main_area');
-    ma.innerHTML=
-      '<div class="ios-grp" style="padding:14px 16px">'+
+  // LOAD TREATMENTS
+  async function loadTreatments(){
+    clearLog("fd-log");log("Loading...","info");
+    var token=getAuthToken();if(!token){log("Token not found.","err");return false;}
+    try{
+      var resp=await apiFetch(API_BASE+"/treatments",{headers:{Authorization:"Bearer "+token,Accept:"application/json, text/plain, */*"}});
+      if(!resp.ok){log("Failed: "+resp.status,"err");return false;}
+      var data=await resp.json();window._fd_allTreatments=Array.isArray(data)?data:(data.data||data.treatments||[]);
+      log("Found "+window._fd_allTreatments.length,"ok");renderList();return true;
+    }catch(err){log("Error: "+err.message,"err");return false;}
+  }
+  function renderList(){
+    var ao=document.getElementById("fd-filter-active").checked;var list=window._fd_allTreatments||[];
+    var filtered=list.filter(function(t){return ao?t.is_active!==false:true;});window._fd_treatments=filtered;
+    var el=document.getElementById("fd-treat-list");el.innerHTML="";
+    var html='<label><input type="checkbox" id="fd-select-all" checked /> <b>Select All ('+filtered.length+')</b></label>';
+    filtered.forEach(function(t,i){var n=(t.medicine?t.medicine.name:t.medicine_code)||"?";var sd=extractDate(t.starts_at)||extractDate(t.starts_at_8601)||"-";var ed=extractDate(t.ends_at)||extractDate(t.ends_at_8601)||"-";
+      html+='<div class="fd-treat-item"><input type="checkbox" class="fd-treat-cb" data-index="'+i+'" checked /><div><strong style="font-size:12px;">'+n+'</strong><br/><span class="fd-tid">ID:'+t.id+'</span><br/><span class="fd-dates">'+sd+' &rarr; '+ed+'</span></div></div>';});
+    el.innerHTML=html;document.getElementById("fd-date-section").style.display="block";document.getElementById("fd-filter-section").style.display="block";document.getElementById("fd-refresh-btn").style.display="none";
+    log("Showing "+filtered.length,"info");
+    document.getElementById("fd-select-all").onchange=function(){var cbs=document.querySelectorAll(".fd-treat-cb");for(var c=0;c<cbs.length;c++)cbs[c].checked=this.checked;};
+  }
+  document.getElementById("fd-filter-active").onchange=function(){renderList();};
+  document.getElementById("fd-load-btn").onclick=async function(){this.disabled=true;await loadTreatments();this.disabled=false;};
+  document.getElementById("fd-refresh-btn").onclick=async function(){this.disabled=true;await loadTreatments();this.disabled=false;};
 
-        // ✅ بحث برقم الفاتورة — 0 ثابت + باقي الأرقام
-        '<div style="margin-bottom:8px">'+
-          '<div style="font-size:11px;font-weight:700;color:'+IOS.muted+';margin-bottom:4px;padding-right:4px">🔢 رقم الفاتورة</div>'+
-          '<div style="position:relative">'+
-            '<span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:900;color:'+IOS.muted+';pointer-events:none;font-family:monospace;z-index:1">0</span>'+
-            '<input type="text" id="ali2_sInv" inputmode="numeric" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="padding-right:30px;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace;font-weight:700">'+
-          '</div>'+
-        '</div>'+
-
-        // ✅ بحث برقم الصيدلية — أول 4 أرقام بعد الـ 0 (نفس منطق الفاتورة بس 4 أرقام بس)
-        '<div style="margin-bottom:8px">'+
-          '<div style="font-size:11px;font-weight:700;color:'+IOS.muted+';margin-bottom:4px;padding-right:4px">🏪 رقم الصيدلية <span style="font-weight:600;color:'+IOS.accent+'">(4 أرقام بعد الـ 0)</span></div>'+
-          '<div style="position:relative">'+
-            '<span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:900;color:'+IOS.muted+';pointer-events:none;font-family:monospace;z-index:1">0</span>'+
-            '<input type="text" id="ali2_sPha" inputmode="numeric" maxlength="4" class="ios-input" placeholder="مثال: 1234 ← يبحث بـ 01234" style="padding-right:30px;direction:ltr;text-align:left;letter-spacing:2px;font-family:monospace;font-weight:700">'+
-          '</div>'+
-        '</div>'+
-
-        // ✅ بحث برقم الطلب ERX
-        '<div>'+
-          '<div style="font-size:11px;font-weight:700;color:'+IOS.muted+';margin-bottom:4px;padding-right:4px">🔗 رقم الطلب (ERX)</div>'+
-          '<input type="text" id="ali2_sOnl" class="ios-input" placeholder="ابحث برقم الطلب ERX..." style="direction:ltr;text-align:left;font-family:monospace">'+
-        '</div>'+
-
-      '</div>'+
-
-      '<div id="ali2_count" style="font-size:11px;color:'+IOS.muted+';text-align:center;font-weight:600;padding:2px 0 10px">عرض '+state.savedRows.length+' من '+state.savedRows.length+' نتيجة</div>'+
-
-      '<div class="ios-grp" id="ali2_results" style="max-height:340px;overflow-y:auto;padding:0"></div>'+
-
-      '<button id="ali2_reset" class="ios-btn ios-ghost" style="margin-top:8px">🔄 إعادة الجلب</button>';
-
-    renderResults(state.savedRows);
-
-    var sInv=document.getElementById('ali2_sInv');
-    var sPha=document.getElementById('ali2_sPha');
-    var sOnl=document.getElementById('ali2_sOnl');
-
-    function doSearch(){
-      var riRaw=sInv.value.trim();
-      var phRaw=sPha.value.trim();
-      var os=sOnl.value.trim().toLowerCase();
-
-      // ✅ رقم الفاتورة: 0 + ما كتبه المستخدم
-      var invFilter=riRaw!==''?('0'+riRaw):'';
-      // ✅ رقم الصيدلية: أول 5 أرقام من الفاتورة = 0 + 4 أرقام
-      var phaFilter=phRaw!==''?('0'+phRaw):'';
-
-      var hf=invFilter!==''||phaFilter!==''||os!=='';
-      var matched=[];
-
-      for(var i=0;i<state.savedRows.length;i++){
-        var rw=state.savedRows[i];
-        var idLow=rw.id.toLowerCase();
-
-        // بحث برقم الفاتورة — startsWith كامل
-        var mi=invFilter!==''&&idLow.startsWith(invFilter.toLowerCase());
-
-        // ✅ بحث برقم الصيدلية — أول 5 أرقام من رقم الفاتورة
-        // يطابق فقط لو الـ 5 أرقام الأولى مساوية لـ 0+الأربعة أرقام
-        var mp=phaFilter!==''&&idLow.substring(0,phaFilter.length)===phaFilter.toLowerCase();
-
-        // بحث برقم الطلب ERX
-        var mo=os!==''&&rw.onl.toLowerCase().indexOf(os)!==-1;
-
-        var ok=hf?(mi||mp||mo):true;
-        if(ok)matched.push(rw);
-      }
-
-      renderResults(matched);
-      var sc=document.getElementById('ali2_count');
-      if(sc)sc.innerText='عرض '+matched.length+' من '+state.savedRows.length+' نتيجة';
-      animNum('s2_match',matched.length);
-
-      // ✅ تلوين الخانات
-      sInv.className='ios-input'+(riRaw.length>0?(matched.length>0?' match':' nomatch'):'');
-      sPha.className='ios-input'+(phRaw.length>0?(matched.length>0?' match':' nomatch'):'');
-      sOnl.className='ios-input'+(os.length>0?(matched.length>0?' match':' nomatch'):'');
+  // UPDATE
+  document.getElementById("fd-update-btn").onclick=async function(){
+    var ns=document.getElementById("fd-start-date").value,ne=document.getElementById("fd-end-date").value;
+    if(!ns||!ne){log("Set both dates!","err");return;}var token=getAuthToken();if(!token){log("Token!","err");return;}
+    var sel=document.querySelectorAll(".fd-treat-cb:checked");if(sel.length===0){log("None selected","err");return;}
+    if(!confirm("Update "+sel.length+" treatments?\nStart: "+ns+"\nEnd: "+ne))return;
+    this.disabled=true;document.getElementById("fd-load-btn").disabled=true;document.getElementById("fd-progress-wrap").style.display="block";
+    clearLog("fd-log");log("Updating "+sel.length+"...","info");var ok=0,fail=0,tot=sel.length;
+    for(var s=0;s<sel.length;s++){
+      var idx=parseInt(sel[s].getAttribute("data-index")),t=window._fd_treatments[idx],tn=(t.medicine?t.medicine.name:t.medicine_code)||"?";
+      setProgress(Math.round(((s+1)/tot)*100));
+      try{var gr=await apiFetch(API_BASE+"/treatments/"+t.id,{headers:{Authorization:"Bearer "+token,Accept:"application/json, text/plain, */*"}});
+        if(!gr.ok){log("["+tn+"] Load fail","err");fail++;continue;}var fd=await gr.json();
+        fd.starts_at=ns;fd.ends_at=ne;fd.starts_at_8601=toUTCDate(ns,false);fd.ends_at_8601=toUTCDate(ne,true);
+        var sp=ns.split("-"),sdd=new Date(Date.UTC(parseInt(sp[0]),parseInt(sp[1])-1,parseInt(sp[2])));sdd.setUTCDate(sdd.getUTCDate()-1);sdd.setUTCHours(21,0,0,0);fd.startsAtLocal=sdd.toISOString();
+        var pr=await apiFetch(API_BASE+"/treatments/"+t.id+"/update",{method:"PUT",headers:{Authorization:"Bearer "+token,Accept:"application/json, text/plain, */*","Content-Type":"application/json"},body:JSON.stringify(fd)});
+        if(pr.ok){log("("+(s+1)+"/"+tot+") ["+tn+"] Done","ok");ok++;}else{log("["+tn+"] Error "+pr.status,"err");fail++;}
+      }catch(e){log("["+tn+"] "+e.message,"err");fail++;}
+      await new Promise(function(r){setTimeout(r,300);});
     }
+    log("===== DONE: "+ok+" ok, "+fail+" failed =====",ok>0?"ok":"err");
+    this.disabled=false;document.getElementById("fd-load-btn").disabled=false;document.getElementById("fd-progress-wrap").style.display="none";document.getElementById("fd-refresh-btn").style.display="block";
+  };
 
-    var df=debounce(doSearch,150);
-    sInv.addEventListener('input',df);
-    sPha.addEventListener('input',df);
-    sOnl.addEventListener('input',df);
-
-    document.getElementById('ali2_reset').addEventListener('click',function(){
-      if(state.isProcessing)return;
-      var ma2=document.getElementById('ali2_main_area');
-      ma2.innerHTML='<button id="ali2_start" class="ios-btn ios-primary" style="font-size:15px;padding:16px;margin-bottom:8px">🚀 جلب كل الطلبات الجديدة</button>';
-      state.savedRows=[];state.visitedSet.clear();
-      animNum('s2_total',0);animNum('s2_match',0);
-      updateProgress(0,0,0);
-      setStatus('جاهز للبدء','ready');
-      document.getElementById('ali2_start').addEventListener('click',startFetch);
+  // ADD TREATMENT
+  document.getElementById("fd-add-btn").onclick=async function(){
+    clearLog("fd-add-log");
+    if(!selectedMedicine){addLog("Select a medicine first!","err");return;}
+    var startDate=document.getElementById("fd-add-start").value,endDate=document.getElementById("fd-add-end").value;
+    if(!startDate||!endDate){addLog("Set both dates!","err");return;}
+    var token=getAuthToken();if(!token){addLog("Token!","err");return;}
+    var intakeChecks=document.querySelectorAll(".fd-intake-cb:checked");
+    if(intakeChecks.length===0){addLog("Select at least one dose time!","err");return;}
+    var freqMinutes=parseInt(document.getElementById("fd-add-freq").value)||1440;
+    var notes=document.getElementById("fd-add-notes").value||"";
+    var configs=[];
+    intakeChecks.forEach(function(cb){
+      var dose=parseFloat(cb.closest(".fd-intake-item").querySelector(".fd-intake-dose").value)||1;
+      var hour=parseInt(cb.getAttribute("data-hour")),minute=parseInt(cb.getAttribute("data-minute"));
+      configs.push({first_take:startDate+" "+String(hour).padStart(2,"0")+":"+String(minute).padStart(2,"0"),firstTake8601:"",dose:dose,days_to_take:null,range_to_take:null,minutes_interval:freqMinutes,days_in_months:null,month_ids:[]});
     });
-  }
+    var medId=selectedMedicine.medicine_id||selectedMedicine.id;
+    var impId=selectedMedicine.imported_medicine_id||selectedMedicine.id;
+    var td={medicine_code:selectedMedicine.code,medicine_id:medId,imported_medicine_id:impId,patient_id:parseInt(ids.patientId),treatment_plan_id:3,starts_at:startDate,ends_at:endDate,starts_at_8601:toUTCDate(startDate,false),ends_at_8601:toUTCDate(endDate,true),emblist_it:true,emblist_it_real:true,is_active:true,is_if_needed_treatment:false,is_replaceable:false,is_sintrom:false,emblist_in_unique_bag:false,force_medicine_code_in_production:false,notes:notes,doctor_id:null,administration_route_id:null,external_id:null,medicine_family_id:null,previous_treatment_id:null,configs:configs,treatment_configs:configs.map(function(c){var tp=c.first_take.split(" ")[1].split(":");return{first_take_8601:{date:startDate+" "+tp[0]+":"+tp[1]+":00.000000",timezone_type:3,timezone:"UTC"},days_to_take:null,minutes_interval:c.minutes_interval,range_to_take:null,dose:c.dose,days_in_months:null,month_ids:[],hour:parseInt(tp[0]),minute:parseInt(tp[1]),weekday:1};})};
+    var sp2=startDate.split("-"),sd2=new Date(Date.UTC(parseInt(sp2[0]),parseInt(sp2[1])-1,parseInt(sp2[2])));sd2.setUTCDate(sd2.getUTCDate()-1);sd2.setUTCHours(21,0,0,0);td.startsAtLocal=sd2.toISOString();
+    addLog("Sending: med_id="+medId+" imp_id="+impId+" code="+selectedMedicine.code,"info");
+    if(!confirm("Add: "+selectedMedicine.code+" - "+selectedMedicine.name+"\n"+startDate+" to "+endDate+"\nDoses: "+intakeChecks.length))return;
+    this.disabled=true;addLog("Creating...","info");
+    try{
+      var resp=await apiFetch(API_BASE+"/treatments/create",{method:"POST",headers:{Authorization:"Bearer "+token,Accept:"application/json, text/plain, */*","Content-Type":"application/json"},body:JSON.stringify(td)});
+      var rt=await resp.text();addLog("Response "+resp.status+": "+rt.substring(0,300),resp.ok?"ok":"err");
+      if(resp.ok){selectedMedicine=null;document.getElementById("fd-selected-med").style.display="none";document.getElementById("fd-med-search").value="";document.querySelectorAll(".fd-intake-cb:checked").forEach(function(cb){cb.checked=false;});}
+    }catch(err){addLog("Error: "+err.message,"err");}
+    this.disabled=false;
+  };
 
-  function renderResults(rows){
-    var box=document.getElementById('ali2_results');if(!box)return;
-    if(rows.length===0){
-      box.innerHTML='<div style="padding:24px;text-align:center;color:'+IOS.muted+';font-size:13px;font-weight:600">لا توجد نتائج مطابقة</div>';
-      return;
-    }
-    var h='';
-    // ✅ استخراج رقم الصيدلية من أول 5 أرقام من الفاتورة
-    for(var i=0;i<Math.min(rows.length,200);i++){
-      var r=rows[i];
-      var pharmaCode=r.id.length>=5?r.id.substring(0,5):'';
-      var pBadge=pharmaCode?'<span class="badge" style="background:rgba(99,102,241,0.08);color:'+IOS.accent+'">🏪 '+esc(pharmaCode)+'</span>':'';
-      var onlBadge=r.onl?'<span class="badge" style="background:rgba(34,197,94,0.08);color:#22c55e">'+esc(r.onl)+'</span>':'';
-      h+='<div class="res-row">'+
-        '<div style="display:flex;align-items:center;justify-content:space-between">'+
-          '<div class="res-inv">'+esc(r.id)+'</div>'+
-          '<div style="display:flex;gap:4px">'+onlBadge+pBadge+'</div>'+
-        '</div>'+
-        '<div class="res-meta">'+
-          (r.name?'<span>👤 '+esc(r.name)+'</span>':'')+
-          (r.mobile?'<span>📱 '+esc(r.mobile)+'</span>':'')+
-        '</div>'+
-      '</div>';
-    }
-    if(rows.length>200)h+='<div style="padding:12px;text-align:center;font-size:11px;color:'+IOS.muted+';font-weight:600">... و '+(rows.length-200)+' نتيجة أخرى — ضيّق البحث</div>';
-    box.innerHTML=h;
-  }
-
-  function startFetch(){
-    if(state.isProcessing)return;
-    var btn=document.getElementById('ali2_start');
-    if(btn){btn.disabled=true;btn.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الجلب...';btn.style.opacity='0.7'}
-    fetchAll();
-  }
-
-  document.getElementById('ali2_start').addEventListener('click',startFetch);
+  // INIT
+  loadIntakes();
+  triggerTokenCapture();
+  log("Ready!","ok");
+  addLog("Search for a medicine to start.","info");
 })();
