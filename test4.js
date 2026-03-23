@@ -143,7 +143,7 @@ else if(!autoDetected&&isFarmadosisPatients){
   };
 }
 
-/* ── 4. Details Page → EZPillAddDrug (4 buttons check) ── */
+/* ── 4. Details Page → EZPillAddDrug (4 buttons) or Export tab ── */
 else if(!autoDetected&&isDetails){
   var btns=document.querySelectorAll('input[type="button"],input[type="submit"],button,a');
   var hasPacked=false,hasDownload=false,hasAI=false,hasCancel=false;
@@ -155,29 +155,66 @@ else if(!autoDetected&&isDetails){
     if(t.indexOf('cancel')>-1)hasCancel=true;
   }
   if(hasPacked&&hasDownload&&hasAI&&hasCancel){
+    // طلب مفتوح → إضافة صنف
     autoDetected=true;
     setTimeout(function(){
       loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
     },300);
+  } else {
+    // طلب مقفل (head_id فيه رقم) → بانيل مع تاب تصدير
+    autoDetected=true;
+    buildPanel('export');
   }
 }
 
-/* ── 5. Home Page → Search (accepted) or Close (packed) ── */
+/* ── 5. Home Page → Search (ready to pack) or Close (packed) ── */
 else if(!autoDetected&&isHomePage){
-  var statusCells=document.querySelectorAll('table td');
-  var firstStatus='';
-  for(var si=0;si<statusCells.length;si++){
-    var stxt=statusCells[si].textContent.trim().toLowerCase();
-    if(stxt==='packed'||stxt==='accepted'||stxt==='received'){
-      firstStatus=stxt;break;
+  // نشوف الكارد اللى عليه الـ highlight الأزرق (active/selected)
+  var activeCardText='';
+  var allCards=document.querySelectorAll('div,section,article');
+  for(var ci=0;ci<allCards.length;ci++){
+    var cs=window.getComputedStyle(allCards[ci]);
+    var bg=cs.backgroundColor||'';
+    // الكارد المحدد بيكون ليه خلفية زرقاء
+    if(bg.indexOf('rgb(59')>-1||bg.indexOf('rgb(96')>-1||bg.indexOf('rgb(37')>-1||
+       allCards[ci].style.background&&allCards[ci].style.background.indexOf('blue')>-1){
+      var cardTxt=(allCards[ci].textContent||'').toLowerCase();
+      if(cardTxt.indexOf('ready to pack')>-1){activeCardText='readytopack';break}
+      if(cardTxt.indexOf('packed')>-1&&cardTxt.indexOf('ready')<0){activeCardText='packed';break}
     }
   }
-  if(firstStatus==='packed'){
+  // fallback: نشوف عمود الـ Status بالضبط
+  if(!activeCardText){
+    var tables=document.querySelectorAll('table');
+    for(var ti=0;ti<tables.length;ti++){
+      var headers=tables[ti].querySelectorAll('th');
+      var statusColIndex=-1;
+      for(var hi=0;hi<headers.length;hi++){
+        if((headers[hi].textContent||'').toLowerCase().trim()==='status'){
+          statusColIndex=hi;break;
+        }
+      }
+      if(statusColIndex>-1){
+        var dataRows=tables[ti].querySelectorAll('tr');
+        for(var ri=1;ri<dataRows.length;ri++){
+          var cells=dataRows[ri].querySelectorAll('td');
+          if(cells[statusColIndex]){
+            var sv=cells[statusColIndex].textContent.trim().toLowerCase();
+            if(sv==='packed'){activeCardText='packed';break}
+            if(sv==='accepted'){activeCardText='readytopack';break}
+          }
+        }
+      }
+      if(activeCardText)break;
+    }
+  }
+  if(activeCardText==='packed'){
     autoDetected=true;
     setTimeout(function(){
       loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);
     },300);
-  } else if(firstStatus==='accepted'){
+  } else if(activeCardText==='readytopack'||activeCardText===''){
+    // لو مش عارف نحدد → افتراضياً Search_Order (ready to pack أكثر استخداماً)
     autoDetected=true;
     setTimeout(function(){
       loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);
@@ -254,12 +291,14 @@ function jvmDownload(){
 /* ══════════════════════════════════════
    Build Main Panel
    ══════════════════════════════════════ */
-function buildPanel(){
+function buildPanel(forceTab){
 
-  var startTab='orders';
-  if(isFarmadosis||isFareye)startTab='tools';
-  else if(isPrint)startTab='tools';
-  else if(isDetails)startTab='tools';
+  var startTab=forceTab||'orders';
+  if(!forceTab){
+    if(isFarmadosis||isFareye)startTab='tools';
+    else if(isPrint)startTab='tools';
+    else if(isDetails)startTab='tools';
+  }
 
   var ctxMap={
     'orders':{icon:'📋',text:'قائمة الطلبات',color:'#6366f1',bg:'rgba(99,102,241,0.08)'},
