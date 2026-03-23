@@ -169,52 +169,36 @@ else if(!autoDetected&&isDetails){
 
 /* ── 5. Home Page → Search (ready to pack) or Close (packed) ── */
 else if(!autoDetected&&isHomePage){
-  // نشوف الكارد اللى عليه الـ highlight الأزرق (active/selected)
-  var activeCardText='';
-  var allCards=document.querySelectorAll('div,section,article');
-  for(var ci=0;ci<allCards.length;ci++){
-    var cs=window.getComputedStyle(allCards[ci]);
-    var bg=cs.backgroundColor||'';
-    // الكارد المحدد بيكون ليه خلفية زرقاء
-    if(bg.indexOf('rgb(59')>-1||bg.indexOf('rgb(96')>-1||bg.indexOf('rgb(37')>-1||
-       allCards[ci].style.background&&allCards[ci].style.background.indexOf('blue')>-1){
-      var cardTxt=(allCards[ci].textContent||'').toLowerCase();
-      if(cardTxt.indexOf('ready to pack')>-1){activeCardText='readytopack';break}
-      if(cardTxt.indexOf('packed')>-1&&cardTxt.indexOf('ready')<0){activeCardText='packed';break}
+  // نلاقي عمود Status بالاسم الصح
+  var detectedMode='';
+  var tables=document.querySelectorAll('table');
+  outer:for(var ti=0;ti<tables.length;ti++){
+    var headers=tables[ti].querySelectorAll('th');
+    var statusColIndex=-1;
+    for(var hi=0;hi<headers.length;hi++){
+      if((headers[hi].textContent||'').toLowerCase().trim()==='status'){
+        statusColIndex=hi;break;
+      }
     }
-  }
-  // fallback: نشوف عمود الـ Status بالضبط
-  if(!activeCardText){
-    var tables=document.querySelectorAll('table');
-    for(var ti=0;ti<tables.length;ti++){
-      var headers=tables[ti].querySelectorAll('th');
-      var statusColIndex=-1;
-      for(var hi=0;hi<headers.length;hi++){
-        if((headers[hi].textContent||'').toLowerCase().trim()==='status'){
-          statusColIndex=hi;break;
+    if(statusColIndex>-1){
+      var dataRows=tables[ti].querySelectorAll('tr');
+      for(var ri=1;ri<dataRows.length;ri++){
+        var cells=dataRows[ri].querySelectorAll('td');
+        if(cells[statusColIndex]){
+          var sv=cells[statusColIndex].textContent.trim().toLowerCase();
+          if(sv==='accepted'){detectedMode='readytopack';break outer;}
+          if(sv==='packed'||sv==='fulfilled'||sv==='received'){detectedMode='packed';break outer;}
         }
       }
-      if(statusColIndex>-1){
-        var dataRows=tables[ti].querySelectorAll('tr');
-        for(var ri=1;ri<dataRows.length;ri++){
-          var cells=dataRows[ri].querySelectorAll('td');
-          if(cells[statusColIndex]){
-            var sv=cells[statusColIndex].textContent.trim().toLowerCase();
-            if(sv==='packed'){activeCardText='packed';break}
-            if(sv==='accepted'){activeCardText='readytopack';break}
-          }
-        }
-      }
-      if(activeCardText)break;
     }
   }
-  if(activeCardText==='packed'){
+  if(detectedMode==='packed'){
     autoDetected=true;
     setTimeout(function(){
       loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);
     },300);
-  } else if(activeCardText==='readytopack'||activeCardText===''){
-    // لو مش عارف نحدد → افتراضياً Search_Order (ready to pack أكثر استخداماً)
+  } else {
+    // accepted أو مش قادر يحدد → Search_Order
     autoDetected=true;
     setTimeout(function(){
       loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);
