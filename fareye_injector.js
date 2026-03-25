@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '3.4';
+  var VERSION = '3.5';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -36,12 +36,7 @@ javascript:(function(){
       ov.addEventListener('click',function(e){
         if (resolved) return;
         var b=e.target.closest('[data-fey-btn]');
-        if(b){
-          resolved = true;
-          var val = o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value;
-          ov.remove();
-          resolve(val);
-        }
+        if(b){ resolved = true; ov.remove(); resolve(o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value); }
       });
       document.body.appendChild(ov);
     });
@@ -76,7 +71,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.4</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.5</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -84,9 +79,7 @@ javascript:(function(){
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_s_d" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
         '</div>'+
-
         '<button id="fey_alloc_direct" style="width:100%;padding:13px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.3);transition:all 0.3s;margin-bottom:14px">📦 Allocate طلبات الصفحة الحالية</button>'+
-
         '<div id="fey_main">'+
           '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
             '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
@@ -109,16 +102,11 @@ javascript:(function(){
     '</div>';
   document.body.appendChild(panel);
 
-  // ─── Helpers ───
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
   function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'},paused:{bg:'#eff6ff',co:'#1d4ed8',bo:'#bfdbfe',ic:'⏸️'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
-
-  // ═══════════════════════════════════════════════════════════════
-  //  Shared Helpers
-  // ═══════════════════════════════════════════════════════════════
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
@@ -132,35 +120,14 @@ javascript:(function(){
       }
     }
     var allTh = document.querySelectorAll('thead th');
-    for (var h = 0; h < allTh.length; h++) {
-      if ((allTh[h].textContent || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return h;
-    }
+    for (var h = 0; h < allTh.length; h++) { if ((allTh[h].textContent || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return h; }
     return -1;
   }
 
-  function getRows() {
-    var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]');
-    if (!rows.length) rows = document.querySelectorAll('tbody tr');
-    return rows;
-  }
-
-  function getRowStatus(row, colIndex) {
-    var cells = row.querySelectorAll('td');
-    if (colIndex >= cells.length) return '';
-    return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
-  }
-
-  function countRowsByStatus(status) {
-    var col = getFlowColIndex(); if (col === -1) return 0;
-    var rows = getRows(); var count = 0;
-    for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; }
-    return count;
-  }
-
-  function isRowChecked(row) {
-    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
-    return cb && cb.checked;
-  }
+  function getRows() { var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]'); if (!rows.length) rows = document.querySelectorAll('tbody tr'); return rows; }
+  function getRowStatus(row, colIndex) { var cells = row.querySelectorAll('td'); if (colIndex >= cells.length) return ''; return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase(); }
+  function countRowsByStatus(status) { var col = getFlowColIndex(); if (col === -1) return 0; var rows = getRows(); var count = 0; for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; } return count; }
+  function isRowChecked(row) { var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]'); return cb && cb.checked; }
 
   async function checkRow(row) {
     var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
@@ -196,9 +163,7 @@ javascript:(function(){
       if (status.indexOf('delivery') !== -1) {
         if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
         skipped++;
-      } else {
-        await checkRow(rows[r]); selected++; await wait(50);
-      }
+      } else { await checkRow(rows[r]); selected++; await wait(50); }
     }
     return { selected:selected, skipped:skipped };
   }
@@ -238,15 +203,8 @@ javascript:(function(){
     return countRowsByStatus(status) === 0;
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  //  🔍 البحث عن الأزرار — بسيط ومباشر + حماية reject مطلقة
-  // ═══════════════════════════════════════════════════════════════
+  function isReject(txt) { return txt.toLowerCase().indexOf('reject') !== -1; }
 
-  function isReject(txt) {
-    return txt.toLowerCase().indexOf('reject') !== -1;
-  }
-
-  // البحث عن عنصر بنص معين (بدون فتح أي شيء)
   function findButtonByText(textMatch) {
     var textLower = textMatch.toLowerCase();
     var allEl = document.querySelectorAll('span, button, li, a, div[role="menuitem"], li[role="menuitem"]');
@@ -260,39 +218,25 @@ javascript:(function(){
     return null;
   }
 
-  // فتح dropdown واحد بشكل آمن (بدون لمس reject)
   async function openOneDropdown() {
     var triggers = document.querySelectorAll('.ant-dropdown-trigger, button.ant-dropdown-trigger');
     for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].offsetParent !== null && !isReject((triggers[i].innerText||''))) {
-        triggers[i].click();
-        await wait(400);
-        return true;
-      }
+      if (triggers[i].offsetParent !== null && !isReject((triggers[i].innerText||''))) { triggers[i].click(); await wait(400); return true; }
     }
     var arrows = document.querySelectorAll('.anticon-down, .anticon-ellipsis');
-    for (var j = 0; j < arrows.length; j++) {
-      if (arrows[j].offsetParent !== null) { arrows[j].click(); await wait(400); return true; }
-    }
+    for (var j = 0; j < arrows.length; j++) { if (arrows[j].offsetParent !== null) { arrows[j].click(); await wait(400); return true; } }
     return false;
   }
 
-  // الضغط على زر action — يحاول يلاقيه، لو مش موجود يفتح dropdown ويدور تاني
   async function clickAction(textMatch) {
-    // محاولة 1: ابحث مباشرة
     var el = findButtonByText(textMatch);
     if (el) { el.click(); await wait(500); return true; }
-
-    // محاولة 2: افتح dropdown وابحث
     await openOneDropdown();
     el = findButtonByText(textMatch);
     if (el) { el.click(); await wait(500); return true; }
-
-    // محاولة 3: استنى وجرب تاني
     await wait(600);
     el = findButtonByText(textMatch);
     if (el) { el.click(); await wait(500); return true; }
-
     return false;
   }
 
@@ -306,15 +250,9 @@ javascript:(function(){
       || document.querySelector('input.ant-select-selection-search-input')
       || document.querySelector('input[aria-haspopup="listbox"]');
   }
-
   function getSelector() { var input = getInput(); if (!input) return null; return input.closest('.ant-select-selector') || input.closest('.ant-select'); }
   function countTags() { return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length; }
-
-  async function waitForOpen(input, timeout) {
-    var start = Date.now();
-    while (Date.now() - start < timeout) { if (input.getAttribute('aria-expanded') === 'true') return true; await wait(50); }
-    return false;
-  }
+  async function waitForOpen(input, timeout) { var start = Date.now(); while (Date.now() - start < timeout) { if (input.getAttribute('aria-expanded') === 'true') return true; await wait(50); } return false; }
 
   async function forceOpenSelect() {
     var input = getInput(); var selector = getSelector();
@@ -324,18 +262,14 @@ javascript:(function(){
     selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
     selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
     await wait(50); input.focus(); await wait(50);
-    if (input.getAttribute('aria-expanded') !== 'true') {
-      var overflow = document.querySelector('.ant-select-selection-overflow');
-      if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); }
-    }
+    if (input.getAttribute('aria-expanded') !== 'true') { var overflow = document.querySelector('.ant-select-selection-overflow'); if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); } }
     if (input.getAttribute('aria-expanded') !== 'true') { input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true })); await wait(50); }
     return await waitForOpen(input, 400);
   }
 
   async function injectOne(orderNum) {
     var input = getInput(); if (!input) return false;
-    var tagsBefore = countTags();
-    await forceOpenSelect();
+    var tagsBefore = countTags(); await forceOpenSelect();
     nativeSetter.call(input, ''); input.dispatchEvent(new Event('input', { bubbles:true })); await wait(30);
     input.focus(); document.execCommand('selectAll', false); document.execCommand('delete', false); document.execCommand('insertText', false, orderNum); await wait(50);
     if (input.value !== orderNum) { nativeSetter.call(input, orderNum); input.dispatchEvent(new Event('input', { bubbles:true })); input.dispatchEvent(new Event('change', { bubbles:true })); input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum })); }
@@ -388,19 +322,12 @@ javascript:(function(){
   function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
   document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
 
-  document.getElementById('fey_alloc_direct').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    await runAllocate();
-  });
+  document.getElementById('fey_alloc_direct').addEventListener('click', async function() { if (state.isRunning) return; await runAllocate(); });
 
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
     var input = getInput();
-    if (!input) {
-      await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye الصحيحة',
-        buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
-      return;
-    }
+    if (!input) { await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye الصحيحة',buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]}); return; }
     startBtn.disabled = true; startBtn.style.opacity = '0.8'; startBtn.innerHTML = '👆 المس الخانة...';
     for (var sec = 5; sec > 0; sec--) { setSt('👆 المس الخانة الآن! (' + sec + ')', 'waiting'); await wait(1000); }
     setSt('🚀 جاري الرفع...', 'working');
@@ -415,27 +342,16 @@ javascript:(function(){
       startBtn.innerHTML = '📤 ' + (i+1) + '/' + state.orders.length;
       var ok = await injectOne(order);
       if (ok) { state.injectedCount++; } else { await wait(300); ok = await injectOne(order); if (ok) { state.injectedCount++; } else { state.failedCount++; } }
-      upStats();
-      if (i < state.orders.length - 1) await wait(state.delayMs);
+      upStats(); if (i < state.orders.length - 1) await wait(state.delayMs);
     }
     state.isRunning = false; pf.style.width = '100%';
     startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
     startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
-    var banner = document.createElement('div');
-    banner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;z-index:99999999;background:white;border-radius:24px;padding:30px 40px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.3);font-family:Segoe UI,sans-serif;direction:rtl;transition:all 0.4s cubic-bezier(0.16,1,0.3,1)';
-    banner.innerHTML = '<div style="font-size:50px;margin-bottom:10px">'+(state.failedCount>0?'⚠️':'🎉')+'</div><div style="font-size:22px;font-weight:900;color:#1e293b;margin-bottom:8px">انتهى الرفع</div><div style="display:flex;gap:20px;justify-content:center;margin-top:12px"><div><span style="font-size:28px;font-weight:900;color:#10b981">'+state.injectedCount+'</span><div style="font-size:11px;color:#94a3b8;font-weight:700">نجاح ✅</div></div><div><span style="font-size:28px;font-weight:900;color:'+(state.failedCount>0?'#ef4444':'#10b981')+'">'+state.failedCount+'</span><div style="font-size:11px;color:#94a3b8;font-weight:700">فشل ❌</div></div></div>';
-    document.body.appendChild(banner);
-    requestAnimationFrame(function(){banner.style.opacity='1';banner.style.transform='translate(-50%,-50%) scale(1)';});
-    setTimeout(function(){banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';setTimeout(function(){banner.remove()},400);}, 3000);
     setSt(state.injectedCount+'✅ / '+state.failedCount+'❌', 'done');
-    await wait(3500);
     var allocRes = await showDialog({
       icon:'📦', iconColor:'blue', title:'Allocate الطلبات؟',
-      desc:'هل تريد تعليم طلبات Allocation وعمل Allocate تلقائي؟',
-      buttons:[
-        {text:'لا، شكراً',value:'no'},
-        {text:'📦 Allocate',value:'yes',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;box-shadow:0 4px 12px rgba(37,99,235,0.3)'}
-      ]
+      desc:'تم رفع ' + state.injectedCount + ' طلب ✅' + (state.failedCount > 0 ? '  |  فشل ' + state.failedCount + ' ❌' : '') + '\n\nهل تريد Allocate تلقائي؟',
+      buttons:[ {text:'لا، شكراً',value:'no'}, {text:'📦 Allocate',value:'yes',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;box-shadow:0 4px 12px rgba(37,99,235,0.3)'} ]
     });
     if (allocRes === 'yes') await runAllocate();
   });
@@ -449,176 +365,134 @@ javascript:(function(){
       setSt('📦 بحث عن طلبات Allocation...', 'working');
       var flowColIndex = getFlowColIndex();
       if (flowColIndex === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
-
       var result = await selectOnlyByStatus('allocation');
       if (result.selected === 0) {
-        showToast('لا يوجد Allocation — متابعة...', 'info');
-        setSt('⚠️ لا يوجد Allocation — متابعة', 'working');
-        await wait(500);
-        await runPostAllocate(false);
-        return;
+        showToast('لا يوجد Allocation — متابعة...', 'info'); setSt('⚠️ لا يوجد Allocation — متابعة', 'working'); await wait(500);
+        await runPostAllocate(false); return;
       }
-
       showToast('تم تعليم ' + result.selected + ' طلب Allocation', 'success');
-      setSt('📦 جاري Allocate (' + result.selected + ')...', 'working');
-      await wait(400);
-
+      setSt('📦 جاري Allocate (' + result.selected + ')...', 'working'); await wait(400);
       var allocClicked = await clickAction('Allocate');
-      if (allocClicked) {
-        setSt('🎉 تم Allocate — جاري المتابعة...', 'done');
-      } else {
-        await showDialog({
-          icon:'⚠️', iconColor:'amber', title:'اضغط Allocate يدوياً',
-          desc:'الطلبات معلّمة — اضغط Allocate ثم "تم"',
-          buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
-        });
-      }
+      if (allocClicked) { setSt('🎉 تم Allocate — جاري المتابعة...', 'done'); }
+      else { await showDialog({ icon:'⚠️', iconColor:'amber', title:'اضغط Allocate يدوياً', desc:'الطلبات معلّمة — اضغط Allocate ثم "تم"', buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}] }); }
       await wait(1500);
       await runPostAllocate(true);
     } catch(err) { setSt('❌ خطأ: ' + (err.message || err), 'error'); showToast('خطأ في Allocate', 'error'); }
   }
 
   // ═══════════════════════════════════════════════════════════════
-  //  🔄 Post-Allocate: المراحل بالترتيب
+  //  🔄 Post-Allocate: كل المراحل
   //
-  //  الترتيب:
-  //  1. Refresh + انتظار Allocation تتحول
+  //  1. Refresh + انتظار Allocation → Loading Task
   //  2. تحديد ما عدا Delivery + Assign to User
-  //  3. ⏸️ انتظار المستخدم يختار الكابتن ويضغط Assign
-  //  4. بعد تأكيد المستخدم ← Refresh + تحديد + Pending (تلقائي)
-  //  5. Refresh + تحديد + Collected (تلقائي)
-  //  6. تحقق نهائي
+  //  3. ⏸️ انتظار اختيار الكابتن (المستخدم يضغط "خلصت")
+  //  4. Refresh + تحديد + Pending ← تلقائي
+  //  5. Refresh + تحديد + Collected ← تلقائي
+  //  6. Refresh + تحديد Delivery + Assign أخير ← نفس الكابتن
+  //  7. ⏸️ انتظار المستخدم يختار نفس الكابتن
+  //  8. تحقق نهائي
   // ═══════════════════════════════════════════════════════════════
 
   async function runPostAllocate(didAllocate) {
     try {
 
-      // ──────────────────────────────────────────
-      //  المرحلة 1: Refresh + انتظار
-      // ──────────────────────────────────────────
+      // ── 1: Refresh + انتظار ──
       setSt('🔄 تحديث...', 'working');
       await clickRefresh();
-
       if (didAllocate !== false) {
         var allocLeft = countRowsByStatus('allocation');
-        if (allocLeft > 0) {
-          setSt('⏳ انتظار Allocation → Loading Task...', 'working');
-          await waitUntilStatusGone('allocation', 20, 4000);
-        }
+        if (allocLeft > 0) { setSt('⏳ انتظار Allocation → Loading Task...', 'working'); await waitUntilStatusGone('allocation', 20, 4000); }
       }
 
-      // ──────────────────────────────────────────
-      //  المرحلة 2: تحديد + Assign to User
-      // ──────────────────────────────────────────
+      // ── 2: تحديد ما عدا Delivery + Assign ──
       setSt('☑️ تحديد الطلبات (تخطي Delivery)...', 'working');
       var sel = await selectAllExceptDelivery();
-
-      if (sel.selected === 0) {
-        showToast('🎉 كل الطلبات Delivery', 'success');
-        setSt('✅ كل الطلبات Delivery 🎉', 'done');
-        return;
-      }
+      if (sel.selected === 0) { showToast('🎉 كل الطلبات Delivery', 'success'); setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
       if (sel.skipped > 0) showToast('تخطي ' + sel.skipped + ' Delivery', 'info');
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
-      await wait(300);
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success'); await wait(300);
 
       setSt('👤 Assign to User...', 'working');
       await clickAction('Assign to User');
 
-      // ──────────────────────────────────────────
-      //  المرحلة 3: ⏸️ إيقاف كامل — انتظار المستخدم
-      //  الكود لن يتحرك أبداً حتى المستخدم يضغط الزر
-      // ──────────────────────────────────────────
-      setSt('⏸️ في انتظارك — اختر الكابتن واضغط Assign...', 'paused');
-
+      // ── 3: ⏸️ انتظار اختيار الكابتن (أول مرة) ──
+      setSt('⏸️ اختر الكابتن...', 'paused');
       await showDialog({
         icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
-        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. بعد ما تخلص اضغط الزر هنا ⬇️\n\n⏸️ الكود متوقف تماماً — خذ وقتك',
-        buttons:[{text:'✅ خلصت — كمّل باقي المراحل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
+        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. اضغط الزر هنا ⬇️\n\n⏸️ الكود متوقف — خذ وقتك',
+        buttons:[{text:'✅ خلصت — كمّل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
       });
-
-      // المستخدم ضغط "خلصت" — نكمل تلقائي من هنا
-      showToast('👍 تم — جاري إكمال باقي المراحل تلقائياً...', 'success');
+      showToast('👍 جاري إكمال المراحل تلقائياً...', 'success');
       await wait(500);
 
-      // ──────────────────────────────────────────
-      //  المرحلة 4: Refresh + تحديد + Pending (تلقائي)
-      // ──────────────────────────────────────────
+      // ── 4: Refresh + تحديد + Pending (تلقائي) ──
       setSt('🔄 تحديث بعد Assign...', 'working');
-      await clickRefresh();
-      await wait(500);
+      await clickRefresh(); await wait(500);
 
       setSt('☑️ تحديد الطلبات قبل Pending...', 'working');
       sel = await selectAllExceptDelivery();
-
-      if (sel.selected === 0) {
-        setSt('✅ كل الطلبات Delivery 🎉', 'done');
-        return;
-      }
-
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
-      await wait(300);
+      if (sel.selected === 0) { setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success'); await wait(300);
 
       setSt('⏳ Pending (' + sel.selected + ' طلب)...', 'working');
       var pendingDone = await clickAction('Pending');
       if (!pendingDone) pendingDone = await clickAction('pending');
+      if (pendingDone) showToast('✅ تم Pending!', 'success');
+      else showToast('⚠️ Pending لم يُعثر عليه', 'warning');
 
-      if (pendingDone) {
-        showToast('✅ تم Pending!', 'success');
-      } else {
-        showToast('⚠️ Pending لم يُعثر عليه', 'warning');
-      }
-
-      // ──────────────────────────────────────────
-      //  المرحلة 5: Refresh + تحديد + Collected (تلقائي)
-      // ──────────────────────────────────────────
+      // ── 5: Refresh + تحديد + Collected (تلقائي) ──
       await wait(1000);
       setSt('🔄 تحديث بعد Pending...', 'working');
-      await clickRefresh();
-      await wait(500);
+      await clickRefresh(); await wait(500);
 
       setSt('☑️ تحديد الطلبات قبل Collected...', 'working');
       sel = await selectAllExceptDelivery();
-
-      if (sel.selected === 0) {
-        setSt('✅ كل الطلبات Delivery 🎉', 'done');
-        return;
-      }
-
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
-      await wait(300);
+      if (sel.selected === 0) { setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success'); await wait(300);
 
       setSt('📦 Collected (' + sel.selected + ' طلب) ⛔ تجنب Reject...', 'working');
       var collectedDone = await clickAction('Collected');
+      if (collectedDone) showToast('✅ تم Collected!', 'success');
+      else showToast('⚠️ Collected لم يُعثر عليه', 'warning');
 
-      if (collectedDone) {
-        showToast('✅ تم Collected!', 'success');
-      } else {
-        showToast('⚠️ Collected لم يُعثر عليه', 'warning');
+      // ── 6: Refresh + تحديد Delivery + Assign أخير ──
+      await wait(1000);
+      setSt('🔄 تحديث قبل Assign النهائي...', 'working');
+      await clickRefresh(); await wait(500);
+
+      setSt('☑️ تحديد طلبات Delivery...', 'working');
+      var deliverySel = await selectOnlyByStatus('delivery');
+
+      if (deliverySel.selected === 0) {
+        showToast('⚠️ لا يوجد طلبات Delivery', 'warning');
+        setSt('✅ تم تنفيذ كل المراحل 🎉', 'done');
+        return;
       }
 
-      // ──────────────────────────────────────────
-      //  المرحلة 6: التحقق النهائي
-      // ──────────────────────────────────────────
-      await wait(1000);
-      setSt('🔄 التحديث النهائي...', 'working');
-      await clickRefresh();
+      showToast('تم تحديد ' + deliverySel.selected + ' طلب Delivery', 'success');
+      await wait(300);
+
+      setSt('👤 Assign النهائي لطلبات Delivery...', 'working');
+      await clickAction('Assign to User');
+
+      // ── 7: ⏸️ انتظار اختيار نفس الكابتن ──
+      setSt('⏸️ اختر نفس الكابتن...', 'paused');
+      await showDialog({
+        icon:'🚗', iconColor:'green', title:'Assign النهائي — نفس الكابتن',
+        desc:'اختر نفس الكابتن اللي اخترته قبل كده\nواضغط Assign\nثم اضغط "تم" ⬇️\n\n📦 ' + deliverySel.selected + ' طلب Delivery جاهزين',
+        buttons:[{text:'✅ خلصت — تم الكل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
+      });
+
+      // ── 8: التحقق النهائي ──
+      showToast('👍 تم!', 'success');
       await wait(500);
+      setSt('🔄 التحديث النهائي...', 'working');
+      await clickRefresh(); await wait(500);
 
       var deliveryCount = countRowsByStatus('delivery');
       var totalRows = getRows().length;
-      var remaining = totalRows - deliveryCount;
 
-      if (remaining === 0 && deliveryCount > 0) {
-        showToast('🎉 كل الطلبات (' + deliveryCount + ') Delivery!', 'success');
-        setSt('🎉 ' + deliveryCount + '/' + deliveryCount + ' Delivery ✅', 'done');
-      } else if (deliveryCount > 0) {
-        showToast('🎉 ' + deliveryCount + '/' + totalRows + ' Delivery', 'success');
-        setSt('🎉 ' + deliveryCount + ' Delivery + ' + remaining + ' متبقي', 'done');
-      } else {
-        showToast('✅ تم تنفيذ كل المراحل', 'success');
-        setSt('✅ تم 🎉', 'done');
-      }
+      showToast('🎉 انتهى! ' + deliveryCount + '/' + totalRows + ' Delivery', 'success');
+      setSt('🎉 تم بنجاح! ' + deliveryCount + '/' + totalRows + ' Delivery + Assign ✅', 'done');
 
     } catch(err) {
       setSt('❌ خطأ: ' + (err.message || err), 'error');
