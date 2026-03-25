@@ -1539,19 +1539,20 @@ window.ezShowDoses=function(){
       var code=cdi>=0&&tds.length>cdi?getVal(tds[cdi]).replace(/\D/g,''):'';
       if(code&&seenCodes[code])return;if(code)seenCodes[code]=true;
       var isDup=false;
-      if(note){var nl=note.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();isDup=!!shouldDuplicateRow(nl);}
-      if(name&&note)items.push({name:name,note:note,isDup:isDup,row:r,noteCell:tds[ni],rowIdx:rIdx});
+      if(note){var nl=_ezNormAr(note);isDup=!!shouldDuplicateRow(nl);}
+      if(name)items.push({name:name,note:note||'',isDup:isDup,row:r,noteCell:tds[ni],rowIdx:rIdx});
     }
   });
-  if(items.length===0){window.ezShowToast('لا توجد بيانات جرعات','info');return;}
+  if(items.length===0){window.ezShowToast('لا توجد أصناف في الجدول','info');return;}
   var html='';
-  html+='<div class="ez-doses-header"><div class="ez-logo-group"><div class="ez-doses-logo">📋</div><div class="ez-title-block"><div class="ez-doses-title">جدول الجرعات</div><div class="ez-sub-info"><span class="ez-items-count">📦 '+items.length+' صنف</span><span style="font-size:9px;color:#f59e0b;font-weight:800;margin-right:8px">✏️ عدّل الجرعة واضغط تطبيق</span></div></div></div><button class="ez-btn-icon" onclick="window.ezCloseDoses()">x</button></div>';
+  var _notedCount=items.filter(function(it){return it.note&&it.note.length>0;}).length;
+  html+='<div class="ez-doses-header"><div class="ez-logo-group"><div class="ez-doses-logo">📋</div><div class="ez-title-block"><div class="ez-doses-title">جدول الجرعات</div><div class="ez-sub-info"><span class="ez-items-count">📦 '+items.length+' صنف ('+_notedCount+' بجرعات)</span><span style="font-size:9px;color:#f59e0b;font-weight:800;margin-right:8px">✏️ عدّل الجرعة واضغط تطبيق</span></div></div></div><button class="ez-btn-icon" onclick="window.ezCloseDoses()">x</button></div>';
   html+='<div class="ez-doses-body">';
   html+='<div class="ez-dose-header-row"><div class="ez-dose-num">#</div><div class="ez-dose-name">الصنف</div><div class="ez-dose-note">الجرعة ✏️</div></div>';
   for(var i=0;i<items.length;i++){
     var dupClass=items[i].isDup?' ez-dose-item-dup':'';
     var dupIcon=items[i].isDup?' ⚡':'';
-    html+='<div class="ez-dose-item'+dupClass+'"><div class="ez-dose-num">'+(i+1)+'</div><div class="ez-dose-name">'+_ezEsc(items[i].name)+'</div><div class="ez-dose-note" style="padding:4px 6px"><input type="text" class="ez-dose-edit-input" data-idx="'+i+'" value="'+_ezEsc(items[i].note)+'" style="width:100%;padding:6px 8px;border:1.5px solid rgba(129,140,248,0.12);border-radius:8px;font-size:12px;font-weight:700;color:#3730a3;font-family:Cairo,sans-serif;direction:rtl;outline:none;background:rgba(241,245,249,0.5)" onfocus="this.style.borderColor=\'#6366f1\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'rgba(129,140,248,0.12)\';this.style.background=\'rgba(241,245,249,0.5)\'" />'+dupIcon+'</div></div>';
+    html+='<div class="ez-dose-item'+dupClass+'"><div class="ez-dose-num">'+(i+1)+'</div><div class="ez-dose-name">'+_ezEsc(items[i].name)+'</div><div class="ez-dose-note" style="padding:4px 6px"><input type="text" class="ez-dose-edit-input" data-idx="'+i+'" value="'+_ezEsc(items[i].note)+'" placeholder="اكتب الجرعة هنا..." style="width:100%;padding:6px 8px;border:1.5px solid rgba(129,140,248,0.12);border-radius:8px;font-size:12px;font-weight:700;color:#3730a3;font-family:Cairo,sans-serif;direction:rtl;outline:none;background:rgba(241,245,249,0.5)" onfocus="this.style.borderColor=\'#6366f1\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'rgba(129,140,248,0.12)\';this.style.background=\'rgba(241,245,249,0.5)\'" />'+dupIcon+'</div></div>';
   }
   html+='</div>';
   html+='<div class="ez-doses-footer" style="gap:8px"><button onclick="window.ezApplyDoseEdits()" style="flex:1;height:42px;border:none;border-radius:12px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;cursor:pointer;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(16,185,129,0.2)">✅ تطبيق التعديلات</button><button class="ez-btn-close-doses" onclick="window.ezCloseDoses()">✕ إغلاق</button></div>';
@@ -3342,8 +3343,9 @@ function getTimeFromWords(w){
     var _nN=/ظهر|الظهر|ظهرا|ظهرً|عصر|العصر|عصرا|عصرً|noon|midday|afternoon|asr/i.test(s);
     var _mR=/صباح|الصباح|صبح|صباحا|صباحً|morning/i.test(s);
     if(_eV||_nN||_mR){
-      if(_mA){if(_eV)return{time:NORMAL_TIMES.afterDinner||'21:00'};if(_nN)return{time:NORMAL_TIMES.afterLunch||'14:00'};return{time:NORMAL_TIMES.afterBreakfast||'09:00'};}
-      if(_mB){if(_eV)return{time:NORMAL_TIMES.beforeDinner||'20:00'};if(_nN)return{time:NORMAL_TIMES.beforeLunch||'13:00'};return{time:NORMAL_TIMES.beforeBreakfast||'08:00'};}
+      /* v146: When multiple time-of-day present, always return EARLIEST (morning first) */
+      if(_mA){if(_mR)return{time:NORMAL_TIMES.afterBreakfast||'09:00'};if(_nN)return{time:NORMAL_TIMES.afterLunch||'14:00'};if(_eV)return{time:NORMAL_TIMES.afterDinner||'21:00'};return{time:NORMAL_TIMES.afterBreakfast||'09:00'};}
+      if(_mB){if(_mR)return{time:NORMAL_TIMES.beforeBreakfast||'08:00'};if(_nN)return{time:NORMAL_TIMES.beforeLunch||'13:00'};if(_eV)return{time:NORMAL_TIMES.beforeDinner||'20:00'};return{time:NORMAL_TIMES.beforeBreakfast||'08:00'};}
     }
   }
   var st=s.match(/(?:at|الساعه|الساعه)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|صباحا|مساء)?/i);
