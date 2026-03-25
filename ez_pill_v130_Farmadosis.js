@@ -2328,6 +2328,31 @@ window.ezUndoDuplicates=function(){
     if(ei<0) ei=idx(hs,'every');
     if(ci<0||si<0||ni<0||ei<0) return;
 
+    var foundDuplicates=false;
+
+    /* v146: Undo odd_fixed splits first (from duplicatedRows tracking) */
+    for(var _oi=duplicatedRows.length-1;_oi>=0;_oi--){
+      var _od=duplicatedRows[_oi];
+      if(_od.type==='odd_fixed'&&_od.oddFixedData){
+        foundDuplicates=true;
+        var _origRow=_od.originalRow;
+        var _remRows=_od.duplicates||[];
+        /* Restore original size on main row */
+        var _origTds=_origRow.querySelectorAll('td');
+        set(_origTds[si],_od.oddFixedData.origSize);
+        set(_origTds[ei],'24');
+        /* Restore original note (remove مرتين context, keep first dose) */
+        set(_origTds[ni],_od.oddFixedData.origNote);
+        /* Remove remainder row(s) */
+        for(var _ri2=0;_ri2<_remRows.length;_ri2++){
+          if(_remRows[_ri2].parentNode) _remRows[_ri2].parentNode.removeChild(_remRows[_ri2]);
+        }
+        duplicatedRows.splice(_oi,1);
+        duplicatedCount--;
+      }
+    }
+
+    /* Original undo logic for regular splits */
     var groups={},rows=Array.from(tb.querySelectorAll('tr')).slice(1);
     rows.forEach(function(r){
       var tds=r.querySelectorAll('td');
@@ -4324,9 +4349,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
           setSize(_remTds[si_main],_remainSize);
           setEvry(_remTds[ei_main],'24');
 
-          /* Note: first dose time only (صباحا from صباحا ومساءا, بعد الفطار from بعد الفطار والعشاء) */
+          /* Note: first dose time only */
           var _remNote=rd.note.replace(/و\s*(مساءا|مساء|المساء|العشاء|العشا|عشاء)/gi,'').replace(/مرتين|twice/gi,'').replace(/\s+/g,' ').trim();
-          if(ni_main>=0&&_remTds[ni_main]){var _remNInp=_remTds[ni_main].querySelector('input,textarea');if(_remNInp){_remNInp.value='⚡ '+_remNote+' (باقي)';fire(_remNInp);}}
+          if(ni_main>=0&&_remTds[ni_main]){var _remNInp=_remTds[ni_main].querySelector('input,textarea');if(_remNInp){_remNInp.value='⚡ '+_remNote;fire(_remNInp);}}
 
           /* Set remainder row start time = first time */
           setTime(_remRow,_firstTime);
@@ -4350,6 +4375,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
           /* Insert remainder row after main row */
           r_node.parentNode.insertBefore(_remRow,r_node.nextSibling);
+          /* Track for undo in post-process dialog */
+          duplicatedRows.push({originalRow:r_node,duplicates:[_remRow],type:'odd_fixed',meals:[],oddFixedData:{code:rd.itemCode,origSize:_fixSizeN,evenSize:_evenSize,remainSize:_remainSize,origNote:rd.note}});
+          duplicatedCount++;
           console.log('ODD FIXED: created remainder row size='+_remainSize+' every=24 time='+_firstTime+' startDate='+_oddEndDate);
         } else {
           /* Even fixed size or single dose — normal processing */
@@ -4460,7 +4488,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     var enC=detectedLanguagesPerRow.filter(function(l){return l==='english';}).length;var arC=detectedLanguagesPerRow.filter(function(l){return l==='arabic';}).length;
     if(enC>0&&enC>=arC){setPatientLanguage('english');}else if(arC>0){setPatientLanguage('arabic');}
     if(duplicatedCount>0)window.ezShowToast('تم تقسيم '+duplicatedCount+' صنف إلى صفوف متعددة ⚡'+(ramadanMode?' 🌙':''),'info');
-    if(showPostDialog||ramadanMode)showPostProcessDialog();
+    if(showPostDialog||ramadanMode||duplicatedCount>0)showPostProcessDialog();
     /* Ramadan mode notification */
     if(ramadanMode){
       var rmBadge=document.createElement('div');
