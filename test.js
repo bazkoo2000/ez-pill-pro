@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '3.0';
+  var VERSION = '3.2';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -65,7 +65,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.0</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.2</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -111,18 +111,25 @@ javascript:(function(){
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
-  // ─── إيجاد index عمود Current Flow ───
+  // ─── إيجاد index عمود Current Flow (محسّن ومختصر) ───
   function getFlowColIndex() {
-    var allTh = document.querySelectorAll('thead tr:first-child th');
-    for (var h = 0; h < allTh.length; h++) {
-      if ((allTh[h].innerText || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return h;
-    }
-    var allRows = document.querySelectorAll('thead tr');
-    for (var r = 0; r < allRows.length; r++) {
-      var cells = allRows[r].querySelectorAll('th');
-      for (var c = 0; c < cells.length; c++) {
-        if ((cells[c].innerText || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return c;
+    // الطريقة 1: البحث عن span.ant-table-column-title
+    var colSpans = document.querySelectorAll('thead span.ant-table-column-title');
+    for (var s = 0; s < colSpans.length; s++) {
+      var spanText = (colSpans[s].textContent || '').replace(/\s+/g,' ').trim();
+      if (spanText === 'Current Flow') {
+        var th = colSpans[s].closest('th');
+        if (th) {
+          var siblings = Array.from(th.parentElement.children);
+          var idx = siblings.indexOf(th);
+          if (idx !== -1) return idx;
+        }
       }
+    }
+    // الطريقة 2 (fallback): أي th يحتوي النص
+    var allTh = document.querySelectorAll('thead th');
+    for (var h = 0; h < allTh.length; h++) {
+      if ((allTh[h].textContent || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return h;
     }
     return -1;
   }
@@ -134,6 +141,13 @@ javascript:(function(){
     return rows;
   }
 
+  // ─── قراءة حالة صف معين ───
+  function getRowStatus(row, colIndex) {
+    var cells = row.querySelectorAll('td');
+    if (colIndex >= cells.length) return '';
+    return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
+  }
+
   // ─── عدد الصفوف بحالة معينة ───
   function countRowsByStatus(status) {
     var col = getFlowColIndex();
@@ -141,11 +155,15 @@ javascript:(function(){
     var rows = getRows();
     var count = 0;
     for (var r = 0; r < rows.length; r++) {
-      var cells = rows[r].querySelectorAll('td');
-      if (col >= cells.length) continue;
-      if ((cells[col].innerText || '').replace(/\s+/g,' ').trim().toLowerCase().indexOf(status.toLowerCase()) !== -1) count++;
+      if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++;
     }
     return count;
+  }
+
+  // ─── هل الصف معلّم؟ ───
+  function isRowChecked(row) {
+    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
+    return cb && cb.checked;
   }
 
   // ─── تعليم صف واحد ───
@@ -163,65 +181,91 @@ javascript:(function(){
     cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
     cb.dispatchEvent(new Event('change', { bubbles:true }));
     await wait(80);
-    // fallback
     if (!cb.checked) {
       var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox');
       if (wrap) { wrap.click(); await wait(80); }
     }
   }
 
-  // ─── تحديد الكل (كل الصفوف المرئية) ───
-  async function selectAllRows() {
-    // جرب header checkbox أولاً
-    var headerCb = document.querySelector('thead input[type="checkbox"]');
-    if (headerCb && !headerCb.checked) {
-      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
-      if (setter && setter.set) setter.set.call(headerCb, true);
-      headerCb.click();
-      headerCb.dispatchEvent(new Event('change', { bubbles:true }));
-      await wait(400);
-      if (document.querySelectorAll('tbody input[type="checkbox"]:checked').length > 0) {
-        return document.querySelectorAll('tbody tr').length;
-      }
+  // ─── إلغاء تعليم صف ───
+  async function uncheckRow(row) {
+    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
+    if (!cb || !cb.checked) return;
+    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
+    if (setter && setter.set) setter.set.call(cb, false);
+    cb.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+    cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
+    cb.dispatchEvent(new Event('change', { bubbles:true }));
+    await wait(80);
+    if (cb.checked) {
+      var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox');
+      if (wrap) { wrap.click(); await wait(80); }
     }
-    // fallback: عليم كل صف
-    var rows = getRows();
-    for (var r = 0; r < rows.length; r++) {
-      await checkRow(rows[r]);
-      await wait(40);
-    }
-    return rows.length;
   }
 
-  // ─── تحديد الصفوف بحالة معينة فقط ───
-  async function selectRowsByStatus(status) {
+  // ─── تحديد كل الصفوف ما عدا Delivery ───
+  async function selectAllExceptDelivery() {
     var col = getFlowColIndex();
-    if (col === -1) return 0;
+    if (col === -1) {
+      showToast('لم يتم العثور على عمود Current Flow', 'error');
+      return { selected: 0, skipped: 0 };
+    }
     var rows = getRows();
-    var count = 0;
+    var selected = 0;
+    var skipped = 0;
     for (var r = 0; r < rows.length; r++) {
-      var cells = rows[r].querySelectorAll('td');
-      if (col >= cells.length) continue;
-      var cellTxt = (cells[col].innerText || '').replace(/\s+/g,' ').trim().toLowerCase();
-      if (cellTxt.indexOf(status.toLowerCase()) !== -1) {
+      var status = getRowStatus(rows[r], col);
+      if (status.indexOf('delivery') !== -1) {
+        // Delivery — تأكد إنه مش معلّم
+        if (isRowChecked(rows[r])) {
+          await uncheckRow(rows[r]);
+          await wait(30);
+        }
+        skipped++;
+      } else {
         await checkRow(rows[r]);
-        count++;
+        selected++;
         await wait(50);
       }
     }
-    return count;
+    return { selected: selected, skipped: skipped };
+  }
+
+  // ─── تحديد الصفوف بحالة معينة فقط (وإلغاء الباقي) ───
+  async function selectOnlyByStatus(targetStatus) {
+    var col = getFlowColIndex();
+    if (col === -1) {
+      showToast('لم يتم العثور على عمود Current Flow', 'error');
+      return { selected: 0, skipped: 0 };
+    }
+    var rows = getRows();
+    var selected = 0;
+    var skipped = 0;
+    for (var r = 0; r < rows.length; r++) {
+      var status = getRowStatus(rows[r], col);
+      if (status.indexOf(targetStatus.toLowerCase()) !== -1) {
+        await checkRow(rows[r]);
+        selected++;
+        await wait(50);
+      } else {
+        if (isRowChecked(rows[r])) {
+          await uncheckRow(rows[r]);
+          await wait(30);
+        }
+        skipped++;
+      }
+    }
+    return { selected: selected, skipped: skipped };
   }
 
   // ─── الضغط على زر Refresh ───
   async function clickRefresh() {
     var found = null;
-    // ابحث عبر SVG aria-label
     var svgs = document.querySelectorAll('svg[aria-label="refresh icon"]');
     for (var i = 0; i < svgs.length; i++) {
       var p = svgs[i].parentElement;
       if (p && p.offsetParent !== null) { found = p; break; }
     }
-    // fallback: نص "Refresh"
     if (!found) {
       var all = document.querySelectorAll('span, button');
       for (var j = 0; j < all.length; j++) {
@@ -251,20 +295,21 @@ javascript:(function(){
     return countRowsByStatus(status) === 0;
   }
 
-  // ─── البحث عن زر action والضغط عليه (مع حماية من reject) ───
+  // ─── البحث عن زر action والضغط عليه (مع حماية من reject + case-insensitive) ───
   async function clickActionButton(textMatch, exactMatch) {
     await wait(400);
-    // مرتبة: span أولاً، ثم button، ثم li
     var selectors = ['span', 'li[role="menuitem"]', 'button', 'a', 'div[role="menuitem"]'];
+    var textLower = textMatch.toLowerCase();
     for (var s = 0; s < selectors.length; s++) {
       var elems = document.querySelectorAll(selectors[s]);
       for (var i = 0; i < elems.length; i++) {
         var el = elems[i];
-        if (!el.offsetParent) continue; // غير مرئي
+        if (!el.offsetParent) continue;
         var txt = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
+        var txtLower = txt.toLowerCase();
         // حماية مطلقة من reject
-        if (txt.toLowerCase() === 'reject' || txt.toLowerCase().indexOf('reject') !== -1) continue;
-        var isMatch = exactMatch ? (txt === textMatch) : (txt.indexOf(textMatch) !== -1);
+        if (txtLower === 'reject' || txtLower.indexOf('reject') !== -1) continue;
+        var isMatch = exactMatch ? (txtLower === textLower) : (txtLower.indexOf(textLower) !== -1);
         if (isMatch) {
           el.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
           el.click();
@@ -382,7 +427,32 @@ javascript:(function(){
   uploadArea.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#d8b4fe';this.style.background='#faf5ff';if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
   fileInput.addEventListener('change',function(){if(this.files.length)handleFiles(this.files)});
 
-  function handleFiles(files){var all=[],loaded=0,total=files.length;for(var i=0;i<files.length;i++){(function(f){var r=new FileReader();r.onload=function(e){all=all.concat(parse(e.target.result));loaded++;if(loaded===total){var u=[],s={};for(var j=0;j<all.length;j++)if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب جاهز','loaded');showToast(u.length+' طلب','success');enableStart()}};r.readAsText(f)})(files[i])}}
+  // ─── handleFiles محسّن (بدون race condition) ───
+  function handleFiles(files){
+    var results=[];
+    var loaded=0;
+    var total=files.length;
+    for(var i=0;i<files.length;i++){
+      (function(idx,f){
+        var r=new FileReader();
+        r.onload=function(e){
+          results[idx]=parse(e.target.result);
+          loaded++;
+          if(loaded===total){
+            var all=[].concat.apply([],results);
+            var u=[],s={};
+            for(var j=0;j<all.length;j++){if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}}
+            state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();
+            var d=all.length-u.length;
+            uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';
+            uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';
+            setSt(u.length+' طلب جاهز','loaded');showToast(u.length+' طلب','success');enableStart();
+          }
+        };
+        r.readAsText(f);
+      })(i,files[i]);
+    }
+  }
 
   manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
   function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
@@ -459,202 +529,215 @@ javascript:(function(){
   // ═══════════════════════════════════════════════════════════════
 
   async function runAllocate() {
-    setSt('📦 جاري البحث عن طلبات Allocation...', 'working');
+    try {
+      setSt('📦 جاري البحث عن طلبات Allocation...', 'working');
 
-    var flowColIndex = getFlowColIndex();
-    if (flowColIndex === -1) {
-      showToast('لم يتم العثور على عمود Current Flow', 'error');
-      setSt('❌ عمود Current Flow غير موجود', 'error');
-      return;
-    }
-
-    var rows = getRows();
-    var checkedCount = 0;
-
-    for (var r = 0; r < rows.length; r++) {
-      var rowCells = rows[r].querySelectorAll('td');
-      if (flowColIndex >= rowCells.length) continue;
-      var cellText = (rowCells[flowColIndex].innerText || rowCells[flowColIndex].textContent || '').replace(/\s+/g,' ').trim();
-      if (cellText.toLowerCase().indexOf('allocation') !== -1) {
-        await checkRow(rows[r]);
-        checkedCount++;
-        await wait(50);
+      var flowColIndex = getFlowColIndex();
+      if (flowColIndex === -1) {
+        showToast('لم يتم العثور على عمود Current Flow', 'error');
+        setSt('❌ عمود Current Flow غير موجود', 'error');
+        return;
       }
-    }
 
-    if (checkedCount === 0) {
-      // لا يوجد Allocation — انتقل مباشرة لـ Loading Task
-      showToast('لا يوجد طلبات Allocation — متابعة...', 'info');
-      setSt('⚠️ لا يوجد Allocation — سيتم المتابعة من Loading Task', 'working');
-      await wait(800);
-      await runPostAllocate(false);
-      return;
-    }
+      // تحديد طلبات Allocation فقط (وإلغاء تعليم الباقي)
+      var result = await selectOnlyByStatus('allocation');
 
-    showToast('تم تعليم ' + checkedCount + ' طلب', 'success');
-    setSt('📦 تم التعليم (' + checkedCount + ') — جاري الضغط على Allocate...', 'working');
-    await wait(600);
-
-    // البحث عن زر Allocate
-    var allocateBtn = null;
-    var candidates = document.querySelectorAll('button, a.ant-btn, li[role="menuitem"], span.ant-dropdown-menu-title-content');
-    for (var b = 0; b < candidates.length; b++) {
-      var btnText = (candidates[b].innerText || candidates[b].textContent || '').replace(/\s+/g,' ').trim();
-      if (btnText === 'Allocate') { allocateBtn = candidates[b]; break; }
-    }
-    if (!allocateBtn) {
-      await wait(500);
-      var allElems = document.querySelectorAll('button, [role="button"], [role="menuitem"], .ant-btn, li, a');
-      for (var b2 = 0; b2 < allElems.length; b2++) {
-        var el = allElems[b2];
-        var elText = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
-        if (elText === 'Allocate' && el.offsetParent !== null) { allocateBtn = el; break; }
+      if (result.selected === 0) {
+        showToast('لا يوجد طلبات Allocation — متابعة...', 'info');
+        setSt('⚠️ لا يوجد Allocation — سيتم المتابعة من Loading Task', 'working');
+        await wait(800);
+        await runPostAllocate(false);
+        return;
       }
-    }
 
-    if (allocateBtn) {
-      allocateBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-      allocateBtn.click();
-      showToast('✅ تم عمل Allocate!', 'success');
-      setSt('🎉 تم Allocate ' + checkedCount + ' طلب — جاري المتابعة...', 'done');
-    } else {
-      showToast('⚠️ تم التعليم — اضغط Allocate يدوياً', 'warning');
-      await showDialog({
-        icon:'⚠️', iconColor:'amber', title:'لم يُعثر على زر Allocate',
-        desc:'اضغط Allocate يدوياً ثم اضغط "تم" للمتابعة',
-        buttons:[{text:'✅ تم الـ Allocate',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
-      });
-    }
+      showToast('تم تعليم ' + result.selected + ' طلب Allocation', 'success');
+      setSt('📦 تم التعليم (' + result.selected + ') — جاري الضغط على Allocate...', 'working');
+      await wait(600);
 
-    await wait(1500);
-    await runPostAllocate(true);
+      var allocateBtn = null;
+      var candidates = document.querySelectorAll('button, a.ant-btn, li[role="menuitem"], span.ant-dropdown-menu-title-content');
+      for (var b = 0; b < candidates.length; b++) {
+        var btnText = (candidates[b].innerText || candidates[b].textContent || '').replace(/\s+/g,' ').trim();
+        if (btnText === 'Allocate') { allocateBtn = candidates[b]; break; }
+      }
+      if (!allocateBtn) {
+        await wait(500);
+        var allElems = document.querySelectorAll('button, [role="button"], [role="menuitem"], .ant-btn, li, a');
+        for (var b2 = 0; b2 < allElems.length; b2++) {
+          var el = allElems[b2];
+          var elText = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
+          if (elText === 'Allocate' && el.offsetParent !== null) { allocateBtn = el; break; }
+        }
+      }
+
+      if (allocateBtn) {
+        allocateBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+        allocateBtn.click();
+        showToast('✅ تم عمل Allocate!', 'success');
+        setSt('🎉 تم Allocate ' + result.selected + ' طلب — جاري المتابعة...', 'done');
+      } else {
+        showToast('⚠️ تم التعليم — اضغط Allocate يدوياً', 'warning');
+        await showDialog({
+          icon:'⚠️', iconColor:'amber', title:'لم يُعثر على زر Allocate',
+          desc:'اضغط Allocate يدوياً ثم اضغط "تم" للمتابعة',
+          buttons:[{text:'✅ تم الـ Allocate',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
+        });
+      }
+
+      await wait(1500);
+      await runPostAllocate(true);
+
+    } catch(err) {
+      setSt('❌ خطأ في Allocate: ' + (err.message || err), 'error');
+      showToast('حصل خطأ غير متوقع في Allocate', 'error');
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════
-  //  🔄 Post-Allocate Flow الكامل
+  //  🔄 Post-Allocate Flow — كل شيء ما عدا Delivery
   // ═══════════════════════════════════════════════════════════════
 
   async function runPostAllocate(didAllocate) {
+    try {
 
-    // ── المرحلة 1: Refresh + انتظار Loading Task ──
-    setSt('🔄 تحديث الصفحة...', 'working');
-    await clickRefresh();
+      // ── المرحلة 1: Refresh + انتظار Loading Task ──
+      setSt('🔄 تحديث الصفحة...', 'working');
+      await clickRefresh();
 
-    if (didAllocate !== false) {
-      var allocStillThere = countRowsByStatus('allocation');
-      if (allocStillThere > 0) {
-        setSt('⏳ انتظار تحويل الطلبات إلى Loading Task...', 'working');
-        var gone = await waitUntilStatusGone('allocation', 20, 4000);
-        if (!gone) {
-          showToast('⚠️ بعض الطلبات لم تتحول بعد — سيتم المتابعة', 'warning');
+      if (didAllocate !== false) {
+        var allocStillThere = countRowsByStatus('allocation');
+        if (allocStillThere > 0) {
+          setSt('⏳ انتظار تحويل الطلبات إلى Loading Task...', 'working');
+          var gone = await waitUntilStatusGone('allocation', 20, 4000);
+          if (!gone) {
+            showToast('⚠️ بعض الطلبات لم تتحول بعد — سيتم المتابعة', 'warning');
+          }
         }
       }
-    }
 
-    // ── المرحلة 2: تحديد طلبات Loading Task ──
-    setSt('☑️ تحديد طلبات Loading Task...', 'working');
-    var ltCount = await selectRowsByStatus('Loading Task');
+      // ── المرحلة 2: تحديد كل شيء ما عدا Delivery ──
+      setSt('☑️ تحديد الطلبات (تخطي Delivery)...', 'working');
+      var sel = await selectAllExceptDelivery();
 
-    if (ltCount === 0) {
-      showToast('⚠️ لا يوجد طلبات Loading Task في الصفحة', 'warning');
-      setSt('⚠️ لا يوجد طلبات Loading Task', 'error');
-      return;
-    }
+      if (sel.selected === 0) {
+        showToast('⚠️ لا يوجد طلبات لمعالجتها (كلها Delivery)', 'warning');
+        setSt('✅ كل الطلبات بالفعل في حالة Delivery 🎉', 'done');
+        return;
+      }
 
-    showToast('تم تحديد ' + ltCount + ' طلب Loading Task', 'success');
-    await wait(500);
+      if (sel.skipped > 0) {
+        showToast('تخطي ' + sel.skipped + ' طلب Delivery (جاهزة)', 'info');
+      }
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
+      await wait(500);
 
-    // ── المرحلة 3: Assign to User ──
-    setSt('👤 فتح Assign to User...', 'working');
-    var assignFound = await clickActionButton('Assign to User', false);
+      // ── المرحلة 3: Assign to User ──
+      setSt('👤 فتح Assign to User...', 'working');
+      var assignFound = await clickActionButton('Assign to User', false);
 
-    if (!assignFound) {
-      showToast('⚠️ لم يُعثر على زر Assign to User', 'warning');
-      await showDialog({
-        icon:'⚠️', iconColor:'amber', title:'لم يُعثر على Assign to User',
-        desc:'اضغط "Assign to User" يدوياً، اختر الكابتن، ثم اضغط "تم"',
-        buttons:[{text:'✅ تم الـ Assign',value:'done',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
-      });
-    } else {
-      // ── انتظار الفني يختار الكابتن ──
-      setSt('👆 في انتظار اختيار الكابتن...', 'waiting');
-      await showDialog({
-        icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
-        desc:'اختر كابتن التوصيل من القائمة ثم اضغط Assign\nبعد ما تخلص اضغط "تم" للمتابعة',
-        buttons:[{text:'✅ تم اختيار الكابتن والـ Assign',value:'done',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white'}]
-      });
-    }
+      if (!assignFound) {
+        showToast('⚠️ لم يُعثر على زر Assign to User', 'warning');
+        await showDialog({
+          icon:'⚠️', iconColor:'amber', title:'لم يُعثر على Assign to User',
+          desc:'اضغط "Assign to User" يدوياً، اختر الكابتن، ثم اضغط "تم"',
+          buttons:[{text:'✅ تم الـ Assign',value:'done',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
+        });
+      } else {
+        setSt('👆 في انتظار اختيار الكابتن...', 'waiting');
+        await showDialog({
+          icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
+          desc:'اختر كابتن التوصيل من القائمة ثم اضغط Assign\nبعد ما تخلص اضغط "تم" للمتابعة',
+          buttons:[{text:'✅ تم اختيار الكابتن والـ Assign',value:'done',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white'}]
+        });
+      }
 
-    // ── المرحلة 4: Refresh + Select All + Pending ──
-    setSt('🔄 تحديث بعد Assign...', 'working');
-    await clickRefresh();
-    await wait(500);
+      // ── المرحلة 4: Refresh + تحديد ما عدا Delivery + Pending ──
+      setSt('🔄 تحديث بعد Assign...', 'working');
+      await clickRefresh();
+      await wait(500);
 
-    setSt('☑️ تحديد الكل قبل Pending...', 'working');
-    var selCount = await selectAllRows();
-    showToast('تم تحديد ' + selCount + ' طلب', 'success');
-    await wait(500);
+      setSt('☑️ تحديد الطلبات (تخطي Delivery) قبل Pending...', 'working');
+      sel = await selectAllExceptDelivery();
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
+      await wait(500);
 
-    setSt('⏳ الضغط على Pending...', 'working');
-    var pendingFound = await clickActionButton('pending', true);
+      if (sel.selected === 0) {
+        showToast('✅ كل الطلبات Delivery — لا حاجة لـ Pending', 'success');
+        setSt('✅ كل الطلبات بالفعل Delivery 🎉', 'done');
+        return;
+      }
 
-    if (!pendingFound) {
-      showToast('⚠️ لم يُعثر على Pending — اضغطه يدوياً', 'warning');
-      await showDialog({
-        icon:'⚠️', iconColor:'amber', title:'لم يُعثر على Pending',
-        desc:'اضغط "pending" يدوياً ثم اضغط "تم"',
-        buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
-      });
-    } else {
-      showToast('✅ تم Pending!', 'success');
-    }
+      setSt('⏳ الضغط على Pending...', 'working');
+      var pendingFound = await clickActionButton('Pending', true);
 
-    await wait(1000);
+      if (!pendingFound) {
+        showToast('⚠️ لم يُعثر على Pending — اضغطه يدوياً', 'warning');
+        await showDialog({
+          icon:'⚠️', iconColor:'amber', title:'لم يُعثر على Pending',
+          desc:'اضغط "Pending" يدوياً ثم اضغط "تم"',
+          buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
+        });
+      } else {
+        showToast('✅ تم Pending!', 'success');
+      }
 
-    // ── المرحلة 5: Refresh + Select All + Collected ──
-    setSt('🔄 تحديث بعد Pending...', 'working');
-    await clickRefresh();
-    await wait(500);
+      await wait(1000);
 
-    setSt('☑️ تحديد الكل قبل Collected...', 'working');
-    selCount = await selectAllRows();
-    showToast('تم تحديد ' + selCount + ' طلب', 'success');
-    await wait(500);
+      // ── المرحلة 5: Refresh + تحديد ما عدا Delivery + Collected ──
+      setSt('🔄 تحديث بعد Pending...', 'working');
+      await clickRefresh();
+      await wait(500);
 
-    setSt('📦 الضغط على Collected (تجنب Reject!)...', 'working');
-    var collectedFound = await clickActionButton('Collected', true);
+      setSt('☑️ تحديد الطلبات (تخطي Delivery) قبل Collected...', 'working');
+      sel = await selectAllExceptDelivery();
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
+      await wait(500);
 
-    if (!collectedFound) {
-      showToast('⚠️ لم يُعثر على Collected — اضغطه يدوياً (تجنب Reject!)', 'warning');
-      await showDialog({
-        icon:'⚠️', iconColor:'amber', title:'لم يُعثر على Collected',
-        desc:'⛔ تجنب Reject تماماً!\nاضغط "Collected" فقط، ثم اضغط "تم"',
-        buttons:[{text:'✅ تم Collected',value:'ok',style:'background:linear-gradient(135deg,#059669,#10b981);color:white'}]
-      });
-    } else {
-      showToast('✅ تم Collected!', 'success');
-    }
+      if (sel.selected === 0) {
+        showToast('✅ كل الطلبات Delivery — لا حاجة لـ Collected', 'success');
+        setSt('✅ كل الطلبات بالفعل Delivery 🎉', 'done');
+        return;
+      }
 
-    await wait(1000);
+      setSt('📦 الضغط على Collected (تجنب Reject!)...', 'working');
+      var collectedFound = await clickActionButton('Collected', true);
 
-    // ── المرحلة 6: Refresh النهائي + Select All + تحقق Delivery ──
-    setSt('🔄 التحديث النهائي...', 'working');
-    await clickRefresh();
-    await wait(500);
+      if (!collectedFound) {
+        showToast('⚠️ لم يُعثر على Collected — اضغطه يدوياً (تجنب Reject!)', 'warning');
+        await showDialog({
+          icon:'⚠️', iconColor:'amber', title:'لم يُعثر على Collected',
+          desc:'⛔ تجنب Reject تماماً!\nاضغط "Collected" فقط، ثم اضغط "تم"',
+          buttons:[{text:'✅ تم Collected',value:'ok',style:'background:linear-gradient(135deg,#059669,#10b981);color:white'}]
+        });
+      } else {
+        showToast('✅ تم Collected!', 'success');
+      }
 
-    setSt('☑️ تحديد الكل للتحقق...', 'working');
-    selCount = await selectAllRows();
-    await wait(500);
+      await wait(1000);
 
-    var deliveryCount = countRowsByStatus('Delivery');
-    var totalRows = getRows().length;
+      // ── المرحلة 6: Refresh النهائي + تحقق ──
+      setSt('🔄 التحديث النهائي...', 'working');
+      await clickRefresh();
+      await wait(500);
 
-    if (deliveryCount > 0) {
-      showToast('🎉 ' + deliveryCount + '/' + totalRows + ' طلب وصلوا Delivery!', 'success');
-      setSt('🎉 تم بنجاح! ' + deliveryCount + ' طلب حالتهم Delivery ✅', 'done');
-    } else {
-      showToast('✅ تم تنفيذ كل المراحل', 'success');
-      setSt('✅ تم تنفيذ كل المراحل بنجاح 🎉', 'done');
+      var deliveryCount = countRowsByStatus('delivery');
+      var totalRows = getRows().length;
+      var remainingNonDelivery = totalRows - deliveryCount;
+
+      if (deliveryCount > 0 && remainingNonDelivery === 0) {
+        showToast('🎉 كل الطلبات (' + deliveryCount + ') وصلت Delivery!', 'success');
+        setSt('🎉 تم بنجاح! كل ' + deliveryCount + ' طلب Delivery ✅', 'done');
+      } else if (deliveryCount > 0) {
+        showToast('🎉 ' + deliveryCount + '/' + totalRows + ' طلب Delivery', 'success');
+        setSt('🎉 ' + deliveryCount + ' Delivery ✅ + ' + remainingNonDelivery + ' لم يتحول بعد', 'done');
+      } else {
+        showToast('✅ تم تنفيذ كل المراحل', 'success');
+        setSt('✅ تم تنفيذ كل المراحل بنجاح 🎉', 'done');
+      }
+
+    } catch(err) {
+      setSt('❌ خطأ: ' + (err.message || err), 'error');
+      showToast('حصل خطأ غير متوقع', 'error');
     }
   }
 
