@@ -2265,7 +2265,7 @@ window.ezSubmit=function(){
     var ramadanMode=document.getElementById('ramadan-mode')?document.getElementById('ramadan-mode').checked:false;
     /* Clean brackets from patient name - after reading dialog data to avoid re-render issues */
     var _pn=document.querySelector('input[name="Name"],#Name,input[placeholder*="Name"]');
-    if(_pn&&_pn.value&&/[()\[\]{}⟨⟩<>«»]/.test(_pn.value)){_pn.value=_cleanNameField(_pn.value);}
+    if(_pn&&_pn.value&&/[()\[\]{}⟨⟩<>«»\/\\|#@&*!~+=;:,."'`^%$]/.test(_pn.value)){_pn.value=_cleanNameField(_pn.value);}
     /* Read and save ramadan days remaining */
     if(ramadanMode){
       var rmDaysInp=document.getElementById('ez-rm-days-left');
@@ -3087,7 +3087,8 @@ function _ezColorDupRows(tb){
 /* Strip brackets from Name field — system rejects them */
 function _cleanNameField(txt){
   if(!txt) return '';
-  return txt.toString().replace(/[()\[\]{}⟨⟩<>«»]/g,' ').replace(/\s+/g,' ').trim();
+  /* v146: Clean all special characters — brackets, slashes, symbols */
+  return txt.toString().replace(/[()\[\]{}⟨⟩<>«»\/\\|#@&*!~+=;:,."'`^%$]/g,' ').replace(/\s+/g,' ').trim();
 }
 
 function cleanNote(txt){
@@ -3290,9 +3291,12 @@ function smartDoseRecognizer(note){
   if(/قبل\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*قبل\s*(الاكل|الاكل)|before\s*meals?\s*twice/i.test(s)){res.count=2;res.isBefore=true;return res;}
   if(/بعد\s*(الاكل|الاكل|الوجبات?)\s*مرتين|مرتين\s*بعد\s*(الاكل|الاكل)|after\s*meals?\s*twice/i.test(s)){res.count=2;return res;}
 
-  if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;res.isBefore=true;return res;}
-  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
-  if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)){res.count=1;return res;}
+  /* v146: Check if multiple time-of-day keywords exist — if yes, skip Step 4 single-meal detection */
+  var _hasMultiTime=(function(){var _tc=0;if(/صباح|الصباح|صبح|morning/i.test(s))_tc++;if(/ظهر|الظهر|noon/i.test(s))_tc++;if(/عصر|العصر|afternoon/i.test(s))_tc++;if(/مساء|مسا|مساءا|evening|night|ليل/i.test(s))_tc++;if(/نوم|النوم|bed|sleep/i.test(s))_tc++;return _tc>=2;})();
+
+  if(/(^|\s)(قبل\s*(الاكل|الاكل|الوجبه?)|before\s*(meal|food)\b|ac\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)&&!_hasMultiTime){res.count=1;res.isBefore=true;return res;}
+  if(/(^|\s)(بعد\s*(الاكل|الاكل|الوجبه?)|after\s*(meal|food)\b|pc\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)&&!_hasMultiTime){res.count=1;return res;}
+  if(/(^|\s)(مع\s*(الاكل|الاكل|الوجبه?)|with\s*(meal|food)\b)(\s|$)/i.test(s)&&!/مرتين|مرات|twice|times|الثلاث/i.test(s)&&!_hasMultiTime){res.count=1;return res;}
 
   /* ── Step 5: Count from detected meal/time keywords ── */
   var mealCount=0;
@@ -3722,7 +3726,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     if(ri_idx===0)return;var tds_nodes=r_node.querySelectorAll('td');
     if(nm_main>=0&&tds_nodes.length>nm_main){var n_val=get(tds_nodes[nm_main]);
       /* Clean brackets from name */
-      if(n_val&&/[()\[\]{}⟨⟩<>«»]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol\b|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|لصقات|لصقه|لصقة|لاصقه|لاصقة|لزقه|لزقة|لزقات|patch|patches|transdermal|topical|gel\b|جل\b|ointment|دهان|دهون|مسحه|مسحة|للجلد|جلديه|جلدية|dermal|lotion|لوشن|فوط|غسول|wash|shampoo|شامبو|تحاميل|حقن|بلاستر|plaster|foam|رغوه|رغوة/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
+      if(n_val&&/[()\[\]{}⟨⟩<>«»\/\\|#@&*!~+=;:,."'`^%$]/.test(n_val)){n_val=_cleanNameField(n_val);var _snInp=tds_nodes[nm_main].querySelector('input,textarea');if(_snInp){_snInp.value=n_val;try{_snInp.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}}else{tds_nodes[nm_main].textContent=n_val;}}if(/refrigerator|ثلاجه|ثلاجة|cream|syrup|كريم|مرهم|شراب|قطرة|drop|حقنة|injection|لبوس|suppository|غرغرة|mouthwash|بخاخ|spray|محلول|solution|أنف|nasal|عين|eye|أذن|ear|glucose|جلوكوز|strip|شريط|شرائط|lancet|لانسيت|شكاكة|alcohol\b|كحول|pads|باد|accu|chek|test|فحص|blood|دم|device|جهاز|disposable|one-touch|ون تاتش|وان تاش|نانو|نهدي|nahdi|لصقات|لصقه|لصقة|لاصقه|لاصقة|لزقه|لزقة|لزقات|patch|patches|transdermal|topical|gel\b|جل\b|ointment|دهان|دهون|مسحه|مسحة|للجلد|جلديه|جلدية|dermal|lotion|لوشن|فوط|غسول|wash|shampoo|شامبو|تحاميل|حقن|بلاستر|plaster|foam|رغوه|رغوة/i.test(n_val)){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}}
     var cb=r_node.querySelector('input[type="checkbox"]');if(cb&&!cb.checked){skp_list.push(r_node);return;}
     if(ci_main>=0&&tds_nodes.length>ci_main){var cd=getCleanCode(tds_nodes[ci_main]);if(cd){if(processedCodes[cd]){var ck=getCheckmarkCellIndex(r_node);resetCheckmark(r_node,ck);skp_list.push(r_node);return;}else{processedCodes[cd]={row:r_node,note:cleanNote(get(tds_nodes[ni_main]))};rtp_list.push(r_node);return;}}}
     rtp_list.push(r_node);
