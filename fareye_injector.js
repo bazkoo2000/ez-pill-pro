@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '3.3';
+  var VERSION = '3.4';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -25,13 +25,24 @@ javascript:(function(){
   function showDialog(o) {
     return new Promise(function(resolve) {
       var ov = document.createElement('div');
+      ov.id = 'fey-dialog-overlay';
       ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:feyFadeIn 0.25s';
       var ibg = {blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',amber:'linear-gradient(135deg,#fef3c7,#fde68a)',red:'linear-gradient(135deg,#fee2e2,#fecaca)',purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)'};
       var ih='',bh='';
       if(o.info)for(var i=0;i<o.info.length;i++){var r=o.info[i];ih+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">'+r.label+'</span><span style="font-weight:800;color:'+(r.color||'#1e293b')+';font-size:12px">'+r.value+'</span></div>';}
-      if(o.buttons)for(var j=0;j<o.buttons.length;j++)bh+='<button data-idx="'+j+'" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;'+(o.buttons[j].style||'background:#f1f5f9;color:#475569')+';transition:all 0.2s">'+o.buttons[j].text+'</button>';
-      ov.innerHTML='<div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px">'+bh+'</div></div>';
-      ov.addEventListener('click',function(e){var b=e.target.closest('[data-idx]');if(b){ov.remove();resolve(o.buttons[parseInt(b.getAttribute('data-idx'))].value);}});
+      if(o.buttons)for(var j=0;j<o.buttons.length;j++)bh+='<button data-fey-btn="'+j+'" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;'+(o.buttons[j].style||'background:#f1f5f9;color:#475569')+';transition:all 0.2s">'+o.buttons[j].text+'</button>';
+      ov.innerHTML='<div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500;white-space:pre-line">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px">'+bh+'</div></div>';
+      var resolved = false;
+      ov.addEventListener('click',function(e){
+        if (resolved) return;
+        var b=e.target.closest('[data-fey-btn]');
+        if(b){
+          resolved = true;
+          var val = o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value;
+          ov.remove();
+          resolve(val);
+        }
+      });
       document.body.appendChild(ov);
     });
   }
@@ -65,7 +76,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.3</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.4</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -101,7 +112,7 @@ javascript:(function(){
   // ─── Helpers ───
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
-  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
+  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'},paused:{bg:'#eff6ff',co:'#1d4ed8',bo:'#bfdbfe',ic:'⏸️'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
@@ -111,18 +122,13 @@ javascript:(function(){
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
 
-  // ─── إيجاد index عمود Current Flow ───
   function getFlowColIndex() {
     var colSpans = document.querySelectorAll('thead span.ant-table-column-title');
     for (var s = 0; s < colSpans.length; s++) {
       var spanText = (colSpans[s].textContent || '').replace(/\s+/g,' ').trim();
       if (spanText === 'Current Flow') {
         var th = colSpans[s].closest('th');
-        if (th) {
-          var siblings = Array.from(th.parentElement.children);
-          var idx = siblings.indexOf(th);
-          if (idx !== -1) return idx;
-        }
+        if (th) { var siblings = Array.from(th.parentElement.children); var idx = siblings.indexOf(th); if (idx !== -1) return idx; }
       }
     }
     var allTh = document.querySelectorAll('thead th');
@@ -145,13 +151,9 @@ javascript:(function(){
   }
 
   function countRowsByStatus(status) {
-    var col = getFlowColIndex();
-    if (col === -1) return 0;
-    var rows = getRows();
-    var count = 0;
-    for (var r = 0; r < rows.length; r++) {
-      if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++;
-    }
+    var col = getFlowColIndex(); if (col === -1) return 0;
+    var rows = getRows(); var count = 0;
+    for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; }
     return count;
   }
 
@@ -170,10 +172,7 @@ javascript:(function(){
     cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
     cb.dispatchEvent(new Event('change', { bubbles:true }));
     await wait(80);
-    if (!cb.checked) {
-      var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox');
-      if (wrap) { wrap.click(); await wait(80); }
-    }
+    if (!cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
   }
 
   async function uncheckRow(row) {
@@ -185,38 +184,29 @@ javascript:(function(){
     cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
     cb.dispatchEvent(new Event('change', { bubbles:true }));
     await wait(80);
-    if (cb.checked) {
-      var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox');
-      if (wrap) { wrap.click(); await wait(80); }
-    }
+    if (cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
   }
 
-  // ─── تحديد كل الصفوف ما عدا Delivery ───
   async function selectAllExceptDelivery() {
     var col = getFlowColIndex();
     if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
-    var rows = getRows();
-    var selected = 0, skipped = 0;
+    var rows = getRows(); var selected = 0, skipped = 0;
     for (var r = 0; r < rows.length; r++) {
       var status = getRowStatus(rows[r], col);
       if (status.indexOf('delivery') !== -1) {
         if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
         skipped++;
       } else {
-        await checkRow(rows[r]);
-        selected++;
-        await wait(50);
+        await checkRow(rows[r]); selected++; await wait(50);
       }
     }
     return { selected:selected, skipped:skipped };
   }
 
-  // ─── تحديد حالة معينة فقط ───
   async function selectOnlyByStatus(targetStatus) {
     var col = getFlowColIndex();
     if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
-    var rows = getRows();
-    var selected = 0, skipped = 0;
+    var rows = getRows(); var selected = 0, skipped = 0;
     for (var r = 0; r < rows.length; r++) {
       var status = getRowStatus(rows[r], col);
       if (status.indexOf(targetStatus.toLowerCase()) !== -1) {
@@ -241,114 +231,68 @@ javascript:(function(){
   async function waitUntilStatusGone(status, maxTries, intervalMs) {
     maxTries = maxTries || 20; intervalMs = intervalMs || 4000;
     for (var i = 0; i < maxTries; i++) {
-      var cnt = countRowsByStatus(status);
-      if (cnt === 0) return true;
-      setSt('⏳ لا يزال ' + cnt + ' طلب "' + status + '" — انتظار (' + (i+1) + '/' + maxTries + ')', 'working');
-      await wait(intervalMs);
-      await clickRefresh();
+      var cnt = countRowsByStatus(status); if (cnt === 0) return true;
+      setSt('⏳ ' + cnt + ' طلب "' + status + '" — انتظار (' + (i+1) + '/' + maxTries + ')', 'working');
+      await wait(intervalMs); await clickRefresh();
     }
     return countRowsByStatus(status) === 0;
   }
 
   // ═══════════════════════════════════════════════════════════════
-  //  🔍 البحث عن الأزرار والضغط عليها (ذكي + حماية reject)
+  //  🔍 البحث عن الأزرار — بسيط ومباشر + حماية reject مطلقة
   // ═══════════════════════════════════════════════════════════════
 
-  // هل العنصر يحتوي reject؟ ممنوع نهائياً
-  function isReject(el) {
-    var t = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
-    return t.indexOf('reject') !== -1;
+  function isReject(txt) {
+    return txt.toLowerCase().indexOf('reject') !== -1;
   }
 
-  // البحث عن عنصر مطابق في الصفحة (مرئي + مش reject)
-  function findVisibleElement(textMatch) {
+  // البحث عن عنصر بنص معين (بدون فتح أي شيء)
+  function findButtonByText(textMatch) {
     var textLower = textMatch.toLowerCase();
-    // كل العناصر المحتملة
-    var allEl = document.querySelectorAll('span, button, li, a, div[role="menuitem"], li[role="menuitem"], .ant-dropdown-menu-title-content');
+    var allEl = document.querySelectorAll('span, button, li, a, div[role="menuitem"], li[role="menuitem"]');
     for (var i = 0; i < allEl.length; i++) {
       var el = allEl[i];
-      // تخطي الغير مرئي
       if (!el.offsetParent && el.offsetWidth === 0) continue;
-      // حماية reject مطلقة
-      if (isReject(el)) continue;
       var txt = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
-      // مطابقة دقيقة (case-insensitive)
+      if (isReject(txt)) continue;
       if (txt.toLowerCase() === textLower) return el;
     }
     return null;
   }
 
-  // فتح كل dropdowns المحتملة في الصفحة
-  async function openDropdowns() {
-    // 1) أزرار Ant Design dropdown
-    var triggers = document.querySelectorAll('.ant-dropdown-trigger, .ant-btn-group .ant-dropdown-trigger, [class*="dropdown"] button, button.ant-dropdown-trigger');
+  // فتح dropdown واحد بشكل آمن (بدون لمس reject)
+  async function openOneDropdown() {
+    var triggers = document.querySelectorAll('.ant-dropdown-trigger, button.ant-dropdown-trigger');
     for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].offsetParent !== null && !isReject(triggers[i])) {
+      if (triggers[i].offsetParent !== null && !isReject((triggers[i].innerText||''))) {
         triggers[i].click();
-        await wait(300);
+        await wait(400);
+        return true;
       }
     }
-    // 2) أيقونات السهم (dropdown arrows)
-    var arrows = document.querySelectorAll('.anticon-down, .anticon-ellipsis, [class*="more"], .ant-dropdown-link');
+    var arrows = document.querySelectorAll('.anticon-down, .anticon-ellipsis');
     for (var j = 0; j < arrows.length; j++) {
-      if (arrows[j].offsetParent !== null) {
-        arrows[j].click();
-        await wait(300);
-      }
+      if (arrows[j].offsetParent !== null) { arrows[j].click(); await wait(400); return true; }
     }
-    // 3) أي زر فيه "Actions" أو "More"
-    var btns = document.querySelectorAll('button, span.ant-btn');
-    for (var k = 0; k < btns.length; k++) {
-      var btnTxt = (btns[k].innerText||'').trim().toLowerCase();
-      if ((btnTxt.indexOf('action') !== -1 || btnTxt.indexOf('more') !== -1) && btns[k].offsetParent !== null) {
-        btns[k].click();
-        await wait(300);
-      }
-    }
+    return false;
   }
 
-  // الضغط على زر بشكل ذكي: يحاول 3 مرات مع فتح dropdowns
-  async function smartClickAction(textMatch, maxRetries) {
-    maxRetries = maxRetries || 3;
+  // الضغط على زر action — يحاول يلاقيه، لو مش موجود يفتح dropdown ويدور تاني
+  async function clickAction(textMatch) {
+    // محاولة 1: ابحث مباشرة
+    var el = findButtonByText(textMatch);
+    if (el) { el.click(); await wait(500); return true; }
 
-    for (var attempt = 1; attempt <= maxRetries; attempt++) {
-      // محاولة 1: ابحث مباشرة
-      var el = findVisibleElement(textMatch);
-      if (el) {
-        el.scrollIntoView({ block:'center' });
-        await wait(100);
-        el.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-        el.dispatchEvent(new MouseEvent('mouseup', { bubbles:true }));
-        el.click();
-        await wait(500);
-        showToast('✅ تم ' + textMatch, 'success');
-        return true;
-      }
+    // محاولة 2: افتح dropdown وابحث
+    await openOneDropdown();
+    el = findButtonByText(textMatch);
+    if (el) { el.click(); await wait(500); return true; }
 
-      // ما لقيناه — افتح dropdowns وجرب تاني
-      setSt('🔍 محاولة ' + attempt + '/' + maxRetries + ': بحث عن ' + textMatch + '...', 'working');
-      await openDropdowns();
-      await wait(400);
+    // محاولة 3: استنى وجرب تاني
+    await wait(600);
+    el = findButtonByText(textMatch);
+    if (el) { el.click(); await wait(500); return true; }
 
-      el = findVisibleElement(textMatch);
-      if (el) {
-        el.scrollIntoView({ block:'center' });
-        await wait(100);
-        el.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-        el.dispatchEvent(new MouseEvent('mouseup', { bubbles:true }));
-        el.click();
-        await wait(500);
-        showToast('✅ تم ' + textMatch, 'success');
-        return true;
-      }
-
-      // ما لقيناه — استنى وجرب تاني
-      if (attempt < maxRetries) {
-        await wait(800);
-      }
-    }
-
-    showToast('❌ لم يُعثر على "' + textMatch + '" بعد ' + maxRetries + ' محاولات', 'error');
     return false;
   }
 
@@ -363,28 +307,17 @@ javascript:(function(){
       || document.querySelector('input[aria-haspopup="listbox"]');
   }
 
-  function getSelector() {
-    var input = getInput();
-    if (!input) return null;
-    return input.closest('.ant-select-selector') || input.closest('.ant-select');
-  }
-
-  function countTags() {
-    return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length;
-  }
+  function getSelector() { var input = getInput(); if (!input) return null; return input.closest('.ant-select-selector') || input.closest('.ant-select'); }
+  function countTags() { return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length; }
 
   async function waitForOpen(input, timeout) {
     var start = Date.now();
-    while (Date.now() - start < timeout) {
-      if (input.getAttribute('aria-expanded') === 'true') return true;
-      await wait(50);
-    }
+    while (Date.now() - start < timeout) { if (input.getAttribute('aria-expanded') === 'true') return true; await wait(50); }
     return false;
   }
 
   async function forceOpenSelect() {
-    var input = getInput();
-    var selector = getSelector();
+    var input = getInput(); var selector = getSelector();
     if (!input || !selector) return false;
     if (input.getAttribute('aria-expanded') === 'true') { input.focus(); return true; }
     selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
@@ -395,48 +328,24 @@ javascript:(function(){
       var overflow = document.querySelector('.ant-select-selection-overflow');
       if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); }
     }
-    if (input.getAttribute('aria-expanded') !== 'true') {
-      input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
-      await wait(50);
-    }
+    if (input.getAttribute('aria-expanded') !== 'true') { input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true })); await wait(50); }
     return await waitForOpen(input, 400);
   }
 
   async function injectOne(orderNum) {
-    var input = getInput();
-    if (!input) return false;
+    var input = getInput(); if (!input) return false;
     var tagsBefore = countTags();
     await forceOpenSelect();
-    nativeSetter.call(input, '');
-    input.dispatchEvent(new Event('input', { bubbles:true }));
-    await wait(30);
-    input.focus();
-    document.execCommand('selectAll', false);
-    document.execCommand('delete', false);
-    document.execCommand('insertText', false, orderNum);
-    await wait(50);
-    if (input.value !== orderNum) {
-      nativeSetter.call(input, orderNum);
-      input.dispatchEvent(new Event('input', { bubbles:true }));
-      input.dispatchEvent(new Event('change', { bubbles:true }));
-      input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum }));
-    }
+    nativeSetter.call(input, ''); input.dispatchEvent(new Event('input', { bubbles:true })); await wait(30);
+    input.focus(); document.execCommand('selectAll', false); document.execCommand('delete', false); document.execCommand('insertText', false, orderNum); await wait(50);
+    if (input.value !== orderNum) { nativeSetter.call(input, orderNum); input.dispatchEvent(new Event('input', { bubbles:true })); input.dispatchEvent(new Event('change', { bubbles:true })); input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum })); }
     await wait(80);
     var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
-    input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
-    await wait(30);
-    input.dispatchEvent(new KeyboardEvent('keypress', enterOpts));
-    await wait(30);
-    input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
-    await wait(200);
+    input.dispatchEvent(new KeyboardEvent('keydown', enterOpts)); await wait(30);
+    input.dispatchEvent(new KeyboardEvent('keypress', enterOpts)); await wait(30);
+    input.dispatchEvent(new KeyboardEvent('keyup', enterOpts)); await wait(200);
     var tagsAfter = countTags();
-    if (tagsAfter <= tagsBefore) {
-      input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
-      await wait(50);
-      input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
-      await wait(200);
-      tagsAfter = countTags();
-    }
+    if (tagsAfter <= tagsBefore) { input.dispatchEvent(new KeyboardEvent('keydown', enterOpts)); await wait(50); input.dispatchEvent(new KeyboardEvent('keyup', enterOpts)); await wait(200); tagsAfter = countTags(); }
     return tagsAfter > tagsBefore;
   }
 
@@ -492,21 +401,12 @@ javascript:(function(){
         buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
       return;
     }
-    startBtn.disabled = true;
-    startBtn.style.opacity = '0.8';
-    startBtn.innerHTML = '👆 المس الخانة...';
-    for (var sec = 5; sec > 0; sec--) {
-      setSt('👆 المس الخانة الآن! (' + sec + ')', 'waiting');
-      await wait(1000);
-    }
+    startBtn.disabled = true; startBtn.style.opacity = '0.8'; startBtn.innerHTML = '👆 المس الخانة...';
+    for (var sec = 5; sec > 0; sec--) { setSt('👆 المس الخانة الآن! (' + sec + ')', 'waiting'); await wait(1000); }
     setSt('🚀 جاري الرفع...', 'working');
-    state.isRunning = true;
-    state.injectedCount = 0;
-    state.failedCount = 0;
-    document.getElementById('fey_pw').style.display = 'block';
-    upStats();
-    var pf = document.getElementById('fey_pf');
-    var pt = document.getElementById('fey_pt');
+    state.isRunning = true; state.injectedCount = 0; state.failedCount = 0;
+    document.getElementById('fey_pw').style.display = 'block'; upStats();
+    var pf = document.getElementById('fey_pf'); var pt = document.getElementById('fey_pt');
     for (var i = 0; i < state.orders.length; i++) {
       var order = state.orders[i];
       setSt((i+1) + '/' + state.orders.length + ': ' + order, 'working');
@@ -514,16 +414,11 @@ javascript:(function(){
       pt.innerText = (i+1) + '/' + state.orders.length;
       startBtn.innerHTML = '📤 ' + (i+1) + '/' + state.orders.length;
       var ok = await injectOne(order);
-      if (ok) { state.injectedCount++; } else {
-        await wait(300);
-        ok = await injectOne(order);
-        if (ok) { state.injectedCount++; } else { state.failedCount++; }
-      }
+      if (ok) { state.injectedCount++; } else { await wait(300); ok = await injectOne(order); if (ok) { state.injectedCount++; } else { state.failedCount++; } }
       upStats();
       if (i < state.orders.length - 1) await wait(state.delayMs);
     }
-    state.isRunning = false;
-    pf.style.width = '100%';
+    state.isRunning = false; pf.style.width = '100%';
     startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
     startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
     var banner = document.createElement('div');
@@ -552,122 +447,103 @@ javascript:(function(){
   async function runAllocate() {
     try {
       setSt('📦 بحث عن طلبات Allocation...', 'working');
-
       var flowColIndex = getFlowColIndex();
-      if (flowColIndex === -1) {
-        showToast('عمود Current Flow غير موجود', 'error');
-        setSt('❌ عمود Current Flow غير موجود', 'error');
-        return;
-      }
+      if (flowColIndex === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
 
       var result = await selectOnlyByStatus('allocation');
-
       if (result.selected === 0) {
         showToast('لا يوجد Allocation — متابعة...', 'info');
-        setSt('⚠️ لا يوجد Allocation — متابعة من Loading Task', 'working');
+        setSt('⚠️ لا يوجد Allocation — متابعة', 'working');
         await wait(500);
         await runPostAllocate(false);
         return;
       }
 
       showToast('تم تعليم ' + result.selected + ' طلب Allocation', 'success');
-      setSt('📦 جاري Allocate (' + result.selected + ' طلب)...', 'working');
+      setSt('📦 جاري Allocate (' + result.selected + ')...', 'working');
       await wait(400);
 
-      var allocClicked = await smartClickAction('Allocate', 3);
-
-      if (!allocClicked) {
-        // آخر محاولة: ابحث عن أي زر فيه "Allocate" مش "Allocation"
-        var allBtns = document.querySelectorAll('button, .ant-btn, [role="button"]');
-        for (var b = 0; b < allBtns.length; b++) {
-          var bt = (allBtns[b].innerText||'').trim();
-          if (bt === 'Allocate' && allBtns[b].offsetParent !== null) {
-            allBtns[b].click();
-            allocClicked = true;
-            showToast('✅ تم Allocate!', 'success');
-            break;
-          }
-        }
-      }
-
+      var allocClicked = await clickAction('Allocate');
       if (allocClicked) {
         setSt('🎉 تم Allocate — جاري المتابعة...', 'done');
       } else {
-        setSt('⚠️ Allocate يدوي مطلوب', 'error');
         await showDialog({
           icon:'⚠️', iconColor:'amber', title:'اضغط Allocate يدوياً',
           desc:'الطلبات معلّمة — اضغط Allocate ثم "تم"',
           buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
         });
       }
-
       await wait(1500);
       await runPostAllocate(true);
-
-    } catch(err) {
-      setSt('❌ خطأ: ' + (err.message || err), 'error');
-      showToast('خطأ في Allocate', 'error');
-    }
+    } catch(err) { setSt('❌ خطأ: ' + (err.message || err), 'error'); showToast('خطأ في Allocate', 'error'); }
   }
 
   // ═══════════════════════════════════════════════════════════════
-  //  🔄 Post-Allocate: Assign → Pending → Collected (تلقائي بالكامل)
+  //  🔄 Post-Allocate: المراحل بالترتيب
+  //
+  //  الترتيب:
+  //  1. Refresh + انتظار Allocation تتحول
+  //  2. تحديد ما عدا Delivery + Assign to User
+  //  3. ⏸️ انتظار المستخدم يختار الكابتن ويضغط Assign
+  //  4. بعد تأكيد المستخدم ← Refresh + تحديد + Pending (تلقائي)
+  //  5. Refresh + تحديد + Collected (تلقائي)
+  //  6. تحقق نهائي
   // ═══════════════════════════════════════════════════════════════
 
   async function runPostAllocate(didAllocate) {
     try {
 
-      // ── 1: Refresh ──
+      // ──────────────────────────────────────────
+      //  المرحلة 1: Refresh + انتظار
+      // ──────────────────────────────────────────
       setSt('🔄 تحديث...', 'working');
       await clickRefresh();
 
       if (didAllocate !== false) {
         var allocLeft = countRowsByStatus('allocation');
         if (allocLeft > 0) {
-          setSt('⏳ انتظار تحويل Allocation → Loading Task...', 'working');
+          setSt('⏳ انتظار Allocation → Loading Task...', 'working');
           await waitUntilStatusGone('allocation', 20, 4000);
         }
       }
 
-      // ── 2: تحديد ما عدا Delivery ──
+      // ──────────────────────────────────────────
+      //  المرحلة 2: تحديد + Assign to User
+      // ──────────────────────────────────────────
       setSt('☑️ تحديد الطلبات (تخطي Delivery)...', 'working');
       var sel = await selectAllExceptDelivery();
 
       if (sel.selected === 0) {
         showToast('🎉 كل الطلبات Delivery', 'success');
-        setSt('✅ كل الطلبات Delivery بالفعل 🎉', 'done');
+        setSt('✅ كل الطلبات Delivery 🎉', 'done');
         return;
       }
       if (sel.skipped > 0) showToast('تخطي ' + sel.skipped + ' Delivery', 'info');
       showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
       await wait(300);
 
-      // ── 3: Assign to User ──
       setSt('👤 Assign to User...', 'working');
-      var assignDone = await smartClickAction('Assign to User', 3);
+      await clickAction('Assign to User');
 
-      if (assignDone) {
-        // ننتظر اختيار الكابتن فقط — هذا الشيء الوحيد اللي يحتاج تدخل يدوي
-        setSt('👆 اختر الكابتن...', 'waiting');
-        await showDialog({
-          icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
-          desc:'اختر كابتن التوصيل ثم اضغط Assign\nبعدها اضغط "تم" وباقي المراحل تلقائية',
-          buttons:[{text:'✅ تم اختيار الكابتن',value:'done',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white'}]
-        });
-      } else {
-        // حتى لو ما لقينا الزر — نسأل المستخدم يعمل assign يدوي ونكمل
-        await showDialog({
-          icon:'⚠️', iconColor:'amber', title:'Assign يدوي',
-          desc:'اعمل Assign to User يدوياً واختر الكابتن\nثم اضغط "تم" وباقي المراحل تلقائية',
-          buttons:[{text:'✅ تم',value:'done',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
-        });
-      }
+      // ──────────────────────────────────────────
+      //  المرحلة 3: ⏸️ إيقاف كامل — انتظار المستخدم
+      //  الكود لن يتحرك أبداً حتى المستخدم يضغط الزر
+      // ──────────────────────────────────────────
+      setSt('⏸️ في انتظارك — اختر الكابتن واضغط Assign...', 'paused');
 
-      // ═══════════════════════════════════════════════════════
-      //  من هنا كل شيء تلقائي 100% — بدون أي تدخل يدوي
-      // ═══════════════════════════════════════════════════════
+      await showDialog({
+        icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
+        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. بعد ما تخلص اضغط الزر هنا ⬇️\n\n⏸️ الكود متوقف تماماً — خذ وقتك',
+        buttons:[{text:'✅ خلصت — كمّل باقي المراحل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
+      });
 
-      // ── 4: Refresh + تحديد + Pending ──
+      // المستخدم ضغط "خلصت" — نكمل تلقائي من هنا
+      showToast('👍 تم — جاري إكمال باقي المراحل تلقائياً...', 'success');
+      await wait(500);
+
+      // ──────────────────────────────────────────
+      //  المرحلة 4: Refresh + تحديد + Pending (تلقائي)
+      // ──────────────────────────────────────────
       setSt('🔄 تحديث بعد Assign...', 'working');
       await clickRefresh();
       await wait(500);
@@ -680,21 +556,22 @@ javascript:(function(){
         return;
       }
 
-      setSt('⏳ تنفيذ Pending (' + sel.selected + ' طلب)...', 'working');
-      var pendingDone = await smartClickAction('Pending', 4);
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
+      await wait(300);
 
-      if (!pendingDone) {
-        // محاولة بـ pending بحرف صغير
-        pendingDone = await smartClickAction('pending', 2);
-      }
+      setSt('⏳ Pending (' + sel.selected + ' طلب)...', 'working');
+      var pendingDone = await clickAction('Pending');
+      if (!pendingDone) pendingDone = await clickAction('pending');
 
       if (pendingDone) {
         showToast('✅ تم Pending!', 'success');
       } else {
-        showToast('⚠️ Pending لم يُعثر عليه — متابعة...', 'warning');
+        showToast('⚠️ Pending لم يُعثر عليه', 'warning');
       }
 
-      // ── 5: Refresh + تحديد + Collected (مباشرة بدون توقف) ──
+      // ──────────────────────────────────────────
+      //  المرحلة 5: Refresh + تحديد + Collected (تلقائي)
+      // ──────────────────────────────────────────
       await wait(1000);
       setSt('🔄 تحديث بعد Pending...', 'working');
       await clickRefresh();
@@ -708,16 +585,21 @@ javascript:(function(){
         return;
       }
 
-      setSt('📦 تنفيذ Collected (' + sel.selected + ' طلب)...⛔ تجنب Reject', 'working');
-      var collectedDone = await smartClickAction('Collected', 4);
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
+      await wait(300);
+
+      setSt('📦 Collected (' + sel.selected + ' طلب) ⛔ تجنب Reject...', 'working');
+      var collectedDone = await clickAction('Collected');
 
       if (collectedDone) {
         showToast('✅ تم Collected!', 'success');
       } else {
-        showToast('⚠️ Collected لم يُعثر عليه — متابعة...', 'warning');
+        showToast('⚠️ Collected لم يُعثر عليه', 'warning');
       }
 
-      // ── 6: التحقق النهائي ──
+      // ──────────────────────────────────────────
+      //  المرحلة 6: التحقق النهائي
+      // ──────────────────────────────────────────
       await wait(1000);
       setSt('🔄 التحديث النهائي...', 'working');
       await clickRefresh();
