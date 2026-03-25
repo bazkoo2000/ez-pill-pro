@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '3.5';
+  var VERSION = '4.0';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -25,19 +25,22 @@ javascript:(function(){
   function showDialog(o) {
     return new Promise(function(resolve) {
       var ov = document.createElement('div');
-      ov.id = 'fey-dialog-overlay';
       ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:feyFadeIn 0.25s';
       var ibg = {blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',amber:'linear-gradient(135deg,#fef3c7,#fde68a)',red:'linear-gradient(135deg,#fee2e2,#fecaca)',purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)'};
       var ih='',bh='';
       if(o.info)for(var i=0;i<o.info.length;i++){var r=o.info[i];ih+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">'+r.label+'</span><span style="font-weight:800;color:'+(r.color||'#1e293b')+';font-size:12px">'+r.value+'</span></div>';}
       if(o.buttons)for(var j=0;j<o.buttons.length;j++)bh+='<button data-fey-btn="'+j+'" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;'+(o.buttons[j].style||'background:#f1f5f9;color:#475569')+';transition:all 0.2s">'+o.buttons[j].text+'</button>';
-      ov.innerHTML='<div style="background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)"><div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500;white-space:pre-line">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px">'+bh+'</div></div>';
+      var dialogBox = document.createElement('div');
+      dialogBox.style.cssText = 'background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)';
+      dialogBox.innerHTML = '<div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500;white-space:pre-line">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px">'+bh+'</div>';
+      ov.appendChild(dialogBox);
       var resolved = false;
-      ov.addEventListener('click',function(e){
+      dialogBox.addEventListener('click', function(e) {
         if (resolved) return;
-        var b=e.target.closest('[data-fey-btn]');
-        if(b){ resolved = true; ov.remove(); resolve(o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value); }
+        var b = e.target.closest('[data-fey-btn]');
+        if (b) { resolved = true; ov.remove(); resolve(o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value); }
       });
+      ov.addEventListener('click', function(e) { e.stopPropagation(); e.stopImmediatePropagation(); }, true);
       document.body.appendChild(ov);
     });
   }
@@ -55,7 +58,11 @@ javascript:(function(){
     '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:390px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s;animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
     '#'+PANEL_ID+'.fey-min{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}'+
     '#'+PANEL_ID+'.fey-min .fey-inner{display:none!important}'+
-    '#'+PANEL_ID+'.fey-min::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
+    '#'+PANEL_ID+'.fey-min::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}'+
+    '.fey-helper-btn{width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;font-weight:700;font-size:13px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:space-between;background:#fff;color:#1e293b;transition:all 0.2s;margin-bottom:8px}'+
+    '.fey-helper-btn:hover{border-color:#8b5cf6;background:#faf5ff}'+
+    '.fey-helper-btn:active{transform:scale(0.98)}'+
+    '.fey-helper-btn .fey-badge{font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;min-width:24px;text-align:center}';
   document.head.appendChild(css);
 
   var panel = document.createElement('div');
@@ -71,15 +78,34 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.5</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v4.0</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
+
+        // الإحصائيات
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div><div style="font-size:18px;margin-bottom:4px">📋</div><div id="fey_s_t" style="font-size:22px;font-weight:900;color:#8b5cf6;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">إجمالي</div></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_s_d" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
         '</div>'+
-        '<button id="fey_alloc_direct" style="width:100%;padding:13px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.3);transition:all 0.3s;margin-bottom:14px">📦 Allocate طلبات الصفحة الحالية</button>'+
+
+        // أزرار التحديد الذكية
+        '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:14px;margin-bottom:16px">'+
+          '<div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-align:center;letter-spacing:0.5px">⚡ أدوات التحديد</div>'+
+          '<button id="fey_sel_lt" class="fey-helper-btn">'+
+            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">📋</span> تحديد Loading Task</span>'+
+            '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
+          '</button>'+
+          '<button id="fey_sel_del" class="fey-helper-btn" style="margin-bottom:0">'+
+            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">🚚</span> تحديد Delivery</span>'+
+            '<span class="fey-badge" style="background:#dcfce7;color:#059669" id="fey_cnt_del">—</span>'+
+          '</button>'+
+        '</div>'+
+
+        // زر Allocate
+        '<button id="fey_alloc_direct" style="width:100%;padding:13px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.3);transition:all 0.3s;margin-bottom:16px">📦 Allocate طلبات الصفحة</button>'+
+
+        // رفع الملفات
         '<div id="fey_main">'+
           '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
             '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
@@ -102,13 +128,18 @@ javascript:(function(){
     '</div>';
   document.body.appendChild(panel);
 
+  // ─── Helpers ───
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
-  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'},paused:{bg:'#eff6ff',co:'#1d4ed8',bo:'#bfdbfe',ic:'⏸️'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
+  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Table Helpers
+  // ═══════════════════════════════════════════════════════════════
 
   function getFlowColIndex() {
     var colSpans = document.querySelectorAll('thead span.ant-table-column-title');
@@ -126,7 +157,14 @@ javascript:(function(){
 
   function getRows() { var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]'); if (!rows.length) rows = document.querySelectorAll('tbody tr'); return rows; }
   function getRowStatus(row, colIndex) { var cells = row.querySelectorAll('td'); if (colIndex >= cells.length) return ''; return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase(); }
-  function countRowsByStatus(status) { var col = getFlowColIndex(); if (col === -1) return 0; var rows = getRows(); var count = 0; for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; } return count; }
+
+  function countRowsByStatus(status) {
+    var col = getFlowColIndex(); if (col === -1) return 0;
+    var rows = getRows(); var count = 0;
+    for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; }
+    return count;
+  }
+
   function isRowChecked(row) { var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]'); return cb && cb.checked; }
 
   async function checkRow(row) {
@@ -154,47 +192,51 @@ javascript:(function(){
     if (cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
   }
 
-  async function selectAllExceptDelivery() {
-    var col = getFlowColIndex();
-    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
-    var rows = getRows(); var selected = 0, skipped = 0;
-    for (var r = 0; r < rows.length; r++) {
-      var status = getRowStatus(rows[r], col);
-      if (status.indexOf('delivery') !== -1) {
-        if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
-        skipped++;
-      } else { await checkRow(rows[r]); selected++; await wait(50); }
-    }
-    return { selected:selected, skipped:skipped };
-  }
-
+  // ─── تحديد حالة معينة فقط (وإلغاء تعليم الباقي) ───
   async function selectOnlyByStatus(targetStatus) {
     var col = getFlowColIndex();
-    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
-    var rows = getRows(); var selected = 0, skipped = 0;
+    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return 0; }
+    var rows = getRows(); var selected = 0;
     for (var r = 0; r < rows.length; r++) {
       var status = getRowStatus(rows[r], col);
       if (status.indexOf(targetStatus.toLowerCase()) !== -1) {
         await checkRow(rows[r]); selected++; await wait(50);
       } else {
         if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
-        skipped++;
       }
     }
-    return { selected:selected, skipped:skipped };
+    return selected;
   }
+
+  // ─── تحديث عدادات الأزرار ───
+  function updateCounts() {
+    var ltCount = countRowsByStatus('loading task');
+    var delCount = countRowsByStatus('delivery');
+    var ltEl = document.getElementById('fey_cnt_lt');
+    var delEl = document.getElementById('fey_cnt_del');
+    if (ltEl) { ltEl.innerText = ltCount > 0 ? ltCount : '—'; ltEl.style.background = ltCount > 0 ? '#dbeafe' : '#f1f5f9'; ltEl.style.color = ltCount > 0 ? '#1d4ed8' : '#94a3b8'; }
+    if (delEl) { delEl.innerText = delCount > 0 ? delCount : '—'; delEl.style.background = delCount > 0 ? '#dcfce7' : '#f1f5f9'; delEl.style.color = delCount > 0 ? '#059669' : '#94a3b8'; }
+  }
+
+  // تحديث العدادات كل 3 ثواني
+  setInterval(updateCounts, 3000);
+  setTimeout(updateCounts, 500);
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Refresh + Button Helpers
+  // ═══════════════════════════════════════════════════════════════
 
   async function clickRefresh() {
     var found = null;
     var svgs = document.querySelectorAll('svg[aria-label="refresh icon"]');
     for (var i = 0; i < svgs.length; i++) { var p = svgs[i].parentElement; if (p && p.offsetParent !== null) { found = p; break; } }
     if (!found) { var all = document.querySelectorAll('span, button'); for (var j = 0; j < all.length; j++) { if ((all[j].innerText||'').trim() === 'Refresh' && all[j].offsetParent !== null) { found = all[j]; break; } } }
-    if (found) { found.click(); await wait(1800); return true; }
+    if (found) { found.click(); await wait(2500); updateCounts(); return true; }
     return false;
   }
 
   async function waitUntilStatusGone(status, maxTries, intervalMs) {
-    maxTries = maxTries || 20; intervalMs = intervalMs || 4000;
+    maxTries = maxTries || 25; intervalMs = intervalMs || 5000;
     for (var i = 0; i < maxTries; i++) {
       var cnt = countRowsByStatus(status); if (cnt === 0) return true;
       setSt('⏳ ' + cnt + ' طلب "' + status + '" — انتظار (' + (i+1) + '/' + maxTries + ')', 'working');
@@ -221,22 +263,19 @@ javascript:(function(){
   async function openOneDropdown() {
     var triggers = document.querySelectorAll('.ant-dropdown-trigger, button.ant-dropdown-trigger');
     for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].offsetParent !== null && !isReject((triggers[i].innerText||''))) { triggers[i].click(); await wait(400); return true; }
+      if (triggers[i].offsetParent !== null && !isReject((triggers[i].innerText||''))) { triggers[i].click(); await wait(500); return true; }
     }
-    var arrows = document.querySelectorAll('.anticon-down, .anticon-ellipsis');
-    for (var j = 0; j < arrows.length; j++) { if (arrows[j].offsetParent !== null) { arrows[j].click(); await wait(400); return true; } }
     return false;
   }
 
   async function clickAction(textMatch) {
+    await wait(300);
     var el = findButtonByText(textMatch);
-    if (el) { el.click(); await wait(500); return true; }
+    if (el) { el.click(); await wait(600); return true; }
     await openOneDropdown();
+    await wait(300);
     el = findButtonByText(textMatch);
-    if (el) { el.click(); await wait(500); return true; }
-    await wait(600);
-    el = findButtonByText(textMatch);
-    if (el) { el.click(); await wait(500); return true; }
+    if (el) { el.click(); await wait(600); return true; }
     return false;
   }
 
@@ -283,11 +322,54 @@ javascript:(function(){
     return tagsAfter > tagsBefore;
   }
 
-  // ─── Events ───
+  // ═══════════════════════════════════════════════════════════════
+  //  UI Events
+  // ═══════════════════════════════════════════════════════════════
+
   panel.addEventListener('click',function(e){if(panel.classList.contains('fey-min')){panel.classList.remove('fey-min');e.stopPropagation();}});
   document.getElementById('fey_close').addEventListener('click',function(e){e.stopPropagation();panel.style.animation='feySlideIn 0.3s reverse';setTimeout(function(){panel.remove()},280);});
   document.getElementById('fey_min').addEventListener('click',function(e){e.stopPropagation();panel.classList.add('fey-min');});
 
+  // ─── أزرار التحديد ───
+  document.getElementById('fey_sel_lt').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    this.style.opacity = '0.6';
+    setSt('☑️ تحديد Loading Task...', 'working');
+    var count = await selectOnlyByStatus('loading task');
+    this.style.opacity = '1';
+    updateCounts();
+    if (count > 0) {
+      showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
+      setSt('☑️ تم تحديد ' + count + ' Loading Task ✅', 'done');
+    } else {
+      showToast('لا يوجد طلبات Loading Task', 'warning');
+      setSt('⚠️ لا يوجد Loading Task', 'ready');
+    }
+  });
+
+  document.getElementById('fey_sel_del').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    this.style.opacity = '0.6';
+    setSt('☑️ تحديد Delivery...', 'working');
+    var count = await selectOnlyByStatus('delivery');
+    this.style.opacity = '1';
+    updateCounts();
+    if (count > 0) {
+      showToast('تم تحديد ' + count + ' طلب Delivery', 'success');
+      setSt('☑️ تم تحديد ' + count + ' Delivery ✅', 'done');
+    } else {
+      showToast('لا يوجد طلبات Delivery', 'warning');
+      setSt('⚠️ لا يوجد Delivery', 'ready');
+    }
+  });
+
+  // ─── Allocate ───
+  document.getElementById('fey_alloc_direct').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    await runAllocate();
+  });
+
+  // ─── رفع الملفات ───
   var uploadArea=document.getElementById('fey_upload');
   var fileInput=document.getElementById('fey_file');
   var startBtn=document.getElementById('fey_start');
@@ -322,7 +404,9 @@ javascript:(function(){
   function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
   document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
 
-  document.getElementById('fey_alloc_direct').addEventListener('click', async function() { if (state.isRunning) return; await runAllocate(); });
+  // ═══════════════════════════════════════════════════════════════
+  //  رفع الطلبات → Allocate تلقائي
+  // ═══════════════════════════════════════════════════════════════
 
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
@@ -348,6 +432,8 @@ javascript:(function(){
     startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
     startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
     setSt(state.injectedCount+'✅ / '+state.failedCount+'❌', 'done');
+
+    // بعد الرفع → Allocate مباشرة
     var allocRes = await showDialog({
       icon:'📦', iconColor:'blue', title:'Allocate الطلبات؟',
       desc:'تم رفع ' + state.injectedCount + ' طلب ✅' + (state.failedCount > 0 ? '  |  فشل ' + state.failedCount + ' ❌' : '') + '\n\nهل تريد Allocate تلقائي؟',
@@ -357,7 +443,7 @@ javascript:(function(){
   });
 
   // ═══════════════════════════════════════════════════════════════
-  //  📦 Allocate
+  //  📦 Allocate فقط — بدون مراحل بعده
   // ═══════════════════════════════════════════════════════════════
 
   async function runAllocate() {
@@ -365,138 +451,39 @@ javascript:(function(){
       setSt('📦 بحث عن طلبات Allocation...', 'working');
       var flowColIndex = getFlowColIndex();
       if (flowColIndex === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
-      var result = await selectOnlyByStatus('allocation');
-      if (result.selected === 0) {
-        showToast('لا يوجد Allocation — متابعة...', 'info'); setSt('⚠️ لا يوجد Allocation — متابعة', 'working'); await wait(500);
-        await runPostAllocate(false); return;
-      }
-      showToast('تم تعليم ' + result.selected + ' طلب Allocation', 'success');
-      setSt('📦 جاري Allocate (' + result.selected + ')...', 'working'); await wait(400);
-      var allocClicked = await clickAction('Allocate');
-      if (allocClicked) { setSt('🎉 تم Allocate — جاري المتابعة...', 'done'); }
-      else { await showDialog({ icon:'⚠️', iconColor:'amber', title:'اضغط Allocate يدوياً', desc:'الطلبات معلّمة — اضغط Allocate ثم "تم"', buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}] }); }
-      await wait(1500);
-      await runPostAllocate(true);
-    } catch(err) { setSt('❌ خطأ: ' + (err.message || err), 'error'); showToast('خطأ في Allocate', 'error'); }
-  }
 
-  // ═══════════════════════════════════════════════════════════════
-  //  🔄 Post-Allocate: كل المراحل
-  //
-  //  1. Refresh + انتظار Allocation → Loading Task
-  //  2. تحديد ما عدا Delivery + Assign to User
-  //  3. ⏸️ انتظار اختيار الكابتن (المستخدم يضغط "خلصت")
-  //  4. Refresh + تحديد + Pending ← تلقائي
-  //  5. Refresh + تحديد + Collected ← تلقائي
-  //  6. Refresh + تحديد Delivery + Assign أخير ← نفس الكابتن
-  //  7. ⏸️ انتظار المستخدم يختار نفس الكابتن
-  //  8. تحقق نهائي
-  // ═══════════════════════════════════════════════════════════════
-
-  async function runPostAllocate(didAllocate) {
-    try {
-
-      // ── 1: Refresh + انتظار ──
-      setSt('🔄 تحديث...', 'working');
-      await clickRefresh();
-      if (didAllocate !== false) {
-        var allocLeft = countRowsByStatus('allocation');
-        if (allocLeft > 0) { setSt('⏳ انتظار Allocation → Loading Task...', 'working'); await waitUntilStatusGone('allocation', 20, 4000); }
-      }
-
-      // ── 2: تحديد ما عدا Delivery + Assign ──
-      setSt('☑️ تحديد الطلبات (تخطي Delivery)...', 'working');
-      var sel = await selectAllExceptDelivery();
-      if (sel.selected === 0) { showToast('🎉 كل الطلبات Delivery', 'success'); setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
-      if (sel.skipped > 0) showToast('تخطي ' + sel.skipped + ' Delivery', 'info');
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success'); await wait(300);
-
-      setSt('👤 Assign to User...', 'working');
-      await clickAction('Assign to User');
-
-      // ── 3: ⏸️ انتظار اختيار الكابتن (أول مرة) ──
-      setSt('⏸️ اختر الكابتن...', 'paused');
-      await showDialog({
-        icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
-        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. اضغط الزر هنا ⬇️\n\n⏸️ الكود متوقف — خذ وقتك',
-        buttons:[{text:'✅ خلصت — كمّل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
-      });
-      showToast('👍 جاري إكمال المراحل تلقائياً...', 'success');
-      await wait(500);
-
-      // ── 4: Refresh + تحديد + Pending (تلقائي) ──
-      setSt('🔄 تحديث بعد Assign...', 'working');
-      await clickRefresh(); await wait(500);
-
-      setSt('☑️ تحديد الطلبات قبل Pending...', 'working');
-      sel = await selectAllExceptDelivery();
-      if (sel.selected === 0) { setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success'); await wait(300);
-
-      setSt('⏳ Pending (' + sel.selected + ' طلب)...', 'working');
-      var pendingDone = await clickAction('Pending');
-      if (!pendingDone) pendingDone = await clickAction('pending');
-      if (pendingDone) showToast('✅ تم Pending!', 'success');
-      else showToast('⚠️ Pending لم يُعثر عليه', 'warning');
-
-      // ── 5: Refresh + تحديد + Collected (تلقائي) ──
-      await wait(1000);
-      setSt('🔄 تحديث بعد Pending...', 'working');
-      await clickRefresh(); await wait(500);
-
-      setSt('☑️ تحديد الطلبات قبل Collected...', 'working');
-      sel = await selectAllExceptDelivery();
-      if (sel.selected === 0) { setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success'); await wait(300);
-
-      setSt('📦 Collected (' + sel.selected + ' طلب) ⛔ تجنب Reject...', 'working');
-      var collectedDone = await clickAction('Collected');
-      if (collectedDone) showToast('✅ تم Collected!', 'success');
-      else showToast('⚠️ Collected لم يُعثر عليه', 'warning');
-
-      // ── 6: Refresh + تحديد Delivery + Assign أخير ──
-      await wait(1000);
-      setSt('🔄 تحديث قبل Assign النهائي...', 'working');
-      await clickRefresh(); await wait(500);
-
-      setSt('☑️ تحديد طلبات Delivery...', 'working');
-      var deliverySel = await selectOnlyByStatus('delivery');
-
-      if (deliverySel.selected === 0) {
-        showToast('⚠️ لا يوجد طلبات Delivery', 'warning');
-        setSt('✅ تم تنفيذ كل المراحل 🎉', 'done');
+      var selected = await selectOnlyByStatus('allocation');
+      if (selected === 0) {
+        showToast('لا يوجد طلبات Allocation', 'warning');
+        setSt('⚠️ لا يوجد طلبات Allocation', 'ready');
+        updateCounts();
         return;
       }
 
-      showToast('تم تحديد ' + deliverySel.selected + ' طلب Delivery', 'success');
-      await wait(300);
+      showToast('تم تعليم ' + selected + ' طلب Allocation', 'success');
+      setSt('📦 جاري Allocate (' + selected + ')...', 'working');
+      await wait(400);
 
-      setSt('👤 Assign النهائي لطلبات Delivery...', 'working');
-      await clickAction('Assign to User');
+      var allocClicked = await clickAction('Allocate');
+      if (allocClicked) {
+        showToast('✅ تم Allocate!', 'success');
+      } else {
+        showToast('⚠️ لم يُعثر على زر Allocate — اضغطه يدوياً', 'warning');
+      }
 
-      // ── 7: ⏸️ انتظار اختيار نفس الكابتن ──
-      setSt('⏸️ اختر نفس الكابتن...', 'paused');
-      await showDialog({
-        icon:'🚗', iconColor:'green', title:'Assign النهائي — نفس الكابتن',
-        desc:'اختر نفس الكابتن اللي اخترته قبل كده\nواضغط Assign\nثم اضغط "تم" ⬇️\n\n📦 ' + deliverySel.selected + ' طلب Delivery جاهزين',
-        buttons:[{text:'✅ خلصت — تم الكل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
-      });
+      // انتظار التحويل
+      setSt('⏳ انتظار Allocation → Loading Task...', 'working');
+      await wait(2000);
+      await waitUntilStatusGone('allocation', 25, 5000);
 
-      // ── 8: التحقق النهائي ──
-      showToast('👍 تم!', 'success');
-      await wait(500);
-      setSt('🔄 التحديث النهائي...', 'working');
-      await clickRefresh(); await wait(500);
-
-      var deliveryCount = countRowsByStatus('delivery');
-      var totalRows = getRows().length;
-
-      showToast('🎉 انتهى! ' + deliveryCount + '/' + totalRows + ' Delivery', 'success');
-      setSt('🎉 تم بنجاح! ' + deliveryCount + '/' + totalRows + ' Delivery + Assign ✅', 'done');
+      updateCounts();
+      var ltCount = countRowsByStatus('loading task');
+      setSt('✅ تم Allocate — ' + ltCount + ' طلب Loading Task جاهزين 🎉', 'done');
+      showToast('🎉 ' + ltCount + ' طلب Loading Task جاهزين', 'success');
 
     } catch(err) {
       setSt('❌ خطأ: ' + (err.message || err), 'error');
-      showToast('خطأ غير متوقع', 'error');
+      showToast('خطأ في Allocate', 'error');
     }
   }
 
