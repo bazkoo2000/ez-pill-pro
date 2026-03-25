@@ -89,9 +89,13 @@ javascript:(function(){
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
         '</div>'+
 
-        // أزرار التحديد الذكية
+        // أدوات ذكية
         '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:14px;margin-bottom:16px">'+
-          '<div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-align:center;letter-spacing:0.5px">⚡ أدوات التحديد</div>'+
+          '<div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-align:center;letter-spacing:0.5px">⚡ أدوات ذكية</div>'+
+          '<button id="fey_alloc_direct" class="fey-helper-btn">'+
+            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">📦</span> Allocate</span>'+
+            '<span class="fey-badge" style="background:#fef3c7;color:#d97706" id="fey_cnt_alloc">—</span>'+
+          '</button>'+
           '<button id="fey_sel_lt" class="fey-helper-btn">'+
             '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">📋</span> تحديد Loading Task</span>'+
             '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
@@ -101,9 +105,6 @@ javascript:(function(){
             '<span class="fey-badge" style="background:#dcfce7;color:#059669" id="fey_cnt_del">—</span>'+
           '</button>'+
         '</div>'+
-
-        // زر Allocate
-        '<button id="fey_alloc_direct" style="width:100%;padding:13px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.3);transition:all 0.3s;margin-bottom:16px">📦 Allocate طلبات الصفحة</button>'+
 
         // رفع الملفات
         '<div id="fey_main">'+
@@ -210,10 +211,13 @@ javascript:(function(){
 
   // ─── تحديث عدادات الأزرار ───
   function updateCounts() {
+    var allocCount = countRowsByStatus('allocation');
     var ltCount = countRowsByStatus('loading task');
     var delCount = countRowsByStatus('delivery');
+    var allocEl = document.getElementById('fey_cnt_alloc');
     var ltEl = document.getElementById('fey_cnt_lt');
     var delEl = document.getElementById('fey_cnt_del');
+    if (allocEl) { allocEl.innerText = allocCount > 0 ? allocCount : '—'; allocEl.style.background = allocCount > 0 ? '#fef3c7' : '#f1f5f9'; allocEl.style.color = allocCount > 0 ? '#d97706' : '#94a3b8'; }
     if (ltEl) { ltEl.innerText = ltCount > 0 ? ltCount : '—'; ltEl.style.background = ltCount > 0 ? '#dbeafe' : '#f1f5f9'; ltEl.style.color = ltCount > 0 ? '#1d4ed8' : '#94a3b8'; }
     if (delEl) { delEl.innerText = delCount > 0 ? delCount : '—'; delEl.style.background = delCount > 0 ? '#dcfce7' : '#f1f5f9'; delEl.style.color = delCount > 0 ? '#059669' : '#94a3b8'; }
   }
