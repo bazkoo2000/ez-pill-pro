@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '2.1';
+  var VERSION = '3.3';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -65,7 +65,7 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v2.1</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.3</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
@@ -74,7 +74,6 @@ javascript:(function(){
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
         '</div>'+
 
-        /* ─── زر Allocate المباشر ─── */
         '<button id="fey_alloc_direct" style="width:100%;padding:13px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.3);transition:all 0.3s;margin-bottom:14px">📦 Allocate طلبات الصفحة الحالية</button>'+
 
         '<div id="fey_main">'+
@@ -107,10 +106,255 @@ javascript:(function(){
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
   // ═══════════════════════════════════════════════════════════════
-  //  Injection
+  //  Shared Helpers
   // ═══════════════════════════════════════════════════════════════
 
   var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+
+  // ─── إيجاد index عمود Current Flow ───
+  function getFlowColIndex() {
+    var colSpans = document.querySelectorAll('thead span.ant-table-column-title');
+    for (var s = 0; s < colSpans.length; s++) {
+      var spanText = (colSpans[s].textContent || '').replace(/\s+/g,' ').trim();
+      if (spanText === 'Current Flow') {
+        var th = colSpans[s].closest('th');
+        if (th) {
+          var siblings = Array.from(th.parentElement.children);
+          var idx = siblings.indexOf(th);
+          if (idx !== -1) return idx;
+        }
+      }
+    }
+    var allTh = document.querySelectorAll('thead th');
+    for (var h = 0; h < allTh.length; h++) {
+      if ((allTh[h].textContent || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return h;
+    }
+    return -1;
+  }
+
+  function getRows() {
+    var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]');
+    if (!rows.length) rows = document.querySelectorAll('tbody tr');
+    return rows;
+  }
+
+  function getRowStatus(row, colIndex) {
+    var cells = row.querySelectorAll('td');
+    if (colIndex >= cells.length) return '';
+    return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
+  }
+
+  function countRowsByStatus(status) {
+    var col = getFlowColIndex();
+    if (col === -1) return 0;
+    var rows = getRows();
+    var count = 0;
+    for (var r = 0; r < rows.length; r++) {
+      if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++;
+    }
+    return count;
+  }
+
+  function isRowChecked(row) {
+    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
+    return cb && cb.checked;
+  }
+
+  async function checkRow(row) {
+    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
+    if (!cb) { var fc = row.querySelector('td'); if (fc) { fc.click(); await wait(60); } return; }
+    if (cb.checked) return;
+    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
+    if (setter && setter.set) setter.set.call(cb, true);
+    cb.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+    cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
+    cb.dispatchEvent(new Event('change', { bubbles:true }));
+    await wait(80);
+    if (!cb.checked) {
+      var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox');
+      if (wrap) { wrap.click(); await wait(80); }
+    }
+  }
+
+  async function uncheckRow(row) {
+    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
+    if (!cb || !cb.checked) return;
+    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
+    if (setter && setter.set) setter.set.call(cb, false);
+    cb.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+    cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
+    cb.dispatchEvent(new Event('change', { bubbles:true }));
+    await wait(80);
+    if (cb.checked) {
+      var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox');
+      if (wrap) { wrap.click(); await wait(80); }
+    }
+  }
+
+  // ─── تحديد كل الصفوف ما عدا Delivery ───
+  async function selectAllExceptDelivery() {
+    var col = getFlowColIndex();
+    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
+    var rows = getRows();
+    var selected = 0, skipped = 0;
+    for (var r = 0; r < rows.length; r++) {
+      var status = getRowStatus(rows[r], col);
+      if (status.indexOf('delivery') !== -1) {
+        if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
+        skipped++;
+      } else {
+        await checkRow(rows[r]);
+        selected++;
+        await wait(50);
+      }
+    }
+    return { selected:selected, skipped:skipped };
+  }
+
+  // ─── تحديد حالة معينة فقط ───
+  async function selectOnlyByStatus(targetStatus) {
+    var col = getFlowColIndex();
+    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
+    var rows = getRows();
+    var selected = 0, skipped = 0;
+    for (var r = 0; r < rows.length; r++) {
+      var status = getRowStatus(rows[r], col);
+      if (status.indexOf(targetStatus.toLowerCase()) !== -1) {
+        await checkRow(rows[r]); selected++; await wait(50);
+      } else {
+        if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
+        skipped++;
+      }
+    }
+    return { selected:selected, skipped:skipped };
+  }
+
+  async function clickRefresh() {
+    var found = null;
+    var svgs = document.querySelectorAll('svg[aria-label="refresh icon"]');
+    for (var i = 0; i < svgs.length; i++) { var p = svgs[i].parentElement; if (p && p.offsetParent !== null) { found = p; break; } }
+    if (!found) { var all = document.querySelectorAll('span, button'); for (var j = 0; j < all.length; j++) { if ((all[j].innerText||'').trim() === 'Refresh' && all[j].offsetParent !== null) { found = all[j]; break; } } }
+    if (found) { found.click(); await wait(1800); return true; }
+    return false;
+  }
+
+  async function waitUntilStatusGone(status, maxTries, intervalMs) {
+    maxTries = maxTries || 20; intervalMs = intervalMs || 4000;
+    for (var i = 0; i < maxTries; i++) {
+      var cnt = countRowsByStatus(status);
+      if (cnt === 0) return true;
+      setSt('⏳ لا يزال ' + cnt + ' طلب "' + status + '" — انتظار (' + (i+1) + '/' + maxTries + ')', 'working');
+      await wait(intervalMs);
+      await clickRefresh();
+    }
+    return countRowsByStatus(status) === 0;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  🔍 البحث عن الأزرار والضغط عليها (ذكي + حماية reject)
+  // ═══════════════════════════════════════════════════════════════
+
+  // هل العنصر يحتوي reject؟ ممنوع نهائياً
+  function isReject(el) {
+    var t = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
+    return t.indexOf('reject') !== -1;
+  }
+
+  // البحث عن عنصر مطابق في الصفحة (مرئي + مش reject)
+  function findVisibleElement(textMatch) {
+    var textLower = textMatch.toLowerCase();
+    // كل العناصر المحتملة
+    var allEl = document.querySelectorAll('span, button, li, a, div[role="menuitem"], li[role="menuitem"], .ant-dropdown-menu-title-content');
+    for (var i = 0; i < allEl.length; i++) {
+      var el = allEl[i];
+      // تخطي الغير مرئي
+      if (!el.offsetParent && el.offsetWidth === 0) continue;
+      // حماية reject مطلقة
+      if (isReject(el)) continue;
+      var txt = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
+      // مطابقة دقيقة (case-insensitive)
+      if (txt.toLowerCase() === textLower) return el;
+    }
+    return null;
+  }
+
+  // فتح كل dropdowns المحتملة في الصفحة
+  async function openDropdowns() {
+    // 1) أزرار Ant Design dropdown
+    var triggers = document.querySelectorAll('.ant-dropdown-trigger, .ant-btn-group .ant-dropdown-trigger, [class*="dropdown"] button, button.ant-dropdown-trigger');
+    for (var i = 0; i < triggers.length; i++) {
+      if (triggers[i].offsetParent !== null && !isReject(triggers[i])) {
+        triggers[i].click();
+        await wait(300);
+      }
+    }
+    // 2) أيقونات السهم (dropdown arrows)
+    var arrows = document.querySelectorAll('.anticon-down, .anticon-ellipsis, [class*="more"], .ant-dropdown-link');
+    for (var j = 0; j < arrows.length; j++) {
+      if (arrows[j].offsetParent !== null) {
+        arrows[j].click();
+        await wait(300);
+      }
+    }
+    // 3) أي زر فيه "Actions" أو "More"
+    var btns = document.querySelectorAll('button, span.ant-btn');
+    for (var k = 0; k < btns.length; k++) {
+      var btnTxt = (btns[k].innerText||'').trim().toLowerCase();
+      if ((btnTxt.indexOf('action') !== -1 || btnTxt.indexOf('more') !== -1) && btns[k].offsetParent !== null) {
+        btns[k].click();
+        await wait(300);
+      }
+    }
+  }
+
+  // الضغط على زر بشكل ذكي: يحاول 3 مرات مع فتح dropdowns
+  async function smartClickAction(textMatch, maxRetries) {
+    maxRetries = maxRetries || 3;
+
+    for (var attempt = 1; attempt <= maxRetries; attempt++) {
+      // محاولة 1: ابحث مباشرة
+      var el = findVisibleElement(textMatch);
+      if (el) {
+        el.scrollIntoView({ block:'center' });
+        await wait(100);
+        el.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+        el.dispatchEvent(new MouseEvent('mouseup', { bubbles:true }));
+        el.click();
+        await wait(500);
+        showToast('✅ تم ' + textMatch, 'success');
+        return true;
+      }
+
+      // ما لقيناه — افتح dropdowns وجرب تاني
+      setSt('🔍 محاولة ' + attempt + '/' + maxRetries + ': بحث عن ' + textMatch + '...', 'working');
+      await openDropdowns();
+      await wait(400);
+
+      el = findVisibleElement(textMatch);
+      if (el) {
+        el.scrollIntoView({ block:'center' });
+        await wait(100);
+        el.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
+        el.dispatchEvent(new MouseEvent('mouseup', { bubbles:true }));
+        el.click();
+        await wait(500);
+        showToast('✅ تم ' + textMatch, 'success');
+        return true;
+      }
+
+      // ما لقيناه — استنى وجرب تاني
+      if (attempt < maxRetries) {
+        await wait(800);
+      }
+    }
+
+    showToast('❌ لم يُعثر على "' + textMatch + '" بعد ' + maxRetries + ' محاولات', 'error');
+    return false;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Injection
+  // ═══════════════════════════════════════════════════════════════
 
   function getInput() {
     return document.getElementById('rc_select_1')
@@ -142,57 +386,35 @@ javascript:(function(){
     var input = getInput();
     var selector = getSelector();
     if (!input || !selector) return false;
-
-    if (input.getAttribute('aria-expanded') === 'true') {
-      input.focus();
-      return true;
-    }
-
+    if (input.getAttribute('aria-expanded') === 'true') { input.focus(); return true; }
     selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
     selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
     selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
-    await wait(50);
-
-    input.focus();
-    await wait(50);
-
+    await wait(50); input.focus(); await wait(50);
     if (input.getAttribute('aria-expanded') !== 'true') {
       var overflow = document.querySelector('.ant-select-selection-overflow');
-      if (overflow) {
-        overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-        overflow.click();
-        await wait(50);
-        input.focus();
-      }
+      if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); }
     }
-
     if (input.getAttribute('aria-expanded') !== 'true') {
       input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
       await wait(50);
     }
-
-    var isOpen = await waitForOpen(input, 400);
-    return isOpen;
+    return await waitForOpen(input, 400);
   }
 
   async function injectOne(orderNum) {
     var input = getInput();
     if (!input) return false;
-
     var tagsBefore = countTags();
-
-    var opened = await forceOpenSelect();
-
+    await forceOpenSelect();
     nativeSetter.call(input, '');
     input.dispatchEvent(new Event('input', { bubbles:true }));
     await wait(30);
-
     input.focus();
     document.execCommand('selectAll', false);
     document.execCommand('delete', false);
     document.execCommand('insertText', false, orderNum);
     await wait(50);
-
     if (input.value !== orderNum) {
       nativeSetter.call(input, orderNum);
       input.dispatchEvent(new Event('input', { bubbles:true }));
@@ -200,7 +422,6 @@ javascript:(function(){
       input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum }));
     }
     await wait(80);
-
     var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
     input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
     await wait(30);
@@ -208,9 +429,7 @@ javascript:(function(){
     await wait(30);
     input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
     await wait(200);
-
     var tagsAfter = countTags();
-
     if (tagsAfter <= tagsBefore) {
       input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
       await wait(50);
@@ -218,7 +437,6 @@ javascript:(function(){
       await wait(200);
       tagsAfter = countTags();
     }
-
     return tagsAfter > tagsBefore;
   }
 
@@ -238,89 +456,84 @@ javascript:(function(){
   uploadArea.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#d8b4fe';this.style.background='#faf5ff';if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
   fileInput.addEventListener('change',function(){if(this.files.length)handleFiles(this.files)});
 
-  function handleFiles(files){var all=[],loaded=0,total=files.length;for(var i=0;i<files.length;i++){(function(f){var r=new FileReader();r.onload=function(e){all=all.concat(parse(e.target.result));loaded++;if(loaded===total){var u=[],s={};for(var j=0;j<all.length;j++)if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب جاهز','loaded');showToast(u.length+' طلب','success');enableStart()}};r.readAsText(f)})(files[i])}}
+  function handleFiles(files){
+    var results=[];var loaded=0;var total=files.length;
+    for(var i=0;i<files.length;i++){
+      (function(idx,f){
+        var r=new FileReader();
+        r.onload=function(e){
+          results[idx]=parse(e.target.result);loaded++;
+          if(loaded===total){
+            var all=[].concat.apply([],results);var u=[],s={};
+            for(var j=0;j<all.length;j++){if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}}
+            state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;
+            uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';
+            uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب جاهز','loaded');showToast(u.length+' طلب','success');enableStart();
+          }
+        };r.readAsText(f);
+      })(i,files[i]);
+    }
+  }
 
   manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
   function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
   document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
 
-  // ─── زر Allocate المباشر ───
   document.getElementById('fey_alloc_direct').addEventListener('click', async function() {
     if (state.isRunning) return;
     await runAllocate();
   });
 
-  // ─── Start ───
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
-
     var input = getInput();
     if (!input) {
       await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye الصحيحة',
         buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]});
       return;
     }
-
     startBtn.disabled = true;
     startBtn.style.opacity = '0.8';
     startBtn.innerHTML = '👆 المس الخانة...';
-
     for (var sec = 5; sec > 0; sec--) {
       setSt('👆 المس الخانة الآن! (' + sec + ')', 'waiting');
       await wait(1000);
     }
-
     setSt('🚀 جاري الرفع...', 'working');
-
     state.isRunning = true;
     state.injectedCount = 0;
     state.failedCount = 0;
     document.getElementById('fey_pw').style.display = 'block';
     upStats();
-
     var pf = document.getElementById('fey_pf');
     var pt = document.getElementById('fey_pt');
-
     for (var i = 0; i < state.orders.length; i++) {
       var order = state.orders[i];
       setSt((i+1) + '/' + state.orders.length + ': ' + order, 'working');
       pf.style.width = (((i+1) / state.orders.length) * 100) + '%';
       pt.innerText = (i+1) + '/' + state.orders.length;
       startBtn.innerHTML = '📤 ' + (i+1) + '/' + state.orders.length;
-
       var ok = await injectOne(order);
-
-      if (ok) {
-        state.injectedCount++;
-      } else {
+      if (ok) { state.injectedCount++; } else {
         await wait(300);
         ok = await injectOne(order);
-        if (ok) {
-          state.injectedCount++;
-        } else {
-          state.failedCount++;
-        }
+        if (ok) { state.injectedCount++; } else { state.failedCount++; }
       }
       upStats();
-
       if (i < state.orders.length - 1) await wait(state.delayMs);
     }
-
     state.isRunning = false;
     pf.style.width = '100%';
     startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
     startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
-
     var banner = document.createElement('div');
     banner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;z-index:99999999;background:white;border-radius:24px;padding:30px 40px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.3);font-family:Segoe UI,sans-serif;direction:rtl;transition:all 0.4s cubic-bezier(0.16,1,0.3,1)';
-    banner.innerHTML = '<div style="font-size:50px;margin-bottom:10px">' + (state.failedCount > 0 ? '⚠️' : '🎉') + '</div><div style="font-size:22px;font-weight:900;color:#1e293b;margin-bottom:8px">انتهى الرفع</div><div style="display:flex;gap:20px;justify-content:center;margin-top:12px"><div><span style="font-size:28px;font-weight:900;color:#10b981">' + state.injectedCount + '</span><div style="font-size:11px;color:#94a3b8;font-weight:700">نجاح ✅</div></div><div><span style="font-size:28px;font-weight:900;color:' + (state.failedCount > 0 ? '#ef4444' : '#10b981') + '">' + state.failedCount + '</span><div style="font-size:11px;color:#94a3b8;font-weight:700">فشل ❌</div></div><div><span style="font-size:28px;font-weight:900;color:#8b5cf6">' + countTags() + '</span><div style="font-size:11px;color:#94a3b8;font-weight:700">Tags</div></div></div>';
+    banner.innerHTML = '<div style="font-size:50px;margin-bottom:10px">'+(state.failedCount>0?'⚠️':'🎉')+'</div><div style="font-size:22px;font-weight:900;color:#1e293b;margin-bottom:8px">انتهى الرفع</div><div style="display:flex;gap:20px;justify-content:center;margin-top:12px"><div><span style="font-size:28px;font-weight:900;color:#10b981">'+state.injectedCount+'</span><div style="font-size:11px;color:#94a3b8;font-weight:700">نجاح ✅</div></div><div><span style="font-size:28px;font-weight:900;color:'+(state.failedCount>0?'#ef4444':'#10b981')+'">'+state.failedCount+'</span><div style="font-size:11px;color:#94a3b8;font-weight:700">فشل ❌</div></div></div>';
     document.body.appendChild(banner);
     requestAnimationFrame(function(){banner.style.opacity='1';banner.style.transform='translate(-50%,-50%) scale(1)';});
     setTimeout(function(){banner.style.opacity='0';banner.style.transform='translate(-50%,-50%) scale(0.8)';setTimeout(function(){banner.remove()},400);}, 3000);
-    setSt(state.injectedCount + '✅ / ' + state.failedCount + '❌', 'done');
-
+    setSt(state.injectedCount+'✅ / '+state.failedCount+'❌', 'done');
     await wait(3500);
-
     var allocRes = await showDialog({
       icon:'📦', iconColor:'blue', title:'Allocate الطلبات؟',
       desc:'هل تريد تعليم طلبات Allocation وعمل Allocate تلقائي؟',
@@ -329,179 +542,205 @@ javascript:(function(){
         {text:'📦 Allocate',value:'yes',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;box-shadow:0 4px 12px rgba(37,99,235,0.3)'}
       ]
     });
-
-    if (allocRes === 'yes') {
-      await runAllocate();
-    }
+    if (allocRes === 'yes') await runAllocate();
   });
 
   // ═══════════════════════════════════════════════════════════════
-  //  📦 Allocate — نسخة محسّنة
+  //  📦 Allocate
   // ═══════════════════════════════════════════════════════════════
 
   async function runAllocate() {
-    setSt('📦 جاري البحث عن طلبات Allocation...', 'working');
+    try {
+      setSt('📦 بحث عن طلبات Allocation...', 'working');
 
-    // ── 1. إيجاد index عمود Current Flow بدقة ──
-    var flowColIndex = -1;
-
-    // أولاً: نجرب نلاقي الـ th من خلال all header cells
-    var allTh = document.querySelectorAll('thead tr:first-child th');
-    for (var h = 0; h < allTh.length; h++) {
-      var thText = (allTh[h].innerText || allTh[h].textContent || '').replace(/\s+/g,' ').trim();
-      if (thText.indexOf('Current Flow') !== -1) {
-        flowColIndex = h;
-        break;
+      var flowColIndex = getFlowColIndex();
+      if (flowColIndex === -1) {
+        showToast('عمود Current Flow غير موجود', 'error');
+        setSt('❌ عمود Current Flow غير موجود', 'error');
+        return;
       }
-    }
 
-    // ثانياً: fallback — نفتش في كل thead rows
-    if (flowColIndex === -1) {
-      var allHeaderRows = document.querySelectorAll('thead tr');
-      for (var hr = 0; hr < allHeaderRows.length && flowColIndex === -1; hr++) {
-        var headerCells = allHeaderRows[hr].querySelectorAll('th');
-        for (var hc = 0; hc < headerCells.length; hc++) {
-          var hcText = (headerCells[hc].innerText || headerCells[hc].textContent || '').replace(/\s+/g,' ').trim();
-          if (hcText.indexOf('Current Flow') !== -1) {
-            flowColIndex = hc;
+      var result = await selectOnlyByStatus('allocation');
+
+      if (result.selected === 0) {
+        showToast('لا يوجد Allocation — متابعة...', 'info');
+        setSt('⚠️ لا يوجد Allocation — متابعة من Loading Task', 'working');
+        await wait(500);
+        await runPostAllocate(false);
+        return;
+      }
+
+      showToast('تم تعليم ' + result.selected + ' طلب Allocation', 'success');
+      setSt('📦 جاري Allocate (' + result.selected + ' طلب)...', 'working');
+      await wait(400);
+
+      var allocClicked = await smartClickAction('Allocate', 3);
+
+      if (!allocClicked) {
+        // آخر محاولة: ابحث عن أي زر فيه "Allocate" مش "Allocation"
+        var allBtns = document.querySelectorAll('button, .ant-btn, [role="button"]');
+        for (var b = 0; b < allBtns.length; b++) {
+          var bt = (allBtns[b].innerText||'').trim();
+          if (bt === 'Allocate' && allBtns[b].offsetParent !== null) {
+            allBtns[b].click();
+            allocClicked = true;
+            showToast('✅ تم Allocate!', 'success');
             break;
           }
         }
       }
-    }
 
-    if (flowColIndex === -1) {
-      showToast('لم يتم العثور على عمود Current Flow', 'error');
-      setSt('❌ عمود Current Flow غير موجود', 'error');
-      return;
-    }
-
-    // ── 2. جمع كل صفوف الجدول ──
-    var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]');
-    if (rows.length === 0) {
-      rows = document.querySelectorAll('tbody tr');
-    }
-
-    var checkedCount = 0;
-    var skippedCount = 0;
-    var alreadyChecked = 0;
-
-    for (var r = 0; r < rows.length; r++) {
-      var rowCells = rows[r].querySelectorAll('td');
-      if (flowColIndex >= rowCells.length) continue;
-
-      // استخراج نص الخلية بدقة (innerText أفضل لأنه يتجاهل الـ hidden elements)
-      var cellText = (rowCells[flowColIndex].innerText || rowCells[flowColIndex].textContent || '').replace(/\s+/g,' ').trim();
-
-      if (cellText.toLowerCase().indexOf('allocation') !== -1) {
-        // ─ إيجاد الـ checkbox في أول خلية td ─
-        var cbInput = rows[r].querySelector('td:first-child input[type="checkbox"]');
-
-        // fallback: أي checkbox في الصف
-        if (!cbInput) {
-          cbInput = rows[r].querySelector('input[type="checkbox"]');
-        }
-
-        if (cbInput) {
-          if (cbInput.checked) {
-            // بالفعل متعلّم
-            alreadyChecked++;
-            checkedCount++;
-          } else {
-            // تعليم بـ React-friendly events
-            var nativeCBSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
-            if (nativeCBSetter && nativeCBSetter.set) {
-              nativeCBSetter.set.call(cbInput, true);
-            }
-            cbInput.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
-            cbInput.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
-            cbInput.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
-            cbInput.dispatchEvent(new Event('change', { bubbles:true }));
-            await wait(80);
-
-            // تحقق من النجاح
-            if (cbInput.checked) {
-              checkedCount++;
-            } else {
-              // محاولة ثانية عبر الـ wrapper
-              var wrapper = rows[r].querySelector('.ant-checkbox-wrapper') ||
-                            rows[r].querySelector('.ant-checkbox') ||
-                            rows[r].querySelector('td:first-child label');
-              if (wrapper) {
-                wrapper.click();
-                await wait(80);
-              }
-              if (cbInput.checked) {
-                checkedCount++;
-              } else {
-                // محاولة أخيرة: click على الـ td مباشرة
-                rowCells[0].click();
-                await wait(80);
-                checkedCount++; // نعدّه حتى لو مش متأكدين
-              }
-            }
-          }
-          await wait(50);
-        } else {
-          // لا يوجد checkbox — نحاول نضغط على الصف مباشرة
-          var firstCell = rowCells[0];
-          if (firstCell) {
-            firstCell.click();
-            await wait(80);
-            checkedCount++;
-          }
-        }
+      if (allocClicked) {
+        setSt('🎉 تم Allocate — جاري المتابعة...', 'done');
       } else {
-        skippedCount++;
+        setSt('⚠️ Allocate يدوي مطلوب', 'error');
+        await showDialog({
+          icon:'⚠️', iconColor:'amber', title:'اضغط Allocate يدوياً',
+          desc:'الطلبات معلّمة — اضغط Allocate ثم "تم"',
+          buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
+        });
       }
+
+      await wait(1500);
+      await runPostAllocate(true);
+
+    } catch(err) {
+      setSt('❌ خطأ: ' + (err.message || err), 'error');
+      showToast('خطأ في Allocate', 'error');
     }
+  }
 
-    if (checkedCount === 0) {
-      showToast('لا يوجد طلبات Allocation!', 'warning');
-      setSt('⚠️ لا يوجد طلبات Allocation في الصفحة', 'error');
-      return;
-    }
+  // ═══════════════════════════════════════════════════════════════
+  //  🔄 Post-Allocate: Assign → Pending → Collected (تلقائي بالكامل)
+  // ═══════════════════════════════════════════════════════════════
 
-    showToast('تم تعليم ' + checkedCount + ' طلب', 'success');
-    setSt('📦 تم التعليم (' + checkedCount + ') — جاري الضغط على Allocate...', 'working');
-    await wait(600);
+  async function runPostAllocate(didAllocate) {
+    try {
 
-    // ── 3. البحث عن زر Allocate والضغط عليه ──
-    var allocateBtn = null;
+      // ── 1: Refresh ──
+      setSt('🔄 تحديث...', 'working');
+      await clickRefresh();
 
-    // البحث الدقيق: نريد زر Allocate الفعلي وليس أي عنصر يحتوي على الكلمة
-    var candidates = document.querySelectorAll('button, a.ant-btn, li[role="menuitem"], span.ant-dropdown-menu-title-content');
-    for (var b = 0; b < candidates.length; b++) {
-      var btnText = (candidates[b].innerText || candidates[b].textContent || '').replace(/\s+/g,' ').trim();
-      if (btnText === 'Allocate') {
-        allocateBtn = candidates[b];
-        break;
-      }
-    }
-
-    // fallback: ندور في كل عناصر الصفحة
-    if (!allocateBtn) {
-      await wait(500);
-      var allElems = document.querySelectorAll('button, [role="button"], [role="menuitem"], .ant-btn, li, a');
-      for (var b2 = 0; b2 < allElems.length; b2++) {
-        var el = allElems[b2];
-        var elText = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
-        if (elText === 'Allocate' && el.offsetParent !== null) { // مرئي فقط
-          allocateBtn = el;
-          break;
+      if (didAllocate !== false) {
+        var allocLeft = countRowsByStatus('allocation');
+        if (allocLeft > 0) {
+          setSt('⏳ انتظار تحويل Allocation → Loading Task...', 'working');
+          await waitUntilStatusGone('allocation', 20, 4000);
         }
       }
-    }
 
-    if (allocateBtn) {
-      allocateBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-      allocateBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles:true }));
-      allocateBtn.click();
-      showToast('✅ تم عمل Allocate!', 'success');
-      setSt('🎉 تم Allocate ' + checkedCount + ' طلب بنجاح', 'done');
-    } else {
-      showToast('⚠️ تم التعليم — اضغط Allocate يدوياً', 'warning');
-      setSt('⚠️ تم التعليم (' + checkedCount + ') — اضغط Allocate يدوياً', 'error');
+      // ── 2: تحديد ما عدا Delivery ──
+      setSt('☑️ تحديد الطلبات (تخطي Delivery)...', 'working');
+      var sel = await selectAllExceptDelivery();
+
+      if (sel.selected === 0) {
+        showToast('🎉 كل الطلبات Delivery', 'success');
+        setSt('✅ كل الطلبات Delivery بالفعل 🎉', 'done');
+        return;
+      }
+      if (sel.skipped > 0) showToast('تخطي ' + sel.skipped + ' Delivery', 'info');
+      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
+      await wait(300);
+
+      // ── 3: Assign to User ──
+      setSt('👤 Assign to User...', 'working');
+      var assignDone = await smartClickAction('Assign to User', 3);
+
+      if (assignDone) {
+        // ننتظر اختيار الكابتن فقط — هذا الشيء الوحيد اللي يحتاج تدخل يدوي
+        setSt('👆 اختر الكابتن...', 'waiting');
+        await showDialog({
+          icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
+          desc:'اختر كابتن التوصيل ثم اضغط Assign\nبعدها اضغط "تم" وباقي المراحل تلقائية',
+          buttons:[{text:'✅ تم اختيار الكابتن',value:'done',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white'}]
+        });
+      } else {
+        // حتى لو ما لقينا الزر — نسأل المستخدم يعمل assign يدوي ونكمل
+        await showDialog({
+          icon:'⚠️', iconColor:'amber', title:'Assign يدوي',
+          desc:'اعمل Assign to User يدوياً واختر الكابتن\nثم اضغط "تم" وباقي المراحل تلقائية',
+          buttons:[{text:'✅ تم',value:'done',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}]
+        });
+      }
+
+      // ═══════════════════════════════════════════════════════
+      //  من هنا كل شيء تلقائي 100% — بدون أي تدخل يدوي
+      // ═══════════════════════════════════════════════════════
+
+      // ── 4: Refresh + تحديد + Pending ──
+      setSt('🔄 تحديث بعد Assign...', 'working');
+      await clickRefresh();
+      await wait(500);
+
+      setSt('☑️ تحديد الطلبات قبل Pending...', 'working');
+      sel = await selectAllExceptDelivery();
+
+      if (sel.selected === 0) {
+        setSt('✅ كل الطلبات Delivery 🎉', 'done');
+        return;
+      }
+
+      setSt('⏳ تنفيذ Pending (' + sel.selected + ' طلب)...', 'working');
+      var pendingDone = await smartClickAction('Pending', 4);
+
+      if (!pendingDone) {
+        // محاولة بـ pending بحرف صغير
+        pendingDone = await smartClickAction('pending', 2);
+      }
+
+      if (pendingDone) {
+        showToast('✅ تم Pending!', 'success');
+      } else {
+        showToast('⚠️ Pending لم يُعثر عليه — متابعة...', 'warning');
+      }
+
+      // ── 5: Refresh + تحديد + Collected (مباشرة بدون توقف) ──
+      await wait(1000);
+      setSt('🔄 تحديث بعد Pending...', 'working');
+      await clickRefresh();
+      await wait(500);
+
+      setSt('☑️ تحديد الطلبات قبل Collected...', 'working');
+      sel = await selectAllExceptDelivery();
+
+      if (sel.selected === 0) {
+        setSt('✅ كل الطلبات Delivery 🎉', 'done');
+        return;
+      }
+
+      setSt('📦 تنفيذ Collected (' + sel.selected + ' طلب)...⛔ تجنب Reject', 'working');
+      var collectedDone = await smartClickAction('Collected', 4);
+
+      if (collectedDone) {
+        showToast('✅ تم Collected!', 'success');
+      } else {
+        showToast('⚠️ Collected لم يُعثر عليه — متابعة...', 'warning');
+      }
+
+      // ── 6: التحقق النهائي ──
+      await wait(1000);
+      setSt('🔄 التحديث النهائي...', 'working');
+      await clickRefresh();
+      await wait(500);
+
+      var deliveryCount = countRowsByStatus('delivery');
+      var totalRows = getRows().length;
+      var remaining = totalRows - deliveryCount;
+
+      if (remaining === 0 && deliveryCount > 0) {
+        showToast('🎉 كل الطلبات (' + deliveryCount + ') Delivery!', 'success');
+        setSt('🎉 ' + deliveryCount + '/' + deliveryCount + ' Delivery ✅', 'done');
+      } else if (deliveryCount > 0) {
+        showToast('🎉 ' + deliveryCount + '/' + totalRows + ' Delivery', 'success');
+        setSt('🎉 ' + deliveryCount + ' Delivery + ' + remaining + ' متبقي', 'done');
+      } else {
+        showToast('✅ تم تنفيذ كل المراحل', 'success');
+        setSt('✅ تم 🎉', 'done');
+      }
+
+    } catch(err) {
+      setSt('❌ خطأ: ' + (err.message || err), 'error');
+      showToast('خطأ غير متوقع', 'error');
     }
   }
 
