@@ -4292,17 +4292,73 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         var _doseN=smartDoseRecognizer(rd.note);
         var _tpiN=getTwoPillsPerDoseInfo(rd.note);
         var _tmN=getTimeFromWords(rd.note);
-        /* Set time from note */
-        if(!_tmN.isUnrecognized) setTime(r_node,_tmN.time);
-        else setTime(r_node,(getCodeAwareTime(_tmN,rd.itemCode)).time);
-        /* Set every from note dose count */
-        if(_doseN.count>=4||rd.timesPerDay>=4){setEvry(tds_nodes[ei_main],'6');}
-        else if(_doseN.count===3||rd.timesPerDay===3){setEvry(tds_nodes[ei_main],'8');}
-        else if(_doseN.count===2||rd.timesPerDay===2){setEvry(tds_nodes[ei_main],'12');}
-        else{setEvry(tds_nodes[ei_main],'24');}
-        /* Size stays FIXED — never multiply */
-        setSize(tds_nodes[si_main],_fixSizeN);
-        if(di_main>=0) setDose(tds_nodes[di_main],_tpiN.dose);
+        var _fixEvery=24;
+        if(_doseN.count>=4||rd.timesPerDay>=4) _fixEvery=6;
+        else if(_doseN.count===3||rd.timesPerDay===3) _fixEvery=8;
+        else if(_doseN.count===2||rd.timesPerDay===2) _fixEvery=12;
+        var _fixTPD=Math.floor(24/_fixEvery);
+        var _firstTime=(!_tmN.isUnrecognized)?_tmN.time:(getCodeAwareTime(_tmN,rd.itemCode)).time;
+
+        /* v146: Odd fixed size + BID/TID → split into even + remainder */
+        if(_fixSizeN%_fixTPD!==0&&_fixTPD>=2){
+          var _evenSize=_fixSizeN-(_fixSizeN%_fixTPD);
+          var _remainSize=_fixSizeN-_evenSize;
+          console.log('ODD FIXED: code='+rd.itemCode+' size='+_fixSizeN+' tpd='+_fixTPD+' → even='+_evenSize+' remain='+_remainSize);
+
+          /* Main row: even size, original every */
+          setSize(tds_nodes[si_main],_evenSize);
+          setEvry(tds_nodes[ei_main],String(_fixEvery));
+          setTime(r_node,_firstTime);
+          if(di_main>=0) setDose(tds_nodes[di_main],_tpiN.dose);
+
+          /* Get end date from main row */
+          var _oddEndDate='';
+          if(edi_main>=0&&tds_nodes[edi_main]){
+            var _oddEdInp=tds_nodes[edi_main].querySelector('input');
+            if(_oddEdInp) _oddEndDate=_oddEdInp.value||'';
+          }
+
+          /* Create remainder row: clone, set size=remainder, every=24, first time only */
+          var _remRow=r_node.cloneNode(true);
+          var _remTds=_remRow.querySelectorAll('td');
+          setSize(_remTds[si_main],_remainSize);
+          setEvry(_remTds[ei_main],'24');
+
+          /* Note: first dose time only (صباحا from صباحا ومساءا, بعد الفطار from بعد الفطار والعشاء) */
+          var _remNote=rd.note.replace(/و\s*(مساءا|مساء|المساء|العشاء|العشا|عشاء)/gi,'').replace(/مرتين|twice/gi,'').replace(/\s+/g,' ').trim();
+          if(ni_main>=0&&_remTds[ni_main]){var _remNInp=_remTds[ni_main].querySelector('input,textarea');if(_remNInp){_remNInp.value='⚡ '+_remNote+' (باقي)';fire(_remNInp);}}
+
+          /* Set remainder row start time = first time */
+          setTime(_remRow,_firstTime);
+
+          /* Set remainder start date = main row end date */
+          if(_oddEndDate&&sdi_main>=0&&_remTds[sdi_main]){
+            var _remSdInp=_remTds[sdi_main].querySelector('input');
+            if(_remSdInp){_remSdInp.value=_oddEndDate;fire(_remSdInp);}
+          }
+          /* Set remainder end date = end date + 1 day */
+          if(_oddEndDate&&edi_main>=0&&_remTds[edi_main]){
+            var _remEdDate=new Date(_oddEndDate);
+            _remEdDate.setDate(_remEdDate.getDate()+1);
+            var _remEdStr=_remEdDate.getFullYear()+'-'+('0'+(_remEdDate.getMonth()+1)).slice(-2)+'-'+('0'+_remEdDate.getDate()).slice(-2);
+            var _remEdInp=_remTds[edi_main].querySelector('input');
+            if(_remEdInp){_remEdInp.value=_remEdStr;fire(_remEdInp);}
+          }
+
+          if(di_main>=0) setDose(_remTds[di_main],_tpiN.dose);
+          if(qi_main>=0){var _remQ=parseInt(get(tds_nodes[qi_main]))||1;setSize(_remTds[qi_main],_remQ*m);}
+
+          /* Insert remainder row after main row */
+          r_node.parentNode.insertBefore(_remRow,r_node.nextSibling);
+          console.log('ODD FIXED: created remainder row size='+_remainSize+' every=24 time='+_firstTime+' startDate='+_oddEndDate);
+        } else {
+          /* Even fixed size or single dose — normal processing */
+          setSize(tds_nodes[si_main],_fixSizeN);
+          setEvry(tds_nodes[ei_main],String(_fixEvery));
+          setTime(r_node,_firstTime);
+          if(di_main>=0) setDose(tds_nodes[di_main],_tpiN.dose);
+        }
+
         if(qi_main>=0){var cur2f=parseInt(get(tds_nodes[qi_main]))||1;setSize(tds_nodes[qi_main],cur2f*m);}
         continue;
       }
