@@ -264,7 +264,7 @@
   document.getElementById("fd-add-start").addEventListener("change",recalcAddEndDate);
   document.getElementById("fd-add-qty").addEventListener("input",recalcAddEndDate);
   document.getElementById("fd-add-size").addEventListener("input",recalcAddEndDate);
-  var today=new Date();document.getElementById("fd-add-start").value=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+  var tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);document.getElementById("fd-add-start").value=tomorrow.getFullYear()+"-"+String(tomorrow.getMonth()+1).padStart(2,"0")+"-"+String(tomorrow.getDate()).padStart(2,"0");
 
   // ============ MEDICINE SEARCH ============
   var searchTimeout=null,selectedMedicine=null;
