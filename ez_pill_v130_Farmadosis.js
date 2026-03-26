@@ -3489,12 +3489,24 @@ function getMealTimesFromNote(note){
    - 3 مرات: منتظم فقط لو كل الفروق متساوية
    لو غير منتظم → لازم تكرار ──*/
 function needsDuplicateByTime(times){
+  /* v146: Duplicate ONLY when times are NOT evenly spaced
+     - 2 times 12h apart (±0.5h) → regular → every=12, NO dup
+     - 2 times NOT 12h apart → irregular → DUPLICATE
+     - 3 times 8h apart (±0.5h) → regular → every=8, NO dup  
+     - 3 times NOT 8h apart → irregular → DUPLICATE */
   if(times.length<2) return false;
-  var gaps=[];
-  for(var i=1;i<times.length;i++) gaps.push(times[i]-times[i-1]);
-  if(times.length===2) return Math.abs(gaps[0]-12)>2;
-  var minG=Math.min.apply(null,gaps);var maxG=Math.max.apply(null,gaps);
-  return (maxG-minG)>0.5;
+  if(times.length===2){
+    var gap=times[1]-times[0];
+    /* 12h ± 0.5h = regular BID → no dup needed */
+    return Math.abs(gap-12)>0.5;
+  }
+  if(times.length===3){
+    var g1=times[1]-times[0];
+    var g2=times[2]-times[1];
+    /* 8h ± 0.5h each = regular TID → no dup needed */
+    return Math.abs(g1-8)>0.5||Math.abs(g2-8)>0.5;
+  }
+  return true;
 }
 
 function shouldDuplicateRow(note){
@@ -3505,22 +3517,13 @@ function shouldDuplicateRow(note){
   var isEvery6=/كل\s*6|every\s*6|q6h|q\s*6\s*h/i.test(s);
   if(isEvery6)return{type:'q6h',doseInfo:d,isBefore:d.isBefore};
 
-  /* ── المبدأ الجديد: احسب الأوقات الفعلية وشوف لو منتظمة ── */
+  /* v146: Check actual times — duplicate only if irregular */
   var mealTimes=getMealTimesFromNote(note);
   if(mealTimes.length>=2&&needsDuplicateByTime(mealTimes)){
     var dupType=mealTimes.length>=3?'three':'two';
     return{type:dupType,doseInfo:d,isBefore:d.isBefore};
   }
 
-  /* ── منطق صارم: فقط الأوقات غير المنتظمة تتقسم ── */
-  if(d.hasBed&&(d.hasB||d.hasL||d.hasD||d.hasM||d.hasN||d.hasA)){
-    var _bedMealT=getMealTimesFromNote(note);
-    if(_bedMealT.length>=2&&needsDuplicateByTime(_bedMealT))return{type:'two',doseInfo:d,isBefore:d.isBefore};
-  }
-  if(d.hasEmpty&&d.hasBed){
-    var _emBedT=getMealTimesFromNote(note);
-    if(_emBedT.length>=2&&needsDuplicateByTime(_emBedT))return{type:'two',doseInfo:d,isBefore:d.isBefore};
-  }
   return null;
 }
 
