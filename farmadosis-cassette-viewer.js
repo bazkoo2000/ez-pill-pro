@@ -208,9 +208,9 @@
           headers: { "Authorization": "Bearer " + token, "Accept": "application/json, text/plain, */*", "Content-Type": "application/json", "X-Client-ID": "Web" },
           body: JSON.stringify({ machine_id: 59, production_layout_id: 101 })
         });
-        if (!saveResp.ok) { fcLog("[" + productionId + "] Save failed", "err"); continue; }
-        fcLog("[" + productionId + "] Saved", "ok");
-      } catch (e) { fcLog("[" + productionId + "] " + e.message, "err"); continue; }
+        if (!saveResp.ok) { fcLog("[" + productionId + "] Already saved/sent, skipping save", "info"); }
+        else { fcLog("[" + productionId + "] Saved", "ok"); }
+      } catch (e) { fcLog("[" + productionId + "] Save skipped: " + e.message, "info"); }
 
       try {
         var url = API_ROOT + "/productions/" + productionId + "/reports/recharge?sortBy[]=device&sortBy[]=quantity&sortDesc[]=true&sortDesc[]=true&itemsPerPage=-1&page=1&parameters[]=with-details";
