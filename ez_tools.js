@@ -1,277 +1,358 @@
-(async function () {
-  "use strict";
+javascript:(function(){
+'use strict';
 
-  var oldPanel = document.getElementById("fd-cassette-panel");
-  if (oldPanel) oldPanel.remove();
+var PID='ez-tools-main';
+var old=document.getElementById(PID);if(old){old.remove();return}
+var SECRET='101093';
 
-  // ============ AUTO-DETECT PRODUCTION ID ============
-  function getCheckedProductionIds() {
-    var ids = [];
-    var rows = document.querySelectorAll("tr");
-    rows.forEach(function (row) {
-      var checkbox = row.querySelector(".v-input--selection-controls__ripple");
-      if (!checkbox) return;
-      var input = row.querySelector("input[type=checkbox]");
-      var isChecked = false;
-      if (input && input.checked) isChecked = true;
-      else { var vInput = row.querySelector(".v-input--is-label-active, .v-input--is-dirty"); if (vInput) isChecked = true; }
-      if (!isChecked) return;
-      var link = row.querySelector("a[href*='/productions/']");
-      if (link) { var match = link.getAttribute("href").match(/productions\/(\d+)/); if (match) ids.push(match[1]); }
-    });
-    return ids;
+/* ══════════════════════════════════════
+   Smart Context Detection
+   ══════════════════════════════════════ */
+var loc=window.location.href.toLowerCase();
+var isDetails=loc.indexOf('getezpill_details')>-1||loc.indexOf('getezpill_detail')>-1;
+var isPrint=loc.indexOf('printorder')>-1;
+var isFarmadosis=loc.indexOf('farmadosis.com')>-1;
+var isFareye=loc.indexOf('fareye')>-1;
+var isFarmadosisTreatments=isFarmadosis&&loc.indexOf('/treatments')>-1;
+var isFarmadosisPatients=isFarmadosis&&loc.indexOf('/patients')>-1&&!isFarmadosisTreatments;
+var isHomePage=loc.indexOf('ez_pill_web')>-1&&!isDetails&&!isPrint;
+
+/* ══════════════════════════════════════
+   Helpers
+   ══════════════════════════════════════ */
+function gv(td){
+  if(!td)return'';
+  var inp=td.querySelector('input,textarea');
+  if(inp)return inp.value.trim();
+  var sel=td.querySelector('select');
+  if(sel){var o=sel.options[sel.selectedIndex];return o?o.text.trim():''}
+  return td.textContent.trim();
+}
+
+function getStoreCode(){
+  var labels=document.querySelectorAll('label');
+  for(var i=0;i<labels.length;i++){
+    var txt=labels[i].textContent||'';
+    if(txt.indexOf('StoreCode')>-1){return txt.replace(/[^0-9]/g,'')}
   }
-  function getProductionIdFromUrl() { var m = window.location.href.match(/productions\/(\d+)/); return m ? m[1] : null; }
-  function getInstallationId() { var m = window.location.href.match(/installations\/(\d+)/); return m ? m[1] : "22"; }
+  return'0000';
+}
 
-  // ============ TOKEN ============
-  function getAuthToken() {
-    if (window._fd_capturedToken) return window._fd_capturedToken;
-    var storages = [localStorage, sessionStorage];
-    for (var si = 0; si < storages.length; si++) { var store = storages[si];
-      for (var j = 0; j < store.length; j++) { var key = store.key(j); var v = store.getItem(key);
-        try { var p = JSON.parse(v); if (p && typeof p === "object") { if (p.token) return p.token; if (p.access_token) return p.access_token; } }
-        catch (e) { if (v && v.length > 30 && v.length < 1000 && /^[A-Za-z0-9._-]+$/.test(v)) return v; } } }
-    return null;
+function to24h(t){
+  t=(t||'09:00').trim().toUpperCase();
+  var isPM=t.indexOf('PM')>-1;
+  var isAM=t.indexOf('AM')>-1;
+  t=t.replace(/[APM\s]/gi,'').trim();
+  var parts=t.split(':');
+  var hr=parseInt(parts[0])||0;
+  var mn=parts[1]||'00';
+  if(isPM&&hr<12)hr+=12;
+  if(isAM&&hr===12)hr=0;
+  return String(hr).padStart(2,'0')+':'+mn;
+}
+
+function toYMD(d){
+  if(!d)return'';
+  d=d.trim();
+  if(d.indexOf('/')>-1){var p=d.split('/');if(p.length===3)return p[2]+p[0].padStart(2,'0')+p[1].padStart(2,'0')}
+  if(d.indexOf('-')>-1)return d.replace(/-/g,'');
+  return d;
+}
+
+/* ══════════════════════════════════════
+   Load Tool
+   ══════════════════════════════════════ */
+function loadTool(url,name,closePanel){
+  if(closePanel){var pp=document.getElementById(PID);if(pp)pp.style.display='none'}
+  var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
+  fetch(full).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(code){
+    try{new Function(code)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}
+  }).catch(function(){
+    try{var x=new XMLHttpRequest();x.open('GET',full,true);x.onload=function(){if(x.status===200){try{new Function(x.responseText)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}}else{alert('فشل تحميل '+name);showPanel()}};x.onerror=function(){alert('فشل تحميل '+name);showPanel()};x.send()}catch(e2){alert('فشل تحميل '+name);showPanel()}
+  });
+}
+
+function showPanel(){var pp=document.getElementById(PID);if(pp){pp.style.display='block';pp.style.animation='ezSlideIn 0.35s cubic-bezier(0.16,1,0.3,1)'}}
+
+/* ══════════════════════════════════════
+   Auto-Launch Detection
+   ══════════════════════════════════════ */
+var autoDetected=false;
+
+/* ── 1. FarEye ── */
+if(!autoDetected&&isFareye){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);
+  },300);
+}
+
+/* ── 1b. Farmadosis Treatments → farmadosis-bulk ── */
+else if(!autoDetected&&isFarmadosisTreatments){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
+  },300);
+}
+
+/* ── 2. Print Order → nahdi-editor ── */
+else if(!autoDetected&&isPrint){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);
+  },300);
+}
+
+/* ── 3. Farmadosis Patients → farmadosis-bulk مباشرة ── */
+else if(!autoDetected&&isFarmadosisPatients){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
+  },300);
+}
+
+/* ── 4. Details Page → EZPillAddDrug (4 buttons) or Export tab ── */
+else if(!autoDetected&&isDetails){
+  var btns=document.querySelectorAll('input[type="button"],input[type="submit"],button,a');
+  var hasPacked=false,hasDownload=false,hasAI=false,hasCancel=false;
+  for(var bi=0;bi<btns.length;bi++){
+    var t=(btns[bi].value||btns[bi].textContent||'').toLowerCase().trim();
+    if(t.indexOf('update status as packed')>-1)hasPacked=true;
+    if(t.indexOf('download file')>-1)hasDownload=true;
+    if(t.indexOf('ai assistant')>-1)hasAI=true;
+    if(t.indexOf('cancel')>-1)hasCancel=true;
   }
-  if (!window._fd_cassette_intercepted) {
-    window._fd_cassette_intercepted = true;
-    var origXHR = XMLHttpRequest.prototype.setRequestHeader;
-    XMLHttpRequest.prototype.setRequestHeader = function (n, v) {
-      if (n.toLowerCase() === "authorization" && v.indexOf("Bearer") > -1) window._fd_capturedToken = v.replace("Bearer ", "");
-      return origXHR.apply(this, arguments);
-    };
+  if(hasPacked&&hasDownload&&hasAI&&hasCancel){
+    // طلب مفتوح → إضافة صنف
+    autoDetected=true;
+    setTimeout(function(){
+      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
+    },300);
+  } else {
+    // طلب مقفل (head_id فيه رقم) → بانيل مع تاب تصدير
+    autoDetected=true;
+    buildPanel('export');
   }
+}
 
-  var API_ROOT = "https://amcoplusapi.farmadosis.com/api/installations/" + getInstallationId();
-  var detectedIds = getCheckedProductionIds();
-  var urlId = getProductionIdFromUrl();
-
-  // ============ STYLES ============
-  var css = '\
-    #fd-cassette-panel{position:fixed;top:0;left:0;width:540px;height:100vh;background:#fff;border-right:3px solid #1565c0;z-index:999999;font-family:Arial,sans-serif;font-size:13px;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,.3)}\
-    #fd-cassette-panel *{box-sizing:border-box}\
-    #fd-cassette-panel .fc-header{background:#1565c0;color:#fff;padding:14px 18px;font-size:16px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}\
-    #fd-cassette-panel .fc-close{cursor:pointer;font-size:22px;background:none;border:none;color:#fff;font-weight:bold}\
-    #fd-cassette-panel .fc-body{padding:15px}\
-    #fd-cassette-panel .fc-btn{width:100%;padding:10px;margin-top:8px;border:none;border-radius:6px;font-size:13px;font-weight:bold;cursor:pointer;color:#fff}\
-    #fd-cassette-panel .fc-btn:hover{opacity:.9}\
-    #fd-cassette-panel .fc-btn:disabled{background:#ccc;cursor:not-allowed}\
-    #fd-cassette-panel .fc-btn-blue{background:#1565c0}\
-    #fd-cassette-panel .fc-detected{margin:8px 0;padding:10px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;font-size:12px;color:#2e7d32;font-weight:bold}\
-    #fd-cassette-panel .fc-detected-none{background:#fff3e0;border-color:#ffcc80;color:#e65100}\
-    #fd-cassette-panel .fc-log{margin-top:8px;padding:8px;background:#f5f5f5;border-radius:4px;max-height:80px;overflow-y:auto;font-size:11px;line-height:1.5;direction:ltr}\
-    #fd-cassette-panel .fc-log .ok{color:green}\
-    #fd-cassette-panel .fc-log .err{color:red}\
-    #fd-cassette-panel .fc-log .info{color:#1565c0}\
-    #fd-cassette-panel .fc-table-wrap{margin-top:8px;max-height:calc(100vh - 420px);overflow-y:auto;border:1px solid #ddd;border-radius:6px}\
-    #fd-cassette-panel table{width:100%;border-collapse:collapse;font-size:12px}\
-    #fd-cassette-panel thead{position:sticky;top:0;z-index:1}\
-    #fd-cassette-panel th{background:#1565c0;color:#fff;padding:8px 6px;text-align:left;font-size:11px;white-space:nowrap}\
-    #fd-cassette-panel td{padding:7px 6px;border-bottom:1px solid #eee}\
-    #fd-cassette-panel tr:hover td{background:#e3f2fd}\
-    #fd-cassette-panel .fc-tray{background:#fff3e0;color:#e65100;font-weight:bold;padding:2px 8px;border-radius:10px;font-size:11px;display:inline-block}\
-    #fd-cassette-panel .fc-cassette{background:#e8f5e9;color:#2e7d32;font-weight:bold;padding:2px 8px;border-radius:10px;font-size:11px;display:inline-block}\
-    #fd-cassette-panel .fc-no-cassette{background:#ffebee;color:#c62828;font-weight:bold;padding:2px 8px;border-radius:10px;font-size:11px;display:inline-block}\
-    #fd-cassette-panel .fc-summary{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}\
-    #fd-cassette-panel .fc-stat{flex:1;min-width:70px;padding:8px;border-radius:8px;text-align:center;font-weight:bold}\
-    #fd-cassette-panel .fc-stat .fc-num{font-size:20px}\
-    #fd-cassette-panel .fc-stat .fc-label{font-size:10px;color:#666}\
-    #fd-cassette-panel .fc-search{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:13px;margin-top:8px}\
-    #fd-cassette-panel .fc-section{margin-top:12px;padding:12px;border-radius:8px;border:1px solid #ddd}\
-    #fd-cassette-panel .fc-section-title{font-weight:bold;font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px}\
-    #fd-cassette-panel .fc-lookup-box{background:#f3e5f5;border-color:#ce93d8}\
-    #fd-cassette-panel .fc-lookup-box .fc-section-title{color:#7b1fa2}\
-    #fd-cassette-panel .fc-prod-box{background:#e3f2fd;border-color:#90caf9}\
-    #fd-cassette-panel .fc-prod-box .fc-section-title{color:#1565c0}\
-    #fd-cassette-panel .fc-lookup-result{margin-top:8px;padding:10px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;font-size:12px;display:none}\
-    #fd-cassette-panel .fc-lookup-result .fc-lr-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5}\
-    #fd-cassette-panel .fc-lookup-result .fc-lr-label{color:#666;font-size:11px}\
-    #fd-cassette-panel .fc-lookup-result .fc-lr-value{font-weight:bold;font-size:12px}\
-    #fd-cassette-panel .fc-lookup-input{display:flex;gap:6px}\
-    #fd-cassette-panel .fc-lookup-input input{flex:1;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:13px}\
-    #fd-cassette-panel .fc-lookup-input button{padding:8px 16px;border:none;border-radius:4px;background:#7b1fa2;color:#fff;font-weight:bold;cursor:pointer;font-size:13px;white-space:nowrap}\
-    #fd-cassette-panel .fc-lookup-input button:hover{opacity:.9}\
-  ';
-
-  // ============ PANEL ============
-  var panel = document.createElement("div");
-  panel.id = "fd-cassette-panel";
-
-  var detectedHtml = '';
-  if (detectedIds.length > 0) detectedHtml = '<div class="fc-detected">Auto-detected: ' + detectedIds.join(", ") + '</div>';
-  else if (urlId) detectedHtml = '<div class="fc-detected">From URL: ' + urlId + '</div>';
-  else detectedHtml = '<div class="fc-detected fc-detected-none">No production selected. Check a row or enter from production page.</div>';
-
-  panel.innerHTML = '<style>' + css + '</style>\
-    <div class="fc-header"><span>Cassette Viewer</span><button class="fc-close" id="fc-close-btn">&times;</button></div>\
-    <div class="fc-body">\
-      <!-- CASSETTE LOOKUP -->\
-      <div class="fc-section fc-lookup-box">\
-        <div class="fc-section-title">&#128270; Cassette Lookup</div>\
-        <div class="fc-lookup-input">\
-          <input type="text" id="fc-lookup-code" placeholder="Medicine code e.g. 101066105" />\
-          <button id="fc-lookup-btn">Search</button>\
-        </div>\
-        <div class="fc-lookup-result" id="fc-lookup-result"></div>\
-      </div>\
-      <!-- PRODUCTION REPORT -->\
-      <div class="fc-section fc-prod-box">\
-        <div class="fc-section-title">&#128203; Production Cassettes</div>\
-        ' + detectedHtml + '\
-        <button class="fc-btn fc-btn-blue" id="fc-load-btn">Load Cassette Data</button>\
-      </div>\
-      <div class="fc-summary" id="fc-summary" style="display:none;"></div>\
-      <input type="text" class="fc-search" id="fc-search" placeholder="Filter by code, name, or cassette..." style="display:none;" />\
-      <div class="fc-table-wrap" id="fc-table-wrap" style="display:none;"></div>\
-      <div class="fc-log" id="fc-log"></div>\
-    </div>';
-  document.body.appendChild(panel);
-
-  document.getElementById("fc-close-btn").onclick = function () { document.getElementById("fd-cassette-panel").remove(); };
-
-  var logEl = document.getElementById("fc-log");
-  function fcLog(m, c) { logEl.innerHTML += '<div class="' + (c || "info") + '">' + m + '</div>'; logEl.scrollTop = logEl.scrollHeight; }
-
-  // ============ CASSETTE LOOKUP ============
-  document.getElementById("fc-lookup-btn").onclick = async function () {
-    var code = document.getElementById("fc-lookup-code").value.trim();
-    if (!code) return;
-    var token = getAuthToken();
-    if (!token) { fcLog("Token not found!", "err"); return; }
-
-    this.disabled = true;
-    this.textContent = "...";
-    var resultEl = document.getElementById("fc-lookup-result");
-    resultEl.style.display = "none";
-
-    try {
-      var url = API_ROOT + "/cassettes/search?page=1&itemsPerPage=10&sortDesc[]=false&mustSort=false&multiSort=false&is_active=true&query=" + encodeURIComponent(code) + "&find_deactived_cassette_medicines=0";
-      var resp = await fetch(url, {
-        headers: { "Authorization": "Bearer " + token, "Accept": "application/json, text/plain, */*", "X-Client-ID": "Web" }
-      });
-
-      if (!resp.ok) { fcLog("Search failed: " + resp.status, "err"); this.disabled = false; this.textContent = "Search"; return; }
-
-      var data = await resp.json();
-      var items = data.items || data.data || [];
-
-      if (items.length === 0) {
-        resultEl.style.display = "block";
-        resultEl.innerHTML = '<div style="text-align:center;color:#e65100;font-weight:bold;padding:10px;">&#10060; No cassette found for this code.<br/><span class="fc-tray">Will use Tray</span></div>';
-      } else {
-        var c = items[0];
-        var medName = (c.medicines && c.medicines.length > 0) ? c.medicines[0].name : (c.medicine_name || "—");
-        var medCode = (c.medicines && c.medicines.length > 0) ? c.medicines[0].code : (c.medicine_code || "—");
-
-        resultEl.style.display = "block";
-        resultEl.innerHTML = '\
-          <div style="text-align:center;margin-bottom:8px;"><span class="fc-cassette" style="font-size:13px;">&#9989; Cassette #' + (c.number || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Medicine</span><span class="fc-lr-value">' + medCode + ' - ' + medName + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Chip</span><span class="fc-lr-value">' + (c.chip || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Base</span><span class="fc-lr-value" style="color:#1565c0;font-size:14px;background:#e3f2fd;padding:2px 10px;border-radius:6px;">' + (c.base_name || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Number</span><span class="fc-lr-value">' + (c.number || "—") + '</span></div>\
-          ' + (items.length > 1 ? '<div style="margin-top:6px;font-size:10px;color:#999;text-align:center;">+ ' + (items.length - 1) + ' more result(s)</div>' : '') + '';
+/* ── 5. Home Page → Search (ready to pack) or Close (packed) ── */
+else if(!autoDetected&&isHomePage){
+  // نلاقي عمود Status بالاسم الصح
+  var detectedMode='';
+  var tables=document.querySelectorAll('table');
+  outer:for(var ti=0;ti<tables.length;ti++){
+    var headers=tables[ti].querySelectorAll('th');
+    var statusColIndex=-1;
+    for(var hi=0;hi<headers.length;hi++){
+      if((headers[hi].textContent||'').toLowerCase().trim()==='status'){
+        statusColIndex=hi;break;
       }
-    } catch (e) {
-      fcLog("Error: " + e.message, "err");
     }
-
-    this.disabled = false;
-    this.textContent = "Search";
-  };
-
-  // Enter key in lookup
-  document.getElementById("fc-lookup-code").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") document.getElementById("fc-lookup-btn").click();
-  });
-
-  // ============ LOAD PRODUCTION DATA ============
-  var allItems = [];
-
-  document.getElementById("fc-load-btn").onclick = async function () {
-    var freshIds = getCheckedProductionIds();
-    if (freshIds.length === 0) { var fromUrl = getProductionIdFromUrl(); if (fromUrl) freshIds = [fromUrl]; }
-    if (freshIds.length === 0) { fcLog("No production selected! Check a row first.", "err"); return; }
-
-    var token = getAuthToken();
-    if (!token) { fcLog("Token not found!", "err"); return; }
-
-    this.disabled = true;
-    logEl.innerHTML = "";
-    allItems = [];
-
-    for (var pi = 0; pi < freshIds.length; pi++) {
-      var productionId = freshIds[pi];
-      fcLog("[" + productionId + "] Saving to machine...", "info");
-
-      try {
-        var saveResp = await fetch(API_ROOT + "/productions/" + productionId + "/save-to-machine", {
-          method: "POST",
-          headers: { "Authorization": "Bearer " + token, "Accept": "application/json, text/plain, */*", "Content-Type": "application/json", "X-Client-ID": "Web" },
-          body: JSON.stringify({ machine_id: 59, production_layout_id: 101 })
-        });
-        if (!saveResp.ok) { fcLog("[" + productionId + "] Save failed", "err"); continue; }
-        fcLog("[" + productionId + "] Saved", "ok");
-      } catch (e) { fcLog("[" + productionId + "] " + e.message, "err"); continue; }
-
-      try {
-        var url = API_ROOT + "/productions/" + productionId + "/reports/recharge?sortBy[]=device&sortBy[]=quantity&sortDesc[]=true&sortDesc[]=true&itemsPerPage=-1&page=1&parameters[]=with-details";
-        var resp = await fetch(url, {
-          headers: { "Authorization": "Bearer " + token, "Accept": "application/json, text/plain, */*", "X-Client-ID": "Web" }
-        });
-        if (!resp.ok) { fcLog("[" + productionId + "] Report failed", "err"); continue; }
-        var data = await resp.json();
-        var items = Array.isArray(data) ? data : (data.items || data.data || []);
-        items.forEach(function (item) { item._prodId = productionId; });
-        allItems = allItems.concat(items);
-        fcLog("[" + productionId + "] Found " + items.length + " medicines", "ok");
-      } catch (e) { fcLog("[" + productionId + "] " + e.message, "err"); }
-
-      if (pi < freshIds.length - 1) await new Promise(function (r) { setTimeout(r, 300); });
+    if(statusColIndex>-1){
+      var dataRows=tables[ti].querySelectorAll('tr');
+      for(var ri=1;ri<dataRows.length;ri++){
+        var cells=dataRows[ri].querySelectorAll('td');
+        if(cells[statusColIndex]){
+          var sv=cells[statusColIndex].textContent.trim().toLowerCase();
+          if(sv==='accepted'){detectedMode='readytopack';break outer;}
+          if(sv==='packed'||sv==='fulfilled'||sv==='received'){detectedMode='packed';break outer;}
+        }
+      }
     }
+  }
+  if(detectedMode==='packed'){
+    autoDetected=true;
+    setTimeout(function(){
+      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);
+    },300);
+  } else {
+    // accepted أو مش قادر يحدد → Search_Order
+    autoDetected=true;
+    setTimeout(function(){
+      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);
+    },300);
+  }
+}
 
-    if (allItems.length > 0) { renderSummary(); renderTable(allItems); document.getElementById("fc-search").style.display = "block"; }
-    this.disabled = false;
-  };
+/* ══════════════════════════════════════
+   لو مفيش أداة اتعرفت → البانيل الكامل
+   ══════════════════════════════════════ */
+if(!autoDetected){
+  buildPanel();
+}
 
-  // ============ SUMMARY ============
-  function renderSummary() {
-    var total = allItems.length;
-    var cassettes = allItems.filter(function (i) { return i.device && i.device.toLowerCase().indexOf("cassette") > -1; }).length;
-    var trays = allItems.filter(function (i) { return i.device && i.device.toLowerCase().indexOf("tray") > -1; }).length;
-    var totalQty = allItems.reduce(function (s, i) { return s + (i.quantity || 0); }, 0);
-    var el = document.getElementById("fc-summary");
-    el.style.display = "flex";
-    el.innerHTML = '<div class="fc-stat" style="background:#e3f2fd;"><div class="fc-num">' + total + '</div><div class="fc-label">Total</div></div>\
-      <div class="fc-stat" style="background:#e8f5e9;"><div class="fc-num">' + cassettes + '</div><div class="fc-label">Cassettes</div></div>\
-      <div class="fc-stat" style="background:#fff3e0;"><div class="fc-num">' + trays + '</div><div class="fc-label">Trays</div></div>';
+/* ══════════════════════════════════════
+   Farmadosis Download (JSON)
+   ══════════════════════════════════════ */
+function safeDownload(){try{var pname=(document.getElementById('pname')||{}).value||'';var mobile=(document.getElementById('mobile')||{}).value||'';var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';if(!pname||!mobile)return;if(!inv)return;var treats=[];var rows=document.querySelectorAll('table.styled-table tr');for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;var code=gv(tds[1]);if(!code||code.length<3)continue;var every=gv(tds[6])||'';var mins=1440;if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;var st=gv(tds[7])||'09:00';if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}if(!st||st.length<3)st='09:00';function fd(dd){if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}return dd}var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]})}if(!treats.length)return;downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv)}catch(e){}}
+
+/* ══════════════════════════════════════
+   JVM Download (.OCS)
+   ══════════════════════════════════════ */
+function jvmDownload(){
+  try{
+    var pname=(document.getElementById('pname')||{}).value||'';
+    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
+    if(!pname){alert('⚠️ اسم المريض غير موجود');return}
+    if(!inv){alert('⚠️ رقم الفاتورة غير موجود');return}
+    var storeCode=getStoreCode();
+    var lines=[];
+    var rows=document.querySelectorAll('table.styled-table tr');
+    for(var r=1;r<rows.length;r++){
+      var tds=rows[r].querySelectorAll('td');
+      if(tds.length<12)continue;
+      var code=gv(tds[1]);
+      if(!code||code.length<3)continue;
+      var itemName=gv(tds[2]);
+      var dose=gv(tds[5])||'1';
+      var every=gv(tds[6])||'';
+      var startTime=gv(tds[7])||'09:00';
+      var startDate=gv(tds[8])||'';
+      var endDate=gv(tds[9])||'';
+      var notes=gv(tds[10])||'';
+      var expiry=gv(tds[11])||'';
+      var time24=to24h(startTime);
+      var sd=toYMD(startDate);
+      var ed=toYMD(endDate);
+      if(!sd)sd=new Date().toISOString().slice(0,10).replace(/-/g,'');
+      if(!ed)ed=sd;
+      function pLabel(t){var h=parseInt(t.split(':')[0])||0;return h<12?'صباحا':'مساءا'}
+      function mkLine(t,period){return pname+'||Nahdi Pharmacy|Store '+storeCode+'|'+dose+'|'+code+'|'+itemName+'|'+t+'|'+sd+'|'+ed+'|'+expiry+'|'+period+'|'+notes+'|||||';}
+      var evH=24;
+      if(every.indexOf('4')>-1&&every.indexOf('24')<0)evH=4;
+      else if(every.indexOf('6')>-1)evH=6;
+      else if(every.indexOf('8')>-1)evH=8;
+      else if(every.indexOf('12')>-1)evH=12;
+      if(evH===24){lines.push(mkLine(time24,pLabel(time24)));}
+      else if(evH===12){lines.push(mkLine('09:00','صباحا'));lines.push(mkLine('21:00','مساءا'));}
+      else if(evH===8){lines.push(mkLine('08:00','صباحا'));lines.push(mkLine('16:00','مساءا'));lines.push(mkLine('00:00','صباحا'));}
+      else if(evH===6){lines.push(mkLine('06:00','صباحا'));lines.push(mkLine('12:00','مساءا'));lines.push(mkLine('18:00','مساءا'));lines.push(mkLine('00:00','صباحا'));}
+      else if(evH===4){lines.push(mkLine('06:00','صباحا'));lines.push(mkLine('10:00','صباحا'));lines.push(mkLine('14:00','مساءا'));lines.push(mkLine('18:00','مساءا'));lines.push(mkLine('22:00','مساءا'));lines.push(mkLine('02:00','صباحا'));}
+    }
+    if(!lines.length){alert('⚠️ لا توجد أصناف للتصدير');return}
+    var content=lines.join('\r\n')+'\r\n';
+    var bom='\uFEFF';
+    var blob=new Blob([bom+content],{type:'application/octet-stream'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download='ezPillDownload'+inv+'.OCS';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }catch(e){alert('❌ خطأ في تحميل JVM: '+e.message)}
+}
+
+/* ══════════════════════════════════════
+   Build Main Panel
+   ══════════════════════════════════════ */
+function buildPanel(forceTab){
+
+  var startTab=forceTab||'orders';
+  if(!forceTab){
+    if(isFarmadosis||isFareye)startTab='tools';
+    else if(isPrint)startTab='tools';
+    else if(isDetails)startTab='tools';
   }
 
-  // ============ TABLE ============
-  function renderTable(items) {
-    var wrap = document.getElementById("fc-table-wrap");
-    wrap.style.display = "block";
-    if (items.length === 0) { wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No data</div>'; return; }
-    var html = '<table><thead><tr><th>#</th><th>Code</th><th>Name</th><th>Device</th><th>Chip</th><th>Base</th><th>Qty</th><th>Stock</th></tr></thead><tbody>';
-    items.forEach(function (item, i) {
-      var isCassette = item.device && item.device.toLowerCase().indexOf("cassette") > -1;
-      var deviceHtml = isCassette ? '<span class="fc-cassette">' + item.device + '</span>' : '<span class="fc-tray">' + (item.device || "N/A") + '</span>';
-      html += '<tr><td>' + (i + 1) + '</td><td><strong>' + (item.code || "") + '</strong></td><td>' + (item.name || "") + '</td><td>' + deviceHtml + '</td><td>' + (item.chip || "—") + '</td><td>' + (item.base || "—") + '</td><td><strong>' + (item.quantity || 0) + '</strong></td><td>' + (item.stock || 0) + '</td></tr>';
-    });
-    html += '</tbody></table>';
-    wrap.innerHTML = html;
+  var ctxMap={
+    'orders':{icon:'📋',text:'قائمة الطلبات',color:'#6366f1',bg:'rgba(99,102,241,0.08)'},
+    'tools':{icon:'🛠️',text:'صفحة التفاصيل',color:'#22c55e',bg:'rgba(34,197,94,0.08)'},
+    'export':{icon:'📤',text:'عرض فقط',color:'#f59e0b',bg:'rgba(245,158,11,0.08)'},
+  };
+  if(isFarmadosis)ctxMap['tools']={icon:'💊',text:'Farmadosis',color:'#8b5cf6',bg:'rgba(139,92,246,0.08)'};
+  else if(isFareye)ctxMap['tools']={icon:'🚀',text:'FarEye',color:'#f97316',bg:'rgba(249,115,22,0.08)'};
+  var ctx=ctxMap[startTab]||ctxMap['orders'];
+
+  if(!document.getElementById('ez-tools-css')){
+    var css=document.createElement('style');css.id='ez-tools-css';
+    css.textContent=
+      '@keyframes ezSlideIn{from{opacity:0;transform:translateY(-18px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}'+
+      '@keyframes ezFadeTab{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}'+
+      '#'+PID+'{position:fixed;top:14px;right:14px;z-index:999999;width:380px;border-radius:22px;overflow:hidden;background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif;animation:ezSlideIn 0.4s cubic-bezier(0.16,1,0.3,1);direction:rtl}'+
+      '#'+PID+' .ez-seg{display:flex;gap:2px;padding:3px;margin:0 16px 10px;border-radius:10px;background:rgba(0,0,0,0.05)}'+
+      '#'+PID+' .ez-seg-btn{flex:1;padding:8px 4px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:#9ca3af;background:transparent;transition:all 0.25s;direction:rtl}'+
+      '#'+PID+' .ez-seg-btn.active{background:#fff;color:#1f2937;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 0 0 0.5px rgba(0,0,0,0.04)}'+
+      '#'+PID+' .ez-group{background:#fff;border-radius:14px;margin:0 16px 12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}'+
+      '#'+PID+' .ez-item{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;transition:background 0.15s;border-bottom:0.5px solid #f3f4f6;direction:rtl}'+
+      '#'+PID+' .ez-item:last-child{border-bottom:none}'+
+      '#'+PID+' .ez-item:hover{background:#f9fafb}'+
+      '#'+PID+' .ez-item:active{background:#f3f4f6}'+
+      '#'+PID+' .ez-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}'+
+      '#'+PID+' .ez-tab-content{animation:ezFadeTab 0.25s ease}'+
+      '#'+PID+' .ez-ctx{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;letter-spacing:0.3px}';
+    document.head.appendChild(css);
   }
 
-  // ============ FILTER TABLE ============
-  document.getElementById("fc-search").addEventListener("input", function () {
-    var q = this.value.trim().toLowerCase();
-    if (!q) { renderTable(allItems); return; }
-    var filtered = allItems.filter(function (item) {
-      return (item.code && item.code.toLowerCase().indexOf(q) > -1) || (item.name && item.name.toLowerCase().indexOf(q) > -1) || (item.device && item.device.toLowerCase().indexOf(q) > -1) || (item.chip && item.chip.toLowerCase().indexOf(q) > -1);
-    });
-    renderTable(filtered);
-  });
+  var p=document.createElement('div');p.id=PID;
+  p.innerHTML=
+    '<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+    '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">EZ</div>'+
+    '<div><div style="font-size:15px;font-weight:800;color:#1f2937">EZ Tools</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v3.1 — Auto Launch</div></div></div>'+
+    '<div style="display:flex;align-items:center;gap:8px">'+
+    '<div class="ez-ctx" style="background:'+ctx.bg+';color:'+ctx.color+'">'+ctx.icon+' '+ctx.text+'</div>'+
+    '<button id="ez-t-close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:inherit" onmouseover="this.style.background=\'rgba(239,68,68,0.1)\';this.style.color=\'#ef4444\'" onmouseout="this.style.background=\'rgba(0,0,0,0.06)\';this.style.color=\'#9ca3af\'">×</button>'+
+    '</div></div>'+
+    '<div class="ez-seg">'+
+    '<button class="ez-seg-btn'+(startTab==='orders'?' active':'')+'" data-tab="orders">📋 الطلبات</button>'+
+    '<button class="ez-seg-btn'+(startTab==='tools'?' active':'')+'" data-tab="tools">🛠️ الأدوات</button>'+
+    '<button class="ez-seg-btn'+(startTab==='export'?' active':'')+'" data-tab="export">📤 تصدير</button>'+
+    '</div>'+
+    '<div id="ez-tab-orders" class="ez-tab-content" style="display:'+(startTab==='orders'?'block':'none')+'">'+
+    '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-search"><div class="ez-icon" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff)">🔍</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">بحث طلبات ready to pack</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">فحص وفتح الطلبات تلقائياً</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-close-orders"><div class="ez-icon" style="background:linear-gradient(135deg,#fee2e2,#fce7f3)">📝</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تقفيل الطلبات packed</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تقفيل طلبات received وتصدير الـ packed</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-radar"><div class="ez-icon" style="background:linear-gradient(135deg,#dcfce7,#d1fae5)">📡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">البحث الشامل</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Radar — بحث متقدم</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '</div></div>'+
+    '<div id="ez-tab-tools" class="ez-tab-content" style="display:'+(startTab==='tools'?'block':'none')+'">'+
+    '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-add"><div class="ez-icon" style="background:linear-gradient(135deg,#dbeafe,#e0e7ff)">➕</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">إضافة صنف</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">إضافة دواء جديد الى الجدول</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-editor"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تحكم كامل فى الـ print summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-fareye"><div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">رفع الطلبات على fareye</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-bulk"><div class="ez-icon" style="background:linear-gradient(135deg,#fde68a,#fef3c7)">⚡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Farmadosis Bulk</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Patients & Treatments — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '</div></div>'+
+    '<div id="ez-tab-export" class="ez-tab-content" style="display:'+(startTab==='export'?'block':'none')+'">'+
+    '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-dl"><div class="ez-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">💊</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل Farmadosis</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف JSON — جهاز Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-jvm"><div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🏥</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل JVM</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف OCS — جهاز JVM</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-pr"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">🖨️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">طباعة الملخص</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Print Summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '</div></div>'+
+    '<div style="padding:8px 20px 14px;text-align:center"><div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v3.1 — DEVELOPED BY ALI EL-BAZ</div></div>';
 
-  fcLog("Ready!", "ok");
+  document.body.appendChild(p);
+
+  /* Tabs */
+  var segBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+  for(var si=0;si<segBtns.length;si++){
+    segBtns[si].addEventListener('click',function(){
+      var tab=this.getAttribute('data-tab');
+      var all=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+      for(var j=0;j<all.length;j++){all[j].classList.remove('active')}
+      this.classList.add('active');
+      var tids=['orders','tools','export'];
+      for(var k=0;k<tids.length;k++){
+        var el=document.getElementById('ez-tab-'+tids[k]);
+        if(el){if(tids[k]===tab){el.style.display='block';el.style.animation='ezFadeTab 0.25s ease'}else{el.style.display='none'}}
+      }
+    });
+  }
+
+  /* Close */
+  document.getElementById('ez-t-close').onclick=function(){
+    p.style.transition='all 0.3s cubic-bezier(0.4,0,1,1)';
+    p.style.opacity='0';p.style.transform='translateY(-18px) scale(0.97)';
+    setTimeout(function(){p.remove()},300);
+  };
+
+  /* Buttons */
+  document.getElementById('ez-t-search').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);};
+  document.getElementById('ez-t-close-orders').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);};
+  document.getElementById('ez-t-radar').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);};
+  document.getElementById('ez-t-add').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);};
+  document.getElementById('ez-t-editor').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);};
+  document.getElementById('ez-t-fareye').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);};
+  document.getElementById('ez-t-bulk').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);};
+  document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
+  document.getElementById('ez-t-jvm').onclick=function(){jvmDownload()};
+  document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}};
+}
+
 })();
