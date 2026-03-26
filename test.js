@@ -7,17 +7,14 @@
   // ============ AUTO-DETECT PRODUCTION ID ============
   function getCheckedProductionIds() {
     var ids = [];
-    var rows = document.querySelectorAll("tr");
-    rows.forEach(function (row) {
-      var checkbox = row.querySelector(".v-input--selection-controls__ripple");
-      if (!checkbox) return;
-      var input = row.querySelector("input[type=checkbox]");
-      var isChecked = false;
-      if (input && input.checked) isChecked = true;
-      else { var vInput = row.querySelector(".v-input--is-label-active, .v-input--is-dirty"); if (vInput) isChecked = true; }
-      if (!isChecked) return;
+    // Vuetify adds v-data-table__selected class to checked rows
+    var selectedRows = document.querySelectorAll("tr.v-data-table__selected");
+    selectedRows.forEach(function (row) {
       var link = row.querySelector("a[href*='/productions/']");
-      if (link) { var match = link.getAttribute("href").match(/productions\/(\d+)/); if (match) ids.push(match[1]); }
+      if (link) {
+        var match = link.getAttribute("href").match(/productions\/(\d+)/);
+        if (match) ids.push(match[1]);
+      }
     });
     return ids;
   }
@@ -169,14 +166,8 @@
           <div style="text-align:center;margin-bottom:8px;"><span class="fc-cassette" style="font-size:13px;">&#9989; Cassette #' + (c.number || "—") + '</span></div>\
           <div class="fc-lr-row"><span class="fc-lr-label">Medicine</span><span class="fc-lr-value">' + medCode + ' - ' + medName + '</span></div>\
           <div class="fc-lr-row"><span class="fc-lr-label">Chip</span><span class="fc-lr-value">' + (c.chip || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Base</span><span class="fc-lr-value">' + (c.base_name || "—") + '</span></div>\
+          <div class="fc-lr-row"><span class="fc-lr-label">Base</span><span class="fc-lr-value" style="color:#1565c0;font-size:14px;background:#e3f2fd;padding:2px 10px;border-radius:6px;">' + (c.base_name || "—") + '</span></div>\
           <div class="fc-lr-row"><span class="fc-lr-label">Number</span><span class="fc-lr-value">' + (c.number || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Stock</span><span class="fc-lr-value">' + (c.units_quantity || 0) + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Max Doses</span><span class="fc-lr-value">' + (c.maximum_doses || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Batch</span><span class="fc-lr-value">' + (c.batch || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Expiry</span><span class="fc-lr-value">' + (c.batch_expires_at || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Dose</span><span class="fc-lr-value">' + (c.dose || 1) + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Active</span><span class="fc-lr-value">' + (c.is_active ? "&#9989; Yes" : "&#10060; No") + '</span></div>\
           ' + (items.length > 1 ? '<div style="margin-top:6px;font-size:10px;color:#999;text-align:center;">+ ' + (items.length - 1) + ' more result(s)</div>' : '') + '';
       }
     } catch (e) {
@@ -251,8 +242,7 @@
     el.style.display = "flex";
     el.innerHTML = '<div class="fc-stat" style="background:#e3f2fd;"><div class="fc-num">' + total + '</div><div class="fc-label">Total</div></div>\
       <div class="fc-stat" style="background:#e8f5e9;"><div class="fc-num">' + cassettes + '</div><div class="fc-label">Cassettes</div></div>\
-      <div class="fc-stat" style="background:#fff3e0;"><div class="fc-num">' + trays + '</div><div class="fc-label">Trays</div></div>\
-      <div class="fc-stat" style="background:#f3e5f5;"><div class="fc-num">' + totalQty + '</div><div class="fc-label">Total Qty</div></div>';
+      <div class="fc-stat" style="background:#fff3e0;"><div class="fc-num">' + trays + '</div><div class="fc-label">Trays</div></div>';
   }
 
   // ============ TABLE ============
@@ -264,7 +254,8 @@
     items.forEach(function (item, i) {
       var isCassette = item.device && item.device.toLowerCase().indexOf("cassette") > -1;
       var deviceHtml = isCassette ? '<span class="fc-cassette">' + item.device + '</span>' : '<span class="fc-tray">' + (item.device || "N/A") + '</span>';
-      html += '<tr><td>' + (i + 1) + '</td><td><strong>' + (item.code || "") + '</strong></td><td>' + (item.name || "") + '</td><td>' + deviceHtml + '</td><td>' + (item.chip || "—") + '</td><td>' + (item.base || "—") + '</td><td><strong>' + (item.quantity || 0) + '</strong></td><td>' + (item.stock || 0) + '</td></tr>';
+      var baseHtml = item.base ? '<span style="background:#1565c0;color:#fff;font-weight:bold;padding:3px 10px;border-radius:6px;font-size:12px;">' + item.base + '</span>' : '<span style="color:#ccc;">—</span>';
+      html += '<tr><td>' + (i + 1) + '</td><td><strong>' + (item.code || "") + '</strong></td><td>' + (item.name || "") + '</td><td>' + deviceHtml + '</td><td>' + (item.chip || "—") + '</td><td>' + baseHtml + '</td><td><strong>' + (item.quantity || 0) + '</strong></td><td>' + (item.stock || 0) + '</td></tr>';
     });
     html += '</tbody></table>';
     wrap.innerHTML = html;
@@ -281,4 +272,10 @@
   });
 
   fcLog("Ready!", "ok");
+  if (detectedIds.length > 0) fcLog("Detected " + detectedIds.length + " checked production(s)", "ok");
+  else fcLog("No checked rows found. Check a production row first.", "info");
+
+  // Debug
+  var selectedRows = document.querySelectorAll("tr.v-data-table__selected");
+  fcLog("Debug: " + selectedRows.length + " selected rows in page", "info");
 })();
