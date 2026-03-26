@@ -14,7 +14,8 @@ var isPrint=loc.indexOf('printorder')>-1;
 var isFarmadosis=loc.indexOf('farmadosis.com')>-1;
 var isFareye=loc.indexOf('fareye')>-1;
 var isFarmadosisTreatments=isFarmadosis&&loc.indexOf('/treatments')>-1;
-var isFarmadosisPatients=isFarmadosis&&loc.indexOf('/patients')>-1&&!isFarmadosisTreatments;
+var isFarmadosisProductions=isFarmadosis&&loc.indexOf('/productions')>-1;
+var isFarmadosisPatients=isFarmadosis&&loc.indexOf('/patients')>-1&&!isFarmadosisTreatments&&!isFarmadosisProductions;
 var isHomePage=loc.indexOf('ez_pill_web')>-1&&!isDetails&&!isPrint;
 
 /* ══════════════════════════════════════
@@ -92,6 +93,14 @@ else if(!autoDetected&&isFarmadosisTreatments){
   autoDetected=true;
   setTimeout(function(){
     loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
+  },300);
+}
+
+/* ── 1c. Farmadosis Productions → cassette-viewer ── */
+else if(!autoDetected&&isFarmadosisProductions){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-cassette-viewer.js','Cassette Viewer',true);
   },300);
 }
 
@@ -308,6 +317,7 @@ function buildPanel(forceTab){
     '<div class="ez-item" id="ez-t-editor"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تحكم كامل فى الـ print summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '<div class="ez-item" id="ez-t-fareye"><div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">رفع الطلبات على fareye</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '<div class="ez-item" id="ez-t-bulk"><div class="ez-icon" style="background:linear-gradient(135deg,#fde68a,#fef3c7)">⚡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Farmadosis Bulk</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Patients & Treatments — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-cassette"><div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#c7d2fe)">🏭</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Cassette Viewer</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Productions — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '</div></div>'+
     '<div id="ez-tab-export" class="ez-tab-content" style="display:'+(startTab==='export'?'block':'none')+'">'+
     '<div class="ez-group">'+
@@ -350,6 +360,7 @@ function buildPanel(forceTab){
   document.getElementById('ez-t-editor').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);};
   document.getElementById('ez-t-fareye').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);};
   document.getElementById('ez-t-bulk').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);};
+  document.getElementById('ez-t-cassette').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-cassette-viewer.js','Cassette Viewer',true);};
   document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
   document.getElementById('ez-t-jvm').onclick=function(){jvmDownload()};
   document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}};
