@@ -449,7 +449,7 @@
         if(itemEl) itemEl.style.background="#ffebee";
         impLog("["+file.name+"] "+err.message,"err");
       }
-      if(i<total-1) await new Promise(function(r){setTimeout(r,500);});
+      if(i<total-1) await new Promise(function(r){setTimeout(r,100);});
     }
     impLog("===== DONE: "+ok+" ok, "+fail+" failed =====",ok>0?"ok":"err");
     this.disabled = false;
