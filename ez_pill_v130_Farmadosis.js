@@ -3456,7 +3456,15 @@ function getCodeAwareTime(timeResult,itemCode){
 /* ── Helper: استخرج الأوقات الفعلية من الـ note بناءً على الكلمات ── */
 function getMealTimesFromNote(note){
   var s=(note||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
-  var isBefore=/قبل/i.test(s);
+  /* v146: Per-keyword before/after instead of global isBefore */
+  var bfBefore=/قبل\s*(ال)?(فطار|فطور|افطار|فكار)|before\s*(break|iftar)/i.test(s);
+  var bfAfter=/بعد\s*(ال)?(فطار|فطور|افطار|فكار)|after\s*(break|iftar)|مع\s*(ال)?(فطار|فكار)/i.test(s);
+  var lnBefore=/قبل\s*(ال)?(غدا|غداء|غذا|غذاء)|before\s*lunch/i.test(s);
+  var lnAfter=/بعد\s*(ال)?(غدا|غداء|غذا|غذاء)|after\s*lunch|مع\s*(ال)?(غدا|غداء)/i.test(s);
+  var dnBefore=/قبل\s*(ال)?(عشا|عشاء)|before\s*(din|sup)/i.test(s);
+  var dnAfter=/بعد\s*(ال)?(عشا|عشاء)|after\s*(din|sup)|مع\s*(ال)?(عشا|عشاء)/i.test(s);
+  var globalBefore=!bfBefore&&!bfAfter&&!lnBefore&&!lnAfter&&!dnBefore&&!dnAfter&&/قبل/i.test(s)&&!/بعد/i.test(s);
+
   var hasB=/فطر|فطار|فطور|افطار|الفطار|فكار|الفكار|breakfast|fatur|ftor/i.test(s);
   var hasL=/غدا|غداء|الغدا|الغداء|الغدى|غذا|غذاء|الغذا|الغذاء|عداء|العداء|lunch/i.test(s);
   var hasD=/عشا|عشو|عشاء|العشاء|العشا|سحور|dinner|asha/i.test(s);
@@ -3468,14 +3476,12 @@ function getMealTimesFromNote(note){
   var hasEmpty=/ريق|الريق|empty|fasting|stomach/i.test(s);
   var times=[];
   if(hasEmpty) times.push(7);
-  if(hasB) times.push(isBefore?8:9);
-  /* v146: صباحا + عالريق = وقت واحد (ريق) مش اتنين */
+  if(hasB){if(bfBefore)times.push(8);else if(bfAfter)times.push(9);else times.push(globalBefore?8:9);}
   if(hasMorning&&!hasB&&!hasEmpty) times.push(9);
   if(hasNoon&&!hasL) times.push(12);
-  if(hasL) times.push(isBefore?13:14);
+  if(hasL){if(lnBefore)times.push(13);else if(lnAfter)times.push(14);else times.push(globalBefore?13:14);}
   if(hasAfternoon&&!hasL) times.push(15);
-  if(hasD) times.push(isBefore?20:21);
-  /* v146: مساء + قبل النوم = وقت واحد (نوم) مش اتنين */
+  if(hasD){if(dnBefore)times.push(20);else if(dnAfter)times.push(21);else times.push(globalBefore?20:21);}
   if(hasEvening&&!hasD&&!hasBed) times.push(21);
   if(hasBed) times.push(22);
   var unique={};var result=[];
@@ -3602,14 +3608,21 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);}
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
       var n1='',t1='',n2='',t2='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasN){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=n_lbl;t2=NORMAL_TIMES.noon;meals=['الصباح','الظهر'];}
-      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){n1=n_lbl;t1=NORMAL_TIMES.noon;n2=e_lbl;t2=NORMAL_TIMES.evening;meals=['الظهر','المساء'];}
-      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=a_lbl;t2=NORMAL_TIMES.afternoon;meals=['الصباح','العصر'];}
-      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=a_lbl;t1=NORMAL_TIMES.afternoon;n2=e_lbl;t2=NORMAL_TIMES.evening;meals=['العصر','المساء'];}
-      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln;t2=NORMAL_TIMES.beforeLunch;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln;t2=NORMAL_TIMES.afterLunch;}meals=isEn?['Breakfast','Lunch']:['الفطار','الغداء'];}
-      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){if(ni.isBefore){n1=p+ln;t1=NORMAL_TIMES.beforeLunch;n2=p+dn;t2=NORMAL_TIMES.beforeDinner;}else{n1=p+ln;t1=NORMAL_TIMES.afterLunch;n2=p+dn;t2=NORMAL_TIMES.afterDinner;}meals=isEn?['Lunch','Dinner']:['الغداء','العشاء'];}
-      else{if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+dn;t2=NORMAL_TIMES.beforeDinner;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+dn;t2=NORMAL_TIMES.afterDinner;}meals=isEn?['Breakfast','Dinner']:['الفطار','العشاء'];}
-      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
+      /* v146: NEVER rename notes. Keep original text, only set different times */
+      var _origNote=get(r.querySelectorAll('td')[niIdx]);
+      var _mealTimes=getMealTimesFromNote(_origNote);
+      if(_mealTimes.length>=2){
+        t1=('0'+Math.floor(_mealTimes[0])).slice(-2)+':'+('0'+Math.round((_mealTimes[0]%1)*60)).slice(-2);
+        t2=('0'+Math.floor(_mealTimes[1])).slice(-2)+':'+('0'+Math.round((_mealTimes[1]%1)*60)).slice(-2);
+      } else if(ni.doseInfo.hasM&&ni.doseInfo.hasN){t1=NORMAL_TIMES.morning;t2=NORMAL_TIMES.noon;}
+      else if(ni.doseInfo.hasN&&ni.doseInfo.hasE){t1=NORMAL_TIMES.noon;t2=NORMAL_TIMES.evening;}
+      else if(ni.doseInfo.hasM&&ni.doseInfo.hasA){t1=NORMAL_TIMES.morning;t2=NORMAL_TIMES.afternoon;}
+      else if(ni.doseInfo.hasA&&ni.doseInfo.hasE){t1=NORMAL_TIMES.afternoon;t2=NORMAL_TIMES.evening;}
+      else if(ni.doseInfo.hasB&&ni.doseInfo.hasL){t1=ni.isBefore?NORMAL_TIMES.beforeBreakfast:NORMAL_TIMES.afterBreakfast;t2=ni.isBefore?NORMAL_TIMES.beforeLunch:NORMAL_TIMES.afterLunch;}
+      else if(ni.doseInfo.hasL&&ni.doseInfo.hasD){t1=ni.isBefore?NORMAL_TIMES.beforeLunch:NORMAL_TIMES.afterLunch;t2=ni.isBefore?NORMAL_TIMES.beforeDinner:NORMAL_TIMES.afterDinner;}
+      else{t1=ni.isBefore?NORMAL_TIMES.beforeBreakfast:NORMAL_TIMES.afterBreakfast;t2=ni.isBefore?NORMAL_TIMES.beforeDinner:NORMAL_TIMES.afterDinner;}
+      meals=['1','2'];
+      setNote(nt1[niIdx],'⚡ '+_origNote);setNote(nt2[niIdx],'⚡ '+_origNote);setTime(nr1,t1);setTime(nr2,t2);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
     } else if(ni.type==='three'){
       var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);var nr3=r.cloneNode(true);
@@ -3619,9 +3632,16 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(di>=0){var tpi=getTwoPillsPerDoseInfo(get(r.querySelectorAll('td')[niIdx]));setDose(nt1[di],tpi.dose);setDose(nt2[di],tpi.dose);setDose(nt3[di],tpi.dose);}
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);setSize(nt3[qi],calcQ);}
       var n1='',t1='',n2='',t2='',n3='',t3='';
-      if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){n1=m_lbl;t1=NORMAL_TIMES.morning;n2=a_lbl;t2=NORMAL_TIMES.afternoon;n3=e_lbl;t3=NORMAL_TIMES.evening;meals=isEn?['Morning','Afternoon','Evening']:['الصباح','العصر','المساء'];}
-      else{if(ni.isBefore){n1=p+bf;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln;t2=NORMAL_TIMES.beforeLunch;n3=p+dn;t3=NORMAL_TIMES.beforeDinner;}else{n1=p+bf;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln;t2=NORMAL_TIMES.afterLunch;n3=p+dn;t3=NORMAL_TIMES.afterDinner;}meals=isEn?['Breakfast','Lunch','Dinner']:['الفطار','الغداء','العشاء'];}
-      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setNote(nt3[niIdx],'⚡ '+n3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
+      var _origNote3=get(r.querySelectorAll('td')[niIdx]);
+      var _mealTimes3=getMealTimesFromNote(_origNote3);
+      if(_mealTimes3.length>=3){
+        t1=('0'+Math.floor(_mealTimes3[0])).slice(-2)+':'+('0'+Math.round((_mealTimes3[0]%1)*60)).slice(-2);
+        t2=('0'+Math.floor(_mealTimes3[1])).slice(-2)+':'+('0'+Math.round((_mealTimes3[1]%1)*60)).slice(-2);
+        t3=('0'+Math.floor(_mealTimes3[2])).slice(-2)+':'+('0'+Math.round((_mealTimes3[2]%1)*60)).slice(-2);
+      } else if(ni.doseInfo.hasM&&ni.doseInfo.hasA&&ni.doseInfo.hasE){t1=NORMAL_TIMES.morning;t2=NORMAL_TIMES.afternoon;t3=NORMAL_TIMES.evening;}
+      else{t1=ni.isBefore?NORMAL_TIMES.beforeBreakfast:NORMAL_TIMES.afterBreakfast;t2=ni.isBefore?NORMAL_TIMES.beforeLunch:NORMAL_TIMES.afterLunch;t3=ni.isBefore?NORMAL_TIMES.beforeDinner:NORMAL_TIMES.afterDinner;}
+      meals=['1','2','3'];
+      setNote(nt1[niIdx],'⚡ '+_origNote3);setNote(nt2[niIdx],'⚡ '+_origNote3);setNote(nt3[niIdx],'⚡ '+_origNote3);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
     } else if(ni.type==='q6h'){
       var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
@@ -3633,9 +3653,10 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(qi>=0){setSize(nt1[qi],calcQ);setSize(nt2[qi],calcQ);}
       var andW=isEn?' & ':' و';var bedLbl=isEn?'Before Bed':'قبل النوم';
       var n1='',t1='',n2='',t2='';
-      if(ni.isBefore){n1=p+bf+andW+dn;t1=NORMAL_TIMES.beforeBreakfast;n2=p+ln+andW+bedLbl;t2=NORMAL_TIMES.beforeLunch;}
-      else{n1=p+bf+andW+dn;t1=NORMAL_TIMES.afterBreakfast;n2=p+ln+andW+bedLbl;t2=NORMAL_TIMES.afterLunch;}
-      setNote(nt1[niIdx],'⚡ '+n1);setNote(nt2[niIdx],'⚡ '+n2);setTime(nr1,t1);setTime(nr2,t2);
+      var _origNoteQ6=get(r.querySelectorAll('td')[niIdx]);
+      if(ni.isBefore){t1=NORMAL_TIMES.beforeBreakfast;t2=NORMAL_TIMES.beforeLunch;}
+      else{t1=NORMAL_TIMES.afterBreakfast;t2=NORMAL_TIMES.afterLunch;}
+      setNote(nt1[niIdx],'⚡ '+_origNoteQ6);setNote(nt2[niIdx],'⚡ '+_origNoteQ6);setTime(nr1,t1);setTime(nr2,t2);
       nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
       meals=isEn?['Breakfast&Dinner','Lunch&Bed']:['الفطار والعشاء','الغداء والنوم'];
