@@ -103,44 +103,12 @@ else if(!autoDetected&&isPrint){
   },300);
 }
 
-/* ── 3. Farmadosis Patients → mini menu ── */
+/* ── 3. Farmadosis Patients → farmadosis-bulk مباشرة ── */
 else if(!autoDetected&&isFarmadosisPatients){
   autoDetected=true;
-  var choiceDiv=document.createElement('div');
-  choiceDiv.id='ez-choice-panel';
-  choiceDiv.style.cssText='position:fixed;top:14px;right:14px;z-index:999999;background:#fff;border-radius:16px;padding:18px;width:300px;box-shadow:0 20px 60px rgba(0,0,0,0.15);font-family:-apple-system,BlinkMacSystemFont,Cairo,sans-serif;direction:rtl;animation:ezSlideIn 0.35s cubic-bezier(0.16,1,0.3,1)';
-  choiceDiv.innerHTML=
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'+
-    '<div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px">EZ</div>'+
-    '<div><div style="font-size:14px;font-weight:800;color:#1f2937">Farmadosis Patients</div>'+
-    '<div style="font-size:10px;color:#9ca3af">اختار الأداة المطلوبة</div></div></div>'+
-    '<div id="ez-choice-1" style="padding:13px;border-radius:10px;background:#f0fdf4;cursor:pointer;margin-bottom:8px;border:1px solid #bbf7d0;transition:all 0.2s">'+
-    '<div style="font-size:13px;font-weight:700;color:#15803d">📤 رفع ملفات JSON</div>'+
-    '<div style="font-size:11px;color:#6b7280;margin-top:2px">رفع الملفات لـ Farmadosis</div></div>'+
-    '<div id="ez-choice-2" style="padding:13px;border-radius:10px;background:#fef2f2;cursor:pointer;border:1px solid #fecaca;transition:all 0.2s">'+
-    '<div style="font-size:13px;font-weight:700;color:#dc2626">✅ تقفيل البيشنت</div>'+
-    '<div style="font-size:11px;color:#6b7280;margin-top:2px">تقفيل دفعة واحدة</div></div>'+
-    '<button id="ez-choice-close" style="margin-top:10px;width:100%;padding:8px;border:none;border-radius:8px;background:#f3f4f6;color:#9ca3af;cursor:pointer;font-size:12px;font-family:inherit">إلغاء — عرض البانيل الكامل</button>';
-  document.body.appendChild(choiceDiv);
-
-  document.getElementById('ez-choice-1').onmouseover=function(){this.style.background='#dcfce7'};
-  document.getElementById('ez-choice-1').onmouseout=function(){this.style.background='#f0fdf4'};
-  document.getElementById('ez-choice-2').onmouseover=function(){this.style.background='#fee2e2'};
-  document.getElementById('ez-choice-2').onmouseout=function(){this.style.background='#fef2f2'};
-
-  document.getElementById('ez-choice-1').onclick=function(){
-    choiceDiv.remove();
-    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/patient.js','رفع ملفات json',false);
-  };
-  document.getElementById('ez-choice-2').onclick=function(){
-    choiceDiv.remove();
-    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/auto-checkbox-clicker.js','تقفيل البيشنت',false);
-  };
-  document.getElementById('ez-choice-close').onclick=function(){
-    choiceDiv.remove();
-    buildPanel();
-    showPanel();
-  };
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
+  },300);
 }
 
 /* ── 4. Details Page → EZPillAddDrug (4 buttons) or Export tab ── */
@@ -318,7 +286,7 @@ function buildPanel(forceTab){
     '<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+
     '<div style="display:flex;align-items:center;gap:10px">'+
     '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">EZ</div>'+
-    '<div><div style="font-size:15px;font-weight:800;color:#1f2937">EZ Tools</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v3.0 — Auto Launch</div></div></div>'+
+    '<div><div style="font-size:15px;font-weight:800;color:#1f2937">EZ Tools</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v3.1 — Auto Launch</div></div></div>'+
     '<div style="display:flex;align-items:center;gap:8px">'+
     '<div class="ez-ctx" style="background:'+ctx.bg+';color:'+ctx.color+'">'+ctx.icon+' '+ctx.text+'</div>'+
     '<button id="ez-t-close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:inherit" onmouseover="this.style.background=\'rgba(239,68,68,0.1)\';this.style.color=\'#ef4444\'" onmouseout="this.style.background=\'rgba(0,0,0,0.06)\';this.style.color=\'#9ca3af\'">×</button>'+
@@ -339,9 +307,7 @@ function buildPanel(forceTab){
     '<div class="ez-item" id="ez-t-add"><div class="ez-icon" style="background:linear-gradient(135deg,#dbeafe,#e0e7ff)">➕</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">إضافة صنف</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">إضافة دواء جديد الى الجدول</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '<div class="ez-item" id="ez-t-editor"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تحكم كامل فى الـ print summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '<div class="ez-item" id="ez-t-fareye"><div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">رفع الطلبات على fareye</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-patient-close"><div class="ez-icon" style="background:linear-gradient(135deg,#fee2e2,#fecaca)">✅</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تقفيل البيشنت</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تقفيل البيشنت دفعة واحدة farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-upload"><div class="ez-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">📤</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">رفع ملفات json</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">رفع الملفات لـ Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-bulk"><div class="ez-icon" style="background:linear-gradient(135deg,#fde68a,#fef3c7)">⚡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Farmadosis Bulk</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Treatments — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-bulk"><div class="ez-icon" style="background:linear-gradient(135deg,#fde68a,#fef3c7)">⚡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Farmadosis Bulk</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Patients & Treatments — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '</div></div>'+
     '<div id="ez-tab-export" class="ez-tab-content" style="display:'+(startTab==='export'?'block':'none')+'">'+
     '<div class="ez-group">'+
@@ -349,7 +315,7 @@ function buildPanel(forceTab){
     '<div class="ez-item" id="ez-t-jvm"><div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🏥</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل JVM</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف OCS — جهاز JVM</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '<div class="ez-item" id="ez-t-pr"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">🖨️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">طباعة الملخص</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Print Summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
     '</div></div>'+
-    '<div style="padding:8px 20px 14px;text-align:center"><div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v3.0 — DEVELOPED BY ALI EL-BAZ</div></div>';
+    '<div style="padding:8px 20px 14px;text-align:center"><div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v3.1 — DEVELOPED BY ALI EL-BAZ</div></div>';
 
   document.body.appendChild(p);
 
@@ -383,8 +349,6 @@ function buildPanel(forceTab){
   document.getElementById('ez-t-add').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);};
   document.getElementById('ez-t-editor').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);};
   document.getElementById('ez-t-fareye').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);};
-  document.getElementById('ez-t-patient-close').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/auto-checkbox-clicker.js','تقفيل البيشنت',true);};
-  document.getElementById('ez-t-upload').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/patient.js','رفع ملفات json',true);};
   document.getElementById('ez-t-bulk').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);};
   document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
   document.getElementById('ez-t-jvm').onclick=function(){jvmDownload()};
