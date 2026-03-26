@@ -169,7 +169,7 @@
           <div style="text-align:center;margin-bottom:8px;"><span class="fc-cassette" style="font-size:13px;">&#9989; Cassette #' + (c.number || "—") + '</span></div>\
           <div class="fc-lr-row"><span class="fc-lr-label">Medicine</span><span class="fc-lr-value">' + medCode + ' - ' + medName + '</span></div>\
           <div class="fc-lr-row"><span class="fc-lr-label">Chip</span><span class="fc-lr-value">' + (c.chip || "—") + '</span></div>\
-          <div class="fc-lr-row"><span class="fc-lr-label">Base</span><span class="fc-lr-value">' + (c.base_name || "—") + '</span></div>\
+          <div class="fc-lr-row"><span class="fc-lr-label">Base</span><span class="fc-lr-value" style="color:#1565c0;font-size:14px;background:#e3f2fd;padding:2px 10px;border-radius:6px;">' + (c.base_name || "—") + '</span></div>\
           <div class="fc-lr-row"><span class="fc-lr-label">Number</span><span class="fc-lr-value">' + (c.number || "—") + '</span></div>\
           ' + (items.length > 1 ? '<div style="margin-top:6px;font-size:10px;color:#999;text-align:center;">+ ' + (items.length - 1) + ' more result(s)</div>' : '') + '';
       }
@@ -245,8 +245,7 @@
     el.style.display = "flex";
     el.innerHTML = '<div class="fc-stat" style="background:#e3f2fd;"><div class="fc-num">' + total + '</div><div class="fc-label">Total</div></div>\
       <div class="fc-stat" style="background:#e8f5e9;"><div class="fc-num">' + cassettes + '</div><div class="fc-label">Cassettes</div></div>\
-      <div class="fc-stat" style="background:#fff3e0;"><div class="fc-num">' + trays + '</div><div class="fc-label">Trays</div></div>\
-      <div class="fc-stat" style="background:#f3e5f5;"><div class="fc-num">' + totalQty + '</div><div class="fc-label">Total Qty</div></div>';
+      <div class="fc-stat" style="background:#fff3e0;"><div class="fc-num">' + trays + '</div><div class="fc-label">Trays</div></div>';
   }
 
   // ============ TABLE ============
