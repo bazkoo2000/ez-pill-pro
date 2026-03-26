@@ -1,592 +1,358 @@
 javascript:(function(){
-  'use strict';
+'use strict';
 
-  var PANEL_ID = 'fareye_injector';
-  var VERSION = '3.6';
-  var VER_KEY = 'fareye_ver';
-  if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
+var PID='ez-tools-main';
+var old=document.getElementById(PID);if(old){old.remove();return}
+var SECRET='101093';
 
-  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:600 };
+/* ══════════════════════════════════════
+   Smart Context Detection
+   ══════════════════════════════════════ */
+var loc=window.location.href.toLowerCase();
+var isDetails=loc.indexOf('getezpill_details')>-1||loc.indexOf('getezpill_detail')>-1;
+var isPrint=loc.indexOf('printorder')>-1;
+var isFarmadosis=loc.indexOf('farmadosis.com')>-1;
+var isFareye=loc.indexOf('fareye')>-1;
+var isFarmadosisTreatments=isFarmadosis&&loc.indexOf('/treatments')>-1;
+var isFarmadosisPatients=isFarmadosis&&loc.indexOf('/patients')>-1&&!isFarmadosisTreatments;
+var isHomePage=loc.indexOf('ez_pill_web')>-1&&!isDetails&&!isPrint;
 
-  function showToast(msg, type) {
-    type = type || 'info';
-    var box = document.getElementById('fareye-toast-box');
-    if (!box) { box = document.createElement('div'); box.id = 'fareye-toast-box'; box.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center'; document.body.appendChild(box); }
-    var colors = {success:'#059669',error:'#dc2626',warning:'#d97706',info:'#1e293b'};
-    var icons = {success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
-    var t = document.createElement('div');
-    t.style.cssText = 'background:'+colors[type]+';color:white;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:600;font-family:Segoe UI,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:flex;align-items:center;gap:8px;direction:rtl;animation:feyToastIn 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
-    t.innerHTML = '<span>'+icons[type]+'</span> '+msg;
-    box.appendChild(t);
-    setTimeout(function(){t.style.transition='all 0.3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},3500);
+/* ══════════════════════════════════════
+   Helpers
+   ══════════════════════════════════════ */
+function gv(td){
+  if(!td)return'';
+  var inp=td.querySelector('input,textarea');
+  if(inp)return inp.value.trim();
+  var sel=td.querySelector('select');
+  if(sel){var o=sel.options[sel.selectedIndex];return o?o.text.trim():''}
+  return td.textContent.trim();
+}
+
+function getStoreCode(){
+  var labels=document.querySelectorAll('label');
+  for(var i=0;i<labels.length;i++){
+    var txt=labels[i].textContent||'';
+    if(txt.indexOf('StoreCode')>-1){return txt.replace(/[^0-9]/g,'')}
   }
-  try{var lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(function(){showToast('تم تلقي تحديث جديد 🎉 → v'+VERSION,'success')},1000);}}catch(e){}
+  return'0000';
+}
 
-  // ═══════════════════════════════════════════════════════════════
-  //  Dialog — يتقفل بالزر فقط، مش بالضغط على الخلفية
-  // ═══════════════════════════════════════════════════════════════
-  function showDialog(o) {
-    return new Promise(function(resolve) {
-      var ov = document.createElement('div');
-      ov.id = 'fey-dialog-overlay';
-      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:feyFadeIn 0.25s';
-      var ibg = {blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',amber:'linear-gradient(135deg,#fef3c7,#fde68a)',red:'linear-gradient(135deg,#fee2e2,#fecaca)',purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)'};
-      var ih='',bh='';
-      if(o.info)for(var i=0;i<o.info.length;i++){var r=o.info[i];ih+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">'+r.label+'</span><span style="font-weight:800;color:'+(r.color||'#1e293b')+';font-size:12px">'+r.value+'</span></div>';}
-      if(o.buttons)for(var j=0;j<o.buttons.length;j++)bh+='<button data-fey-btn="'+j+'" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;'+(o.buttons[j].style||'background:#f1f5f9;color:#475569')+';transition:all 0.2s">'+o.buttons[j].text+'</button>';
+function to24h(t){
+  t=(t||'09:00').trim().toUpperCase();
+  var isPM=t.indexOf('PM')>-1;
+  var isAM=t.indexOf('AM')>-1;
+  t=t.replace(/[APM\s]/gi,'').trim();
+  var parts=t.split(':');
+  var hr=parseInt(parts[0])||0;
+  var mn=parts[1]||'00';
+  if(isPM&&hr<12)hr+=12;
+  if(isAM&&hr===12)hr=0;
+  return String(hr).padStart(2,'0')+':'+mn;
+}
 
-      var dialogBox = document.createElement('div');
-      dialogBox.style.cssText = 'background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)';
-      dialogBox.innerHTML = '<div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500;white-space:pre-line">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px">'+bh+'</div>';
-      ov.appendChild(dialogBox);
+function toYMD(d){
+  if(!d)return'';
+  d=d.trim();
+  if(d.indexOf('/')>-1){var p=d.split('/');if(p.length===3)return p[2]+p[0].padStart(2,'0')+p[1].padStart(2,'0')}
+  if(d.indexOf('-')>-1)return d.replace(/-/g,'');
+  return d;
+}
 
-      var resolved = false;
-
-      // الزر فقط يقفل الـ dialog
-      dialogBox.addEventListener('click', function(e) {
-        if (resolved) return;
-        var b = e.target.closest('[data-fey-btn]');
-        if (b) {
-          resolved = true;
-          var val = o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value;
-          ov.remove();
-          resolve(val);
-        }
-      });
-
-      // امنع أي click على الخلفية من إقفال الـ dialog
-      ov.addEventListener('click', function(e) {
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      }, true);
-
-      // امنع أي event يجي من تحت (FarEye modals) من الوصول للـ dialog
-      dialogBox.addEventListener('mousedown', function(e) { e.stopPropagation(); });
-      dialogBox.addEventListener('mouseup', function(e) { e.stopPropagation(); });
-
-      document.body.appendChild(ov);
-    });
-  }
-
-  var css = document.createElement('style');
-  css.innerHTML =
-    '@keyframes feySlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}'+
-    '@keyframes feyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}'+
-    '@keyframes feySpin{to{transform:rotate(360deg)}}'+
-    '@keyframes feyFadeIn{from{opacity:0}to{opacity:1}}'+
-    '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}'+
-    '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}'+
-    '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}'+
-    '@keyframes feyBlink{0%,100%{opacity:1}50%{opacity:0.3}}'+
-    '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:390px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s;animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
-    '#'+PANEL_ID+'.fey-min{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}'+
-    '#'+PANEL_ID+'.fey-min .fey-inner{display:none!important}'+
-    '#'+PANEL_ID+'.fey-min::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}';
-  document.head.appendChild(css);
-
-  var panel = document.createElement('div');
-  panel.id = PANEL_ID;
-  panel.innerHTML =
-    '<div class="fey-inner">'+
-      '<div style="background:linear-gradient(135deg,#4c1d95,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden">'+
-        '<div style="position:absolute;top:-50%;left:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">'+
-          '<div style="display:flex;gap:6px">'+
-            '<span id="fey_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer">−</span>'+
-            '<span id="fey_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>'+
-          '</div>'+
-          '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
-        '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v3.6</span></div>'+
-      '</div>'+
-      '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div><div style="font-size:18px;margin-bottom:4px">📋</div><div id="fey_s_t" style="font-size:22px;font-weight:900;color:#8b5cf6;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">إجمالي</div></div>'+
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_s_d" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>'+
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
-        '</div>'+
-        '<button id="fey_alloc_direct" style="width:100%;padding:13px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:14px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.3);transition:all 0.3s;margin-bottom:14px">📦 Allocate طلبات الصفحة الحالية</button>'+
-        '<div id="fey_main">'+
-          '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
-            '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
-            '<div style="font-size:15px;font-weight:800;color:#6d28d9;margin-bottom:4px">اضغط لرفع ملف الطلبات</div>'+
-            '<div style="font-size:12px;color:#a78bfa;font-weight:600">ملف .txt (أرقام ERX)</div>'+
-            '<input type="file" id="fey_file" accept=".txt,.csv" multiple style="display:none">'+
-          '</div>'+
-          '<div style="text-align:center;color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:12px">— أو أدخل يدوياً —</div>'+
-          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات (سطر لكل رقم)..." style="width:100%;height:80px;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>'+
-          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز</span></div>'+
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'+
-            '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير:</span>'+
-            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="300" max="2000" value="600" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">0.6s</span></div>'+
-          '</div>'+
-          '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>'+
-        '</div>'+
-        '<div id="fey_pw" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_pt" style="font-size:12px;font-weight:800;color:#8b5cf6">0/0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_pf" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>'+
-        '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">DEVELOPED BY ALI EL-BAZ</div>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(panel);
-
-  function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
-  function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
-  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'},paused:{bg:'#eff6ff',co:'#1d4ed8',bo:'#bfdbfe',ic:'⏸️'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
-  function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
-  function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
-
-  var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-
-  // ═══════════════════════════════════════════════════════════════
-  //  Table Helpers
-  // ═══════════════════════════════════════════════════════════════
-
-  function getFlowColIndex() {
-    var colSpans = document.querySelectorAll('thead span.ant-table-column-title');
-    for (var s = 0; s < colSpans.length; s++) {
-      var spanText = (colSpans[s].textContent || '').replace(/\s+/g,' ').trim();
-      if (spanText === 'Current Flow') {
-        var th = colSpans[s].closest('th');
-        if (th) { var siblings = Array.from(th.parentElement.children); var idx = siblings.indexOf(th); if (idx !== -1) return idx; }
-      }
-    }
-    var allTh = document.querySelectorAll('thead th');
-    for (var h = 0; h < allTh.length; h++) { if ((allTh[h].textContent || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return h; }
-    return -1;
-  }
-
-  function getRows() { var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]'); if (!rows.length) rows = document.querySelectorAll('tbody tr'); return rows; }
-  function getRowStatus(row, colIndex) { var cells = row.querySelectorAll('td'); if (colIndex >= cells.length) return ''; return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase(); }
-  function countRowsByStatus(status) { var col = getFlowColIndex(); if (col === -1) return 0; var rows = getRows(); var count = 0; for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; } return count; }
-  function isRowChecked(row) { var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]'); return cb && cb.checked; }
-
-  async function checkRow(row) {
-    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
-    if (!cb) { var fc = row.querySelector('td'); if (fc) { fc.click(); await wait(60); } return; }
-    if (cb.checked) return;
-    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
-    if (setter && setter.set) setter.set.call(cb, true);
-    cb.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-    cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
-    cb.dispatchEvent(new Event('change', { bubbles:true }));
-    await wait(80);
-    if (!cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
-  }
-
-  async function uncheckRow(row) {
-    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
-    if (!cb || !cb.checked) return;
-    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
-    if (setter && setter.set) setter.set.call(cb, false);
-    cb.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-    cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
-    cb.dispatchEvent(new Event('change', { bubbles:true }));
-    await wait(80);
-    if (cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
-  }
-
-  async function selectAllExceptDelivery() {
-    var col = getFlowColIndex();
-    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
-    var rows = getRows(); var selected = 0, skipped = 0;
-    for (var r = 0; r < rows.length; r++) {
-      var status = getRowStatus(rows[r], col);
-      if (status.indexOf('delivery') !== -1) {
-        if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
-        skipped++;
-      } else { await checkRow(rows[r]); selected++; await wait(50); }
-    }
-    return { selected:selected, skipped:skipped };
-  }
-
-  async function selectOnlyByStatus(targetStatus) {
-    var col = getFlowColIndex();
-    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return { selected:0, skipped:0 }; }
-    var rows = getRows(); var selected = 0, skipped = 0;
-    for (var r = 0; r < rows.length; r++) {
-      var status = getRowStatus(rows[r], col);
-      if (status.indexOf(targetStatus.toLowerCase()) !== -1) {
-        await checkRow(rows[r]); selected++; await wait(50);
-      } else {
-        if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
-        skipped++;
-      }
-    }
-    return { selected:selected, skipped:skipped };
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  Refresh + انتظار ذكي
-  // ═══════════════════════════════════════════════════════════════
-
-  async function clickRefresh() {
-    var found = null;
-    var svgs = document.querySelectorAll('svg[aria-label="refresh icon"]');
-    for (var i = 0; i < svgs.length; i++) { var p = svgs[i].parentElement; if (p && p.offsetParent !== null) { found = p; break; } }
-    if (!found) { var all = document.querySelectorAll('span, button'); for (var j = 0; j < all.length; j++) { if ((all[j].innerText||'').trim() === 'Refresh' && all[j].offsetParent !== null) { found = all[j]; break; } } }
-    if (found) { found.click(); await wait(2500); return true; }
-    return false;
-  }
-
-  // انتظار حتى حالة معينة تختفي (مع Refresh تلقائي)
-  async function waitUntilStatusGone(status, maxTries, intervalMs) {
-    maxTries = maxTries || 25; intervalMs = intervalMs || 5000;
-    for (var i = 0; i < maxTries; i++) {
-      var cnt = countRowsByStatus(status); if (cnt === 0) return true;
-      setSt('⏳ ' + cnt + ' طلب "' + status + '" — انتظار (' + (i+1) + '/' + maxTries + ')', 'working');
-      await wait(intervalMs); await clickRefresh();
-    }
-    return countRowsByStatus(status) === 0;
-  }
-
-  // انتظار حتى نشوف تغيير فعلي بعد action
-  // بيقارن عدد الطلبات اللي مش Delivery — لو قل يعني الحالة اتغيرت
-  async function refreshUntilChanged(beforeNonDelivery, actionName, maxTries) {
-    maxTries = maxTries || 15;
-    for (var i = 0; i < maxTries; i++) {
-      setSt('🔄 انتظار تحديث بعد ' + actionName + '... (' + (i+1) + '/' + maxTries + ')', 'working');
-      await clickRefresh();
-      await wait(1000);
-      var currentNonDelivery = getRows().length - countRowsByStatus('delivery');
-      if (currentNonDelivery !== beforeNonDelivery) {
-        showToast('✅ تم تحديث الحالات', 'success');
-        return true;
-      }
-    }
-    showToast('⚠️ الحالات لم تتغير بعد — متابعة', 'warning');
-    return false;
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  Button Helpers — حماية reject مطلقة
-  // ═══════════════════════════════════════════════════════════════
-
-  function isReject(txt) { return txt.toLowerCase().indexOf('reject') !== -1; }
-
-  function findButtonByText(textMatch) {
-    var textLower = textMatch.toLowerCase();
-    var allEl = document.querySelectorAll('span, button, li, a, div[role="menuitem"], li[role="menuitem"]');
-    for (var i = 0; i < allEl.length; i++) {
-      var el = allEl[i];
-      if (!el.offsetParent && el.offsetWidth === 0) continue;
-      var txt = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
-      if (isReject(txt)) continue;
-      if (txt.toLowerCase() === textLower) return el;
-    }
-    return null;
-  }
-
-  async function openOneDropdown() {
-    var triggers = document.querySelectorAll('.ant-dropdown-trigger, button.ant-dropdown-trigger');
-    for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].offsetParent !== null && !isReject((triggers[i].innerText||''))) { triggers[i].click(); await wait(500); return true; }
-    }
-    var arrows = document.querySelectorAll('.anticon-down, .anticon-ellipsis');
-    for (var j = 0; j < arrows.length; j++) { if (arrows[j].offsetParent !== null) { arrows[j].click(); await wait(500); return true; } }
-    return false;
-  }
-
-  async function clickAction(textMatch) {
-    await wait(300);
-    var el = findButtonByText(textMatch);
-    if (el) { el.click(); await wait(600); return true; }
-    await openOneDropdown();
-    await wait(300);
-    el = findButtonByText(textMatch);
-    if (el) { el.click(); await wait(600); return true; }
-    await wait(800);
-    el = findButtonByText(textMatch);
-    if (el) { el.click(); await wait(600); return true; }
-    return false;
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  Injection
-  // ═══════════════════════════════════════════════════════════════
-
-  function getInput() {
-    return document.getElementById('rc_select_1')
-      || document.querySelector('input.ant-select-selection-search-input[role="combobox"]')
-      || document.querySelector('input.ant-select-selection-search-input')
-      || document.querySelector('input[aria-haspopup="listbox"]');
-  }
-  function getSelector() { var input = getInput(); if (!input) return null; return input.closest('.ant-select-selector') || input.closest('.ant-select'); }
-  function countTags() { return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length; }
-  async function waitForOpen(input, timeout) { var start = Date.now(); while (Date.now() - start < timeout) { if (input.getAttribute('aria-expanded') === 'true') return true; await wait(50); } return false; }
-
-  async function forceOpenSelect() {
-    var input = getInput(); var selector = getSelector();
-    if (!input || !selector) return false;
-    if (input.getAttribute('aria-expanded') === 'true') { input.focus(); return true; }
-    selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
-    selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
-    selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
-    await wait(50); input.focus(); await wait(50);
-    if (input.getAttribute('aria-expanded') !== 'true') { var overflow = document.querySelector('.ant-select-selection-overflow'); if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); } }
-    if (input.getAttribute('aria-expanded') !== 'true') { input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true })); await wait(50); }
-    return await waitForOpen(input, 400);
-  }
-
-  async function injectOne(orderNum) {
-    var input = getInput(); if (!input) return false;
-    var tagsBefore = countTags(); await forceOpenSelect();
-    nativeSetter.call(input, ''); input.dispatchEvent(new Event('input', { bubbles:true })); await wait(30);
-    input.focus(); document.execCommand('selectAll', false); document.execCommand('delete', false); document.execCommand('insertText', false, orderNum); await wait(50);
-    if (input.value !== orderNum) { nativeSetter.call(input, orderNum); input.dispatchEvent(new Event('input', { bubbles:true })); input.dispatchEvent(new Event('change', { bubbles:true })); input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum })); }
-    await wait(80);
-    var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
-    input.dispatchEvent(new KeyboardEvent('keydown', enterOpts)); await wait(30);
-    input.dispatchEvent(new KeyboardEvent('keypress', enterOpts)); await wait(30);
-    input.dispatchEvent(new KeyboardEvent('keyup', enterOpts)); await wait(200);
-    var tagsAfter = countTags();
-    if (tagsAfter <= tagsBefore) { input.dispatchEvent(new KeyboardEvent('keydown', enterOpts)); await wait(50); input.dispatchEvent(new KeyboardEvent('keyup', enterOpts)); await wait(200); tagsAfter = countTags(); }
-    return tagsAfter > tagsBefore;
-  }
-
-  // ─── UI Events ───
-  panel.addEventListener('click',function(e){if(panel.classList.contains('fey-min')){panel.classList.remove('fey-min');e.stopPropagation();}});
-  document.getElementById('fey_close').addEventListener('click',function(e){e.stopPropagation();panel.style.animation='feySlideIn 0.3s reverse';setTimeout(function(){panel.remove()},280);});
-  document.getElementById('fey_min').addEventListener('click',function(e){e.stopPropagation();panel.classList.add('fey-min');});
-
-  var uploadArea=document.getElementById('fey_upload');
-  var fileInput=document.getElementById('fey_file');
-  var startBtn=document.getElementById('fey_start');
-  var manualInput=document.getElementById('fey_manual');
-
-  uploadArea.addEventListener('click',function(){fileInput.click()});
-  uploadArea.addEventListener('dragover',function(e){e.preventDefault();this.style.borderColor='#8b5cf6';this.style.background='#ede9fe'});
-  uploadArea.addEventListener('dragleave',function(){this.style.borderColor='#d8b4fe';this.style.background='#faf5ff'});
-  uploadArea.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#d8b4fe';this.style.background='#faf5ff';if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
-  fileInput.addEventListener('change',function(){if(this.files.length)handleFiles(this.files)});
-
-  function handleFiles(files){
-    var results=[];var loaded=0;var total=files.length;
-    for(var i=0;i<files.length;i++){
-      (function(idx,f){
-        var r=new FileReader();
-        r.onload=function(e){
-          results[idx]=parse(e.target.result);loaded++;
-          if(loaded===total){
-            var all=[].concat.apply([],results);var u=[],s={};
-            for(var j=0;j<all.length;j++){if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}}
-            state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;
-            uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';
-            uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب جاهز','loaded');showToast(u.length+' طلب','success');enableStart();
-          }
-        };r.readAsText(f);
-      })(i,files[i]);
-    }
-  }
-
-  manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
-  function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
-  document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
-
-  document.getElementById('fey_alloc_direct').addEventListener('click', async function() { if (state.isRunning) return; await runAllocate(); });
-
-  startBtn.addEventListener('click', async function() {
-    if (state.isRunning || !state.orders.length) return;
-    var input = getInput();
-    if (!input) { await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye الصحيحة',buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]}); return; }
-    startBtn.disabled = true; startBtn.style.opacity = '0.8'; startBtn.innerHTML = '👆 المس الخانة...';
-    for (var sec = 5; sec > 0; sec--) { setSt('👆 المس الخانة الآن! (' + sec + ')', 'waiting'); await wait(1000); }
-    setSt('🚀 جاري الرفع...', 'working');
-    state.isRunning = true; state.injectedCount = 0; state.failedCount = 0;
-    document.getElementById('fey_pw').style.display = 'block'; upStats();
-    var pf = document.getElementById('fey_pf'); var pt = document.getElementById('fey_pt');
-    for (var i = 0; i < state.orders.length; i++) {
-      var order = state.orders[i];
-      setSt((i+1) + '/' + state.orders.length + ': ' + order, 'working');
-      pf.style.width = (((i+1) / state.orders.length) * 100) + '%';
-      pt.innerText = (i+1) + '/' + state.orders.length;
-      startBtn.innerHTML = '📤 ' + (i+1) + '/' + state.orders.length;
-      var ok = await injectOne(order);
-      if (ok) { state.injectedCount++; } else { await wait(300); ok = await injectOne(order); if (ok) { state.injectedCount++; } else { state.failedCount++; } }
-      upStats(); if (i < state.orders.length - 1) await wait(state.delayMs);
-    }
-    state.isRunning = false; pf.style.width = '100%';
-    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
-    startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
-    setSt(state.injectedCount+'✅ / '+state.failedCount+'❌', 'done');
-    var allocRes = await showDialog({
-      icon:'📦', iconColor:'blue', title:'Allocate الطلبات؟',
-      desc:'تم رفع ' + state.injectedCount + ' طلب ✅' + (state.failedCount > 0 ? '  |  فشل ' + state.failedCount + ' ❌' : '') + '\n\nهل تريد Allocate تلقائي؟',
-      buttons:[ {text:'لا، شكراً',value:'no'}, {text:'📦 Allocate',value:'yes',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;box-shadow:0 4px 12px rgba(37,99,235,0.3)'} ]
-    });
-    if (allocRes === 'yes') await runAllocate();
+/* ══════════════════════════════════════
+   Load Tool
+   ══════════════════════════════════════ */
+function loadTool(url,name,closePanel){
+  if(closePanel){var pp=document.getElementById(PID);if(pp)pp.style.display='none'}
+  var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
+  fetch(full).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(code){
+    try{new Function(code)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}
+  }).catch(function(){
+    try{var x=new XMLHttpRequest();x.open('GET',full,true);x.onload=function(){if(x.status===200){try{new Function(x.responseText)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}}else{alert('فشل تحميل '+name);showPanel()}};x.onerror=function(){alert('فشل تحميل '+name);showPanel()};x.send()}catch(e2){alert('فشل تحميل '+name);showPanel()}
   });
+}
 
-  // ═══════════════════════════════════════════════════════════════
-  //  📦 Allocate
-  // ═══════════════════════════════════════════════════════════════
+function showPanel(){var pp=document.getElementById(PID);if(pp){pp.style.display='block';pp.style.animation='ezSlideIn 0.35s cubic-bezier(0.16,1,0.3,1)'}}
 
-  async function runAllocate() {
-    try {
-      setSt('📦 بحث عن طلبات Allocation...', 'working');
-      var flowColIndex = getFlowColIndex();
-      if (flowColIndex === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
-      var result = await selectOnlyByStatus('allocation');
-      if (result.selected === 0) {
-        showToast('لا يوجد Allocation — متابعة...', 'info'); setSt('⚠️ لا يوجد Allocation — متابعة', 'working'); await wait(500);
-        await runPostAllocate(false); return;
-      }
-      showToast('تم تعليم ' + result.selected + ' طلب Allocation', 'success');
-      setSt('📦 جاري Allocate (' + result.selected + ')...', 'working'); await wait(400);
-      var allocClicked = await clickAction('Allocate');
-      if (allocClicked) { setSt('🎉 تم Allocate — جاري المتابعة...', 'done'); }
-      else { await showDialog({ icon:'⚠️', iconColor:'amber', title:'اضغط Allocate يدوياً', desc:'الطلبات معلّمة — اضغط Allocate ثم "تم"', buttons:[{text:'✅ تم',value:'ok',style:'background:linear-gradient(135deg,#d97706,#f59e0b);color:white'}] }); }
-      await wait(2000);
-      await runPostAllocate(true);
-    } catch(err) { setSt('❌ خطأ: ' + (err.message || err), 'error'); showToast('خطأ في Allocate', 'error'); }
+/* ══════════════════════════════════════
+   Auto-Launch Detection
+   ══════════════════════════════════════ */
+var autoDetected=false;
+
+/* ── 1. FarEye ── */
+if(!autoDetected&&isFareye){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);
+  },300);
+}
+
+/* ── 1b. Farmadosis Treatments → farmadosis-bulk ── */
+else if(!autoDetected&&isFarmadosisTreatments){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
+  },300);
+}
+
+/* ── 2. Print Order → nahdi-editor ── */
+else if(!autoDetected&&isPrint){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);
+  },300);
+}
+
+/* ── 3. Farmadosis Patients → farmadosis-bulk مباشرة ── */
+else if(!autoDetected&&isFarmadosisPatients){
+  autoDetected=true;
+  setTimeout(function(){
+    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
+  },300);
+}
+
+/* ── 4. Details Page → EZPillAddDrug (4 buttons) or Export tab ── */
+else if(!autoDetected&&isDetails){
+  var btns=document.querySelectorAll('input[type="button"],input[type="submit"],button,a');
+  var hasPacked=false,hasDownload=false,hasAI=false,hasCancel=false;
+  for(var bi=0;bi<btns.length;bi++){
+    var t=(btns[bi].value||btns[bi].textContent||'').toLowerCase().trim();
+    if(t.indexOf('update status as packed')>-1)hasPacked=true;
+    if(t.indexOf('download file')>-1)hasDownload=true;
+    if(t.indexOf('ai assistant')>-1)hasAI=true;
+    if(t.indexOf('cancel')>-1)hasCancel=true;
   }
+  if(hasPacked&&hasDownload&&hasAI&&hasCancel){
+    // طلب مفتوح → إضافة صنف
+    autoDetected=true;
+    setTimeout(function(){
+      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
+    },300);
+  } else {
+    // طلب مقفل (head_id فيه رقم) → بانيل مع تاب تصدير
+    autoDetected=true;
+    buildPanel('export');
+  }
+}
 
-  // ═══════════════════════════════════════════════════════════════
-  //  🔄 Post-Allocate — كل المراحل
-  //
-  //  1. Refresh + انتظار Allocation تتحول
-  //  2. تحديد ما عدا Delivery + Assign to User
-  //  3. ⏸️ انتظار اختيار الكابتن (الكود واقف تماماً)
-  //  4. Refresh ذكي (ينتظر الحالات تتغير) + تحديد + Pending
-  //  5. Refresh ذكي + تحديد + Collected
-  //  6. Refresh ذكي + تحديد Delivery + Assign أخير
-  //  7. ⏸️ انتظار نفس الكابتن
-  //  8. تحقق نهائي
-  // ═══════════════════════════════════════════════════════════════
-
-  async function runPostAllocate(didAllocate) {
-    try {
-
-      // ══════════════════════════════════════
-      //  1: Refresh + انتظار Allocation تتحول
-      // ══════════════════════════════════════
-      setSt('🔄 تحديث...', 'working');
-      await clickRefresh();
-      if (didAllocate !== false) {
-        var allocLeft = countRowsByStatus('allocation');
-        if (allocLeft > 0) { setSt('⏳ انتظار Allocation → Loading Task...', 'working'); await waitUntilStatusGone('allocation', 25, 5000); }
+/* ── 5. Home Page → Search (ready to pack) or Close (packed) ── */
+else if(!autoDetected&&isHomePage){
+  // نلاقي عمود Status بالاسم الصح
+  var detectedMode='';
+  var tables=document.querySelectorAll('table');
+  outer:for(var ti=0;ti<tables.length;ti++){
+    var headers=tables[ti].querySelectorAll('th');
+    var statusColIndex=-1;
+    for(var hi=0;hi<headers.length;hi++){
+      if((headers[hi].textContent||'').toLowerCase().trim()==='status'){
+        statusColIndex=hi;break;
       }
-
-      // ══════════════════════════════════════
-      //  2: تحديد ما عدا Delivery + Assign
-      // ══════════════════════════════════════
-      setSt('☑️ تحديد الطلبات (تخطي Delivery)...', 'working');
-      var sel = await selectAllExceptDelivery();
-      if (sel.selected === 0) { showToast('🎉 كل الطلبات Delivery', 'success'); setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
-      if (sel.skipped > 0) showToast('تخطي ' + sel.skipped + ' Delivery', 'info');
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
-      await wait(500);
-
-      setSt('👤 Assign to User...', 'working');
-      await clickAction('Assign to User');
-      await wait(500);
-
-      // ══════════════════════════════════════
-      //  3: ⏸️ إيقاف كامل — اختيار الكابتن
-      //  الـ Promise لن تتحل إلا لما المستخدم يضغط الزر
-      // ══════════════════════════════════════
-      setSt('⏸️ الكود متوقف — اختر الكابتن واضغط Assign...', 'paused');
-
-      await showDialog({
-        icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
-        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. لما تخلص اضغط الزر ⬇️\n\n⏸️ الكود متوقف تماماً — خذ وقتك',
-        buttons:[{text:'✅ خلصت — كمّل باقي المراحل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
-      });
-
-      // المستخدم ضغط — نكمل
-      showToast('👍 جاري إكمال المراحل تلقائياً...', 'success');
-
-      // ══════════════════════════════════════
-      //  4: انتظار ذكي + تحديد + Pending
-      // ══════════════════════════════════════
-      var nonDeliveryBefore = getRows().length - countRowsByStatus('delivery');
-
-      setSt('🔄 انتظار تحديث الحالات بعد Assign...', 'working');
-      await refreshUntilChanged(nonDeliveryBefore, 'Assign', 10);
-      await wait(1000);
-
-      setSt('☑️ تحديد الطلبات قبل Pending...', 'working');
-      sel = await selectAllExceptDelivery();
-      if (sel.selected === 0) { setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
-      await wait(500);
-
-      nonDeliveryBefore = sel.selected;
-      setSt('⏳ Pending (' + sel.selected + ' طلب)...', 'working');
-      var pendingDone = await clickAction('Pending');
-      if (!pendingDone) pendingDone = await clickAction('pending');
-      if (pendingDone) showToast('✅ تم Pending!', 'success');
-      else showToast('⚠️ Pending لم يُعثر عليه', 'warning');
-
-      // ══════════════════════════════════════
-      //  5: انتظار ذكي + تحديد + Collected
-      // ══════════════════════════════════════
-      await wait(1500);
-      setSt('🔄 انتظار تحديث الحالات بعد Pending...', 'working');
-      await refreshUntilChanged(nonDeliveryBefore, 'Pending', 10);
-      await wait(1000);
-
-      setSt('☑️ تحديد الطلبات قبل Collected...', 'working');
-      sel = await selectAllExceptDelivery();
-      if (sel.selected === 0) { setSt('✅ كل الطلبات Delivery 🎉', 'done'); return; }
-      showToast('تم تحديد ' + sel.selected + ' طلب', 'success');
-      await wait(500);
-
-      nonDeliveryBefore = sel.selected;
-      setSt('📦 Collected (' + sel.selected + ' طلب) ⛔ تجنب Reject...', 'working');
-      var collectedDone = await clickAction('Collected');
-      if (collectedDone) showToast('✅ تم Collected!', 'success');
-      else showToast('⚠️ Collected لم يُعثر عليه', 'warning');
-
-      // ══════════════════════════════════════
-      //  6: انتظار ذكي + تحديد Delivery + Assign أخير
-      // ══════════════════════════════════════
-      await wait(1500);
-      setSt('🔄 انتظار تحديث الحالات بعد Collected...', 'working');
-      await refreshUntilChanged(nonDeliveryBefore, 'Collected', 10);
-      await wait(1000);
-
-      setSt('☑️ تحديد طلبات Delivery...', 'working');
-      var deliverySel = await selectOnlyByStatus('delivery');
-      if (deliverySel.selected === 0) {
-        showToast('⚠️ لا يوجد طلبات Delivery', 'warning');
-        setSt('✅ تم تنفيذ كل المراحل 🎉', 'done');
-        return;
+    }
+    if(statusColIndex>-1){
+      var dataRows=tables[ti].querySelectorAll('tr');
+      for(var ri=1;ri<dataRows.length;ri++){
+        var cells=dataRows[ri].querySelectorAll('td');
+        if(cells[statusColIndex]){
+          var sv=cells[statusColIndex].textContent.trim().toLowerCase();
+          if(sv==='accepted'){detectedMode='readytopack';break outer;}
+          if(sv==='packed'||sv==='fulfilled'||sv==='received'){detectedMode='packed';break outer;}
+        }
       }
-      showToast('تم تحديد ' + deliverySel.selected + ' طلب Delivery', 'success');
-      await wait(500);
-
-      setSt('👤 Assign النهائي لطلبات Delivery...', 'working');
-      await clickAction('Assign to User');
-      await wait(500);
-
-      // ══════════════════════════════════════
-      //  7: ⏸️ إيقاف — اختيار نفس الكابتن
-      // ══════════════════════════════════════
-      setSt('⏸️ الكود متوقف — اختر نفس الكابتن...', 'paused');
-
-      await showDialog({
-        icon:'🚗', iconColor:'green', title:'Assign النهائي — نفس الكابتن',
-        desc:'اختر نفس الكابتن اللي اخترته أول مرة\nواضغط Assign في FarEye\nثم اضغط الزر ⬇️\n\n📦 ' + deliverySel.selected + ' طلب Delivery جاهزين',
-        buttons:[{text:'✅ خلصت — تم الكل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
-      });
-
-      // ══════════════════════════════════════
-      //  8: التحقق النهائي
-      // ══════════════════════════════════════
-      showToast('👍 تم!', 'success');
-      await wait(1000);
-      setSt('🔄 التحديث النهائي...', 'working');
-      await clickRefresh(); await wait(1000);
-
-      var deliveryCount = countRowsByStatus('delivery');
-      var totalRows = getRows().length;
-
-      showToast('🎉 انتهى! ' + deliveryCount + '/' + totalRows + ' Delivery', 'success');
-      setSt('🎉 تم بنجاح! ' + deliveryCount + '/' + totalRows + ' Delivery + Assign ✅', 'done');
-
-    } catch(err) {
-      setSt('❌ خطأ: ' + (err.message || err), 'error');
-      showToast('خطأ غير متوقع', 'error');
     }
   }
+  if(detectedMode==='packed'){
+    autoDetected=true;
+    setTimeout(function(){
+      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);
+    },300);
+  } else {
+    // accepted أو مش قادر يحدد → Search_Order
+    autoDetected=true;
+    setTimeout(function(){
+      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);
+    },300);
+  }
+}
+
+/* ══════════════════════════════════════
+   لو مفيش أداة اتعرفت → البانيل الكامل
+   ══════════════════════════════════════ */
+if(!autoDetected){
+  buildPanel();
+}
+
+/* ══════════════════════════════════════
+   Farmadosis Download (JSON)
+   ══════════════════════════════════════ */
+function safeDownload(){try{var pname=(document.getElementById('pname')||{}).value||'';var mobile=(document.getElementById('mobile')||{}).value||'';var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';if(!pname||!mobile)return;if(!inv)return;var treats=[];var rows=document.querySelectorAll('table.styled-table tr');for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;var code=gv(tds[1]);if(!code||code.length<3)continue;var every=gv(tds[6])||'';var mins=1440;if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;var st=gv(tds[7])||'09:00';if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}if(!st||st.length<3)st='09:00';function fd(dd){if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}return dd}var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]})}if(!treats.length)return;downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv)}catch(e){}}
+
+/* ══════════════════════════════════════
+   JVM Download (.OCS)
+   ══════════════════════════════════════ */
+function jvmDownload(){
+  try{
+    var pname=(document.getElementById('pname')||{}).value||'';
+    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
+    if(!pname){alert('⚠️ اسم المريض غير موجود');return}
+    if(!inv){alert('⚠️ رقم الفاتورة غير موجود');return}
+    var storeCode=getStoreCode();
+    var lines=[];
+    var rows=document.querySelectorAll('table.styled-table tr');
+    for(var r=1;r<rows.length;r++){
+      var tds=rows[r].querySelectorAll('td');
+      if(tds.length<12)continue;
+      var code=gv(tds[1]);
+      if(!code||code.length<3)continue;
+      var itemName=gv(tds[2]);
+      var dose=gv(tds[5])||'1';
+      var every=gv(tds[6])||'';
+      var startTime=gv(tds[7])||'09:00';
+      var startDate=gv(tds[8])||'';
+      var endDate=gv(tds[9])||'';
+      var notes=gv(tds[10])||'';
+      var expiry=gv(tds[11])||'';
+      var time24=to24h(startTime);
+      var sd=toYMD(startDate);
+      var ed=toYMD(endDate);
+      if(!sd)sd=new Date().toISOString().slice(0,10).replace(/-/g,'');
+      if(!ed)ed=sd;
+      function pLabel(t){var h=parseInt(t.split(':')[0])||0;return h<12?'صباحا':'مساءا'}
+      function mkLine(t,period){return pname+'||Nahdi Pharmacy|Store '+storeCode+'|'+dose+'|'+code+'|'+itemName+'|'+t+'|'+sd+'|'+ed+'|'+expiry+'|'+period+'|'+notes+'|||||';}
+      var evH=24;
+      if(every.indexOf('4')>-1&&every.indexOf('24')<0)evH=4;
+      else if(every.indexOf('6')>-1)evH=6;
+      else if(every.indexOf('8')>-1)evH=8;
+      else if(every.indexOf('12')>-1)evH=12;
+      if(evH===24){lines.push(mkLine(time24,pLabel(time24)));}
+      else if(evH===12){lines.push(mkLine('09:00','صباحا'));lines.push(mkLine('21:00','مساءا'));}
+      else if(evH===8){lines.push(mkLine('08:00','صباحا'));lines.push(mkLine('16:00','مساءا'));lines.push(mkLine('00:00','صباحا'));}
+      else if(evH===6){lines.push(mkLine('06:00','صباحا'));lines.push(mkLine('12:00','مساءا'));lines.push(mkLine('18:00','مساءا'));lines.push(mkLine('00:00','صباحا'));}
+      else if(evH===4){lines.push(mkLine('06:00','صباحا'));lines.push(mkLine('10:00','صباحا'));lines.push(mkLine('14:00','مساءا'));lines.push(mkLine('18:00','مساءا'));lines.push(mkLine('22:00','مساءا'));lines.push(mkLine('02:00','صباحا'));}
+    }
+    if(!lines.length){alert('⚠️ لا توجد أصناف للتصدير');return}
+    var content=lines.join('\r\n')+'\r\n';
+    var bom='\uFEFF';
+    var blob=new Blob([bom+content],{type:'application/octet-stream'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download='ezPillDownload'+inv+'.OCS';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }catch(e){alert('❌ خطأ في تحميل JVM: '+e.message)}
+}
+
+/* ══════════════════════════════════════
+   Build Main Panel
+   ══════════════════════════════════════ */
+function buildPanel(forceTab){
+
+  var startTab=forceTab||'orders';
+  if(!forceTab){
+    if(isFarmadosis||isFareye)startTab='tools';
+    else if(isPrint)startTab='tools';
+    else if(isDetails)startTab='tools';
+  }
+
+  var ctxMap={
+    'orders':{icon:'📋',text:'قائمة الطلبات',color:'#6366f1',bg:'rgba(99,102,241,0.08)'},
+    'tools':{icon:'🛠️',text:'صفحة التفاصيل',color:'#22c55e',bg:'rgba(34,197,94,0.08)'},
+    'export':{icon:'📤',text:'عرض فقط',color:'#f59e0b',bg:'rgba(245,158,11,0.08)'},
+  };
+  if(isFarmadosis)ctxMap['tools']={icon:'💊',text:'Farmadosis',color:'#8b5cf6',bg:'rgba(139,92,246,0.08)'};
+  else if(isFareye)ctxMap['tools']={icon:'🚀',text:'FarEye',color:'#f97316',bg:'rgba(249,115,22,0.08)'};
+  var ctx=ctxMap[startTab]||ctxMap['orders'];
+
+  if(!document.getElementById('ez-tools-css')){
+    var css=document.createElement('style');css.id='ez-tools-css';
+    css.textContent=
+      '@keyframes ezSlideIn{from{opacity:0;transform:translateY(-18px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}'+
+      '@keyframes ezFadeTab{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}'+
+      '#'+PID+'{position:fixed;top:14px;right:14px;z-index:999999;width:380px;border-radius:22px;overflow:hidden;background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif;animation:ezSlideIn 0.4s cubic-bezier(0.16,1,0.3,1);direction:rtl}'+
+      '#'+PID+' .ez-seg{display:flex;gap:2px;padding:3px;margin:0 16px 10px;border-radius:10px;background:rgba(0,0,0,0.05)}'+
+      '#'+PID+' .ez-seg-btn{flex:1;padding:8px 4px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:#9ca3af;background:transparent;transition:all 0.25s;direction:rtl}'+
+      '#'+PID+' .ez-seg-btn.active{background:#fff;color:#1f2937;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 0 0 0.5px rgba(0,0,0,0.04)}'+
+      '#'+PID+' .ez-group{background:#fff;border-radius:14px;margin:0 16px 12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}'+
+      '#'+PID+' .ez-item{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;transition:background 0.15s;border-bottom:0.5px solid #f3f4f6;direction:rtl}'+
+      '#'+PID+' .ez-item:last-child{border-bottom:none}'+
+      '#'+PID+' .ez-item:hover{background:#f9fafb}'+
+      '#'+PID+' .ez-item:active{background:#f3f4f6}'+
+      '#'+PID+' .ez-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}'+
+      '#'+PID+' .ez-tab-content{animation:ezFadeTab 0.25s ease}'+
+      '#'+PID+' .ez-ctx{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;letter-spacing:0.3px}';
+    document.head.appendChild(css);
+  }
+
+  var p=document.createElement('div');p.id=PID;
+  p.innerHTML=
+    '<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+    '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">EZ</div>'+
+    '<div><div style="font-size:15px;font-weight:800;color:#1f2937">EZ Tools</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v3.1 — Auto Launch</div></div></div>'+
+    '<div style="display:flex;align-items:center;gap:8px">'+
+    '<div class="ez-ctx" style="background:'+ctx.bg+';color:'+ctx.color+'">'+ctx.icon+' '+ctx.text+'</div>'+
+    '<button id="ez-t-close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:inherit" onmouseover="this.style.background=\'rgba(239,68,68,0.1)\';this.style.color=\'#ef4444\'" onmouseout="this.style.background=\'rgba(0,0,0,0.06)\';this.style.color=\'#9ca3af\'">×</button>'+
+    '</div></div>'+
+    '<div class="ez-seg">'+
+    '<button class="ez-seg-btn'+(startTab==='orders'?' active':'')+'" data-tab="orders">📋 الطلبات</button>'+
+    '<button class="ez-seg-btn'+(startTab==='tools'?' active':'')+'" data-tab="tools">🛠️ الأدوات</button>'+
+    '<button class="ez-seg-btn'+(startTab==='export'?' active':'')+'" data-tab="export">📤 تصدير</button>'+
+    '</div>'+
+    '<div id="ez-tab-orders" class="ez-tab-content" style="display:'+(startTab==='orders'?'block':'none')+'">'+
+    '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-search"><div class="ez-icon" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff)">🔍</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">بحث طلبات ready to pack</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">فحص وفتح الطلبات تلقائياً</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-close-orders"><div class="ez-icon" style="background:linear-gradient(135deg,#fee2e2,#fce7f3)">📝</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تقفيل الطلبات packed</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تقفيل طلبات received وتصدير الـ packed</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-radar"><div class="ez-icon" style="background:linear-gradient(135deg,#dcfce7,#d1fae5)">📡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">البحث الشامل</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Radar — بحث متقدم</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '</div></div>'+
+    '<div id="ez-tab-tools" class="ez-tab-content" style="display:'+(startTab==='tools'?'block':'none')+'">'+
+    '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-add"><div class="ez-icon" style="background:linear-gradient(135deg,#dbeafe,#e0e7ff)">➕</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">إضافة صنف</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">إضافة دواء جديد الى الجدول</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-editor"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تحكم كامل فى الـ print summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-fareye"><div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">رفع الطلبات على fareye</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-bulk"><div class="ez-icon" style="background:linear-gradient(135deg,#fde68a,#fef3c7)">⚡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Farmadosis Bulk</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Patients & Treatments — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '</div></div>'+
+    '<div id="ez-tab-export" class="ez-tab-content" style="display:'+(startTab==='export'?'block':'none')+'">'+
+    '<div class="ez-group">'+
+    '<div class="ez-item" id="ez-t-dl"><div class="ez-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">💊</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل Farmadosis</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف JSON — جهاز Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-jvm"><div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🏥</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل JVM</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف OCS — جهاز JVM</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '<div class="ez-item" id="ez-t-pr"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">🖨️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">طباعة الملخص</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Print Summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
+    '</div></div>'+
+    '<div style="padding:8px 20px 14px;text-align:center"><div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v3.1 — DEVELOPED BY ALI EL-BAZ</div></div>';
+
+  document.body.appendChild(p);
+
+  /* Tabs */
+  var segBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+  for(var si=0;si<segBtns.length;si++){
+    segBtns[si].addEventListener('click',function(){
+      var tab=this.getAttribute('data-tab');
+      var all=document.querySelectorAll('#'+PID+' .ez-seg-btn');
+      for(var j=0;j<all.length;j++){all[j].classList.remove('active')}
+      this.classList.add('active');
+      var tids=['orders','tools','export'];
+      for(var k=0;k<tids.length;k++){
+        var el=document.getElementById('ez-tab-'+tids[k]);
+        if(el){if(tids[k]===tab){el.style.display='block';el.style.animation='ezFadeTab 0.25s ease'}else{el.style.display='none'}}
+      }
+    });
+  }
+
+  /* Close */
+  document.getElementById('ez-t-close').onclick=function(){
+    p.style.transition='all 0.3s cubic-bezier(0.4,0,1,1)';
+    p.style.opacity='0';p.style.transform='translateY(-18px) scale(0.97)';
+    setTimeout(function(){p.remove()},300);
+  };
+
+  /* Buttons */
+  document.getElementById('ez-t-search').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);};
+  document.getElementById('ez-t-close-orders').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);};
+  document.getElementById('ez-t-radar').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);};
+  document.getElementById('ez-t-add').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);};
+  document.getElementById('ez-t-editor').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);};
+  document.getElementById('ez-t-fareye').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);};
+  document.getElementById('ez-t-bulk').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);};
+  document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
+  document.getElementById('ez-t-jvm').onclick=function(){jvmDownload()};
+  document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}};
+}
 
 })();
