@@ -2378,12 +2378,29 @@ window.ezUndoDuplicates=function(){
         set(tds[si],curS*mult);
         set(tds[ei],ev);
         var allN=g.map(function(row){return get(row.querySelectorAll('td')[ni]);});
-        var fN=allN[0];
-        fN=fN.replace(/^⚡\s*/,'');
-        for(var k=1;k<allN.length;k++){
-          var next=allN[k].replace(/^⚡\s*/,'');
-          /* v146: Simply join with و — notes are already the original parts */
-          fN+=' و'+next;
+        /* v146: Try to find stored origNote from duplicatedRows */
+        var _storedOrigNote=null;
+        for(var _di=0;_di<duplicatedRows.length;_di++){
+          var _dr=duplicatedRows[_di];
+          if(_dr.origNote&&_dr.duplicates){
+            for(var _dj=0;_dj<_dr.duplicates.length;_dj++){
+              if(_dr.duplicates[_dj]===g[0]||_dr.duplicates[_dj]===g[1]){
+                _storedOrigNote=_dr.origNote;break;
+              }
+            }
+            if(_storedOrigNote) break;
+          }
+        }
+        var fN;
+        if(_storedOrigNote){
+          /* Use the exact original note */
+          fN=_storedOrigNote;
+        } else {
+          /* Fallback: join parts with و */
+          fN=allN[0].replace(/^⚡\s*/,'');
+          for(var k=1;k<allN.length;k++){
+            fN+=' و'+allN[k].replace(/^⚡\s*/,'');
+          }
         }
         set(tds[ni],fN);
         for(var j=1;j<n;j++){if(g[j].parentNode) g[j].parentNode.removeChild(g[j]);}
@@ -3627,6 +3644,19 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
         if(m){result.push(m[0]);timeKws[k].found=true;}
       }
       if(result.length>=numParts) return result.slice(0,numParts);
+      /* v146: Expand "X مرات بعد/قبل الاكل" into meal-specific notes */
+      var _isAfterMeal=/بعد\s*(الاكل|الأكل|الآكل)|after\s*(meal|food)|\bpc\b/i.test(noteText);
+      var _isBeforeMeal=/قبل\s*(الاكل|الأكل|الآكل)|before\s*(meal|food)|\bac\b/i.test(noteText);
+      var _isWithMeal=/مع\s*(الاكل|الأكل|الآكل)|with\s*(meal|food)/i.test(noteText);
+      var _isEn=/[a-z]/i.test(noteText);
+      if(_isAfterMeal||_isWithMeal){
+        if(numParts===3) return _isEn?['After Breakfast','After Lunch','After Dinner']:['بعد الفطار','بعد الغداء','بعد العشاء'];
+        if(numParts===2) return _isEn?['After Breakfast','After Dinner']:['بعد الفطار','بعد العشاء'];
+      }
+      if(_isBeforeMeal){
+        if(numParts===3) return _isEn?['Before Breakfast','Before Lunch','Before Dinner']:['قبل الفطار','قبل الغداء','قبل العشاء'];
+        if(numParts===2) return _isEn?['Before Breakfast','Before Dinner']:['قبل الفطار','قبل العشاء'];
+      }
       /* fallback: return original for all */
       var fb=[];for(var f=0;f<numParts;f++) fb.push(noteText);
       return fb;
@@ -3694,7 +3724,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
       meals=isEn?['Breakfast&Dinner','Lunch&Bed']:['الفطار والعشاء','الغداء والنوم'];
     }
-    duplicatedRows.push({originalRow:r,duplicates:dupRows,type:ni.type,meals:meals});duplicatedCount++;
+    duplicatedRows.push({originalRow:r,duplicates:dupRows,type:ni.type,meals:meals,origNote:on});duplicatedCount++;
     if(r.parentNode)r.parentNode.removeChild(r);
   }
 
