@@ -9,7 +9,7 @@
   window._fd_capturedToken = null;
   var INTAKES = [];
 
-  var css = '#fd-bulk-panel{position:fixed;top:0;right:0;width:440px;height:100vh;background:#fff;border-left:3px solid #f57c00;z-index:999999;font-family:Arial,sans-serif;font-size:13px;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,.3)}#fd-bulk-panel *{box-sizing:border-box}#fd-bulk-panel .fd-header{background:#f57c00;color:#fff;padding:12px 15px;font-size:16px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}#fd-bulk-panel .fd-close{cursor:pointer;font-size:22px;background:none;border:none;color:#fff;font-weight:bold}#fd-bulk-panel .fd-tabs{display:flex;background:#f5f5f5;border-bottom:2px solid #eee}#fd-bulk-panel .fd-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-weight:bold;color:#666;border:none;background:none;font-size:12px}#fd-bulk-panel .fd-tab.active{color:#f57c00;border-bottom:3px solid #f57c00;background:#fff}#fd-bulk-panel .fd-tab-content{display:none;padding:15px}#fd-bulk-panel .fd-tab-content.active{display:block}#fd-bulk-panel label{display:block;margin:8px 0 3px;font-weight:bold;color:#333;font-size:12px}#fd-bulk-panel input[type=date],#fd-bulk-panel input[type=number],#fd-bulk-panel input[type=text],#fd-bulk-panel select{width:100%;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:13px}#fd-bulk-panel .fd-row{display:flex;gap:8px;align-items:flex-end}#fd-bulk-panel .fd-row>div{flex:1}#fd-bulk-panel .fd-btn{width:100%;padding:10px;margin-top:10px;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;color:#fff}#fd-bulk-panel .fd-btn-blue{background:#1976d2}#fd-bulk-panel .fd-btn-orange{background:#f57c00}#fd-bulk-panel .fd-btn-green{background:#388e3c}#fd-bulk-panel .fd-btn-purple{background:#7b1fa2}#fd-bulk-panel .fd-btn:hover{opacity:.9}#fd-bulk-panel .fd-btn:disabled{background:#ccc;cursor:not-allowed}#fd-bulk-panel .fd-log{margin-top:10px;padding:8px;background:#f5f5f5;border-radius:4px;max-height:180px;overflow-y:auto;font-size:11px;line-height:1.5;direction:ltr;word-break:break-all}#fd-bulk-panel .fd-log .ok{color:green}#fd-bulk-panel .fd-log .err{color:red}#fd-bulk-panel .fd-log .info{color:#1976d2}#fd-bulk-panel .fd-treatments{margin-top:8px;max-height:220px;overflow-y:auto}#fd-bulk-panel .fd-treat-item{display:flex;align-items:center;padding:6px 4px;border-bottom:1px solid #eee;gap:6px}#fd-bulk-panel .fd-treat-item:hover{background:#f9f9f9}#fd-bulk-panel .fd-treat-item input[type=checkbox]{width:16px;height:16px;flex-shrink:0}#fd-bulk-panel .fd-tid{color:#999;font-size:10px}#fd-bulk-panel .fd-dates{color:#1976d2;font-size:11px}#fd-bulk-panel .fd-filter{margin:8px 0;padding:6px;background:#e3f2fd;border-radius:4px;font-size:12px}#fd-bulk-panel .fd-filter label{display:inline;margin:0 8px 0 0;font-weight:normal}#fd-bulk-panel .fd-progress{background:#e0e0e0;border-radius:4px;height:5px;margin:6px 0}#fd-bulk-panel .fd-progress-bar{background:#f57c00;height:5px;border-radius:4px;transition:width .3s}#fd-bulk-panel .fd-calc-box{margin-top:8px;padding:10px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px}#fd-bulk-panel .fd-calc-box .fd-calc-title{font-weight:bold;color:#e65100;margin-bottom:6px;font-size:12px}#fd-bulk-panel .fd-calc-result{margin-top:6px;padding:6px;background:#fff;border-radius:4px;font-weight:bold;color:#2e7d32;text-align:center;font-size:13px;border:1px dashed #a5d6a7;display:none}#fd-bulk-panel .fd-or-divider{text-align:center;color:#999;margin:10px 0;font-size:11px;position:relative}#fd-bulk-panel .fd-or-divider::before,#fd-bulk-panel .fd-or-divider::after{content:"";position:absolute;top:50%;width:38%;height:1px;background:#ddd}#fd-bulk-panel .fd-or-divider::before{left:0}#fd-bulk-panel .fd-or-divider::after{right:0}#fd-bulk-panel .fd-search-results{max-height:150px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;margin-top:5px;display:none}#fd-bulk-panel .fd-search-item{padding:8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:12px}#fd-bulk-panel .fd-search-item:hover{background:#e3f2fd}#fd-bulk-panel .fd-selected-med{margin-top:5px;padding:8px;background:#e8f5e9;border-radius:4px;font-size:12px;color:#2e7d32;display:none}#fd-bulk-panel .fd-token-box{margin:8px 0;padding:8px;background:#fff8e1;border:1px solid #ffd54f;border-radius:4px;font-size:11px}#fd-bulk-panel .fd-dose-btn{width:100%;padding:10px;margin-top:5px;border:1px solid #1976d2;border-radius:6px;background:#e3f2fd;color:#1976d2;font-size:13px;font-weight:bold;cursor:pointer;text-align:left}#fd-bulk-panel .fd-dose-btn:hover{background:#bbdefb}#fd-bulk-panel .fd-import-drop{border:2px dashed #9575cd;border-radius:10px;padding:30px;text-align:center;color:#7b1fa2;font-weight:bold;cursor:pointer;margin:10px 0;transition:all .2s}#fd-bulk-panel .fd-import-drop:hover,#fd-bulk-panel .fd-import-drop.dragover{background:#ede7f6;border-color:#7b1fa2}#fd-bulk-panel .fd-file-list{max-height:200px;overflow-y:auto;margin:8px 0}#fd-bulk-panel .fd-file-item{padding:6px 8px;background:#f5f5f5;border-radius:4px;margin:3px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center}#fd-bulk-panel .fd-file-status{font-size:10px;font-weight:bold}';
+  var css = '#fd-bulk-panel{position:fixed;top:0;right:0;width:440px;height:100vh;background:#fff;border-left:3px solid #f57c00;z-index:999999;font-family:Arial,sans-serif;font-size:13px;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,.3)}#fd-bulk-panel *{box-sizing:border-box}#fd-bulk-panel .fd-header{background:#f57c00;color:#fff;padding:12px 15px;font-size:16px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}#fd-bulk-panel .fd-close{cursor:pointer;font-size:22px;background:none;border:none;color:#fff;font-weight:bold}#fd-bulk-panel .fd-tabs{display:flex;background:#f5f5f5;border-bottom:2px solid #eee}#fd-bulk-panel .fd-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-weight:bold;color:#666;border:none;background:none;font-size:12px}#fd-bulk-panel .fd-tab.active{color:#f57c00;border-bottom:3px solid #f57c00;background:#fff}#fd-bulk-panel .fd-tab-content{display:none;padding:15px}#fd-bulk-panel .fd-tab-content.active{display:block}#fd-bulk-panel label{display:block;margin:8px 0 3px;font-weight:bold;color:#333;font-size:12px}#fd-bulk-panel input[type=date],#fd-bulk-panel input[type=number],#fd-bulk-panel input[type=text],#fd-bulk-panel select{width:100%;padding:7px;border:1px solid #ccc;border-radius:4px;font-size:13px}#fd-bulk-panel .fd-row{display:flex;gap:8px;align-items:flex-end}#fd-bulk-panel .fd-row>div{flex:1}#fd-bulk-panel .fd-btn{width:100%;padding:10px;margin-top:10px;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;color:#fff}#fd-bulk-panel .fd-btn-blue{background:#1976d2}#fd-bulk-panel .fd-btn-orange{background:#f57c00}#fd-bulk-panel .fd-btn-green{background:#388e3c}#fd-bulk-panel .fd-btn-purple{background:#7b1fa2}#fd-bulk-panel .fd-btn-red{background:#d32f2f}#fd-bulk-panel .fd-btn:hover{opacity:.9}#fd-bulk-panel .fd-btn:disabled{background:#ccc;cursor:not-allowed}#fd-bulk-panel .fd-log{margin-top:10px;padding:8px;background:#f5f5f5;border-radius:4px;max-height:180px;overflow-y:auto;font-size:11px;line-height:1.5;direction:ltr;word-break:break-all}#fd-bulk-panel .fd-log .ok{color:green}#fd-bulk-panel .fd-log .err{color:red}#fd-bulk-panel .fd-log .info{color:#1976d2}#fd-bulk-panel .fd-log .warn{color:#e65100}#fd-bulk-panel .fd-treatments{margin-top:8px;max-height:220px;overflow-y:auto}#fd-bulk-panel .fd-treat-item{display:flex;align-items:center;padding:6px 4px;border-bottom:1px solid #eee;gap:6px}#fd-bulk-panel .fd-treat-item:hover{background:#f9f9f9}#fd-bulk-panel .fd-treat-item input[type=checkbox]{width:16px;height:16px;flex-shrink:0}#fd-bulk-panel .fd-tid{color:#999;font-size:10px}#fd-bulk-panel .fd-dates{color:#1976d2;font-size:11px}#fd-bulk-panel .fd-filter{margin:8px 0;padding:6px;background:#e3f2fd;border-radius:4px;font-size:12px}#fd-bulk-panel .fd-filter label{display:inline;margin:0 8px 0 0;font-weight:normal}#fd-bulk-panel .fd-progress{background:#e0e0e0;border-radius:4px;height:5px;margin:6px 0}#fd-bulk-panel .fd-progress-bar{background:#f57c00;height:5px;border-radius:4px;transition:width .3s}#fd-bulk-panel .fd-calc-box{margin-top:8px;padding:10px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px}#fd-bulk-panel .fd-calc-box .fd-calc-title{font-weight:bold;color:#e65100;margin-bottom:6px;font-size:12px}#fd-bulk-panel .fd-calc-result{margin-top:6px;padding:6px;background:#fff;border-radius:4px;font-weight:bold;color:#2e7d32;text-align:center;font-size:13px;border:1px dashed #a5d6a7;display:none}#fd-bulk-panel .fd-or-divider{text-align:center;color:#999;margin:10px 0;font-size:11px;position:relative}#fd-bulk-panel .fd-or-divider::before,#fd-bulk-panel .fd-or-divider::after{content:"";position:absolute;top:50%;width:38%;height:1px;background:#ddd}#fd-bulk-panel .fd-or-divider::before{left:0}#fd-bulk-panel .fd-or-divider::after{right:0}#fd-bulk-panel .fd-search-results{max-height:150px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;margin-top:5px;display:none}#fd-bulk-panel .fd-search-item{padding:8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:12px}#fd-bulk-panel .fd-search-item:hover{background:#e3f2fd}#fd-bulk-panel .fd-selected-med{margin-top:5px;padding:8px;background:#e8f5e9;border-radius:4px;font-size:12px;color:#2e7d32;display:none}#fd-bulk-panel .fd-token-box{margin:8px 0;padding:8px;background:#fff8e1;border:1px solid #ffd54f;border-radius:4px;font-size:11px}#fd-bulk-panel .fd-dose-btn{width:100%;padding:10px;margin-top:5px;border:1px solid #1976d2;border-radius:6px;background:#e3f2fd;color:#1976d2;font-size:13px;font-weight:bold;cursor:pointer;text-align:left}#fd-bulk-panel .fd-dose-btn:hover{background:#bbdefb}#fd-bulk-panel .fd-import-drop{border:2px dashed #9575cd;border-radius:10px;padding:30px;text-align:center;color:#7b1fa2;font-weight:bold;cursor:pointer;margin:10px 0;transition:all .2s}#fd-bulk-panel .fd-import-drop:hover,#fd-bulk-panel .fd-import-drop.dragover{background:#ede7f6;border-color:#7b1fa2}#fd-bulk-panel .fd-file-list{max-height:200px;overflow-y:auto;margin:8px 0}#fd-bulk-panel .fd-file-item{padding:6px 8px;background:#f5f5f5;border-radius:4px;margin:3px 0;font-size:12px;display:flex;justify-content:space-between;align-items:center}#fd-bulk-panel .fd-deact-box{padding:12px;background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;margin-bottom:10px}#fd-bulk-panel .fd-deact-box .fd-deact-title{font-weight:bold;color:#c62828;font-size:12px;margin-bottom:6px}#fd-bulk-panel .fd-deact-box .fd-deact-desc{font-size:11px;color:#666;margin-bottom:8px}#fd-bulk-panel .fd-deact-status{font-size:11px;margin-top:6px;font-weight:bold}';
 
   var modalCss = '#fd-intake-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999999;font-family:Arial,sans-serif}#fd-intake-modal .fd-modal-content{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;width:420px;max-height:80vh;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.3)}#fd-intake-modal .fd-modal-header{background:#1976d2;color:#fff;padding:15px;font-size:16px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}#fd-intake-modal .fd-modal-close{cursor:pointer;font-size:22px;background:none;border:none;color:#fff;font-weight:bold}#fd-intake-modal .fd-modal-body{padding:15px;max-height:60vh;overflow-y:auto}#fd-intake-modal .fd-modal-footer{padding:10px 15px;border-top:1px solid #eee;display:flex;gap:10px}#fd-intake-modal .fd-modal-footer button{flex:1;padding:10px;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;color:#fff}#fd-intake-modal .fd-intake-row{display:flex;align-items:center;padding:10px 8px;border-bottom:1px solid #f0f0f0;gap:10px;cursor:pointer;border-radius:4px}#fd-intake-modal .fd-intake-row:hover{background:#e3f2fd}#fd-intake-modal .fd-intake-row.selected{background:#e8f5e9;border:1px solid #a5d6a7}#fd-intake-modal .fd-intake-row input[type=radio]{width:18px;height:18px;flex-shrink:0}#fd-intake-modal .fd-itime{color:#1976d2;font-weight:bold;font-size:14px;min-width:50px}#fd-intake-modal .fd-iname{font-size:13px;flex:1}#fd-intake-modal .fd-idose{width:55px;padding:5px;border:1px solid #ccc;border-radius:4px;text-align:center;font-size:13px}';
 
@@ -17,8 +17,26 @@
   panel.id = "fd-bulk-panel";
   panel.innerHTML = '<style>' + css + '</style>\
     <div class="fd-header"><span>Farmadosis Tools</span><button class="fd-close" id="fd-close-btn">&times;</button></div>\
-    <div class="fd-tabs"><button class="fd-tab active" data-tab="update">Update Dates</button><button class="fd-tab" data-tab="add">Add Treatment</button><button class="fd-tab" data-tab="import">Import Patients</button></div>\
-    <div class="fd-tab-content active" id="fd-tab-update">\
+    <div class="fd-tabs"><button class="fd-tab active" data-tab="import">Import Patients</button><button class="fd-tab" data-tab="update">Update Dates</button><button class="fd-tab" data-tab="add">Add Treatment</button></div>\
+    <!-- TAB 1: IMPORT -->\
+    <div class="fd-tab-content active" id="fd-tab-import">\
+      <div class="fd-token-box" id="fd-import-token">Token: checking...</div>\
+      <div class="fd-deact-box">\
+        <div class="fd-deact-title">Deactivate Old Patients</div>\
+        <div class="fd-deact-desc">Click all checkboxes in the table to deactivate old patients before importing new ones.</div>\
+        <button class="fd-btn fd-btn-red" id="fd-deact-btn" style="margin-top:0;">Deactivate All Visible</button>\
+        <div class="fd-deact-status" id="fd-deact-status"></div>\
+      </div>\
+      <div class="fd-import-drop" id="fd-import-drop">Click or drag JSON files here</div>\
+      <input type="file" id="fd-import-files" multiple accept=".json" style="display:none" />\
+      <div class="fd-file-list" id="fd-file-list"></div>\
+      <div id="fd-import-progress" style="display:none;"><div class="fd-progress"><div class="fd-progress-bar" id="fd-import-bar" style="width:0%"></div></div>\
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:bold;"><span id="fd-import-count">0/0</span><span id="fd-import-pct">0%</span></div></div>\
+      <button class="fd-btn fd-btn-purple" id="fd-import-btn" style="display:none;">Import All Files</button>\
+      <div class="fd-log" id="fd-import-log"></div>\
+    </div>\
+    <!-- TAB 2: UPDATE -->\
+    <div class="fd-tab-content" id="fd-tab-update">\
       <button class="fd-btn fd-btn-blue" id="fd-load-btn">Load Treatments</button>\
       <div id="fd-filter-section" style="display:none;" class="fd-filter"><label><input type="checkbox" id="fd-filter-active" checked /> Active only</label></div>\
       <div id="fd-treat-list" class="fd-treatments"></div>\
@@ -37,6 +55,7 @@
       </div>\
       <div class="fd-log" id="fd-log"></div>\
     </div>\
+    <!-- TAB 3: ADD -->\
     <div class="fd-tab-content" id="fd-tab-add">\
       <div class="fd-token-box" id="fd-token-status">Token: checking...</div>\
       <label>Search Medicine:</label>\
@@ -60,16 +79,6 @@
       </div>\
       <button class="fd-btn fd-btn-green" id="fd-add-btn">Add Treatment</button>\
       <div class="fd-log" id="fd-add-log"></div>\
-    </div>\
-    <div class="fd-tab-content" id="fd-tab-import">\
-      <div class="fd-token-box" id="fd-import-token">Token: checking...</div>\
-      <div class="fd-import-drop" id="fd-import-drop">Click or drag JSON files here</div>\
-      <input type="file" id="fd-import-files" multiple accept=".json" style="display:none" />\
-      <div class="fd-file-list" id="fd-file-list"></div>\
-      <div id="fd-import-progress" style="display:none;"><div class="fd-progress"><div class="fd-progress-bar" id="fd-import-bar" style="width:0%"></div></div>\
-        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:bold;"><span id="fd-import-count">0/0</span><span id="fd-import-pct">0%</span></div></div>\
-      <button class="fd-btn fd-btn-purple" id="fd-import-btn" style="display:none;">Import All Files</button>\
-      <div class="fd-log" id="fd-import-log"></div>\
     </div>';
 
   document.body.appendChild(panel);
@@ -99,11 +108,11 @@
   };
 
   // HELPERS
-  function logTo(id,m,c){var e=document.getElementById(id);e.innerHTML+='<div class="'+(c||"info")+'">'+m+"</div>";e.scrollTop=e.scrollHeight;}
+  function logTo(id,m,c){var e=document.getElementById(id);if(!e)return;e.innerHTML+='<div class="'+(c||"info")+'">'+m+"</div>";e.scrollTop=e.scrollHeight;}
   function log(m,c){logTo("fd-log",m,c);}
   function addLog(m,c){logTo("fd-add-log",m,c);}
   function impLog(m,c){logTo("fd-import-log",m,c);}
-  function clearLog(id){document.getElementById(id||"fd-log").innerHTML="";}
+  function clearLog(id){var e=document.getElementById(id||"fd-log");if(e)e.innerHTML="";}
   function setProgress(p){document.getElementById("fd-progress-bar").style.width=p+"%";}
 
   function getAuthToken(){
@@ -128,14 +137,11 @@
 
   var apiFetch=window._fd_origFetch||window.fetch;
   var ids=getIdsFromUrl();
-  if(!ids){log("Navigate to Farmadosis first!","err");return;}
+  if(!ids){impLog("Navigate to Farmadosis first!","err");return;}
   var patientId=getPatientId();
   var API_BASE_PATIENT=patientId?"https://amcoplusapi.farmadosis.com/api/installations/"+ids.installationId+"/centers/"+ids.centerId+"/patients/"+patientId:null;
   var API_ROOT="https://amcoplusapi.farmadosis.com/api/installations/"+ids.installationId;
   var API_IMPORT="https://amcoplusapi.farmadosis.com/api/installations/"+ids.installationId+"/centers/"+ids.centerId+"/import-integrations/44";
-
-  if(patientId) log("Patient ID: "+patientId,"info");
-  else log("On patients page (no patient selected)","info");
 
   function updateTokenStatus(){
     var token=getAuthToken();
@@ -146,6 +152,82 @@
     });
   }
   setInterval(updateTokenStatus,3000);updateTokenStatus();
+
+  // ============ DEACTIVATE OLD PATIENTS (Auto Checkbox Clicker) ============
+  function simulateClick(el){
+    if(!el)return;
+    var rect=el.getBoundingClientRect();
+    var x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+    var opts={bubbles:true,cancelable:true,view:window,clientX:x,clientY:y};
+    ["pointerdown","mousedown","pointerup","mouseup","click"].forEach(function(name){
+      var Ctor=name.includes("pointer")?PointerEvent:MouseEvent;
+      el.dispatchEvent(new Ctor(name,opts));
+    });
+  }
+
+  function waitForEl(selector,timeout){
+    timeout=timeout||5000;
+    return new Promise(function(res,rej){
+      var el=document.querySelector(selector);
+      if(el)return res(el);
+      var ob=new MutationObserver(function(){var f=document.querySelector(selector);if(f){ob.disconnect();res(f);}});
+      ob.observe(document.body,{childList:true,subtree:true});
+      setTimeout(function(){ob.disconnect();rej(new Error("Timeout"));},timeout);
+    });
+  }
+
+  function randomDelay(min,max){
+    var ms=Math.floor(Math.random()*(max-min+1))+min;
+    return new Promise(function(r){setTimeout(r,ms);});
+  }
+
+  document.getElementById("fd-deact-btn").onclick = async function(){
+    var statusEl = document.getElementById("fd-deact-status");
+    this.disabled = true;
+    statusEl.innerHTML = '<span style="color:#1976d2;">Starting...</span>';
+
+    var checkboxes = [].slice.call(document.querySelectorAll("td .v-input--selection-controls__ripple")).filter(function(el){return el.offsetParent!==null;});
+    var total = checkboxes.length;
+
+    if(total === 0){
+      statusEl.innerHTML = '<span style="color:#e65100;">No checkboxes found in table!</span>';
+      this.disabled = false;
+      return;
+    }
+
+    statusEl.innerHTML = '<span style="color:#1976d2;">Found ' + total + ' patients. Processing...</span>';
+
+    var ok = 0, errors = 0;
+
+    for(var i = 0; i < total; i++){
+      // Re-fetch each cycle (DOM may change)
+      checkboxes = [].slice.call(document.querySelectorAll("td .v-input--selection-controls__ripple")).filter(function(el){return el.offsetParent!==null;});
+      if(i >= checkboxes.length){break;}
+
+      var cb = checkboxes[i];
+      cb.scrollIntoView({behavior:"auto",block:"center"});
+
+      await randomDelay(80,200);
+      simulateClick(cb);
+
+      statusEl.innerHTML = '<span style="color:#1976d2;">Processing ' + (i+1) + '/' + total + '...</span>';
+
+      // Wait for SweetAlert confirm
+      try{
+        var confirmBtn = await waitForEl(".swal2-confirm",5000);
+        await randomDelay(100,250);
+        simulateClick(confirmBtn);
+        ok++;
+      }catch(e){
+        errors++;
+      }
+
+      await randomDelay(150,350);
+    }
+
+    statusEl.innerHTML = '<span style="color:green;">Done! ' + ok + ' deactivated</span>' + (errors > 0 ? '<span style="color:red;"> | ' + errors + ' errors</span>' : '');
+    this.disabled = false;
+  };
 
   // ============ INTAKES ============
   async function loadIntakes(){
@@ -159,7 +241,7 @@
   document.getElementById("fd-dose-btn").onclick=function(){
     var body=document.getElementById("fd-modal-body"),html="";
     INTAKES.forEach(function(intake){var ts=String(intake.hour).padStart(2,"0")+":"+String(intake.minute).padStart(2,"0");var chk=(selectedIntake&&selectedIntake.id===intake.id)?"checked":"";var cls=chk?" selected":"";
-      html+='<div class="fd-intake-row'+cls+'" data-id="'+intake.id+'"><input type="radio" name="fd-intake-radio" value="'+intake.id+'" '+chk+' data-hour="'+intake.hour+'" data-minute="'+intake.minute+'" data-name="'+intake.name+'" /><span class="fd-itime">'+ts+'</span><span class="fd-iname">'+intake.name+'</span><div style="display:flex;align-items:center;gap:4px;font-size:12px">Dose:<input type="number" class="fd-idose" value="'+(selectedDose||1)+'" min="0.25" step="0.25" /></div></div>';});
+      html+='<div class="fd-intake-row'+cls+'"><input type="radio" name="fd-intake-radio" value="'+intake.id+'" '+chk+' data-hour="'+intake.hour+'" data-minute="'+intake.minute+'" data-name="'+intake.name+'" /><span class="fd-itime">'+ts+'</span><span class="fd-iname">'+intake.name+'</span><div style="display:flex;align-items:center;gap:4px;font-size:12px">Dose:<input type="number" class="fd-idose" value="'+(selectedDose||1)+'" min="0.25" step="0.25" /></div></div>';});
     body.innerHTML=html;document.getElementById("fd-intake-modal").style.display="block";
     body.querySelectorAll(".fd-intake-row").forEach(function(row){row.onclick=function(e){if(e.target.type==="number")return;body.querySelectorAll(".fd-intake-row").forEach(function(r){r.classList.remove("selected");});this.classList.add("selected");this.querySelector("input[type=radio]").checked=true;};});
   };
@@ -182,7 +264,7 @@
   document.getElementById("fd-add-start").addEventListener("change",recalcAddEndDate);
   document.getElementById("fd-add-qty").addEventListener("input",recalcAddEndDate);
   document.getElementById("fd-add-size").addEventListener("input",recalcAddEndDate);
-  var today=new Date();document.getElementById("fd-add-start").value=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+  var tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);document.getElementById("fd-add-start").value=tomorrow.getFullYear()+"-"+String(tomorrow.getMonth()+1).padStart(2,"0")+"-"+String(tomorrow.getDate()).padStart(2,"0");
 
   // ============ MEDICINE SEARCH ============
   var searchTimeout=null,selectedMedicine=null;
@@ -276,33 +358,26 @@
     this.disabled=false;
   };
 
-  // ============ IMPORT PATIENTS (Tab 3) ============
+  // ============ IMPORT PATIENTS ============
   var importFiles = [];
-
-  // Drag & Drop + Click
   var dropZone = document.getElementById("fd-import-drop");
   var fileInput = document.getElementById("fd-import-files");
 
   dropZone.onclick = function(){ fileInput.click(); };
   dropZone.addEventListener("dragover",function(e){e.preventDefault();this.classList.add("dragover");});
   dropZone.addEventListener("dragleave",function(){this.classList.remove("dragover");});
-  dropZone.addEventListener("drop",function(e){
-    e.preventDefault();this.classList.remove("dragover");
-    handleImportFiles(e.dataTransfer.files);
-  });
+  dropZone.addEventListener("drop",function(e){e.preventDefault();this.classList.remove("dragover");handleImportFiles(e.dataTransfer.files);});
   fileInput.addEventListener("change",function(){handleImportFiles(this.files);});
 
   function handleImportFiles(files){
     if(!files||!files.length) return;
     importFiles = [];
     for(var i=0;i<files.length;i++) importFiles.push(files[i]);
-
     var listEl = document.getElementById("fd-file-list");
     listEl.innerHTML = "";
     importFiles.forEach(function(f,i){
       listEl.innerHTML += '<div class="fd-file-item" id="fd-fitem-'+i+'"><span>'+f.name+'</span><span class="fd-file-status" id="fd-fstatus-'+i+'" style="color:#999;">Pending</span></div>';
     });
-
     dropZone.innerHTML = importFiles.length + " files selected";
     document.getElementById("fd-import-btn").style.display = "block";
     clearLog("fd-import-log");
@@ -313,50 +388,34 @@
     var token = getAuthToken();
     if(!token){impLog("Token not found!","err");return;}
     if(importFiles.length===0){impLog("No files selected!","err");return;}
-
     this.disabled = true;
     document.getElementById("fd-import-progress").style.display = "block";
     clearLog("fd-import-log");
-    impLog("Starting import of "+importFiles.length+" files...","info");
-
+    impLog("Importing "+importFiles.length+" files...","info");
     var ok=0,fail=0,total=importFiles.length;
 
     for(var i=0;i<total;i++){
       var file = importFiles[i];
       var statusEl = document.getElementById("fd-fstatus-"+i);
       var itemEl = document.getElementById("fd-fitem-"+i);
-
-      // Update progress
       var pct = Math.round(((i+1)/total)*100);
       document.getElementById("fd-import-bar").style.width = pct+"%";
       document.getElementById("fd-import-count").textContent = (i+1)+"/"+total;
       document.getElementById("fd-import-pct").textContent = pct+"%";
-
-      if(statusEl) statusEl.textContent = "Uploading...";
-      if(statusEl) statusEl.style.color = "#1976d2";
+      if(statusEl){statusEl.textContent="Uploading...";statusEl.style.color="#1976d2";}
 
       try{
-        // Read JSON file content
         var content = await new Promise(function(res,rej){
           var reader = new FileReader();
           reader.onload = function(){ res(reader.result); };
           reader.onerror = function(){ rej(new Error("Read failed")); };
           reader.readAsText(file);
         });
+        try{ JSON.parse(content); }catch(e){ throw new Error("Invalid JSON"); }
 
-        // Validate JSON
-        try{ JSON.parse(content); }
-        catch(e){ throw new Error("Invalid JSON"); }
-
-        // Send directly to API
         var resp = await apiFetch(API_IMPORT, {
           method: "POST",
-          headers: {
-            "Authorization": "Bearer " + token,
-            "Accept": "application/json, text/plain, */*",
-            "Content-Type": "application/json",
-            "X-Client-ID": "Web"
-          },
+          headers: {"Authorization":"Bearer "+token,"Accept":"application/json, text/plain, */*","Content-Type":"application/json","X-Client-ID":"Web"},
           body: content
         });
 
@@ -366,18 +425,11 @@
           if(itemEl) itemEl.style.background="#e8f5e9";
           impLog("["+file.name+"] Imported","ok");
         }else{
-          // Try as form-urlencoded (fallback)
           var resp2 = await apiFetch(API_IMPORT, {
             method: "POST",
-            headers: {
-              "Authorization": "Bearer " + token,
-              "Accept": "application/json, text/plain, */*",
-              "Content-Type": "application/x-www-form-urlencoded",
-              "X-Client-ID": "Web"
-            },
+            headers: {"Authorization":"Bearer "+token,"Accept":"application/json, text/plain, */*","Content-Type":"application/x-www-form-urlencoded","X-Client-ID":"Web"},
             body: content
           });
-
           if(resp2.ok){
             ok++;
             if(statusEl){statusEl.textContent="Done";statusEl.style.color="green";}
@@ -397,21 +449,15 @@
         if(itemEl) itemEl.style.background="#ffebee";
         impLog("["+file.name+"] "+err.message,"err");
       }
-
-      // Delay between files
-      if(i<total-1) await new Promise(function(r){setTimeout(r,500);});
+      if(i<total-1) await new Promise(function(r){setTimeout(r,100);});
     }
-
-    impLog("","info");
     impLog("===== DONE: "+ok+" ok, "+fail+" failed =====",ok>0?"ok":"err");
     this.disabled = false;
     this.textContent = "Import Again";
     document.getElementById("fd-import-bar").style.background = fail>0?"#f44336":"#4caf50";
   };
 
-  // ============ INIT ============
+  // INIT
   loadIntakes();
-  log("Ready!","ok");
-  addLog("Search for a medicine.","info");
-  impLog("Select JSON files to import.","info");
+  impLog("Ready.","info");
 })();
