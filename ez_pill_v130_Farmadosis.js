@@ -3134,9 +3134,12 @@ function cleanNote(txt){
   c=c.replace(/كل\s*\d+\s*ساع[ةهات]*/g,'');
   c=c.replace(/^\s*[-–—]\s*/,'');
   /* Step 5: If starts with English/digits and has Arabic text after, strip to first Arabic char */
+  /* v146: EXCEPT when digit is followed by frequency words (3 مرات, 2 مره) */
   if(/^\s*[\da-zA-Z]/.test(c)&&/[\u0600-\u06FF]/.test(c)){
-    var idx=c.search(/[\u0600-\u06FF]/);
-    if(idx>0) c=c.substring(idx);
+    if(!/^\s*\d+\s*(مر[ةهات]|مرتين|حب[ةه]|حبتين|حبيتين|قرص|قرصين|كبسول)/i.test(c)){
+      var idx=c.search(/[\u0600-\u06FF]/);
+      if(idx>0) c=c.substring(idx);
+    }
   }
   /* Step 6: Separate glued "و" connector first (وقرص→و  / وحبه→و ) */
   c=c.replace(/و(قرص|حبه|حبة|كبسوله|كبسولة)\b/g,'و ');
