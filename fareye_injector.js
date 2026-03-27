@@ -40,7 +40,10 @@ javascript:(function(){
         var b = e.target.closest('[data-fey-btn]');
         if (b) { resolved = true; ov.remove(); resolve(o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value); }
       });
-      ov.addEventListener('click', function(e) { e.stopPropagation(); e.stopImmediatePropagation(); }, true);
+      // امنع الإقفال بالضغط على الخلفية — بس اسمح للأزرار جوا الـ dialog تشتغل
+      ov.addEventListener('mousedown', function(e) {
+        if (e.target === ov) { e.stopPropagation(); e.preventDefault(); }
+      });
       document.body.appendChild(ov);
     });
   }
