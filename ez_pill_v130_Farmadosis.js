@@ -1414,6 +1414,26 @@ window.ezApplyDoseEdits=function(){
   else{window.ezShowToast('لم يتم تغيير أي جرعة','info');}
 };
 
+window.ezClearAllNotes=function(){
+  var items=window._ezDoseItems;
+  if(!items||items.length===0){window.ezShowToast('لا توجد بيانات','info');return;}
+  /* Clear all input fields in the dialog */
+  var inputs=document.querySelectorAll('.ez-dose-edit-input');
+  for(var i=0;i<inputs.length;i++) inputs[i].value='';
+  /* Write empty to actual table */
+  var cleared=0;
+  for(var i=0;i<items.length;i++){
+    var noteCell=items[i].noteCell;
+    if(noteCell){
+      var inp=noteCell.querySelector('input,textarea');
+      if(inp){inp.value='';_ezFire(inp);}
+      else{noteCell.textContent='';}
+      cleared++;
+    }
+  }
+  window.ezShowToast('🗑️ تم مسح '+cleared+' جرعة','success');
+};
+
 /* Dark mode removed in v141 */
 
 window.ezMinimize=function(){
@@ -1555,7 +1575,7 @@ window.ezShowDoses=function(){
     html+='<div class="ez-dose-item'+dupClass+'"><div class="ez-dose-num">'+(i+1)+'</div><div class="ez-dose-name">'+_ezEsc(items[i].name)+'</div><div class="ez-dose-note" style="padding:4px 6px"><input type="text" class="ez-dose-edit-input" data-idx="'+i+'" value="'+_ezEsc(items[i].note)+'" placeholder="اكتب الجرعة هنا..." style="width:100%;padding:6px 8px;border:1.5px solid rgba(129,140,248,0.12);border-radius:8px;font-size:12px;font-weight:700;color:#3730a3;font-family:Cairo,sans-serif;direction:rtl;outline:none;background:rgba(241,245,249,0.5)" onfocus="this.style.borderColor=\'#6366f1\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'rgba(129,140,248,0.12)\';this.style.background=\'rgba(241,245,249,0.5)\'" />'+dupIcon+'</div></div>';
   }
   html+='</div>';
-  html+='<div class="ez-doses-footer" style="gap:8px"><button onclick="window.ezApplyDoseEdits()" style="flex:1;height:42px;border:none;border-radius:12px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;cursor:pointer;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(16,185,129,0.2)">✅ تطبيق التعديلات</button><button class="ez-btn-close-doses" onclick="window.ezCloseDoses()">✕ إغلاق</button></div>';
+  html+='<div class="ez-doses-footer" style="gap:8px"><button onclick="window.ezApplyDoseEdits()" style="flex:1;height:42px;border:none;border-radius:12px;background:linear-gradient(145deg,#10b981,#059669);color:#fff;cursor:pointer;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(16,185,129,0.2)">✅ تطبيق التعديلات</button><button onclick="window.ezClearAllNotes()" style="height:42px;padding:0 14px;border:none;border-radius:12px;background:linear-gradient(145deg,#ef4444,#dc2626);color:#fff;cursor:pointer;font-size:13px;font-weight:800;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(239,68,68,0.2)">🗑️ مسح الكل</button><button class="ez-btn-close-doses" onclick="window.ezCloseDoses()">✕ إغلاق</button></div>';
   var dialog=document.createElement('div');
   dialog.id='ez-doses-dialog';dialog.className='ez-doses-dialog';dialog.innerHTML=html;
   document.body.appendChild(dialog);
@@ -2358,7 +2378,7 @@ window.ezUndoDuplicates=function(){
       var tds=r.querySelectorAll('td');
       var code=get(tds[ci]).trim();
       var noteText=get(tds[ni]).trim();
-      var isSplitRow=noteText.indexOf('⚡')===0;
+      var isSplitRow=r.getAttribute('data-ez-split')==='1';
       if(code&&isSplitRow){
         if(!groups[code]) groups[code]=[];
         groups[code].push(r);
@@ -3090,12 +3110,11 @@ function _ezColorDupRows(tb){
   var ni=_ezIdx(hs,'note'),ci=_ezIdx(hs,'code');
   if(ni<0||ci<0)return;
   var rows=Array.from(tb.querySelectorAll('tr')).slice(1);
-  /* Group rows by code, only keep groups with ⚡ rows */
+  /* Group rows by code, only keep groups with split rows */
   var groups={},order=[];
   rows.forEach(function(r){
     var tds=r.querySelectorAll('td');if(tds.length<=Math.max(ni,ci))return;
-    var noteVal=_ezGet(tds[ni]);
-    if(noteVal.indexOf('⚡')<0)return;
+    if(r.getAttribute('data-ez-split')!=='1')return;
     var code=_ezGet(tds[ci]).trim().replace(/\D/g,'');
     if(!code)return;
     if(!groups[code]){groups[code]=[];order.push(code);}
@@ -3683,8 +3702,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else{t1=ni.isBefore?NORMAL_TIMES.beforeBreakfast:NORMAL_TIMES.afterBreakfast;t2=ni.isBefore?NORMAL_TIMES.beforeDinner:NORMAL_TIMES.afterDinner;}
       meals=['1','2'];
       var _noteParts=_splitNote(_origNote,2);
-      setNote(nt1[niIdx],'⚡ '+_noteParts[0]);setNote(nt2[niIdx],'⚡ '+_noteParts[1]);setTime(nr1,t1);setTime(nr2,t2);
-      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
+      setNote(nt1[niIdx],_noteParts[0]);setNote(nt2[niIdx],_noteParts[1]);setTime(nr1,t1);setTime(nr2,t2);
+      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];nr1.setAttribute("data-ez-split","1");nr2.setAttribute("data-ez-split","1");
     } else if(ni.type==='three'){
       var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);var nr3=r.cloneNode(true);
       var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');var nt3=nr3.querySelectorAll('td');
@@ -3703,8 +3722,8 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       else{t1=ni.isBefore?NORMAL_TIMES.beforeBreakfast:NORMAL_TIMES.afterBreakfast;t2=ni.isBefore?NORMAL_TIMES.beforeLunch:NORMAL_TIMES.afterLunch;t3=ni.isBefore?NORMAL_TIMES.beforeDinner:NORMAL_TIMES.afterDinner;}
       meals=['1','2','3'];
       var _noteParts3=_splitNote(_origNote3,3);
-      setNote(nt1[niIdx],'⚡ '+_noteParts3[0]);setNote(nt2[niIdx],'⚡ '+_noteParts3[1]);setNote(nt3[niIdx],'⚡ '+_noteParts3[2]);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
-      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];
+      setNote(nt1[niIdx],_noteParts3[0]);setNote(nt2[niIdx],_noteParts3[1]);setNote(nt3[niIdx],_noteParts3[2]);setTime(nr1,t1);setTime(nr2,t2);setTime(nr3,t3);
+      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);r.parentNode.insertBefore(nr3,r);dupRows=[nr1,nr2,nr3];nr1.setAttribute("data-ez-split","1");nr2.setAttribute("data-ez-split","1");nr3.setAttribute("data-ez-split","1");
     } else if(ni.type==='q6h'){
       var nr1=r.cloneNode(true);var nr2=r.cloneNode(true);
       var nt1=nr1.querySelectorAll('td');var nt2=nr2.querySelectorAll('td');
@@ -3719,9 +3738,9 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       if(ni.isBefore){t1=NORMAL_TIMES.beforeBreakfast;t2=NORMAL_TIMES.beforeLunch;}
       else{t1=NORMAL_TIMES.afterBreakfast;t2=NORMAL_TIMES.afterLunch;}
       var _notePartsQ6=_splitNote(_origNoteQ6,2);
-      setNote(nt1[niIdx],'⚡ '+_notePartsQ6[0]);setNote(nt2[niIdx],'⚡ '+_notePartsQ6[1]);setTime(nr1,t1);setTime(nr2,t2);
+      setNote(nt1[niIdx],_notePartsQ6[0]);setNote(nt2[niIdx],_notePartsQ6[1]);setTime(nr1,t1);setTime(nr2,t2);
       nr1.setAttribute('data-q6h','true');nr2.setAttribute('data-q6h','true');
-      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];
+      r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);dupRows=[nr1,nr2];nr1.setAttribute("data-ez-split","1");nr2.setAttribute("data-ez-split","1");
       meals=isEn?['Breakfast&Dinner','Lunch&Bed']:['الفطار والعشاء','الغداء والنوم'];
     }
     duplicatedRows.push({originalRow:r,duplicates:dupRows,type:ni.type,meals:meals,origNote:on});duplicatedCount++;
@@ -3764,7 +3783,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
       suhoorTime=RAMADAN_TIMES.afterSuhoor;
     }
 
-    setNote(nt1[niIdx],'⚡ '+iftarLabel);setNote(nt2[niIdx],'⚡ '+suhoorLabel);
+    setNote(nt1[niIdx],iftarLabel);setNote(nt2[niIdx],suhoorLabel);
     setTime(nr1,iftarTime);setTime(nr2,suhoorTime);
 
     /* Set Ramadan start dates */
@@ -3776,6 +3795,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
     }
 
     r.parentNode.insertBefore(nr1,r);r.parentNode.insertBefore(nr2,r);
+    nr1.setAttribute('data-ez-split','1');nr2.setAttribute('data-ez-split','1');
     var dupRows=[nr1,nr2];
     var meals=isEn?['Iftar','Suhoor']:['الفطار','السحور'];
     duplicatedRows.push({originalRow:r,duplicates:dupRows,type:'ramadan_two',meals:meals});duplicatedCount++;
@@ -4441,7 +4461,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
           /* Note: first dose time only */
           var _remNote=rd.note.replace(/و\s*(مساءا|مساء|المساء|العشاء|العشا|عشاء)/gi,'').replace(/مرتين|twice/gi,'').replace(/\s+/g,' ').trim();
-          if(ni_main>=0&&_remTds[ni_main]){var _remNInp=_remTds[ni_main].querySelector('input,textarea');if(_remNInp){_remNInp.value='⚡ '+_remNote;fire(_remNInp);}}
+          if(ni_main>=0&&_remTds[ni_main]){var _remNInp=_remTds[ni_main].querySelector('input,textarea');if(_remNInp){_remNInp.value=_remNote;fire(_remNInp);}}
 
           /* Set remainder row start time = first time */
           setTime(_remRow,_firstTime);
@@ -4465,6 +4485,7 @@ function processTable(m,t,autoDuration,enableWarnings,showPostDialog,ramadanMode
 
           /* Insert remainder row after main row */
           r_node.parentNode.insertBefore(_remRow,r_node.nextSibling);
+          _remRow.setAttribute('data-ez-split','1');r_node.setAttribute('data-ez-split','1');
           /* Track for undo in post-process dialog */
           duplicatedRows.push({originalRow:r_node,duplicates:[_remRow],type:'odd_fixed',meals:[],oddFixedData:{code:rd.itemCode,origSize:_fixSizeN,evenSize:_evenSize,remainSize:_remainSize,origNote:rd.note}});
           duplicatedCount++;
