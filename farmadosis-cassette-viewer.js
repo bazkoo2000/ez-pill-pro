@@ -5,18 +5,28 @@
   if (oldPanel) oldPanel.remove();
 
   // ============ AUTO-DETECT PRODUCTION ID ============
-  function getCheckedProductionIds() {
-    var ids = [];
-    // Vuetify adds v-data-table__selected class to checked rows
+  function getCheckedProductions() {
+    var prods = [];
     var selectedRows = document.querySelectorAll("tr.v-data-table__selected");
     selectedRows.forEach(function (row) {
       var link = row.querySelector("a[href*='/productions/']");
-      if (link) {
-        var match = link.getAttribute("href").match(/productions\/(\d+)/);
-        if (match) ids.push(match[1]);
-      }
+      if (!link) return;
+      var match = link.getAttribute("href").match(/productions\/(\d+)/);
+      if (!match) return;
+      var id = match[1];
+      // Get status from the Status cell
+      var status = "unknown";
+      var cells = row.querySelectorAll("td");
+      cells.forEach(function (td) {
+        var header = td.querySelector(".v-data-table__mobile-row__header");
+        if (header && header.textContent.trim() === "Status") {
+          var cell = td.querySelector(".v-data-table__mobile-row__cell");
+          if (cell) status = cell.textContent.trim();
+        }
+      });
+      prods.push({ id: id, status: status });
     });
-    return ids;
+    return prods;
   }
   function getProductionIdFromUrl() { var m = window.location.href.match(/productions\/(\d+)/); return m ? m[1] : null; }
   function getInstallationId() { var m = window.location.href.match(/installations\/(\d+)/); return m ? m[1] : "22"; }
@@ -41,7 +51,8 @@
   }
 
   var API_ROOT = "https://amcoplusapi.farmadosis.com/api/installations/" + getInstallationId();
-  var detectedIds = getCheckedProductionIds();
+  var detectedProds = getCheckedProductions();
+  var detectedIds = detectedProds.map(function(p) { return p.id; });
   var urlId = getProductionIdFromUrl();
 
   // ============ STYLES ============
@@ -96,7 +107,10 @@
   panel.id = "fd-cassette-panel";
 
   var detectedHtml = '';
-  if (detectedIds.length > 0) detectedHtml = '<div class="fc-detected">Auto-detected: ' + detectedIds.join(", ") + '</div>';
+  if (detectedIds.length > 0) {
+    var detectedInfo = detectedProds.map(function(p) { return p.id + ' (' + p.status + ')'; }).join(", ");
+    detectedHtml = '<div class="fc-detected">Selected: ' + detectedInfo + '</div>';
+  }
   else if (urlId) detectedHtml = '<div class="fc-detected">From URL: ' + urlId + '</div>';
   else detectedHtml = '<div class="fc-detected fc-detected-none">No production selected. Check a row or enter from production page.</div>';
 
@@ -187,9 +201,12 @@
   var allItems = [];
 
   document.getElementById("fc-load-btn").onclick = async function () {
-    var freshIds = getCheckedProductionIds();
-    if (freshIds.length === 0) { var fromUrl = getProductionIdFromUrl(); if (fromUrl) freshIds = [fromUrl]; }
-    if (freshIds.length === 0) { fcLog("No production selected! Check a row first.", "err"); return; }
+    var freshProds = getCheckedProductions();
+    if (freshProds.length === 0) {
+      var fromUrl = getProductionIdFromUrl();
+      if (fromUrl) freshProds = [{ id: fromUrl, status: "unknown" }];
+    }
+    if (freshProds.length === 0) { fcLog("No production selected! Check a row first.", "err"); return; }
 
     var token = getAuthToken();
     if (!token) { fcLog("Token not found!", "err"); return; }
@@ -198,20 +215,30 @@
     logEl.innerHTML = "";
     allItems = [];
 
-    for (var pi = 0; pi < freshIds.length; pi++) {
-      var productionId = freshIds[pi];
-      fcLog("[" + productionId + "] Saving to machine...", "info");
+    for (var pi = 0; pi < freshProds.length; pi++) {
+      var prod = freshProds[pi];
+      var productionId = prod.id;
+      var status = prod.status.toLowerCase().trim();
 
-      try {
-        var saveResp = await fetch(API_ROOT + "/productions/" + productionId + "/save-to-machine", {
-          method: "POST",
-          headers: { "Authorization": "Bearer " + token, "Accept": "application/json, text/plain, */*", "Content-Type": "application/json", "X-Client-ID": "Web" },
-          body: JSON.stringify({ machine_id: 59, production_layout_id: 101 })
-        });
-        if (!saveResp.ok) { fcLog("[" + productionId + "] Already saved/sent, skipping save", "info"); }
-        else { fcLog("[" + productionId + "] Saved", "ok"); }
-      } catch (e) { fcLog("[" + productionId + "] Save skipped: " + e.message, "info"); }
+      fcLog("[" + productionId + "] Status: " + prod.status, "info");
 
+      // Only save if status is "Not Sent"
+      if (status === "not sent") {
+        fcLog("[" + productionId + "] Saving to machine...", "info");
+        try {
+          var saveResp = await fetch(API_ROOT + "/productions/" + productionId + "/save-to-machine", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token, "Accept": "application/json, text/plain, */*", "Content-Type": "application/json", "X-Client-ID": "Web" },
+            body: JSON.stringify({ machine_id: 59, production_layout_id: 101 })
+          });
+          if (saveResp.ok) { fcLog("[" + productionId + "] Saved", "ok"); }
+          else { fcLog("[" + productionId + "] Save failed, trying report anyway", "info"); }
+        } catch (e) { fcLog("[" + productionId + "] Save error, trying report anyway", "info"); }
+      } else {
+        fcLog("[" + productionId + "] Skipping save (already " + prod.status + ")", "ok");
+      }
+
+      // Get recharge report
       try {
         var url = API_ROOT + "/productions/" + productionId + "/reports/recharge?sortBy[]=device&sortBy[]=quantity&sortDesc[]=true&sortDesc[]=true&itemsPerPage=-1&page=1&parameters[]=with-details";
         var resp = await fetch(url, {
@@ -225,7 +252,7 @@
         fcLog("[" + productionId + "] Found " + items.length + " medicines", "ok");
       } catch (e) { fcLog("[" + productionId + "] " + e.message, "err"); }
 
-      if (pi < freshIds.length - 1) await new Promise(function (r) { setTimeout(r, 300); });
+      if (pi < freshProds.length - 1) await new Promise(function (r) { setTimeout(r, 300); });
     }
 
     if (allItems.length > 0) { renderSummary(); renderTable(allItems); document.getElementById("fc-search").style.display = "block"; }
@@ -272,7 +299,10 @@
   });
 
   fcLog("Ready!", "ok");
-  if (detectedIds.length > 0) fcLog("Detected " + detectedIds.length + " checked production(s)", "ok");
+  if (detectedProds.length > 0) {
+    fcLog("Detected " + detectedProds.length + " checked production(s)", "ok");
+    detectedProds.forEach(function(p) { fcLog("  #" + p.id + " → " + p.status, "info"); });
+  }
   else fcLog("No checked rows found. Check a production row first.", "info");
 
   // Debug
