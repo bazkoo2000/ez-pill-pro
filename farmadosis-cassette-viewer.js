@@ -14,8 +14,9 @@
       var match = link.getAttribute("href").match(/productions\/(\d+)/);
       if (!match) return;
       var id = match[1];
-      // Get status from the Status cell
       var status = "unknown";
+
+      // Method 1: Mobile view — look for Status header
       var cells = row.querySelectorAll("td");
       cells.forEach(function (td) {
         var header = td.querySelector(".v-data-table__mobile-row__header");
@@ -24,6 +25,18 @@
           if (cell) status = cell.textContent.trim();
         }
       });
+
+      // Method 2: Desktop view — search for known status text in all cells
+      if (status === "unknown") {
+        var knownStatuses = ["Not Sent", "Ready to send", "Sent", "Finished", "In Progress"];
+        cells.forEach(function (td) {
+          var txt = td.textContent.trim();
+          knownStatuses.forEach(function (s) {
+            if (txt === s) status = s;
+          });
+        });
+      }
+
       prods.push({ id: id, status: status });
     });
     return prods;
