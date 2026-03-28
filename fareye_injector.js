@@ -100,7 +100,7 @@ javascript:(function(){
             '<span class="fey-badge" style="background:#fef3c7;color:#d97706" id="fey_cnt_alloc">—</span>'+
           '</button>'+
           '<button id="fey_sel_lt" class="fey-helper-btn">'+
-            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">📋</span> تحديد Loading Task</span>'+
+            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">👤</span> Assign to User</span>'+
             '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
           '</button>'+
           '<button id="fey_sel_del" class="fey-helper-btn" style="margin-bottom:0">'+
@@ -254,7 +254,7 @@ javascript:(function(){
 
   function isReject(txt) { return txt.toLowerCase().indexOf('reject') !== -1; }
 
-  function findButtonByText(textMatch) {
+  function findButtonByText(textMatch, partial) {
     var textLower = textMatch.toLowerCase();
     var allEl = document.querySelectorAll('span, button, li, a, div[role="menuitem"], li[role="menuitem"]');
     for (var i = 0; i < allEl.length; i++) {
@@ -262,7 +262,8 @@ javascript:(function(){
       if (!el.offsetParent && el.offsetWidth === 0) continue;
       var txt = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
       if (isReject(txt)) continue;
-      if (txt.toLowerCase() === textLower) return el;
+      var isMatch = partial ? (txt.toLowerCase().indexOf(textLower) !== -1) : (txt.toLowerCase() === textLower);
+      if (isMatch) return el;
     }
     return null;
   }
@@ -275,13 +276,13 @@ javascript:(function(){
     return false;
   }
 
-  async function clickAction(textMatch) {
+  async function clickAction(textMatch, partial) {
     await wait(300);
-    var el = findButtonByText(textMatch);
+    var el = findButtonByText(textMatch, partial);
     if (el) { el.click(); await wait(600); return true; }
     await openOneDropdown();
     await wait(300);
-    el = findButtonByText(textMatch);
+    el = findButtonByText(textMatch, partial);
     if (el) { el.click(); await wait(600); return true; }
     return false;
   }
@@ -340,17 +341,36 @@ javascript:(function(){
   // ─── أزرار التحديد ───
   document.getElementById('fey_sel_lt').addEventListener('click', async function() {
     if (state.isRunning) return;
-    this.style.opacity = '0.6';
+    var btn = this;
+    btn.style.opacity = '0.6';
+
+    // الخطوة 1: تحديد Loading Task
     setSt('☑️ تحديد Loading Task...', 'working');
     var count = await selectOnlyByStatus('loading task');
-    this.style.opacity = '1';
     updateCounts();
-    if (count > 0) {
-      showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
-      setSt('☑️ تم تحديد ' + count + ' Loading Task ✅', 'done');
-    } else {
+
+    if (count === 0) {
+      btn.style.opacity = '1';
       showToast('لا يوجد طلبات Loading Task', 'warning');
       setSt('⚠️ لا يوجد Loading Task', 'ready');
+      return;
+    }
+
+    showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
+    await wait(500);
+
+    // الخطوة 2: الضغط على Assign to User
+    setSt('👤 جاري فتح Assign to User...', 'working');
+    var clicked = await clickAction('Assign to User', true);
+
+    btn.style.opacity = '1';
+
+    if (clicked) {
+      showToast('✅ تم فتح Assign to User — اختر الكابتن', 'success');
+      setSt('👤 اختر الكابتن واضغط Assign ✅', 'done');
+    } else {
+      showToast('⚠️ لم يُعثر على Assign to User', 'warning');
+      setSt('⚠️ Assign to User غير موجود — اضغطه يدوياً', 'ready');
     }
   });
 
