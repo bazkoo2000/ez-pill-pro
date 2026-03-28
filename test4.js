@@ -1,426 +1,768 @@
-javascript:(function(){
-'use strict';
+(function(){
+  'use strict';
+  const PANEL_ID='ali_sys_v5';const VERSION='6.5';
+  if(document.getElementById(PANEL_ID)){document.getElementById(PANEL_ID).remove();return}
+  const MAX_PER_FILE=49;
+  const FETCH_TIMEOUT=30000;
+  const MAX_RETRIES=2;
+  const state={savedRows:[],visitedSet:new Set(),isProcessing:false,isSyncing:false,htmlBuffer:''};
+  const IOS={bg:'rgba(243,244,246,0.92)',card:'#ffffff',text:'#1f2937',muted:'#9ca3af',accent:'#6366f1',accent2:'#818cf8',success:'#22c55e',error:'#ef4444',warn:'#f59e0b',blue:'#3b82f6',shadow:'0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)',font:'-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif'};
 
-var PID='ez-tools-main';
-var old=document.getElementById(PID);if(old){old.remove();return}
-var SECRET='101093';
+  // ═══════════════════════════════════════════════════════════════
+  // ✅ v6.5 — Smart Server Detection
+  // السيرفر الخارجي (nahdi.sa) = أسرع → concurrency أعلى
+  // السيرفر الداخلي (172.x.x.x) = أبطأ → concurrency أقل + delay أكبر
+  // ═══════════════════════════════════════════════════════════════
+  const IS_EXTERNAL = window.location.hostname.includes('nahdi.sa');
+  const SERVER_PROFILE = IS_EXTERNAL
+    ? { name:'Nahdi Cloud',  initC:5, maxC:8,  minC:3, initDelay:50,  minDelay:30,  maxDelay:300, rampUp:4, rampDown:2, retryDelay:200 }
+    : { name:'Internal Server', initC:3, maxC:5, minC:2, initDelay:150, minDelay:80, maxDelay:600, rampUp:5, rampDown:2, retryDelay:400 };
 
-/* ══════════════════════════════════════
-   Smart Context Detection
-   ══════════════════════════════════════ */
-var loc=window.location.href.toLowerCase();
-var isDetails=loc.indexOf('getezpill_details')>-1||loc.indexOf('getezpill_detail')>-1;
-var isPrint=loc.indexOf('printorder')>-1;
-var isFarmadosis=loc.indexOf('farmadosis.com')>-1;
-var isFareye=loc.indexOf('fareye')>-1;
-var isFarmadosisTreatments=isFarmadosis&&loc.indexOf('/treatments')>-1;
-var isFarmadosisProductions=isFarmadosis&&loc.indexOf('/productions')>-1;
-var isFarmadosisPatients=isFarmadosis&&loc.indexOf('/patients')>-1&&!isFarmadosisTreatments&&!isFarmadosisProductions;
-var isHomePage=loc.indexOf('ez_pill_web')>-1&&!isDetails&&!isPrint;
+  console.log(`🖥️ Server: ${SERVER_PROFILE.name} (${window.location.hostname}) | Start C:${SERVER_PROFILE.initC}`);
 
-/* ══════════════════════════════════════
-   Helpers
-   ══════════════════════════════════════ */
-function gv(td){
-  if(!td)return'';
-  var inp=td.querySelector('input,textarea');
-  if(inp)return inp.value.trim();
-  var sel=td.querySelector('select');
-  if(sel){var o=sel.options[sel.selectedIndex];return o?o.text.trim():''}
-  return td.textContent.trim();
-}
+  const bodyText=document.body?document.body.innerText:'';const packedMatch=bodyText.match(/packed\s*\n*\s*(\d+)/i);const totalPacked=packedMatch?parseInt(packedMatch[1]):0;const defaultPages=totalPacked>0?Math.ceil(totalPacked/10):1;
+  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;')}
 
-function getStoreCode(){
-  var labels=document.querySelectorAll('label');
-  for(var i=0;i<labels.length;i++){
-    var txt=labels[i].textContent||'';
-    if(txt.indexOf('StoreCode')>-1){return txt.replace(/[^0-9]/g,'')}
+  function fetchWithTimeout(url,options={},timeout=FETCH_TIMEOUT){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),timeout);
+    return fetch(url,{...options,signal:controller.signal})
+      .then(res=>{clearTimeout(timer);return res})
+      .catch(err=>{clearTimeout(timer);throw err});
   }
-  return'0000';
-}
 
-function to24h(t){
-  t=(t||'09:00').trim().toUpperCase();
-  var isPM=t.indexOf('PM')>-1;
-  var isAM=t.indexOf('AM')>-1;
-  t=t.replace(/[APM\s]/gi,'').trim();
-  var parts=t.split(':');
-  var hr=parseInt(parts[0])||0;
-  var mn=parts[1]||'00';
-  if(isPM&&hr<12)hr+=12;
-  if(isAM&&hr===12)hr=0;
-  return String(hr).padStart(2,'0')+':'+mn;
-}
-
-function toYMD(d){
-  if(!d)return'';
-  d=d.trim();
-  if(d.indexOf('/')>-1){var p=d.split('/');if(p.length===3)return p[2]+p[0].padStart(2,'0')+p[1].padStart(2,'0')}
-  if(d.indexOf('-')>-1)return d.replace(/-/g,'');
-  return d;
-}
-
-/* ══════════════════════════════════════
-   Load Tool
-   ══════════════════════════════════════ */
-function loadTool(url,name,closePanel){
-  if(closePanel){var pp=document.getElementById(PID);if(pp)pp.style.display='none'}
-  var full=url+(url.indexOf('?')>-1?'&':'?')+'t='+Date.now();
-  fetch(full).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(code){
-    try{new Function(code)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}
-  }).catch(function(){
-    try{var x=new XMLHttpRequest();x.open('GET',full,true);x.onload=function(){if(x.status===200){try{new Function(x.responseText)();}catch(e){alert('خطأ في '+name+': '+e.message);showPanel()}}else{alert('فشل تحميل '+name);showPanel()}};x.onerror=function(){alert('فشل تحميل '+name);showPanel()};x.send()}catch(e2){alert('فشل تحميل '+name);showPanel()}
-  });
-}
-
-function showPanel(){var pp=document.getElementById(PID);if(pp){pp.style.display='block';pp.style.animation='ezSlideIn 0.35s cubic-bezier(0.16,1,0.3,1)'}}
-
-/* ══════════════════════════════════════
-   Auto-Launch Detection
-   ══════════════════════════════════════ */
-var autoDetected=false;
-
-/* ── 1. FarEye ── */
-if(!autoDetected&&isFareye){
-  autoDetected=true;
-  setTimeout(function(){
-    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);
-  },300);
-}
-
-/* ── 1b. Farmadosis Treatments → farmadosis-bulk ── */
-else if(!autoDetected&&isFarmadosisTreatments){
-  autoDetected=true;
-  setTimeout(function(){
-    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
-  },300);
-}
-
-/* ── 1c. Farmadosis Productions → cassette-viewer ── */
-else if(!autoDetected&&isFarmadosisProductions){
-  autoDetected=true;
-  setTimeout(function(){
-    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-cassette-viewer.js','Cassette Viewer',true);
-  },300);
-}
-
-/* ── 2. Print Order → nahdi-editor ── */
-else if(!autoDetected&&isPrint){
-  autoDetected=true;
-  setTimeout(function(){
-    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);
-  },300);
-}
-
-/* ── 3. Farmadosis Patients → farmadosis-bulk مباشرة ── */
-else if(!autoDetected&&isFarmadosisPatients){
-  autoDetected=true;
-  setTimeout(function(){
-    loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);
-  },300);
-}
-
-/* ── 4. Details Page → EZPillAddDrug (4 buttons) or Export tab ── */
-else if(!autoDetected&&isDetails){
-  var btns=document.querySelectorAll('input[type="button"],input[type="submit"],button,a');
-  var hasPacked=false,hasDownload=false,hasAI=false,hasCancel=false;
-  for(var bi=0;bi<btns.length;bi++){
-    var t=(btns[bi].value||btns[bi].textContent||'').toLowerCase().trim();
-    if(t.indexOf('update status as packed')>-1)hasPacked=true;
-    if(t.indexOf('download file')>-1)hasDownload=true;
-    if(t.indexOf('ai assistant')>-1)hasAI=true;
-    if(t.indexOf('cancel')>-1)hasCancel=true;
-  }
-  if(hasPacked&&hasDownload&&hasAI&&hasCancel){
-    // طلب مفتوح → إضافة صنف
-    autoDetected=true;
-    setTimeout(function(){
-      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);
-    },300);
-  } else {
-    // طلب مقفل (head_id فيه رقم) → بانيل مع تاب تصدير
-    autoDetected=true;
-    buildPanel('export');
-  }
-}
-
-/* ── 5. Home Page → Search (ready to pack) or Close (packed) ── */
-else if(!autoDetected&&isHomePage){
-  // نلاقي عمود Status بالاسم الصح
-  var detectedMode='';
-  var tables=document.querySelectorAll('table');
-  outer:for(var ti=0;ti<tables.length;ti++){
-    var headers=tables[ti].querySelectorAll('th');
-    var statusColIndex=-1;
-    for(var hi=0;hi<headers.length;hi++){
-      if((headers[hi].textContent||'').toLowerCase().trim()==='status'){
-        statusColIndex=hi;break;
-      }
-    }
-    if(statusColIndex>-1){
-      var dataRows=tables[ti].querySelectorAll('tr');
-      for(var ri=1;ri<dataRows.length;ri++){
-        var cells=dataRows[ri].querySelectorAll('td');
-        if(cells[statusColIndex]){
-          var sv=cells[statusColIndex].textContent.trim().toLowerCase();
-          if(sv==='accepted'){detectedMode='readytopack';break outer;}
-          if(sv==='packed'||sv==='fulfilled'||sv==='received'){detectedMode='packed';break outer;}
-        }
+  async function fetchWithRetry(url,options={},retries=MAX_RETRIES){
+    for(let attempt=0;attempt<=retries;attempt++){
+      try{
+        const res=await fetchWithTimeout(url,options);
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        return res;
+      }catch(err){
+        if(attempt===retries) throw err;
+        await sleep(800*(attempt+1));
       }
     }
   }
-  if(detectedMode==='packed'){
-    autoDetected=true;
-    setTimeout(function(){
-      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);
-    },300);
-  } else {
-    // accepted أو مش قادر يحدد → Search_Order
-    autoDetected=true;
-    setTimeout(function(){
-      loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);
-    },300);
-  }
-}
 
-/* ══════════════════════════════════════
-   لو مفيش أداة اتعرفت → البانيل الكامل
-   ══════════════════════════════════════ */
-if(!autoDetected){
-  buildPanel();
-}
-
-/* ══════════════════════════════════════
-   Farmadosis Download (JSON)
-   ══════════════════════════════════════ */
-function safeDownload(){
-  try{
-    var pname=(document.getElementById('pname')||{}).value||'';
-    var mobile=(document.getElementById('mobile')||{}).value||'';
-    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
-    if(!pname||!mobile){alert('⚠️ اسم المريض أو الموبايل غير موجود');return}
-    if(!inv){alert('⚠️ رقم الفاتورة غير موجود');return}
-
-    function fd(dd){
-      if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';
-      if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}
-      return dd;
-    }
-
-    var treats=[];
-    var rows=document.querySelectorAll('table.styled-table tr');
-    for(var r=1;r<rows.length;r++){
-      var tds=rows[r].querySelectorAll('td');
-      if(tds.length<10)continue;
-      var code=gv(tds[1]);
-      if(!code||code.length<3)continue;
-
-      /* ── Every: استخراج الرقم الفعلي وتحويله لدقائق ── */
-      var every=gv(tds[6])||'';
-      var evNum=parseInt(every.replace(/[^0-9]/g,''))||24;
-      var mins=evNum*60;
-
-      /* ── Start Time: استخدام to24h المظبوطة ── */
-      var st=to24h(gv(tds[7])||'09:00');
-
-      /* ── التواريخ ── */
-      var sd=fd(gv(tds[8]));
-      var ed=fd(gv(tds[9]));
-      if(!sd)sd=new Date().toISOString().slice(0,10);
-      if(!ed)ed=sd;
-
-      treats.push({
-        medicine_code:code,
-        medicine_name:gv(tds[2]),
-        treatment_plan:'custom_interval',
-        starts_at:sd+' '+st,
-        ends_at:ed+' 23:59',
-        emblist_it:true,
-        force_medicine_code_in_production:false,
-        emblist_in_unique_bag:false,
-        is_if_needed_treatment:false,
-        notes:gv(tds[10])||'',
-        configs:[{
-          first_take:sd+' '+st,
-          dose:gv(tds[5])||'1',
-          minutes_interval:mins
-        }]
-      });
-    }
-    if(!treats.length){alert('⚠️ لا توجد أصناف للتصدير');return}
-    downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv);
-  }catch(e){alert('❌ خطأ في تحميل Farmadosis: '+e.message)}
-}
-
-/* ══════════════════════════════════════
-   JVM Download (.OCS)
-   ══════════════════════════════════════ */
-function jvmDownload(){
-  try{
-    var pname=(document.getElementById('pname')||{}).value||'';
-    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
-    if(!pname){alert('⚠️ اسم المريض غير موجود');return}
-    if(!inv){alert('⚠️ رقم الفاتورة غير موجود');return}
-    var storeCode=getStoreCode();
-    var lines=[];
-    var rows=document.querySelectorAll('table.styled-table tr');
-    for(var r=1;r<rows.length;r++){
-      var tds=rows[r].querySelectorAll('td');
-      if(tds.length<12)continue;
-      var code=gv(tds[1]);
-      if(!code||code.length<3)continue;
-      var itemName=gv(tds[2]);
-      var dose=gv(tds[5])||'1';
-      var every=gv(tds[6])||'';
-      var startTime=gv(tds[7])||'09:00';
-      var startDate=gv(tds[8])||'';
-      var endDate=gv(tds[9])||'';
-      var notes=gv(tds[10])||'';
-      var expiry=gv(tds[11])||'';
-      var time24=to24h(startTime);
-      var sd=toYMD(startDate);
-      var ed=toYMD(endDate);
-      if(!sd)sd=new Date().toISOString().slice(0,10).replace(/-/g,'');
-      if(!ed)ed=sd;
-      function pLabel(t){var h=parseInt(t.split(':')[0])||0;return h<12?'صباحا':'مساءا'}
-      function mkLine(t,period){return pname+'||Nahdi Pharmacy|Store '+storeCode+'|'+dose+'|'+code+'|'+itemName+'|'+t+'|'+sd+'|'+ed+'|'+expiry+'|'+period+'|'+notes+'|||||';}
-      var evH=24;
-      if(every.indexOf('4')>-1&&every.indexOf('24')<0)evH=4;
-      else if(every.indexOf('6')>-1)evH=6;
-      else if(every.indexOf('8')>-1)evH=8;
-      else if(every.indexOf('12')>-1)evH=12;
-      if(evH===24){lines.push(mkLine(time24,pLabel(time24)));}
-      else if(evH===12){lines.push(mkLine('09:00','صباحا'));lines.push(mkLine('21:00','مساءا'));}
-      else if(evH===8){lines.push(mkLine('08:00','صباحا'));lines.push(mkLine('16:00','مساءا'));lines.push(mkLine('00:00','صباحا'));}
-      else if(evH===6){lines.push(mkLine('06:00','صباحا'));lines.push(mkLine('12:00','مساءا'));lines.push(mkLine('18:00','مساءا'));lines.push(mkLine('00:00','صباحا'));}
-      else if(evH===4){lines.push(mkLine('06:00','صباحا'));lines.push(mkLine('10:00','صباحا'));lines.push(mkLine('14:00','مساءا'));lines.push(mkLine('18:00','مساءا'));lines.push(mkLine('22:00','مساءا'));lines.push(mkLine('02:00','صباحا'));}
-    }
-    if(!lines.length){alert('⚠️ لا توجد أصناف للتصدير');return}
-    var content=lines.join('\r\n')+'\r\n';
-    var bom='\uFEFF';
-    var blob=new Blob([bom+content],{type:'application/octet-stream'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');
-    a.href=url;a.download='ezPillDownload'+inv+'.OCS';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  }catch(e){alert('❌ خطأ في تحميل JVM: '+e.message)}
-}
-
-/* ══════════════════════════════════════
-   Build Main Panel
-   ══════════════════════════════════════ */
-function buildPanel(forceTab){
-
-  var startTab=forceTab||'orders';
-  if(!forceTab){
-    if(isFarmadosis||isFareye)startTab='tools';
-    else if(isPrint)startTab='tools';
-    else if(isDetails)startTab='tools';
-  }
-
-  var ctxMap={
-    'orders':{icon:'📋',text:'قائمة الطلبات',color:'#6366f1',bg:'rgba(99,102,241,0.08)'},
-    'tools':{icon:'🛠️',text:'صفحة التفاصيل',color:'#22c55e',bg:'rgba(34,197,94,0.08)'},
-    'export':{icon:'📤',text:'عرض فقط',color:'#f59e0b',bg:'rgba(245,158,11,0.08)'},
-  };
-  if(isFarmadosis)ctxMap['tools']={icon:'💊',text:'Farmadosis',color:'#8b5cf6',bg:'rgba(139,92,246,0.08)'};
-  else if(isFareye)ctxMap['tools']={icon:'🚀',text:'FarEye',color:'#f97316',bg:'rgba(249,115,22,0.08)'};
-  var ctx=ctxMap[startTab]||ctxMap['orders'];
-
-  if(!document.getElementById('ez-tools-css')){
-    var css=document.createElement('style');css.id='ez-tools-css';
-    css.textContent=
-      '@keyframes ezSlideIn{from{opacity:0;transform:translateY(-18px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}'+
-      '@keyframes ezFadeTab{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}'+
-      '#'+PID+'{position:fixed;top:14px;right:14px;z-index:999999;width:380px;border-radius:22px;overflow:hidden;background:rgba(243,244,246,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif;animation:ezSlideIn 0.4s cubic-bezier(0.16,1,0.3,1);direction:rtl}'+
-      '#'+PID+' .ez-seg{display:flex;gap:2px;padding:3px;margin:0 16px 10px;border-radius:10px;background:rgba(0,0,0,0.05)}'+
-      '#'+PID+' .ez-seg-btn{flex:1;padding:8px 4px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:#9ca3af;background:transparent;transition:all 0.25s;direction:rtl}'+
-      '#'+PID+' .ez-seg-btn.active{background:#fff;color:#1f2937;box-shadow:0 1px 4px rgba(0,0,0,0.06),0 0 0 0.5px rgba(0,0,0,0.04)}'+
-      '#'+PID+' .ez-group{background:#fff;border-radius:14px;margin:0 16px 12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)}'+
-      '#'+PID+' .ez-item{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;transition:background 0.15s;border-bottom:0.5px solid #f3f4f6;direction:rtl}'+
-      '#'+PID+' .ez-item:last-child{border-bottom:none}'+
-      '#'+PID+' .ez-item:hover{background:#f9fafb}'+
-      '#'+PID+' .ez-item:active{background:#f3f4f6}'+
-      '#'+PID+' .ez-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}'+
-      '#'+PID+' .ez-tab-content{animation:ezFadeTab 0.25s ease}'+
-      '#'+PID+' .ez-ctx{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;letter-spacing:0.3px}';
-    document.head.appendChild(css);
-  }
-
-  var p=document.createElement('div');p.id=PID;
-  p.innerHTML=
-    '<div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">'+
-    '<div style="display:flex;align-items:center;gap:10px">'+
-    '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">EZ</div>'+
-    '<div><div style="font-size:15px;font-weight:800;color:#1f2937">EZ Tools</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v3.1 — Auto Launch</div></div></div>'+
-    '<div style="display:flex;align-items:center;gap:8px">'+
-    '<div class="ez-ctx" style="background:'+ctx.bg+';color:'+ctx.color+'">'+ctx.icon+' '+ctx.text+'</div>'+
-    '<button id="ez-t-close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:inherit" onmouseover="this.style.background=\'rgba(239,68,68,0.1)\';this.style.color=\'#ef4444\'" onmouseout="this.style.background=\'rgba(0,0,0,0.06)\';this.style.color=\'#9ca3af\'">×</button>'+
-    '</div></div>'+
-    '<div class="ez-seg">'+
-    '<button class="ez-seg-btn'+(startTab==='orders'?' active':'')+'" data-tab="orders">📋 الطلبات</button>'+
-    '<button class="ez-seg-btn'+(startTab==='tools'?' active':'')+'" data-tab="tools">🛠️ الأدوات</button>'+
-    '<button class="ez-seg-btn'+(startTab==='export'?' active':'')+'" data-tab="export">📤 تصدير</button>'+
-    '</div>'+
-    '<div id="ez-tab-orders" class="ez-tab-content" style="display:'+(startTab==='orders'?'block':'none')+'">'+
-    '<div class="ez-group">'+
-    '<div class="ez-item" id="ez-t-search"><div class="ez-icon" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff)">🔍</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">بحث طلبات ready to pack</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">فحص وفتح الطلبات تلقائياً</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-close-orders"><div class="ez-icon" style="background:linear-gradient(135deg,#fee2e2,#fce7f3)">📝</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تقفيل الطلبات packed</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تقفيل طلبات received وتصدير الـ packed</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-radar"><div class="ez-icon" style="background:linear-gradient(135deg,#dcfce7,#d1fae5)">📡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">البحث الشامل</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Radar — بحث متقدم</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '</div></div>'+
-    '<div id="ez-tab-tools" class="ez-tab-content" style="display:'+(startTab==='tools'?'block':'none')+'">'+
-    '<div class="ez-group">'+
-    '<div class="ez-item" id="ez-t-add"><div class="ez-icon" style="background:linear-gradient(135deg,#dbeafe,#e0e7ff)">➕</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">إضافة صنف</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">إضافة دواء جديد الى الجدول</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-editor"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">✏️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تعديل الطباعة</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">تحكم كامل فى الـ print summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-fareye"><div class="ez-icon" style="background:linear-gradient(135deg,#f5d0fe,#fae8ff)">🚀</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">FarEye</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">رفع الطلبات على fareye</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-bulk"><div class="ez-icon" style="background:linear-gradient(135deg,#fde68a,#fef3c7)">⚡</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Farmadosis Bulk</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Patients & Treatments — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-cassette"><div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#c7d2fe)">🏭</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">Cassette Viewer</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">أداة Productions — Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '</div></div>'+
-    '<div id="ez-tab-export" class="ez-tab-content" style="display:'+(startTab==='export'?'block':'none')+'">'+
-    '<div class="ez-group">'+
-    '<div class="ez-item" id="ez-t-dl"><div class="ez-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)">💊</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل Farmadosis</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف JSON — جهاز Farmadosis</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-jvm"><div class="ez-icon" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)">🏥</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">تحميل JVM</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">ملف OCS — جهاز JVM</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '<div class="ez-item" id="ez-t-pr"><div class="ez-icon" style="background:linear-gradient(135deg,#fef3c7,#fef9c3)">🖨️</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1f2937">طباعة الملخص</div><div style="font-size:11px;color:#9ca3af;margin-top:1px">Print Summary</div></div><span style="color:#d1d5db;font-size:16px">‹</span></div>'+
-    '</div></div>'+
-    '<div style="padding:8px 20px 14px;text-align:center"><div style="font-size:9px;color:#c4b5fd;font-weight:700;letter-spacing:0.5px">EZ TOOLS v3.1 — DEVELOPED BY ALI EL-BAZ</div></div>';
-
-  document.body.appendChild(p);
-
-  /* Tabs */
-  var segBtns=document.querySelectorAll('#'+PID+' .ez-seg-btn');
-  for(var si=0;si<segBtns.length;si++){
-    segBtns[si].addEventListener('click',function(){
-      var tab=this.getAttribute('data-tab');
-      var all=document.querySelectorAll('#'+PID+' .ez-seg-btn');
-      for(var j=0;j<all.length;j++){all[j].classList.remove('active')}
-      this.classList.add('active');
-      var tids=['orders','tools','export'];
-      for(var k=0;k<tids.length;k++){
-        var el=document.getElementById('ez-tab-'+tids[k]);
-        if(el){if(tids[k]===tab){el.style.display='block';el.style.animation='ezFadeTab 0.25s ease'}else{el.style.display='none'}}
-      }
+  function safeParseJSON(res){
+    return res.text().then(txt=>{
+      try{return JSON.parse(txt)}
+      catch(e){console.warn('JSON parse failed:',e,txt.substring(0,200));return null}
     });
   }
 
-  /* Close */
-  document.getElementById('ez-t-close').onclick=function(){
-    p.style.transition='all 0.3s cubic-bezier(0.4,0,1,1)';
-    p.style.opacity='0';p.style.transform='translateY(-18px) scale(0.97)';
-    setTimeout(function(){p.remove()},300);
-  };
+  function saveToSession(){
+    try{
+      const lite=state.savedRows.map(r=>({id:r.id,onl:r.onl,st:r.st,typee:r.typee,guestName:r.guestName,guestMobile:r.guestMobile,src:r.src,hid:r.hid}));
+      sessionStorage.setItem('ali_backup',JSON.stringify(lite));
+    }catch(e){}
+  }
+  function loadFromSession(){
+    try{
+      const d=sessionStorage.getItem('ali_backup');
+      if(d) return JSON.parse(d);
+    }catch(e){}
+    return null;
+  }
 
-  /* Buttons */
-  document.getElementById('ez-t-search').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/Search_Order.js','بحث طلبات ready to pack',true);};
-  document.getElementById('ez-t-close-orders').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/close%20receved.js','تقفيل الطلبات packed',true);};
-  document.getElementById('ez-t-radar').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/radar-ali-elbaz-v10.js','البحث الشامل',true);};
-  document.getElementById('ez-t-add').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/EZPillAddDrug.js','إضافة صنف',true);};
-  document.getElementById('ez-t-editor').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/nahdi-editor.js','تعديل الطباعة',true);};
-  document.getElementById('ez-t-fareye').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/fareye_injector.js','FarEye',true);};
-  document.getElementById('ez-t-bulk').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-bulk.js','Farmadosis Bulk',true);};
-  document.getElementById('ez-t-cassette').onclick=function(){loadTool('https://raw.githubusercontent.com/bazkoo2000/ez-pill-pro/refs/heads/main/farmadosis-cassette-viewer.js','Cassette Viewer',true);};
-  document.getElementById('ez-t-dl').onclick=function(){safeDownload()};
-  document.getElementById('ez-t-jvm').onclick=function(){jvmDownload()};
-  document.getElementById('ez-t-pr').onclick=function(){if(typeof printsum==='function'){printsum()}};
-}
+  function showToast(msg,type='info'){
+    let c=document.getElementById('ali-toast-container');if(!c){c=document.createElement('div');c.id='ali-toast-container';c.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center';document.body.appendChild(c)}
+    const cl={success:'#22c55e',error:'#ef4444',warning:'#f59e0b',info:'#6366f1'};const ic={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+    const t=document.createElement('div');t.style.cssText=`background:${IOS.card};color:${cl[type]};padding:12px 22px;border-radius:14px;font-size:13px;font-weight:700;font-family:${IOS.font};box-shadow:0 8px 30px rgba(0,0,0,0.1);display:flex;align-items:center;gap:8px;direction:rtl;animation:aliToastIn 0.4s cubic-bezier(0.16,1,0.3,1)`;
+    t.innerHTML=`<span>${ic[type]}</span> ${esc(msg)}`;c.appendChild(t);setTimeout(()=>{t.style.transition='all 0.3s';t.style.opacity='0';t.style.transform='translateY(10px)';setTimeout(()=>t.remove(),300)},3500);
+  }
 
+  function showDialog({icon,title,desc,info,badges,buttons}){
+    return new Promise(resolve=>{
+      const ov=document.createElement('div');ov.style.cssText=`position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.25);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.2s`;
+      let infoH='';if(info&&info.length){infoH=info.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:${IOS.bg};border-radius:12px;margin-bottom:6px"><span style="font-size:13px;color:${IOS.muted};font-weight:600">${esc(r.label)}</span><span style="font-weight:800;color:${esc(r.color||IOS.accent)};font-size:14px">${esc(String(r.value))}</span></div>`).join('')}
+      let badH='';if(badges&&badges.length){badH='<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding:4px 0 8px">';badges.forEach(b=>{const bs=b.active?`color:${IOS.accent};background:rgba(99,102,241,0.08)`:`color:${IOS.muted};background:${IOS.bg}`;badH+=`<span style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;${bs}">${esc(b.text)}</span>`});badH+='</div>'}
+      let btnH='';if(buttons&&buttons.length){btnH=buttons.map((bt,idx)=>{const bc=bt.primary?`background:${IOS.accent};color:white;font-weight:800`:`background:rgba(0,0,0,0.04);color:${IOS.muted};font-weight:700`;return`<button data-idx="${idx}" style="flex:1;padding:14px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-family:${IOS.font};transition:all 0.2s;${bc}">${esc(bt.text)}</button>`}).join('')}
+      ov.innerHTML=`<div style="background:${IOS.card};border-radius:20px;width:380px;max-width:90vw;overflow:hidden;font-family:${IOS.font};direction:rtl;color:${IOS.text};box-shadow:0 20px 60px rgba(0,0,0,0.12);animation:aliDialogIn 0.35s cubic-bezier(0.16,1,0.3,1)"><div style="padding:28px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(99,102,241,0.06);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px">${icon}</div><div style="font-size:18px;font-weight:800;margin-bottom:6px">${esc(title)}</div><div style="font-size:13px;color:${IOS.muted};line-height:1.7">${esc(desc)}</div></div>${badH}<div style="padding:16px 24px">${infoH}</div><div style="padding:6px 24px 24px;display:flex;gap:10px">${btnH}</div></div>`;
+      ov.addEventListener('click',e=>{const btn=e.target.closest('[data-idx]');if(btn){const idx=parseInt(btn.getAttribute('data-idx'));ov.style.transition='opacity 0.2s';ov.style.opacity='0';setTimeout(()=>ov.remove(),200);resolve({action:buttons[idx].value})}});
+      document.body.appendChild(ov);
+    });
+  }
+
+  const styleEl=document.createElement('style');styleEl.id='ali-pro-css';
+  styleEl.innerHTML=`
+    @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.97)}to{opacity:1;transform:translateX(0) scale(1)}}
+    @keyframes aliPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    @keyframes aliSpin{to{transform:rotate(360deg)}}
+    @keyframes aliFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes aliDialogIn{from{opacity:0;transform:scale(0.95) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    @keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}
+    @keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}
+    @keyframes aliRingGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(99,102,241,0.3))}50%{filter:drop-shadow(0 0 12px rgba(99,102,241,0.6))}}
+    @keyframes aliDotPulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
+    #${PANEL_ID}{position:fixed;top:14px;right:14px;width:380px;max-height:92vh;background:${IOS.bg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:22px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);z-index:9999999;font-family:${IOS.font};direction:rtl;color:${IOS.text};overflow:hidden;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.5s cubic-bezier(0.16,1,0.3,1)}
+    #${PANEL_ID}.ali-minimized{width:56px!important;height:56px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;box-shadow:0 8px 24px rgba(99,102,241,0.3)!important;animation:aliPulse 2s infinite;overflow:hidden}
+    #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
+    #${PANEL_ID}.ali-minimized::after{content:"📝";font-size:22px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    #${PANEL_ID} .ios-grp{background:${IOS.card};border-radius:14px;overflow:hidden;box-shadow:${IOS.shadow};margin-bottom:12px}
+    #${PANEL_ID} .ios-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:0.5px solid #f3f4f6;transition:background 0.15s}
+    #${PANEL_ID} .ios-item:last-child{border-bottom:none}
+    #${PANEL_ID} .ios-item:hover{background:#f9fafb}
+    #${PANEL_ID} .ios-btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:14px;font-family:${IOS.font};transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+    #${PANEL_ID} .ios-btn:active{transform:scale(0.98);opacity:0.9}
+    #${PANEL_ID} .ios-primary{background:${IOS.accent};color:white}
+    #${PANEL_ID} .ios-success{background:${IOS.success};color:white}
+    #${PANEL_ID} .ios-error{background:${IOS.error};color:white}
+    #${PANEL_ID} .ios-warn{background:${IOS.warn};color:white}
+    #${PANEL_ID} .ios-ghost{background:rgba(0,0,0,0.03);color:${IOS.muted}}
+    #${PANEL_ID} .ios-input{width:100%;padding:12px 16px;border:none;border-radius:12px;font-size:14px;font-family:${IOS.font};outline:none;background:rgba(0,0,0,0.03);color:${IOS.text};transition:all 0.2s;font-weight:600;box-sizing:border-box}
+    #${PANEL_ID} .ios-input:focus{background:rgba(99,102,241,0.04);box-shadow:0 0 0 2px rgba(99,102,241,0.15)}
+    #${PANEL_ID} .ios-input.match{background:rgba(34,197,94,0.04);box-shadow:0 0 0 2px rgba(34,197,94,0.15)}
+    #${PANEL_ID} .ios-input.nomatch{background:rgba(239,68,68,0.04);box-shadow:0 0 0 2px rgba(239,68,68,0.15)}
+    .fast-row{border-bottom:0.5px solid #f3f4f6;transition:background 0.15s}
+    .fast-row:hover{background:#f9fafb}
+    .ali-link{color:${IOS.accent};text-decoration:underline;font-weight:bold;cursor:pointer}
+  `;
+  document.head.appendChild(styleEl);
+
+  const serverBadge = IS_EXTERNAL
+    ? `<span style="font-size:9px;padding:2px 8px;border-radius:8px;background:rgba(34,197,94,0.1);color:#22c55e;font-weight:700">☁️ Cloud</span>`
+    : `<span style="font-size:9px;padding:2px 8px;border-radius:8px;background:rgba(245,158,11,0.1);color:#f59e0b;font-weight:700">🏠 Internal</span>`;
+
+  const panel=document.createElement('div');panel.id=PANEL_ID;
+  panel.innerHTML=`<div class="ali-inner">
+    <div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">📝</div>
+        <div><div style="font-size:15px;font-weight:800;color:#1f2937">تقفيل الطلبات ${serverBadge}</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v${VERSION} — iOS Edition</div></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button id="ali_min" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">−</button>
+        <button id="ali_close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+    </div>
+    <div style="padding:10px 16px;overflow-y:auto;max-height:calc(92vh - 60px)" id="ali_body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📥</div><div id="stat_rec" style="font-size:20px;font-weight:900;color:#22c55e">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">Received</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📦</div><div id="stat_pack" style="font-size:20px;font-weight:900;color:#f59e0b">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">Packed</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">✅</div><div id="stat_done" style="font-size:20px;font-weight:900;color:#3b82f6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">المنجز</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📊</div><div id="stat_total" style="font-size:20px;font-weight:900;color:#8b5cf6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">إجمالي</div></div>
+      </div>
+      <div class="ios-grp" style="padding:16px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="position:relative;width:80px;height:80px;flex-shrink:0">
+            <svg id="ali_ring_svg" width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="6"/>
+              <circle id="ali_ring_track" cx="40" cy="40" r="34" fill="none" stroke="url(#aliGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" style="transition:stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1)"/>
+              <defs><linearGradient id="aliGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div id="ali_ring_pct" style="font-size:18px;font-weight:900;color:${IOS.accent};line-height:1;font-family:monospace">0%</div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:13px;font-weight:700">📄 نطاق الفحص</span>
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:${IOS.muted};font-weight:600">صفحة</span><input type="number" id="p_lim" value="${defaultPages}" min="1" class="ios-input" style="width:55px;padding:6px;text-align:center;font-size:14px;font-weight:900;color:${IOS.accent}"></div>
+            </div>
+            <div style="font-size:11px;color:${IOS.muted};font-weight:600;line-height:1.8">
+              <div style="display:flex;justify-content:space-between"><span>الصفحات</span><span id="ali_prog_p_val">0 / 0</span></div>
+              <div style="display:flex;justify-content:space-between"><span>السجلات</span><span id="ali_prog_r_val" style="color:${IOS.accent};font-weight:800">0</span></div>
+              <div style="display:flex;justify-content:space-between"><span>السرعة</span><span id="ali_speed_val" style="color:${IOS.success};font-weight:800">—</span></div>
+            </div>
+            <div id="ali_prog_dots" style="display:flex;gap:3px;margin-top:6px;justify-content:center;opacity:0;transition:opacity 0.3s">
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.accent};animation:aliDotPulse 1s infinite 0s"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.accent2};animation:aliDotPulse 1s infinite 0.2s"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.success};animation:aliDotPulse 1s infinite 0.4s"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.06);color:#22c55e"><span>✅</span><span>النظام في وضع الاستعداد — ${SERVER_PROFILE.name}</span></div>
+      <div id="ali_dynamic_area"><button id="ali_start" class="ios-btn ios-primary" style="font-size:15px;padding:16px">🚀 بدء عملية البحث والاستعلام</button></div>
+      <div style="text-align:center;padding:12px 0 4px;font-size:9px;color:${IOS.muted};font-weight:700;letter-spacing:0.5px">DEVELOPED BY على الباز</div>
+    </div>
+  </div>`;
+  document.body.appendChild(panel);
+
+  function setStatus(text,type){const el=document.getElementById('status-msg');if(!el)return;const cf={ready:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'✅'},working:{color:'#6366f1',bg:'rgba(99,102,241,0.06)',icon:'spinner'},error:{color:'#ef4444',bg:'rgba(239,68,68,0.06)',icon:'❌'},done:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'✅'}};const c=cf[type]||cf.ready;const ih=c.icon==='spinner'?`<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:${IOS.accent};border-radius:50%;animation:aliSpin 0.5s linear infinite;flex-shrink:0"></div>`:`<span>${c.icon}</span>`;el.style.cssText=`display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:${c.bg};color:${c.color};transition:all 0.3s`;el.innerHTML=`${ih}<span>${esc(text)}</span>`}
+  function animNum(id,val){const el=document.getElementById(id);if(!el||el.innerText===String(val))return;requestAnimationFrame(()=>{el.innerText=val;el.style.animation='aliCountUp 0.4s';setTimeout(()=>el.style.animation='',400)})}
+
+  function getReceivedCount(){
+    return state.savedRows.filter(r=>r.st==='received').length;
+  }
+
+  function syncReceivedInput(){
+    const inp=document.getElementById('ali_open_count');
+    if(inp){
+      const count=getReceivedCount();
+      inp.value=count;
+      inp.style.color=count>0?IOS.error:IOS.success;
+    }
+  }
+
+  function updateProgress(current,total,recordCount){
+    const CIRCUMFERENCE=213.6;
+    const ring=document.getElementById('ali_ring_track');
+    const pctEl=document.getElementById('ali_ring_pct');
+    const pVal=document.getElementById('ali_prog_p_val');
+    const rVal=document.getElementById('ali_prog_r_val');
+    const dots=document.getElementById('ali_prog_dots');
+    const svg=document.getElementById('ali_ring_svg');
+    const pct=total>0?Math.round((current/total)*100):0;
+    const offset=CIRCUMFERENCE-(pct/100)*CIRCUMFERENCE;
+    if(ring) ring.style.strokeDashoffset=offset;
+    if(pctEl){pctEl.textContent=pct+'%';pctEl.style.color=pct>=100?IOS.success:IOS.accent}
+    if(pVal) pVal.textContent=current+' / '+total;
+    if(rVal) rVal.textContent=recordCount!==undefined?recordCount:state.savedRows.length;
+    if(dots) dots.style.opacity=pct>0&&pct<100?'1':'0';
+    if(svg) svg.style.animation=pct>0&&pct<100?'aliRingGlow 1.5s ease-in-out infinite':'none';
+  }
+
+  function resetProgress(){
+    updateProgress(0,0,0);
+    const svg=document.getElementById('ali_ring_svg');
+    if(svg) svg.style.animation='none';
+    const spd=document.getElementById('ali_speed_val');
+    if(spd) spd.textContent='—';
+  }
+
+  function updateStats(){
+    let rec=0,done=0,packed=0;
+    state.savedRows.forEach(r=>{if(r.st==='received')rec++;if(r.st==='processed')done++;if(r.st==='packed')packed++});
+    animNum('stat_rec',rec);animNum('stat_pack',packed);animNum('stat_done',done);animNum('stat_total',state.savedRows.length);
+    syncReceivedInput();
+  }
+
+  function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+  function debounce(fn,d){let t;return function(){clearTimeout(t);t=setTimeout(fn,d)}}
+
+  panel.addEventListener('click',e=>{if(panel.classList.contains('ali-minimized')){panel.classList.remove('ali-minimized');e.stopPropagation()}});
+
+  document.getElementById('ali_close').addEventListener('click',e=>{
+    e.stopPropagation();
+    panel.style.transition='all 0.3s';
+    panel.style.opacity='0';
+    panel.style.transform='translateX(40px) scale(0.97)';
+    setTimeout(()=>{
+      panel.remove();
+      state.savedRows=[];
+      state.visitedSet.clear();
+      state.htmlBuffer='';
+    },300);
+  });
+
+  document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
+
+  function processData(data){
+    if(!data){return 0}
+    let orders=[];
+    try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
+    if(!orders||orders.length===0)return 0;
+    let added=0;
+
+    for(let i=0;i<orders.length;i++){
+      const item=orders[i];
+      const inv=item.Invoice||'';
+      const onl=item.onlineNumber||'';
+      const src=item.source||'StorePaid';
+      const hid=item.head_id||'';
+      const typee=item.typee!==undefined?item.typee:'';
+
+      if(inv.length>=5&&inv.startsWith('0')&&!state.visitedSet.has(inv)){
+        state.visitedSet.add(inv);
+        added++;
+        let st='other';
+        let raw=String(item.status||item.Status||item.order_status||item.OrderStatus||'')
+          .toLowerCase().replace(/<[^>]*>?/gm,'').trim();
+
+        if(raw.includes('packed')) st='packed';
+        else if(raw.includes('received')||raw.includes('fulfilled')) st='received';
+        else {
+          let cs=JSON.stringify(item).toLowerCase();
+          if(cs.includes('"packed"')) st='packed';
+          else if(cs.includes('"received"')||cs.includes('"fulfilled"')) st='received';
+        }
+
+        const bg=st==='received'?'rgba(34,197,94,0.06)':(st==='packed'?'rgba(245,158,11,0.06)':'transparent');
+        state.htmlBuffer+=`<tr class="fast-row" id="row_${esc(inv)}" style="background:${bg}" data-inv="${esc(inv)}" data-onl="${esc(onl)}" data-src="${esc(src)}" data-hid="${esc(hid)}"><td style="padding:12px 8px"><span class="ali-link">${esc(inv)}</span></td><td style="padding:12px 8px">${esc(onl)}</td><td style="padding:12px 8px">${esc(item.guestName||'')}</td><td style="padding:12px 8px">${esc(item.guestMobile||item.mobile||'')}</td><td style="padding:12px 8px">${esc(item.payment_method||'Cash')}</td><td style="padding:12px 8px">${esc(item.created_at||item.Created_Time||'')}</td><td id="st_${esc(inv)}" style="padding:12px 8px">${esc(st)}</td><td style="padding:12px 8px">${esc(src)}</td></tr>`;
+        state.savedRows.push({id:inv,onl:onl,st:st,typee:typee,guestName:item.guestName||'',guestMobile:item.guestMobile||item.mobile||'',src:src,hid:hid});
+      }
+    }
+    return added;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ✅ v6.5 — Staggered Pipeline with Server-Aware Throttle
+  // ═══════════════════════════════════════════════════════════════
+
+  async function fetchPage(baseUrl, pageNum, currentStatus) {
+    const res = await fetchWithRetry(baseUrl+'Home/getOrders', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({status:currentStatus, pageSelected:pageNum, searchby:''})
+    });
+    const data = await safeParseJSON(res);
+    return data;
+  }
+
+  async function scanAllPages(){
+    state.isProcessing=true;
+    const baseUrl=window.location.origin+"/ez_pill_web/";
+    const currentStatus='packed';
+    setStatus(`جاري الاتصال — ${SERVER_PROFILE.name}...`,'working');
+    let maxPages=parseInt(document.getElementById('p_lim').value)||1;
+    state.savedRows=[];state.visitedSet.clear();state.htmlBuffer='';
+    resetProgress();
+
+    const startTime = performance.now();
+    let pagesCompleted = 0;
+    let totalSuccessful = 0;
+    let failedPageNumbers = [];
+
+    // ═══ حالة الـ Throttle — تبدأ من إعدادات السيرفر ═══
+    const SP = SERVER_PROFILE;
+    let concurrency = SP.initC;
+    let staggerDelay = SP.initDelay;
+    let consecutiveOK = 0;
+    let consecutiveFail = 0;
+
+    function updateSpeedDisplay() {
+      const elapsed = (performance.now() - startTime) / 1000;
+      const pps = elapsed > 0 ? (pagesCompleted / elapsed).toFixed(1) : '0';
+      const spdEl = document.getElementById('ali_speed_val');
+      if(spdEl) spdEl.textContent = `${pps} ص/ث | C:${concurrency}`;
+    }
+
+    try {
+      // ✅ صفحة 1 — لوحدها لنعرف العدد الإجمالي
+      const data1 = await fetchPage(baseUrl, 1, currentStatus);
+      if(data1 && data1.total_orders){
+        const et = parseInt(data1.total_orders) || 0;
+        if(et > 0){ maxPages = Math.ceil(et/10); document.getElementById('p_lim').value = maxPages }
+      }
+      processData(data1); updateStats();
+      pagesCompleted = 1; totalSuccessful = 1;
+      updateProgress(1, maxPages, state.savedRows.length);
+      updateSpeedDisplay();
+
+      if(maxPages > 1) {
+        let nextPage = 2;
+        let activeCount = 0;
+
+        await new Promise((resolveAll) => {
+
+          function onPageDone(pageNum, success) {
+            activeCount--;
+            pagesCompleted++;
+
+            if(success) {
+              totalSuccessful++;
+              consecutiveOK++;
+              consecutiveFail = 0;
+
+              // ✅ رفع السرعة لو مستقر
+              if(consecutiveOK >= SP.rampUp && concurrency < SP.maxC) {
+                concurrency++;
+                staggerDelay = Math.max(staggerDelay - 20, SP.minDelay);
+                consecutiveOK = 0;
+                console.log(`⬆️ Speed up: C=${concurrency}, delay=${staggerDelay}ms`);
+              }
+            } else {
+              consecutiveFail++;
+              consecutiveOK = 0;
+
+              // ⚠️ تقليل السرعة لو في أخطاء
+              if(consecutiveFail >= SP.rampDown) {
+                concurrency = Math.max(concurrency - 1, SP.minC);
+                staggerDelay = Math.min(staggerDelay + 100, SP.maxDelay);
+                consecutiveFail = 0;
+                console.log(`⬇️ Slow down: C=${concurrency}, delay=${staggerDelay}ms`);
+              }
+            }
+
+            updateProgress(pagesCompleted, maxPages, state.savedRows.length);
+            updateSpeedDisplay();
+            setStatus(`جاري الجلب... ${pagesCompleted}/${maxPages} | C:${concurrency}`,'working');
+
+            launchMore();
+
+            if(activeCount === 0 && nextPage > maxPages) {
+              resolveAll();
+            }
+          }
+
+          function launchOne(pageNum) {
+            activeCount++;
+            fetchPage(baseUrl, pageNum, currentStatus)
+              .then(data => {
+                if(data) { processData(data); updateStats(); }
+                onPageDone(pageNum, true);
+              })
+              .catch(err => {
+                console.warn(`❌ Page ${pageNum} failed:`, err.message);
+                failedPageNumbers.push(pageNum);
+                onPageDone(pageNum, false);
+              });
+          }
+
+          function launchMore() {
+            while(activeCount < concurrency && nextPage <= maxPages) {
+              const p = nextPage++;
+              // ✅ Stagger: فاصل بسيط بين كل إطلاق
+              setTimeout(() => launchOne(p), activeCount * staggerDelay);
+            }
+          }
+
+          launchMore();
+        });
+      }
+
+    } catch(err){
+      console.error(err);
+      const backup=loadFromSession();
+      if(backup&&backup.length>0){
+        showToast('فشل الاتصال — تم تحميل آخر نسخة محفوظة','warning');
+        state.savedRows=backup;
+        updateStats();
+        finishScan(true);
+        return;
+      }
+      setStatus('خطأ في الاتصال بالخادم','error');showToast('فشل الاتصال بالخادم','error');state.isProcessing=false;return;
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ✅ إعادة محاولة الصفحات الفاشلة — واحدة واحدة
+    // ═══════════════════════════════════════════════════
+    if(failedPageNumbers.length > 0) {
+      setStatus(`إعادة محاولة ${failedPageNumbers.length} صفحة فاشلة...`,'working');
+      showToast(`إعادة محاولة ${failedPageNumbers.length} صفحة...`,'warning');
+
+      const stillFailed = [];
+      for(let i = 0; i < failedPageNumbers.length; i++) {
+        const p = failedPageNumbers[i];
+        setStatus(`إعادة محاولة صفحة ${p} (${i+1}/${failedPageNumbers.length})...`,'working');
+        try {
+          await sleep(SP.retryDelay);
+          const data = await fetchPage(baseUrl, p, currentStatus);
+          if(data) { processData(data); updateStats(); totalSuccessful++; }
+        } catch(e) {
+          stillFailed.push(p);
+        }
+      }
+
+      // محاولة أخيرة
+      if(stillFailed.length > 0) {
+        setStatus(`محاولة أخيرة لـ ${stillFailed.length} صفحة...`,'working');
+        const finalFailed = [];
+        for(const p of stillFailed) {
+          try {
+            await sleep(SP.retryDelay * 2);
+            const data = await fetchPage(baseUrl, p, currentStatus);
+            if(data) { processData(data); updateStats(); totalSuccessful++; }
+          } catch(e) {
+            finalFailed.push(p);
+          }
+        }
+        if(finalFailed.length > 0) {
+          showToast(`⚠️ ${finalFailed.length} صفحة لم تُجلب (${finalFailed.join(',')})`,'warning');
+        }
+      }
+    }
+
+    const totalTime = ((performance.now() - startTime) / 1000).toFixed(1);
+    console.log(`✅ Done: ${state.savedRows.length} records in ${totalTime}s (${totalSuccessful}/${maxPages} pages) — ${SERVER_PROFILE.name}`);
+
+    saveToSession();
+    finishScan(false, totalTime);
+  }
+
+  function finishScan(fromBackup, totalTime){
+    state.isProcessing=false;
+    const maxP=parseInt(document.getElementById('p_lim').value)||1;
+    updateProgress(maxP,maxP,state.savedRows.length);
+
+    if(!fromBackup){
+      const tables=document.querySelectorAll('table');
+      let target=tables[0];
+      if(target){
+        for(const t of tables) if(t.innerText.length>target.innerText.length) target=t;
+        const tbody=target.querySelector('tbody')||target;
+        tbody.innerHTML=state.htmlBuffer;
+
+        state.savedRows.forEach(r=>{
+          r.node=document.getElementById('row_'+esc(r.id));
+        });
+
+        tbody.addEventListener('click',e=>{
+          const tr=e.target.closest('tr[data-inv]');
+          if(tr){
+            e.stopPropagation();
+            const link=e.target.closest('.ali-link');
+            if(link){
+              const inv=tr.dataset.inv;
+              const onl=tr.dataset.onl;
+              const src=tr.dataset.src;
+              const hid=tr.dataset.hid;
+              if(inv&&typeof getDetails==='function') getDetails(onl,inv,src,hid);
+            }
+          }
+        },true);
+      }
+    }
+
+    const recCount=getReceivedCount();
+    const timeMsg = totalTime ? ` في ${totalTime} ثانية` : '';
+    setStatus(`اكتملت العملية: تم حصر ${state.savedRows.length} سجل${timeMsg}`,'done');
+    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل${timeMsg}`,'success');
+
+    const da=document.getElementById('ali_dynamic_area');
+    da.innerHTML=`
+      <div class="ios-grp" style="padding:14px 16px">
+        <div style="position:relative;margin-bottom:8px">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:900;color:${IOS.muted};pointer-events:none;font-family:monospace">0</span>
+          <input type="text" id="ali_sI" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="padding-left:30px;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace">
+        </div>
+        <div style="position:relative">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none">🔗</span>
+          <input type="text" id="ali_sO" class="ios-input" placeholder="بحث برقم الطلب (ERX)..." style="padding-right:36px;direction:rtl">
+        </div>
+      </div>
+
+      <div id="ali_search_count" style="font-size:11px;color:${IOS.muted};text-align:center;font-weight:600;padding:2px 0 10px">عرض ${state.savedRows.length} من ${state.savedRows.length} نتيجة</div>
+      <button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button>
+
+      <div class="ios-grp" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">الطلبات القابلة للتسليم:</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:${IOS.muted};font-weight:600">المتبقي:</span>
+          <input type="number" id="ali_open_count" value="${recCount}" class="ios-input" style="width:70px;padding:8px;text-align:center;font-size:15px;font-weight:900;color:${recCount>0?IOS.error:IOS.success}" onfocus="this.value=''">
+        </div>
+      </div>
+
+      <button id="ali_btn_deliver_silent" class="ios-btn ios-error" style="margin-bottom:8px">📝 تنفيذ أوامر التسليم (Received + Fulfilled)</button>
+      <button id="ali_btn_export" class="ios-btn ios-warn" style="margin-bottom:8px">📦 تصدير بيانات الطلبات (Packed)</button>
+      <button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 إعادة فحص البيانات</button>`;
+
+    syncReceivedInput();
+
+    const sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open');
+    let cm=[];
+    function fr(){
+      const ri=sI.value.trim();const is=ri!==''?'0'+ri:'';const os=sO.value.trim().toLowerCase();
+      let sh=0;cm=[];const hf=is!==''||os!=='';
+      for(let i=0;i<state.savedRows.length;i++){
+        const rw=state.savedRows[i];
+        const mi=is!==''&&rw.id.startsWith(is);
+        const mo=os!==''&&rw.onl.toLowerCase().includes(os);
+        const s=hf?(mi||mo):true;
+        if(rw.node) rw.node.style.display=s?'':'none';
+        if(s){sh++;if(hf)cm.push(rw);}
+      }
+      sc.innerText=`عرض ${sh} من ${state.savedRows.length} نتيجة`;
+      if(hf&&cm.length>0){
+        ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;ob.style.opacity='1';ob.style.cursor='pointer';
+      }else if(hf&&cm.length===0){
+        ob.innerHTML='⚡ لا توجد نتائج';ob.style.opacity='0.5';ob.style.cursor='not-allowed';
+      }else{
+        ob.innerHTML='⚡ ابحث أولاً ثم افتح المطابق';ob.style.opacity='0.7';ob.style.cursor='not-allowed';
+      }
+      sI.className='ios-input'+(ri.length>0?(sh>0?' match':' nomatch'):'');
+      sO.className='ios-input'+(os.length>0?(sh>0?' match':' nomatch'):'');
+    }
+    sI.addEventListener('input',debounce(fr,150));
+    sO.addEventListener('input',debounce(fr,150));
+
+    ob.addEventListener('click',async function(){
+      const ri=sI.value.trim();const os=sO.value.trim().toLowerCase();const hf=ri!==''||os!=='';
+      if(!hf){
+        showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!','warning');
+        sI.focus();sI.style.animation='aliBlink 0.5s 3';setTimeout(()=>{sI.style.animation=''},1500);return;
+      }
+      if(cm.length===0){showToast('لا توجد طلبات مطابقة!','warning');return;}
+      ob.disabled=true;ob.style.opacity='0.6';ob.style.cursor='not-allowed';
+      let opened=0,failed=0,blocked=0;
+      const baseUrl=window.location.origin+"/ez_pill_web/getEZPill_Details";
+      for(let idx=0;idx<cm.length;idx++){
+        const it=cm[idx];
+        const url=`${baseUrl}?onlineNumber=${encodeURIComponent(it.onl.replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(it.id)}&typee=${encodeURIComponent(it.typee)}&head_id=${encodeURIComponent(it.hid)}`;
+        try{
+          const w=window.open(url,"_blank");
+          if(w){
+            opened++;window.focus();try{w.blur()}catch(e){}
+          }else{
+            blocked++;
+            if(blocked===1){
+              showToast('المتصفح يحظر النوافذ — اسمح بالنوافذ المنبثقة!','warning');
+            }
+          }
+        }catch(e){failed++;}
+        ob.innerHTML=`🚀 جاري الفتح (${idx+1}/${cm.length})`;
+        setStatus(`فتح ${idx+1} من ${cm.length}: ${it.onl||it.id}`,'working');
+        if(idx<cm.length-1) await sleep(1200);
+      }
+      let msg=`تم فتح ${opened} طلب`;
+      if(blocked>0) msg+=` (${blocked} محظور)`;
+      if(failed>0) msg+=` (${failed} فشل)`;
+      showToast(msg,opened>0?'success':'error');
+      setStatus('تم فتح المطابق بنجاح','done');
+      ob.disabled=false;ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;fr();
+    });
+
+    document.getElementById('ali_btn_deliver_silent').addEventListener('click',async()=>{
+      const list=state.savedRows.filter(r=>r.st==='received');
+      const count=parseInt(document.getElementById('ali_open_count').value)||list.length;
+      const toD=list.slice(0,count);
+      if(!toD.length){showToast('لا توجد سجلات مطابقة','warning');return}
+      const res=await showDialog({
+        icon:'📝',
+        title:'تأكيد أمر التسليم',
+        desc:'سيتم إرسال طلبات التحديث للخادم (Received + Fulfilled)',
+        badges:[{text:'📥 Received+Fulfilled: '+toD.length,active:true},{text:'⚡ معالجة تلقائية',active:true}],
+        info:[{label:'إجمالي السجلات',value:toD.length,color:IOS.error},{label:'العملية',value:'تحديث حالة التسليم',color:IOS.accent}],
+        buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'✅ تأكيد',value:'confirm',primary:true}]
+      });
+      if(res.action!=='confirm')return;
+      const btn=document.getElementById('ali_btn_deliver_silent');btn.disabled=true;btn.style.opacity='0.7';
+      const dUrl=window.location.origin+'/ez_pill_web/getEZPill_Details/updatetoDeliver';
+      const deliverStart = performance.now();
+
+      // ═══════════════════════════════════════════════════
+      // ✅ تسليم متزامن — نفس أسلوب الـ Pipeline
+      // ═══════════════════════════════════════════════════
+      const DC = IS_EXTERNAL
+        ? { initC:5, maxC:10, minC:2, delay:30 }
+        : { initC:3, maxC:6,  minC:2, delay:80 };
+
+      let dConcurrency = DC.initC;
+      let dCompleted = 0;
+      let dSuccess = 0;
+      let dFailed = 0;
+      let dConsecOK = 0;
+      let dConsecFail = 0;
+      const failedItems = [];
+
+      function updateDeliverBtn() {
+        const elapsed = ((performance.now() - deliverStart) / 1000).toFixed(0);
+        const remaining = getReceivedCount();
+        btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> ${dCompleted}/${toD.length} ✅${dSuccess} ❌${dFailed} | C:${dConcurrency} | ${elapsed}ث | متبقي: ${remaining}`;
+      }
+
+      function markDelivered(it) {
+        it.st='processed';
+        if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl) stEl.textContent='processed'}
+      }
+
+      await new Promise((resolveAll) => {
+        let nextIdx = 0;
+        let activeCount = 0;
+
+        function onDone(it, success) {
+          activeCount--;
+          dCompleted++;
+
+          if(success) {
+            dSuccess++;
+            dConsecOK++;
+            dConsecFail = 0;
+            markDelivered(it);
+            if(dConsecOK >= 8 && dConcurrency < DC.maxC) {
+              dConcurrency++;
+              dConsecOK = 0;
+            }
+          } else {
+            dFailed++;
+            dConsecFail++;
+            dConsecOK = 0;
+            failedItems.push(it);
+            if(dConsecFail >= 3 && dConcurrency > DC.minC) {
+              dConcurrency--;
+              dConsecFail = 0;
+            }
+          }
+
+          if(dCompleted % 5 === 0 || dCompleted === toD.length) updateStats();
+          updateDeliverBtn();
+          launchMore();
+
+          if(activeCount === 0 && nextIdx >= toD.length) {
+            resolveAll();
+          }
+        }
+
+        function launchOne(it) {
+          activeCount++;
+          const params=new URLSearchParams();
+          params.append('invoice_num',it.id);
+          params.append('patienName',it.guestName);
+          params.append('mobile',it.guestMobile);
+          fetchWithTimeout(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params})
+            .then(r => {
+              onDone(it, r.ok);
+            })
+            .catch(e => {
+              console.warn('فشل:',it.id,e);
+              onDone(it, false);
+            });
+        }
+
+        function launchMore() {
+          while(activeCount < dConcurrency && nextIdx < toD.length) {
+            const it = toD[nextIdx++];
+            setTimeout(() => launchOne(it), activeCount * DC.delay);
+          }
+        }
+
+        launchMore();
+      });
+
+      // ✅ إعادة محاولة الفاشلين — واحد واحد
+      if(failedItems.length > 0) {
+        btn.innerHTML=`🔄 إعادة محاولة ${failedItems.length} طلب فاشل...`;
+        for(const it of failedItems) {
+          try {
+            await sleep(200);
+            const params=new URLSearchParams();
+            params.append('invoice_num',it.id);
+            params.append('patienName',it.guestName);
+            params.append('mobile',it.guestMobile);
+            const r=await fetchWithTimeout(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});
+            if(r.ok){ dSuccess++; dFailed--; markDelivered(it); }
+          } catch(e){}
+        }
+        updateStats();
+      }
+
+      saveToSession();
+
+      const deliverTime = ((performance.now() - deliverStart) / 1000).toFixed(1);
+      showToast(`تم تنفيذ ${dSuccess} سجل في ${deliverTime}ث — المتبقي: ${getReceivedCount()}`,'success');
+      btn.innerHTML=`✅ اكتمل (${deliverTime}ث) — ${dSuccess} نجح${dFailed>0?' | '+dFailed+' فشل':''} — متبقي: ${getReceivedCount()}`;btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false;
+    });
+
+    document.getElementById('ali_btn_export').addEventListener('click',async()=>{
+      const ri=sI.value.trim();const os=sO.value.trim().toLowerCase();const hf=ri!==''||os!=='';
+      const targetList=hf?cm:state.savedRows;
+      const pr=targetList.filter(r=>r.st==='packed');
+      if(!pr.length){showToast('لا توجد بيانات مطابقة للتصدير','warning');return}
+      const res=await showDialog({icon:'📦',title:'تصدير البيانات',desc:'سيتم تصدير بيانات الطلبات المجهزة كملفات نصية',info:[{label:'عدد الطلبات',value:pr.length,color:IOS.warn},{label:'عدد الملفات',value:Math.ceil(pr.length/MAX_PER_FILE),color:IOS.accent}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'📥 تصدير',value:'confirm',primary:true}]});
+      if(res.action!=='confirm')return;
+      const nf=Math.ceil(pr.length/MAX_PER_FILE);
+      for(let i=0;i<nf;i++){
+        const chunk=pr.slice(i*MAX_PER_FILE,Math.min((i+1)*MAX_PER_FILE,pr.length));
+        const content=chunk.map(r=>r.onl).join('\n');
+        const blob=new Blob([content],{type:'text/plain'});
+        const url=URL.createObjectURL(blob);
+        setTimeout(()=>{const a=document.createElement('a');a.href=url;a.download='Data_Export_'+(i+1)+'.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},i*500);
+      }
+      showToast(`تم تصدير ${nf} ملف`,'success');
+    });
+
+    document.getElementById('ali_btn_sync').addEventListener('click',async function(){
+      if(state.isProcessing){showToast('العملية جارية — انتظر!','warning');return}
+      const sb=this;const oc=state.savedRows.length;
+      const res=await showDialog({icon:'🔄',title:'إعادة فحص البيانات',desc:'سيتم إعادة جلب كل البيانات من الخادم',badges:[{text:'حذف القديم',active:true},{text:'جلب الجديد',active:true},{text:'تحديث الحالات',active:true}],info:[{label:'السجلات الحالية',value:oc,color:IOS.accent},{label:'العملية',value:'فحص شامل',color:IOS.blue}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 بدء',value:'confirm',primary:true}]});
+      if(res.action!=='confirm')return;
+      sb.disabled=true;sb.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...`;sb.style.color=IOS.accent;
+      await scanAllPages();
+    });
+  }
+
+  document.getElementById('ali_start').addEventListener('click',function(){if(state.isProcessing)return;this.disabled=true;this.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...`;this.style.opacity='0.7';scanAllPages()});
 })();
