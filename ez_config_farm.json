@@ -29,6 +29,10 @@
   "weeklyInjections": [],
   "removedWeekly": [],
   "codeStartTimes": {
+    "100008229": {
+      "time": "08:00",
+      "every": 24
+    },
     "100010097": {
       "time": "21:00",
       "every": 24
@@ -106,10 +110,6 @@
       "every": 24
     },
     "102792838": {
-      "time": "21:00",
-      "every": 24
-    },
-    "103006667": {
       "time": "21:00",
       "every": 24
     },
