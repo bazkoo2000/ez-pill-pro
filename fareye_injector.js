@@ -88,22 +88,24 @@ javascript:(function(){
         '</div>'+
         '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:14px;margin-bottom:16px">'+
           '<div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-align:center;letter-spacing:0.5px">⚡ أدوات ذكية</div>'+
-          '<button id="fey_alloc_direct" class="fey-helper-btn">'+
-            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">📦</span> Allocate</span>'+
-            '<span class="fey-badge" style="background:#fef3c7;color:#d97706" id="fey_cnt_alloc">—</span>'+
-          '</button>'+
-          '<button id="fey_sel_lt" class="fey-helper-btn">'+
-            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">👤</span> Assign to User</span>'+
-            '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
-          '</button>'+
-          '<button id="fey_sel_del" class="fey-helper-btn">'+
-            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">⏳</span> Pending</span>'+
-            '<span class="fey-badge" style="background:#dcfce7;color:#059669" id="fey_cnt_del">—</span>'+
-          '</button>'+
-          '<button id="fey_collected" class="fey-helper-btn" style="margin-bottom:0">'+
-            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">📦</span> Collected</span>'+
-            '<span class="fey-badge" style="background:#ede9fe;color:#7c3aed" id="fey_cnt_col">—</span>'+
-          '</button>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+            '<button id="fey_alloc_direct" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
+              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">📦</span> Allocate</span>'+
+              '<span class="fey-badge" style="background:#fef3c7;color:#d97706" id="fey_cnt_alloc">—</span>'+
+            '</button>'+
+            '<button id="fey_sel_lt" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
+              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">👤</span> Assign</span>'+
+              '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
+            '</button>'+
+            '<button id="fey_sel_del" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
+              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">⏳</span> Pending</span>'+
+              '<span class="fey-badge" style="background:#dcfce7;color:#059669" id="fey_cnt_del">—</span>'+
+            '</button>'+
+            '<button id="fey_collected" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
+              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">📦</span> Collected</span>'+
+              '<span class="fey-badge" style="background:#ede9fe;color:#7c3aed" id="fey_cnt_col">—</span>'+
+            '</button>'+
+          '</div>'+
         '</div>'+
         '<div id="fey_main">'+
           '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
