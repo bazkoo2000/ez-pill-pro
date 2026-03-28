@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const PANEL_ID='ali_sys_v5';const VERSION='6.5';
+  const PANEL_ID='ali_sys_v5';const VERSION='6.7';
   if(document.getElementById(PANEL_ID)){document.getElementById(PANEL_ID).remove();return}
   const MAX_PER_FILE=49;
   const FETCH_TIMEOUT=30000;
@@ -8,17 +8,9 @@
   const state={savedRows:[],visitedSet:new Set(),isProcessing:false,isSyncing:false,htmlBuffer:''};
   const IOS={bg:'rgba(243,244,246,0.92)',card:'#ffffff',text:'#1f2937',muted:'#9ca3af',accent:'#6366f1',accent2:'#818cf8',success:'#22c55e',error:'#ef4444',warn:'#f59e0b',blue:'#3b82f6',shadow:'0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)',font:'-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif'};
 
-  // ═══════════════════════════════════════════════════════════════
-  // ✅ v6.5 — Smart Server Detection
-  // السيرفر الخارجي (nahdi.sa) = أسرع → concurrency أعلى
-  // السيرفر الداخلي (172.x.x.x) = أبطأ → concurrency أقل + delay أكبر
-  // ═══════════════════════════════════════════════════════════════
   const IS_EXTERNAL = window.location.hostname.includes('nahdi.sa');
-  const SERVER_PROFILE = IS_EXTERNAL
-    ? { name:'Nahdi Cloud',  initC:5, maxC:8,  minC:3, initDelay:50,  minDelay:30,  maxDelay:300, rampUp:4, rampDown:2, retryDelay:200 }
-    : { name:'Internal Server', initC:3, maxC:5, minC:2, initDelay:150, minDelay:80, maxDelay:600, rampUp:5, rampDown:2, retryDelay:400 };
-
-  console.log(`🖥️ Server: ${SERVER_PROFILE.name} (${window.location.hostname}) | Start C:${SERVER_PROFILE.initC}`);
+  const BATCH_SIZE = IS_EXTERNAL ? 5 : 3;
+  const DELIVER_BATCH = IS_EXTERNAL ? 5 : 3;
 
   const bodyText=document.body?document.body.innerText:'';const packedMatch=bodyText.match(/packed\s*\n*\s*(\d+)/i);const totalPacked=packedMatch?parseInt(packedMatch[1]):0;const defaultPages=totalPacked>0?Math.ceil(totalPacked/10):1;
   function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;')}
@@ -35,11 +27,10 @@
     for(let attempt=0;attempt<=retries;attempt++){
       try{
         const res=await fetchWithTimeout(url,options);
-        if(!res.ok) throw new Error('HTTP '+res.status);
         return res;
       }catch(err){
         if(attempt===retries) throw err;
-        await sleep(800*(attempt+1));
+        await sleep(500*(attempt+1));
       }
     }
   }
@@ -121,16 +112,13 @@
   `;
   document.head.appendChild(styleEl);
 
-  const serverBadge = IS_EXTERNAL
-    ? `<span style="font-size:9px;padding:2px 8px;border-radius:8px;background:rgba(34,197,94,0.1);color:#22c55e;font-weight:700">☁️ Cloud</span>`
-    : `<span style="font-size:9px;padding:2px 8px;border-radius:8px;background:rgba(245,158,11,0.1);color:#f59e0b;font-weight:700">🏠 Internal</span>`;
-
+  const serverLabel = IS_EXTERNAL ? '☁️ Cloud' : '🏠 Local';
   const panel=document.createElement('div');panel.id=PANEL_ID;
   panel.innerHTML=`<div class="ali-inner">
     <div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">📝</div>
-        <div><div style="font-size:15px;font-weight:800;color:#1f2937">تقفيل الطلبات ${serverBadge}</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v${VERSION} — iOS Edition</div></div>
+        <div><div style="font-size:15px;font-weight:800;color:#1f2937">تقفيل الطلبات</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v${VERSION} ${serverLabel}</div></div>
       </div>
       <div style="display:flex;gap:6px">
         <button id="ali_min" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">−</button>
@@ -164,7 +152,6 @@
             <div style="font-size:11px;color:${IOS.muted};font-weight:600;line-height:1.8">
               <div style="display:flex;justify-content:space-between"><span>الصفحات</span><span id="ali_prog_p_val">0 / 0</span></div>
               <div style="display:flex;justify-content:space-between"><span>السجلات</span><span id="ali_prog_r_val" style="color:${IOS.accent};font-weight:800">0</span></div>
-              <div style="display:flex;justify-content:space-between"><span>السرعة</span><span id="ali_speed_val" style="color:${IOS.success};font-weight:800">—</span></div>
             </div>
             <div id="ali_prog_dots" style="display:flex;gap:3px;margin-top:6px;justify-content:center;opacity:0;transition:opacity 0.3s">
               <div style="width:5px;height:5px;border-radius:50%;background:${IOS.accent};animation:aliDotPulse 1s infinite 0s"></div>
@@ -174,7 +161,7 @@
           </div>
         </div>
       </div>
-      <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.06);color:#22c55e"><span>✅</span><span>النظام في وضع الاستعداد — ${SERVER_PROFILE.name}</span></div>
+      <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.06);color:#22c55e"><span>✅</span><span>النظام في وضع الاستعداد</span></div>
       <div id="ali_dynamic_area"><button id="ali_start" class="ios-btn ios-primary" style="font-size:15px;padding:16px">🚀 بدء عملية البحث والاستعلام</button></div>
       <div style="text-align:center;padding:12px 0 4px;font-size:9px;color:${IOS.muted};font-weight:700;letter-spacing:0.5px">DEVELOPED BY على الباز</div>
     </div>
@@ -219,8 +206,6 @@
     updateProgress(0,0,0);
     const svg=document.getElementById('ali_ring_svg');
     if(svg) svg.style.animation='none';
-    const spd=document.getElementById('ali_speed_val');
-    if(spd) spd.textContent='—';
   }
 
   function updateStats(){
@@ -250,12 +235,11 @@
 
   document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
-  function processData(data){
-    if(!data){return 0}
+  function processData(data, forceStatus){
+    if(!data){return}
     let orders=[];
     try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
-    if(!orders||orders.length===0)return 0;
-    let added=0;
+    if(!orders||orders.length===0)return;
 
     for(let i=0;i<orders.length;i++){
       const item=orders[i];
@@ -267,17 +251,19 @@
 
       if(inv.length>=5&&inv.startsWith('0')&&!state.visitedSet.has(inv)){
         state.visitedSet.add(inv);
-        added++;
-        let st='other';
-        let raw=String(item.status||item.Status||item.order_status||item.OrderStatus||'')
-          .toLowerCase().replace(/<[^>]*>?/gm,'').trim();
 
-        if(raw.includes('packed')) st='packed';
-        else if(raw.includes('received')||raw.includes('fulfilled')) st='received';
-        else {
-          let cs=JSON.stringify(item).toLowerCase();
-          if(cs.includes('"packed"')) st='packed';
-          else if(cs.includes('"received"')||cs.includes('"fulfilled"')) st='received';
+        // ✅ لو جاي من طلب received/fulfilled مباشرة → نعرف حالته مباشرة
+        let st = forceStatus || 'other';
+        if(!forceStatus){
+          let raw=String(item.status||item.Status||item.order_status||item.OrderStatus||'')
+            .toLowerCase().replace(/<[^>]*>?/gm,'').trim();
+          if(raw.includes('packed')) st='packed';
+          else if(raw.includes('received')||raw.includes('fulfilled')) st='received';
+          else {
+            let cs=JSON.stringify(item).toLowerCase();
+            if(cs.includes('"packed"')) st='packed';
+            else if(cs.includes('"received"')||cs.includes('"fulfilled"')) st='received';
+          }
         }
 
         const bg=st==='received'?'rgba(34,197,94,0.06)':(st==='packed'?'rgba(245,158,11,0.06)':'transparent');
@@ -285,136 +271,114 @@
         state.savedRows.push({id:inv,onl:onl,st:st,typee:typee,guestName:item.guestName||'',guestMobile:item.guestMobile||item.mobile||'',src:src,hid:hid});
       }
     }
-    return added;
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // ✅ v6.5 — Staggered Pipeline with Server-Aware Throttle
-  // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════
+  // ✅ v6.7 — جلب ذكي: نجيب كل حالة من السيرفر مباشرة
+  //
+  // الفكرة:  بدل ما نجلب 340 طلب packed (34 صفحة) ونفلتر
+  //          نطلب من السيرفر كل حالة لوحدها:
+  //          1. packed → للتصدير
+  //          2. received → للتسليم
+  //          3. fulfilled → للتسليم
+  //
+  //          كل حالة بنكملها صفحة صفحة لحد ما السيرفر يرجع 0 نتائج
+  // ═══════════════════════════════════════════════════════════════════
 
-  async function fetchPage(baseUrl, pageNum, currentStatus) {
-    const res = await fetchWithRetry(baseUrl+'Home/getOrders', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({status:currentStatus, pageSelected:pageNum, searchby:''})
-    });
-    const data = await safeParseJSON(res);
-    return data;
+  async function fetchAllPagesForStatus(baseUrl, status, forceStatus, label){
+    let page = 1;
+    let totalFetched = 0;
+    let emptyCount = 0;
+
+    while(true){
+      try{
+        setStatus(`جاري جلب ${label}... صفحة ${page}`,'working');
+        const res = await fetchWithRetry(baseUrl+'Home/getOrders',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({status:status, pageSelected:page, searchby:''})
+        });
+        const data = await safeParseJSON(res);
+
+        if(!data){emptyCount++;if(emptyCount>=2)break;page++;continue}
+
+        let orders=[];
+        try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
+
+        if(!orders || orders.length===0){
+          // ✅ السيرفر رجع 0 نتائج → خلصت هذه الحالة
+          break;
+        }
+
+        // ✅ نعرف عدد الجديد قبل وبعد
+        const beforeCount = state.savedRows.length;
+        processData(data, forceStatus);
+        const newAdded = state.savedRows.length - beforeCount;
+        totalFetched += orders.length;
+        updateStats();
+
+        // ✅ لو ما ضافش أي جديد (كله مكرر) 3 مرات → نوقف
+        if(newAdded === 0){
+          emptyCount++;
+          if(emptyCount >= 3) break;
+        } else {
+          emptyCount = 0;
+        }
+
+        page++;
+      }catch(err){
+        // صفحة فشلت → نعيدها مرة واحدة
+        try{
+          await sleep(500);
+          const res = await fetchWithRetry(baseUrl+'Home/getOrders',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({status:status, pageSelected:page, searchby:''})
+          });
+          const data = await safeParseJSON(res);
+          if(data) processData(data, forceStatus);
+          updateStats();
+        }catch(e){}
+        page++;
+        emptyCount++;
+        if(emptyCount >= 3) break;
+      }
+    }
+
+    return totalFetched;
   }
 
   async function scanAllPages(){
     state.isProcessing=true;
     const baseUrl=window.location.origin+"/ez_pill_web/";
-    const currentStatus='packed';
-    setStatus(`جاري الاتصال — ${SERVER_PROFILE.name}...`,'working');
-    let maxPages=parseInt(document.getElementById('p_lim').value)||1;
     state.savedRows=[];state.visitedSet.clear();state.htmlBuffer='';
     resetProgress();
-
     const startTime = performance.now();
-    let pagesCompleted = 0;
-    let totalSuccessful = 0;
-    let failedPageNumbers = [];
 
-    // ═══ حالة الـ Throttle — تبدأ من إعدادات السيرفر ═══
-    const SP = SERVER_PROFILE;
-    let concurrency = SP.initC;
-    let staggerDelay = SP.initDelay;
-    let consecutiveOK = 0;
-    let consecutiveFail = 0;
+    try{
+      // ═══════════════════════════════════════════
+      // ✅ المرحلة 1: جلب received + fulfilled مباشرة (للتسليم)
+      // عادةً صفحة أو اتنين بس — سريع جدًا
+      // ═══════════════════════════════════════════
+      setStatus('📥 جاري جلب الطلبات المستلمة (received)...','working');
+      updateProgress(1, 4, state.savedRows.length);
+      const recCount = await fetchAllPagesForStatus(baseUrl, 'received', 'received', 'Received');
 
-    function updateSpeedDisplay() {
-      const elapsed = (performance.now() - startTime) / 1000;
-      const pps = elapsed > 0 ? (pagesCompleted / elapsed).toFixed(1) : '0';
-      const spdEl = document.getElementById('ali_speed_val');
-      if(spdEl) spdEl.textContent = `${pps} ص/ث | C:${concurrency}`;
-    }
+      setStatus('📥 جاري جلب الطلبات المنفذة (fulfilled)...','working');
+      updateProgress(2, 4, state.savedRows.length);
+      const fulCount = await fetchAllPagesForStatus(baseUrl, 'fulfilled', 'received', 'Fulfilled');
 
-    try {
-      // ✅ صفحة 1 — لوحدها لنعرف العدد الإجمالي
-      const data1 = await fetchPage(baseUrl, 1, currentStatus);
-      if(data1 && data1.total_orders){
-        const et = parseInt(data1.total_orders) || 0;
-        if(et > 0){ maxPages = Math.ceil(et/10); document.getElementById('p_lim').value = maxPages }
-      }
-      processData(data1); updateStats();
-      pagesCompleted = 1; totalSuccessful = 1;
-      updateProgress(1, maxPages, state.savedRows.length);
-      updateSpeedDisplay();
+      // ═══════════════════════════════════════════
+      // ✅ المرحلة 2: جلب packed (للتصدير)
+      // ده اللي فيه العدد الكبير
+      // ═══════════════════════════════════════════
+      setStatus('📦 جاري جلب الطلبات المجهزة (packed)...','working');
+      updateProgress(3, 4, state.savedRows.length);
+      const packCount = await fetchAllPagesForStatus(baseUrl, 'packed', 'packed', 'Packed');
 
-      if(maxPages > 1) {
-        let nextPage = 2;
-        let activeCount = 0;
+      updateProgress(4, 4, state.savedRows.length);
 
-        await new Promise((resolveAll) => {
-
-          function onPageDone(pageNum, success) {
-            activeCount--;
-            pagesCompleted++;
-
-            if(success) {
-              totalSuccessful++;
-              consecutiveOK++;
-              consecutiveFail = 0;
-
-              // ✅ رفع السرعة لو مستقر
-              if(consecutiveOK >= SP.rampUp && concurrency < SP.maxC) {
-                concurrency++;
-                staggerDelay = Math.max(staggerDelay - 20, SP.minDelay);
-                consecutiveOK = 0;
-                console.log(`⬆️ Speed up: C=${concurrency}, delay=${staggerDelay}ms`);
-              }
-            } else {
-              consecutiveFail++;
-              consecutiveOK = 0;
-
-              // ⚠️ تقليل السرعة لو في أخطاء
-              if(consecutiveFail >= SP.rampDown) {
-                concurrency = Math.max(concurrency - 1, SP.minC);
-                staggerDelay = Math.min(staggerDelay + 100, SP.maxDelay);
-                consecutiveFail = 0;
-                console.log(`⬇️ Slow down: C=${concurrency}, delay=${staggerDelay}ms`);
-              }
-            }
-
-            updateProgress(pagesCompleted, maxPages, state.savedRows.length);
-            updateSpeedDisplay();
-            setStatus(`جاري الجلب... ${pagesCompleted}/${maxPages} | C:${concurrency}`,'working');
-
-            launchMore();
-
-            if(activeCount === 0 && nextPage > maxPages) {
-              resolveAll();
-            }
-          }
-
-          function launchOne(pageNum) {
-            activeCount++;
-            fetchPage(baseUrl, pageNum, currentStatus)
-              .then(data => {
-                if(data) { processData(data); updateStats(); }
-                onPageDone(pageNum, true);
-              })
-              .catch(err => {
-                console.warn(`❌ Page ${pageNum} failed:`, err.message);
-                failedPageNumbers.push(pageNum);
-                onPageDone(pageNum, false);
-              });
-          }
-
-          function launchMore() {
-            while(activeCount < concurrency && nextPage <= maxPages) {
-              const p = nextPage++;
-              // ✅ Stagger: فاصل بسيط بين كل إطلاق
-              setTimeout(() => launchOne(p), activeCount * staggerDelay);
-            }
-          }
-
-          launchMore();
-        });
-      }
-
-    } catch(err){
+    }catch(err){
       console.error(err);
       const backup=loadFromSession();
       if(backup&&backup.length>0){
@@ -427,48 +391,7 @@
       setStatus('خطأ في الاتصال بالخادم','error');showToast('فشل الاتصال بالخادم','error');state.isProcessing=false;return;
     }
 
-    // ═══════════════════════════════════════════════════
-    // ✅ إعادة محاولة الصفحات الفاشلة — واحدة واحدة
-    // ═══════════════════════════════════════════════════
-    if(failedPageNumbers.length > 0) {
-      setStatus(`إعادة محاولة ${failedPageNumbers.length} صفحة فاشلة...`,'working');
-      showToast(`إعادة محاولة ${failedPageNumbers.length} صفحة...`,'warning');
-
-      const stillFailed = [];
-      for(let i = 0; i < failedPageNumbers.length; i++) {
-        const p = failedPageNumbers[i];
-        setStatus(`إعادة محاولة صفحة ${p} (${i+1}/${failedPageNumbers.length})...`,'working');
-        try {
-          await sleep(SP.retryDelay);
-          const data = await fetchPage(baseUrl, p, currentStatus);
-          if(data) { processData(data); updateStats(); totalSuccessful++; }
-        } catch(e) {
-          stillFailed.push(p);
-        }
-      }
-
-      // محاولة أخيرة
-      if(stillFailed.length > 0) {
-        setStatus(`محاولة أخيرة لـ ${stillFailed.length} صفحة...`,'working');
-        const finalFailed = [];
-        for(const p of stillFailed) {
-          try {
-            await sleep(SP.retryDelay * 2);
-            const data = await fetchPage(baseUrl, p, currentStatus);
-            if(data) { processData(data); updateStats(); totalSuccessful++; }
-          } catch(e) {
-            finalFailed.push(p);
-          }
-        }
-        if(finalFailed.length > 0) {
-          showToast(`⚠️ ${finalFailed.length} صفحة لم تُجلب (${finalFailed.join(',')})`,'warning');
-        }
-      }
-    }
-
     const totalTime = ((performance.now() - startTime) / 1000).toFixed(1);
-    console.log(`✅ Done: ${state.savedRows.length} records in ${totalTime}s (${totalSuccessful}/${maxPages} pages) — ${SERVER_PROFILE.name}`);
-
     saveToSession();
     finishScan(false, totalTime);
   }
@@ -508,9 +431,9 @@
     }
 
     const recCount=getReceivedCount();
-    const timeMsg = totalTime ? ` في ${totalTime} ثانية` : '';
-    setStatus(`اكتملت العملية: تم حصر ${state.savedRows.length} سجل${timeMsg}`,'done');
-    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل${timeMsg}`,'success');
+    const timeMsg = totalTime ? ` في ${totalTime}ث` : '';
+    setStatus(`اكتملت العملية: ${state.savedRows.length} سجل${timeMsg}`,'done');
+    showToast(`اكتمل: ${state.savedRows.length} سجل${timeMsg}`,'success');
 
     const da=document.getElementById('ali_dynamic_area');
     da.innerHTML=`
@@ -605,6 +528,9 @@
       ob.disabled=false;ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;fr();
     });
 
+    // ═══════════════════════════════════════════════════════
+    // ✅ التسليم — batches بدل واحد واحد
+    // ═══════════════════════════════════════════════════════
     document.getElementById('ali_btn_deliver_silent').addEventListener('click',async()=>{
       const list=state.savedRows.filter(r=>r.st==='received');
       const count=parseInt(document.getElementById('ali_open_count').value)||list.length;
@@ -620,31 +546,63 @@
       });
       if(res.action!=='confirm')return;
       const btn=document.getElementById('ali_btn_deliver_silent');btn.disabled=true;btn.style.opacity='0.7';
-      let sc2=0;const dUrl=window.location.origin+'/ez_pill_web/getEZPill_Details/updatetoDeliver';
-      for(let i=0;i<toD.length;i++){
-        const it=toD[i];
-        btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري (${i+1}/${toD.length})... | متبقي: ${getReceivedCount()}`;
-        try{
-          const params=new URLSearchParams();
-          params.append('invoice_num',it.id);
-          params.append('patienName',it.guestName);
-          params.append('mobile',it.guestMobile);
-          const r=await fetchWithTimeout(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});
-          if(r.ok){
-            sc2++;
-            it.st='processed';
-            if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl) stEl.textContent='processed'}
-            updateStats();
-          }
-        }catch(e){console.warn('فشل:',it.id,e)}
-        if(i%10===0||i===toD.length-1) updateStats();
-        await sleep(50);
+      let successCount=0, failCount=0;
+      const dUrl=window.location.origin+'/ez_pill_web/getEZPill_Details/updatetoDeliver';
+      const deliverStart = performance.now();
+
+      function markDone(it){
+        it.st='processed';
+        if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl) stEl.textContent='processed'}
+      }
+
+      const failedDelivers = [];
+      for(let i=0; i<toD.length; i+=DELIVER_BATCH){
+        const batch = [];
+        for(let j=i; j<i+DELIVER_BATCH && j<toD.length; j++){
+          const it = toD[j];
+          batch.push(
+            (async()=>{
+              try{
+                const params=new URLSearchParams();
+                params.append('invoice_num',it.id);
+                params.append('patienName',it.guestName);
+                params.append('mobile',it.guestMobile);
+                const r=await fetchWithTimeout(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});
+                if(r.ok){ successCount++; markDone(it); }
+                else { failedDelivers.push(it); failCount++; }
+              }catch(e){ failedDelivers.push(it); failCount++; }
+            })()
+          );
+        }
+        await Promise.allSettled(batch);
+        updateStats();
+        const elapsed = ((performance.now() - deliverStart)/1000).toFixed(0);
+        btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> ${Math.min(i+DELIVER_BATCH,toD.length)}/${toD.length} (${elapsed}ث) | متبقي: ${getReceivedCount()}`;
+      }
+
+      // إعادة الفاشلين واحد واحد
+      if(failedDelivers.length > 0){
+        btn.innerHTML=`🔄 إعادة ${failedDelivers.length} طلب فاشل...`;
+        for(const it of failedDelivers){
+          try{
+            await sleep(200);
+            const params=new URLSearchParams();
+            params.append('invoice_num',it.id);
+            params.append('patienName',it.guestName);
+            params.append('mobile',it.guestMobile);
+            const r=await fetchWithTimeout(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});
+            if(r.ok){ successCount++; failCount--; markDone(it); }
+          }catch(e){}
+        }
+        updateStats();
       }
 
       saveToSession();
 
-      showToast(`تم تنفيذ ${sc2} سجل — المتبقي: ${getReceivedCount()}`,'success');
-      btn.innerHTML=`✅ اكتمل — متبقي: ${getReceivedCount()}`;btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false;
+      const deliverTime = ((performance.now() - deliverStart)/1000).toFixed(1);
+      showToast(`تم تنفيذ ${successCount} سجل في ${deliverTime}ث — المتبقي: ${getReceivedCount()}`,'success');
+      btn.innerHTML=`✅ اكتمل (${deliverTime}ث) — ${successCount} نجح — متبقي: ${getReceivedCount()}`;
+      btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false;
     });
 
     document.getElementById('ali_btn_export').addEventListener('click',async()=>{
