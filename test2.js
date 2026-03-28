@@ -374,7 +374,7 @@
       // ═══════════════════════════════════════════
       setStatus('📦 جاري جلب الطلبات المجهزة (packed)...','working');
       updateProgress(3, 4, state.savedRows.length);
-      const packCount = await fetchAllPagesForStatus(baseUrl, 'packed', 'packed', 'Packed');
+      const packCount = await fetchAllPagesForStatus(baseUrl, 'packed', null, 'Packed');
 
       updateProgress(4, 4, state.savedRows.length);
 
