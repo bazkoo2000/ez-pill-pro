@@ -103,9 +103,13 @@ javascript:(function(){
             '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">👤</span> Assign to User</span>'+
             '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
           '</button>'+
-          '<button id="fey_sel_del" class="fey-helper-btn" style="margin-bottom:0">'+
+          '<button id="fey_sel_del" class="fey-helper-btn">'+
             '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">⏳</span> Pending</span>'+
             '<span class="fey-badge" style="background:#dcfce7;color:#059669" id="fey_cnt_del">—</span>'+
+          '</button>'+
+          '<button id="fey_collected" class="fey-helper-btn" style="margin-bottom:0">'+
+            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">📦</span> Collected</span>'+
+            '<span class="fey-badge" style="background:#ede9fe;color:#7c3aed" id="fey_cnt_col">—</span>'+
           '</button>'+
         '</div>'+
 
@@ -219,9 +223,11 @@ javascript:(function(){
     var allocEl = document.getElementById('fey_cnt_alloc');
     var ltEl = document.getElementById('fey_cnt_lt');
     var delEl = document.getElementById('fey_cnt_del');
+    var colEl = document.getElementById('fey_cnt_col');
     if (allocEl) { allocEl.innerText = allocCount > 0 ? allocCount : '—'; allocEl.style.background = allocCount > 0 ? '#fef3c7' : '#f1f5f9'; allocEl.style.color = allocCount > 0 ? '#d97706' : '#94a3b8'; }
     if (ltEl) { ltEl.innerText = ltCount > 0 ? ltCount : '—'; ltEl.style.background = ltCount > 0 ? '#dbeafe' : '#f1f5f9'; ltEl.style.color = ltCount > 0 ? '#1d4ed8' : '#94a3b8'; }
     if (delEl) { delEl.innerText = ltCount > 0 ? ltCount : '—'; delEl.style.background = ltCount > 0 ? '#dcfce7' : '#f1f5f9'; delEl.style.color = ltCount > 0 ? '#059669' : '#94a3b8'; }
+    if (colEl) { colEl.innerText = ltCount > 0 ? ltCount : '—'; colEl.style.background = ltCount > 0 ? '#ede9fe' : '#f1f5f9'; colEl.style.color = ltCount > 0 ? '#7c3aed' : '#94a3b8'; }
   }
 
   // تحديث العدادات كل 3 ثواني
@@ -407,6 +413,44 @@ javascript:(function(){
     } else {
       showToast('⚠️ لم يُعثر على زر pending', 'warning');
       setSt('⚠️ زر pending غير موجود — اضغطه يدوياً', 'ready');
+    }
+  });
+
+  // ─── Collected ───
+  document.getElementById('fey_collected').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    var btn = this;
+    btn.style.opacity = '0.6';
+
+    // الخطوة 1: تحديد Loading Task
+    setSt('☑️ تحديد Loading Task...', 'working');
+    var count = await selectOnlyByStatus('loading task');
+    updateCounts();
+
+    if (count === 0) {
+      btn.style.opacity = '1';
+      showToast('لا يوجد طلبات Loading Task', 'warning');
+      setSt('⚠️ لا يوجد Loading Task', 'ready');
+      return;
+    }
+
+    showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
+    await wait(500);
+
+    // الخطوة 2: الضغط على Collected
+    setSt('📦 جاري الضغط على Collected...', 'working');
+    var clicked = await clickAction('Collected', false);
+
+    btn.style.opacity = '1';
+
+    if (clicked) {
+      showToast('✅ تم Collected لـ ' + count + ' طلب', 'success');
+      setSt('📦 تم Collected ' + count + ' طلب ✅', 'done');
+      await wait(2000);
+      updateCounts();
+    } else {
+      showToast('⚠️ لم يُعثر على زر Collected', 'warning');
+      setSt('⚠️ زر Collected غير موجود — اضغطه يدوياً', 'ready');
     }
   });
 
