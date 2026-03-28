@@ -1,698 +1,679 @@
-javascript:(function(){
+(function(){
   'use strict';
+  const PANEL_ID='ali_sys_v5';const VERSION='6.5';
+  if(document.getElementById(PANEL_ID)){document.getElementById(PANEL_ID).remove();return}
+  const MAX_PER_FILE=49;
+  const FETCH_TIMEOUT=30000;
+  const MAX_RETRIES=2;
+  const state={savedRows:[],visitedSet:new Set(),isProcessing:false,isSyncing:false,htmlBuffer:''};
+  const IOS={bg:'rgba(243,244,246,0.92)',card:'#ffffff',text:'#1f2937',muted:'#9ca3af',accent:'#6366f1',accent2:'#818cf8',success:'#22c55e',error:'#ef4444',warn:'#f59e0b',blue:'#3b82f6',shadow:'0 1px 2px rgba(0,0,0,0.03),0 0 0 0.5px rgba(0,0,0,0.03)',font:'-apple-system,BlinkMacSystemFont,Segoe UI,Cairo,Helvetica,sans-serif'};
 
-  var PANEL_ID = 'fareye_injector';
-  var VERSION = '4.1';
-  var VER_KEY = 'fareye_ver';
-  if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
+  // ═══════════════════════════════════════════════════════════════
+  // ✅ v6.5 — Smart Server Detection
+  // السيرفر الخارجي (nahdi.sa) = أسرع → concurrency أعلى
+  // السيرفر الداخلي (172.x.x.x) = أبطأ → concurrency أقل + delay أكبر
+  // ═══════════════════════════════════════════════════════════════
+  const IS_EXTERNAL = window.location.hostname.includes('nahdi.sa');
+  const SERVER_PROFILE = IS_EXTERNAL
+    ? { name:'Nahdi Cloud',  initC:5, maxC:8,  minC:3, initDelay:50,  minDelay:30,  maxDelay:300, rampUp:4, rampDown:2, retryDelay:200 }
+    : { name:'Internal Server', initC:3, maxC:5, minC:2, initDelay:150, minDelay:80, maxDelay:600, rampUp:5, rampDown:2, retryDelay:400 };
 
-  var state = { orders:[], injectedCount:0, failedCount:0, isRunning:false, delayMs:600 };
+  console.log(`🖥️ Server: ${SERVER_PROFILE.name} (${window.location.hostname}) | Start C:${SERVER_PROFILE.initC}`);
 
-  function showToast(msg, type) {
-    type = type || 'info';
-    var box = document.getElementById('fareye-toast-box');
-    if (!box) { box = document.createElement('div'); box.id = 'fareye-toast-box'; box.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center'; document.body.appendChild(box); }
-    var colors = {success:'#059669',error:'#dc2626',warning:'#d97706',info:'#1e293b'};
-    var icons = {success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
-    var t = document.createElement('div');
-    t.style.cssText = 'background:'+colors[type]+';color:white;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:600;font-family:Segoe UI,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:flex;align-items:center;gap:8px;direction:rtl;animation:feyToastIn 0.4s cubic-bezier(0.16,1,0.3,1);white-space:nowrap';
-    t.innerHTML = '<span>'+icons[type]+'</span> '+msg;
-    box.appendChild(t);
-    setTimeout(function(){t.style.transition='all 0.3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},3500);
+  const bodyText=document.body?document.body.innerText:'';const packedMatch=bodyText.match(/packed\s*\n*\s*(\d+)/i);const totalPacked=packedMatch?parseInt(packedMatch[1]):0;const defaultPages=totalPacked>0?Math.ceil(totalPacked/10):1;
+  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;')}
+
+  function fetchWithTimeout(url,options={},timeout=FETCH_TIMEOUT){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),timeout);
+    return fetch(url,{...options,signal:controller.signal})
+      .then(res=>{clearTimeout(timer);return res})
+      .catch(err=>{clearTimeout(timer);throw err});
   }
-  try{var lv=localStorage.getItem(VER_KEY);if(lv!==VERSION){localStorage.setItem(VER_KEY,VERSION);if(lv)setTimeout(function(){showToast('تم تلقي تحديث جديد 🎉 → v'+VERSION,'success')},1000);}}catch(e){}
 
-  function showDialog(o) {
-    return new Promise(function(resolve) {
-      var ov = document.createElement('div');
-      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);z-index:99999999;display:flex;align-items:center;justify-content:center;animation:feyFadeIn 0.25s';
-      var ibg = {blue:'linear-gradient(135deg,#dbeafe,#bfdbfe)',green:'linear-gradient(135deg,#dcfce7,#bbf7d0)',amber:'linear-gradient(135deg,#fef3c7,#fde68a)',red:'linear-gradient(135deg,#fee2e2,#fecaca)',purple:'linear-gradient(135deg,#ede9fe,#ddd6fe)'};
-      var ih='',bh='';
-      if(o.info)for(var i=0;i<o.info.length;i++){var r=o.info[i];ih+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:6px;font-size:13px"><span style="color:#64748b;font-weight:600">'+r.label+'</span><span style="font-weight:800;color:'+(r.color||'#1e293b')+';font-size:12px">'+r.value+'</span></div>';}
-      if(o.buttons)for(var j=0;j<o.buttons.length;j++)bh+='<button data-fey-btn="'+j+'" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;'+(o.buttons[j].style||'background:#f1f5f9;color:#475569')+';transition:all 0.2s">'+o.buttons[j].text+'</button>';
-      var dialogBox = document.createElement('div');
-      dialogBox.style.cssText = 'background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)';
-      dialogBox.innerHTML = '<div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500;white-space:pre-line">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px;flex-wrap:wrap">'+bh+'</div>';
-      ov.appendChild(dialogBox);
-      var resolved = false;
-      dialogBox.addEventListener('click', function(e) {
-        if (resolved) return;
-        var b = e.target.closest('[data-fey-btn]');
-        if (b) { resolved = true; ov.remove(); resolve(o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value); }
-      });
-      ov.addEventListener('mousedown', function(e) { if (e.target === ov) { e.stopPropagation(); e.preventDefault(); } });
+  async function fetchWithRetry(url,options={},retries=MAX_RETRIES){
+    for(let attempt=0;attempt<=retries;attempt++){
+      try{
+        const res=await fetchWithTimeout(url,options);
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        return res;
+      }catch(err){
+        if(attempt===retries) throw err;
+        await sleep(800*(attempt+1));
+      }
+    }
+  }
+
+  function safeParseJSON(res){
+    return res.text().then(txt=>{
+      try{return JSON.parse(txt)}
+      catch(e){console.warn('JSON parse failed:',e,txt.substring(0,200));return null}
+    });
+  }
+
+  function saveToSession(){
+    try{
+      const lite=state.savedRows.map(r=>({id:r.id,onl:r.onl,st:r.st,typee:r.typee,guestName:r.guestName,guestMobile:r.guestMobile,src:r.src,hid:r.hid}));
+      sessionStorage.setItem('ali_backup',JSON.stringify(lite));
+    }catch(e){}
+  }
+  function loadFromSession(){
+    try{
+      const d=sessionStorage.getItem('ali_backup');
+      if(d) return JSON.parse(d);
+    }catch(e){}
+    return null;
+  }
+
+  function showToast(msg,type='info'){
+    let c=document.getElementById('ali-toast-container');if(!c){c=document.createElement('div');c.id='ali-toast-container';c.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;display:flex;flex-direction:column-reverse;gap:8px;align-items:center';document.body.appendChild(c)}
+    const cl={success:'#22c55e',error:'#ef4444',warning:'#f59e0b',info:'#6366f1'};const ic={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+    const t=document.createElement('div');t.style.cssText=`background:${IOS.card};color:${cl[type]};padding:12px 22px;border-radius:14px;font-size:13px;font-weight:700;font-family:${IOS.font};box-shadow:0 8px 30px rgba(0,0,0,0.1);display:flex;align-items:center;gap:8px;direction:rtl;animation:aliToastIn 0.4s cubic-bezier(0.16,1,0.3,1)`;
+    t.innerHTML=`<span>${ic[type]}</span> ${esc(msg)}`;c.appendChild(t);setTimeout(()=>{t.style.transition='all 0.3s';t.style.opacity='0';t.style.transform='translateY(10px)';setTimeout(()=>t.remove(),300)},3500);
+  }
+
+  function showDialog({icon,title,desc,info,badges,buttons}){
+    return new Promise(resolve=>{
+      const ov=document.createElement('div');ov.style.cssText=`position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.25);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:9999999;display:flex;align-items:center;justify-content:center;animation:aliFadeIn 0.2s`;
+      let infoH='';if(info&&info.length){infoH=info.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:${IOS.bg};border-radius:12px;margin-bottom:6px"><span style="font-size:13px;color:${IOS.muted};font-weight:600">${esc(r.label)}</span><span style="font-weight:800;color:${esc(r.color||IOS.accent)};font-size:14px">${esc(String(r.value))}</span></div>`).join('')}
+      let badH='';if(badges&&badges.length){badH='<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding:4px 0 8px">';badges.forEach(b=>{const bs=b.active?`color:${IOS.accent};background:rgba(99,102,241,0.08)`:`color:${IOS.muted};background:${IOS.bg}`;badH+=`<span style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;${bs}">${esc(b.text)}</span>`});badH+='</div>'}
+      let btnH='';if(buttons&&buttons.length){btnH=buttons.map((bt,idx)=>{const bc=bt.primary?`background:${IOS.accent};color:white;font-weight:800`:`background:rgba(0,0,0,0.04);color:${IOS.muted};font-weight:700`;return`<button data-idx="${idx}" style="flex:1;padding:14px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-family:${IOS.font};transition:all 0.2s;${bc}">${esc(bt.text)}</button>`}).join('')}
+      ov.innerHTML=`<div style="background:${IOS.card};border-radius:20px;width:380px;max-width:90vw;overflow:hidden;font-family:${IOS.font};direction:rtl;color:${IOS.text};box-shadow:0 20px 60px rgba(0,0,0,0.12);animation:aliDialogIn 0.35s cubic-bezier(0.16,1,0.3,1)"><div style="padding:28px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:18px;background:rgba(99,102,241,0.06);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px">${icon}</div><div style="font-size:18px;font-weight:800;margin-bottom:6px">${esc(title)}</div><div style="font-size:13px;color:${IOS.muted};line-height:1.7">${esc(desc)}</div></div>${badH}<div style="padding:16px 24px">${infoH}</div><div style="padding:6px 24px 24px;display:flex;gap:10px">${btnH}</div></div>`;
+      ov.addEventListener('click',e=>{const btn=e.target.closest('[data-idx]');if(btn){const idx=parseInt(btn.getAttribute('data-idx'));ov.style.transition='opacity 0.2s';ov.style.opacity='0';setTimeout(()=>ov.remove(),200);resolve({action:buttons[idx].value})}});
       document.body.appendChild(ov);
     });
   }
 
-  var css = document.createElement('style');
-  css.innerHTML =
-    '@keyframes feySlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}'+
-    '@keyframes feyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}'+
-    '@keyframes feySpin{to{transform:rotate(360deg)}}'+
-    '@keyframes feyFadeIn{from{opacity:0}to{opacity:1}}'+
-    '@keyframes feyDialogIn{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}'+
-    '@keyframes feyToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}'+
-    '@keyframes feyCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}'+
-    '@keyframes feyBlink{0%,100%{opacity:1}50%{opacity:0.3}}'+
-    '#'+PANEL_ID+'{position:fixed;top:3%;left:2%;width:390px;max-height:92vh;background:#fff;border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,0.04),0 25px 60px -12px rgba(0,0,0,0.15),0 0 100px -20px rgba(124,58,237,0.1);z-index:9999999;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;overflow:hidden;transition:all 0.5s;animation:feySlideIn 0.6s cubic-bezier(0.16,1,0.3,1)}'+
-    '#'+PANEL_ID+'.fey-min{width:60px!important;height:60px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6d28d9,#8b5cf6)!important;box-shadow:0 8px 30px rgba(124,58,237,0.4)!important;animation:feyPulse 2s infinite;overflow:hidden}'+
-    '#'+PANEL_ID+'.fey-min .fey-inner{display:none!important}'+
-    '#'+PANEL_ID+'.fey-min::after{content:"📋";font-size:26px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}'+
-    '.fey-helper-btn{width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;font-weight:700;font-size:13px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:space-between;background:#fff;color:#1e293b;transition:all 0.2s;margin-bottom:8px}'+
-    '.fey-helper-btn:hover{border-color:#8b5cf6;background:#faf5ff}'+
-    '.fey-helper-btn:active{transform:scale(0.98)}'+
-    '.fey-helper-btn .fey-badge{font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;min-width:24px;text-align:center}';
-  document.head.appendChild(css);
+  const styleEl=document.createElement('style');styleEl.id='ali-pro-css';
+  styleEl.innerHTML=`
+    @keyframes aliSlideIn{from{opacity:0;transform:translateX(40px) scale(0.97)}to{opacity:1;transform:translateX(0) scale(1)}}
+    @keyframes aliPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    @keyframes aliSpin{to{transform:rotate(360deg)}}
+    @keyframes aliFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes aliDialogIn{from{opacity:0;transform:scale(0.95) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    @keyframes aliToastIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes aliCountUp{from{transform:scale(1.3);opacity:0.5}to{transform:scale(1);opacity:1}}
+    @keyframes aliBlink{0%,100%{opacity:1}50%{opacity:0.4}}
+    @keyframes aliRingGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(99,102,241,0.3))}50%{filter:drop-shadow(0 0 12px rgba(99,102,241,0.6))}}
+    @keyframes aliDotPulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
+    #${PANEL_ID}{position:fixed;top:14px;right:14px;width:380px;max-height:92vh;background:${IOS.bg};backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:22px;border:1px solid rgba(255,255,255,0.5);box-shadow:0 20px 60px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.05);z-index:9999999;font-family:${IOS.font};direction:rtl;color:${IOS.text};overflow:hidden;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);animation:aliSlideIn 0.5s cubic-bezier(0.16,1,0.3,1)}
+    #${PANEL_ID}.ali-minimized{width:56px!important;height:56px!important;border-radius:50%!important;cursor:pointer!important;background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;box-shadow:0 8px 24px rgba(99,102,241,0.3)!important;animation:aliPulse 2s infinite;overflow:hidden}
+    #${PANEL_ID}.ali-minimized .ali-inner{display:none!important}
+    #${PANEL_ID}.ali-minimized::after{content:"📝";font-size:22px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    #${PANEL_ID} .ios-grp{background:${IOS.card};border-radius:14px;overflow:hidden;box-shadow:${IOS.shadow};margin-bottom:12px}
+    #${PANEL_ID} .ios-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:0.5px solid #f3f4f6;transition:background 0.15s}
+    #${PANEL_ID} .ios-item:last-child{border-bottom:none}
+    #${PANEL_ID} .ios-item:hover{background:#f9fafb}
+    #${PANEL_ID} .ios-btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:14px;font-family:${IOS.font};transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+    #${PANEL_ID} .ios-btn:active{transform:scale(0.98);opacity:0.9}
+    #${PANEL_ID} .ios-primary{background:${IOS.accent};color:white}
+    #${PANEL_ID} .ios-success{background:${IOS.success};color:white}
+    #${PANEL_ID} .ios-error{background:${IOS.error};color:white}
+    #${PANEL_ID} .ios-warn{background:${IOS.warn};color:white}
+    #${PANEL_ID} .ios-ghost{background:rgba(0,0,0,0.03);color:${IOS.muted}}
+    #${PANEL_ID} .ios-input{width:100%;padding:12px 16px;border:none;border-radius:12px;font-size:14px;font-family:${IOS.font};outline:none;background:rgba(0,0,0,0.03);color:${IOS.text};transition:all 0.2s;font-weight:600;box-sizing:border-box}
+    #${PANEL_ID} .ios-input:focus{background:rgba(99,102,241,0.04);box-shadow:0 0 0 2px rgba(99,102,241,0.15)}
+    #${PANEL_ID} .ios-input.match{background:rgba(34,197,94,0.04);box-shadow:0 0 0 2px rgba(34,197,94,0.15)}
+    #${PANEL_ID} .ios-input.nomatch{background:rgba(239,68,68,0.04);box-shadow:0 0 0 2px rgba(239,68,68,0.15)}
+    .fast-row{border-bottom:0.5px solid #f3f4f6;transition:background 0.15s}
+    .fast-row:hover{background:#f9fafb}
+    .ali-link{color:${IOS.accent};text-decoration:underline;font-weight:bold;cursor:pointer}
+  `;
+  document.head.appendChild(styleEl);
 
-  var panel = document.createElement('div');
-  panel.id = PANEL_ID;
-  panel.innerHTML =
-    '<div class="fey-inner">'+
-      '<div style="background:linear-gradient(135deg,#4c1d95,#6d28d9);padding:20px 22px 18px;color:white;position:relative;overflow:hidden">'+
-        '<div style="position:absolute;top:-50%;left:-30%;width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%);border-radius:50%"></div>'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">'+
-          '<div style="display:flex;gap:6px">'+
-            '<span id="fey_min" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(255,255,255,0.12);cursor:pointer">−</span>'+
-            '<span id="fey_close" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white;background:rgba(239,68,68,0.2);cursor:pointer">✕</span>'+
-          '</div>'+
-          '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
-        '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v4.1</span></div>'+
-      '</div>'+
-      '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
-        '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:14px;margin-bottom:16px">'+
-          '<div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-align:center;letter-spacing:0.5px">⚡ أدوات ذكية</div>'+
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-            '<button id="fey_alloc_direct" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
-              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">📦</span> Allocate</span>'+
-              '<span class="fey-badge" style="background:#fef3c7;color:#d97706" id="fey_cnt_alloc">—</span>'+
-            '</button>'+
-            '<button id="fey_sel_lt" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
-              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">👤</span> Assign</span>'+
-              '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
-            '</button>'+
-            '<button id="fey_sel_del" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
-              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">⏳</span> Pending</span>'+
-              '<span class="fey-badge" style="background:#dcfce7;color:#059669" id="fey_cnt_del">—</span>'+
-            '</button>'+
-            '<button id="fey_collected" class="fey-helper-btn" style="margin:0;flex-direction:column;gap:6px;padding:10px 8px;text-align:center;justify-content:center">'+
-              '<span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="font-size:15px">📦</span> Collected</span>'+
-              '<span class="fey-badge" style="background:#ede9fe;color:#7c3aed" id="fey_cnt_col">—</span>'+
-            '</button>'+
-          '</div>'+
-        '</div>'+
-        '<div id="fey_main">'+
-          '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
-            '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
-            '<div style="font-size:15px;font-weight:800;color:#6d28d9;margin-bottom:4px">اضغط لرفع ملف الطلبات</div>'+
-            '<div style="font-size:12px;color:#a78bfa;font-weight:600">ملف .txt (أرقام ERX)</div>'+
-            '<input type="file" id="fey_file" accept=".txt,.csv" multiple style="display:none">'+
-          '</div>'+
-          '<div style="text-align:center;color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:12px">— أو أدخل يدوياً —</div>'+
-          '<textarea id="fey_manual" placeholder="الصق أرقام الطلبات (سطر لكل رقم)..." style="width:100%;height:80px;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;font-family:Consolas,monospace;outline:none;background:#f8fafc;color:#1e293b;direction:ltr;text-align:left;resize:vertical;box-sizing:border-box;line-height:1.6"></textarea>'+
-          '<div id="fey_status" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0"><span>✅</span><span>جاهز</span></div>'+
-          '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'+
-            '<span style="font-size:13px;font-weight:700;color:#475569">⏱️ التأخير:</span>'+
-            '<div style="display:flex;align-items:center;gap:6px"><input type="range" id="fey_speed" min="300" max="2000" value="600" step="100" style="width:80px;accent-color:#8b5cf6"><span id="fey_speed_l" style="font-size:13px;font-weight:800;color:#8b5cf6;min-width:42px;text-align:center">0.6s</span></div>'+
-          '</div>'+
-          '<button id="fey_start" style="width:100%;padding:14px 20px;border:none;border-radius:14px;cursor:not-allowed;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;box-shadow:0 4px 15px rgba(124,58,237,0.3);transition:all 0.3s;margin-bottom:8px;opacity:0.5" disabled>📤 رفع الطلبات (ارفع ملف أولاً)</button>'+
-        '</div>'+
-        '<div id="fey_pw" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">التقدم</span><span id="fey_pt" style="font-size:12px;font-weight:800;color:#8b5cf6">0/0</span></div><div style="height:10px;background:#e2e8f0;border-radius:10px;overflow:hidden"><div id="fey_pf" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa,#c4b5fd);border-radius:10px;transition:width 0.5s"></div></div></div>'+
-        '<div style="text-align:center;padding:14px 0 4px;font-size:10px;color:#cbd5e1;font-weight:700;letter-spacing:1px">المطور علي الباز ☕</div>'+
-      '</div>'+
-    '</div>';
+  const serverBadge = IS_EXTERNAL
+    ? `<span style="font-size:9px;padding:2px 8px;border-radius:8px;background:rgba(34,197,94,0.1);color:#22c55e;font-weight:700">☁️ Cloud</span>`
+    : `<span style="font-size:9px;padding:2px 8px;border-radius:8px;background:rgba(245,158,11,0.1);color:#f59e0b;font-weight:700">🏠 Internal</span>`;
+
+  const panel=document.createElement('div');panel.id=PANEL_ID;
+  panel.innerHTML=`<div class="ali-inner">
+    <div style="padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:900;box-shadow:0 3px 12px rgba(99,102,241,0.25)">📝</div>
+        <div><div style="font-size:15px;font-weight:800;color:#1f2937">تقفيل الطلبات ${serverBadge}</div><div style="font-size:10px;color:#9ca3af;font-weight:600">v${VERSION} — iOS Edition</div></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button id="ali_min" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,0.06);color:#9ca3af;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">−</button>
+        <button id="ali_close" style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+    </div>
+    <div style="padding:10px 16px;overflow-y:auto;max-height:calc(92vh - 60px)" id="ali_body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📥</div><div id="stat_rec" style="font-size:20px;font-weight:900;color:#22c55e">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">Received</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📦</div><div id="stat_pack" style="font-size:20px;font-weight:900;color:#f59e0b">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">Packed</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">✅</div><div id="stat_done" style="font-size:20px;font-weight:900;color:#3b82f6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">المنجز</div></div>
+        <div style="background:${IOS.card};border-radius:14px;padding:12px 6px;text-align:center;box-shadow:${IOS.shadow}"><div style="font-size:18px;margin-bottom:4px">📊</div><div id="stat_total" style="font-size:20px;font-weight:900;color:#8b5cf6">0</div><div style="font-size:9px;color:${IOS.muted};font-weight:700">إجمالي</div></div>
+      </div>
+      <div class="ios-grp" style="padding:16px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="position:relative;width:80px;height:80px;flex-shrink:0">
+            <svg id="ali_ring_svg" width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="6"/>
+              <circle id="ali_ring_track" cx="40" cy="40" r="34" fill="none" stroke="url(#aliGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" style="transition:stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1)"/>
+              <defs><linearGradient id="aliGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div id="ali_ring_pct" style="font-size:18px;font-weight:900;color:${IOS.accent};line-height:1;font-family:monospace">0%</div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:13px;font-weight:700">📄 نطاق الفحص</span>
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:${IOS.muted};font-weight:600">صفحة</span><input type="number" id="p_lim" value="${defaultPages}" min="1" class="ios-input" style="width:55px;padding:6px;text-align:center;font-size:14px;font-weight:900;color:${IOS.accent}"></div>
+            </div>
+            <div style="font-size:11px;color:${IOS.muted};font-weight:600;line-height:1.8">
+              <div style="display:flex;justify-content:space-between"><span>الصفحات</span><span id="ali_prog_p_val">0 / 0</span></div>
+              <div style="display:flex;justify-content:space-between"><span>السجلات</span><span id="ali_prog_r_val" style="color:${IOS.accent};font-weight:800">0</span></div>
+              <div style="display:flex;justify-content:space-between"><span>السرعة</span><span id="ali_speed_val" style="color:${IOS.success};font-weight:800">—</span></div>
+            </div>
+            <div id="ali_prog_dots" style="display:flex;gap:3px;margin-top:6px;justify-content:center;opacity:0;transition:opacity 0.3s">
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.accent};animation:aliDotPulse 1s infinite 0s"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.accent2};animation:aliDotPulse 1s infinite 0.2s"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:${IOS.success};animation:aliDotPulse 1s infinite 0.4s"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="status-msg" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.06);color:#22c55e"><span>✅</span><span>النظام في وضع الاستعداد — ${SERVER_PROFILE.name}</span></div>
+      <div id="ali_dynamic_area"><button id="ali_start" class="ios-btn ios-primary" style="font-size:15px;padding:16px">🚀 بدء عملية البحث والاستعلام</button></div>
+      <div style="text-align:center;padding:12px 0 4px;font-size:9px;color:${IOS.muted};font-weight:700;letter-spacing:0.5px">DEVELOPED BY على الباز</div>
+    </div>
+  </div>`;
   document.body.appendChild(panel);
 
-  function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
-  function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
-  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'},paused:{bg:'#eff6ff',co:'#1d4ed8',bo:'#bfdbfe',ic:'⏸️'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
-  function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
-  function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
+  function setStatus(text,type){const el=document.getElementById('status-msg');if(!el)return;const cf={ready:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'✅'},working:{color:'#6366f1',bg:'rgba(99,102,241,0.06)',icon:'spinner'},error:{color:'#ef4444',bg:'rgba(239,68,68,0.06)',icon:'❌'},done:{color:'#22c55e',bg:'rgba(34,197,94,0.06)',icon:'✅'}};const c=cf[type]||cf.ready;const ih=c.icon==='spinner'?`<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:${IOS.accent};border-radius:50%;animation:aliSpin 0.5s linear infinite;flex-shrink:0"></div>`:`<span>${c.icon}</span>`;el.style.cssText=`display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;background:${c.bg};color:${c.color};transition:all 0.3s`;el.innerHTML=`${ih}<span>${esc(text)}</span>`}
+  function animNum(id,val){const el=document.getElementById(id);if(!el||el.innerText===String(val))return;requestAnimationFrame(()=>{el.innerText=val;el.style.animation='aliCountUp 0.4s';setTimeout(()=>el.style.animation='',400)})}
 
-  var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+  function getReceivedCount(){
+    return state.savedRows.filter(r=>r.st==='received').length;
+  }
 
-  // ═══════════════════════════════════════════════════════════════
-  //  Table Helpers
-  // ═══════════════════════════════════════════════════════════════
-
-  function getFlowColIndex() {
-    var colSpans = document.querySelectorAll('thead span.ant-table-column-title');
-    for (var s = 0; s < colSpans.length; s++) {
-      var spanText = (colSpans[s].textContent || '').replace(/\s+/g,' ').trim();
-      if (spanText === 'Current Flow') {
-        var th = colSpans[s].closest('th');
-        if (th) { var siblings = Array.from(th.parentElement.children); var idx = siblings.indexOf(th); if (idx !== -1) return idx; }
-      }
+  function syncReceivedInput(){
+    const inp=document.getElementById('ali_open_count');
+    if(inp){
+      const count=getReceivedCount();
+      inp.value=count;
+      inp.style.color=count>0?IOS.error:IOS.success;
     }
-    var allTh = document.querySelectorAll('thead th');
-    for (var h = 0; h < allTh.length; h++) { if ((allTh[h].textContent || '').replace(/\s+/g,' ').trim().indexOf('Current Flow') !== -1) return h; }
-    return -1;
   }
 
-  function getRows() { var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]'); if (!rows.length) rows = document.querySelectorAll('tbody tr'); return rows; }
-  function getRowStatus(row, colIndex) { var cells = row.querySelectorAll('td'); if (colIndex >= cells.length) return ''; return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase(); }
-  function countRowsByStatus(status) { var col = getFlowColIndex(); if (col === -1) return 0; var rows = getRows(); var count = 0; for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; } return count; }
-  function isRowChecked(row) { var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]'); return cb && cb.checked; }
-
-  async function checkRow(row) {
-    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
-    if (!cb) { var fc = row.querySelector('td'); if (fc) { fc.click(); await wait(60); } return; }
-    if (cb.checked) return;
-    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
-    if (setter && setter.set) setter.set.call(cb, true);
-    cb.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-    cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
-    cb.dispatchEvent(new Event('change', { bubbles:true }));
-    await wait(80);
-    if (!cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
+  function updateProgress(current,total,recordCount){
+    const CIRCUMFERENCE=213.6;
+    const ring=document.getElementById('ali_ring_track');
+    const pctEl=document.getElementById('ali_ring_pct');
+    const pVal=document.getElementById('ali_prog_p_val');
+    const rVal=document.getElementById('ali_prog_r_val');
+    const dots=document.getElementById('ali_prog_dots');
+    const svg=document.getElementById('ali_ring_svg');
+    const pct=total>0?Math.round((current/total)*100):0;
+    const offset=CIRCUMFERENCE-(pct/100)*CIRCUMFERENCE;
+    if(ring) ring.style.strokeDashoffset=offset;
+    if(pctEl){pctEl.textContent=pct+'%';pctEl.style.color=pct>=100?IOS.success:IOS.accent}
+    if(pVal) pVal.textContent=current+' / '+total;
+    if(rVal) rVal.textContent=recordCount!==undefined?recordCount:state.savedRows.length;
+    if(dots) dots.style.opacity=pct>0&&pct<100?'1':'0';
+    if(svg) svg.style.animation=pct>0&&pct<100?'aliRingGlow 1.5s ease-in-out infinite':'none';
   }
 
-  async function uncheckRow(row) {
-    var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]');
-    if (!cb || !cb.checked) return;
-    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'checked');
-    if (setter && setter.set) setter.set.call(cb, false);
-    cb.dispatchEvent(new MouseEvent('mousedown', { bubbles:true }));
-    cb.dispatchEvent(new MouseEvent('click', { bubbles:true }));
-    cb.dispatchEvent(new Event('change', { bubbles:true }));
-    await wait(80);
-    if (cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
+  function resetProgress(){
+    updateProgress(0,0,0);
+    const svg=document.getElementById('ali_ring_svg');
+    if(svg) svg.style.animation='none';
+    const spd=document.getElementById('ali_speed_val');
+    if(spd) spd.textContent='—';
   }
 
-  async function selectOnlyByStatus(targetStatus) {
-    var col = getFlowColIndex();
-    if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return 0; }
-    var rows = getRows(); var selected = 0;
-    for (var r = 0; r < rows.length; r++) {
-      var status = getRowStatus(rows[r], col);
-      if (status.indexOf(targetStatus.toLowerCase()) !== -1) {
-        await checkRow(rows[r]); selected++; await wait(50);
-      } else {
-        if (isRowChecked(rows[r])) { await uncheckRow(rows[r]); await wait(30); }
-      }
-    }
-    return selected;
+  function updateStats(){
+    let rec=0,done=0,packed=0;
+    state.savedRows.forEach(r=>{if(r.st==='received')rec++;if(r.st==='processed')done++;if(r.st==='packed')packed++});
+    animNum('stat_rec',rec);animNum('stat_pack',packed);animNum('stat_done',done);animNum('stat_total',state.savedRows.length);
+    syncReceivedInput();
   }
 
-  function updateCounts() {
-    var allocCount = countRowsByStatus('allocation');
-    var ltCount = countRowsByStatus('loading task');
-    var allocEl = document.getElementById('fey_cnt_alloc');
-    var ltEl = document.getElementById('fey_cnt_lt');
-    var delEl = document.getElementById('fey_cnt_del');
-    var colEl = document.getElementById('fey_cnt_col');
-    if (allocEl) { allocEl.innerText = allocCount > 0 ? allocCount : '—'; allocEl.style.background = allocCount > 0 ? '#fef3c7' : '#f1f5f9'; allocEl.style.color = allocCount > 0 ? '#d97706' : '#94a3b8'; }
-    if (ltEl) { ltEl.innerText = ltCount > 0 ? ltCount : '—'; ltEl.style.background = ltCount > 0 ? '#dbeafe' : '#f1f5f9'; ltEl.style.color = ltCount > 0 ? '#1d4ed8' : '#94a3b8'; }
-    if (delEl) { delEl.innerText = ltCount > 0 ? ltCount : '—'; delEl.style.background = ltCount > 0 ? '#dcfce7' : '#f1f5f9'; delEl.style.color = ltCount > 0 ? '#059669' : '#94a3b8'; }
-    if (colEl) { colEl.innerText = ltCount > 0 ? ltCount : '—'; colEl.style.background = ltCount > 0 ? '#ede9fe' : '#f1f5f9'; colEl.style.color = ltCount > 0 ? '#7c3aed' : '#94a3b8'; }
-  }
-  setInterval(updateCounts, 3000);
-  setTimeout(updateCounts, 500);
+  function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+  function debounce(fn,d){let t;return function(){clearTimeout(t);t=setTimeout(fn,d)}}
 
-  // ═══════════════════════════════════════════════════════════════
-  //  Refresh + Button Helpers
-  // ═══════════════════════════════════════════════════════════════
+  panel.addEventListener('click',e=>{if(panel.classList.contains('ali-minimized')){panel.classList.remove('ali-minimized');e.stopPropagation()}});
 
-  async function clickRefresh() {
-    var found = null;
-    var svgs = document.querySelectorAll('svg[aria-label="refresh icon"]');
-    for (var i = 0; i < svgs.length; i++) { var p = svgs[i].parentElement; if (p && p.offsetParent !== null) { found = p; break; } }
-    if (!found) {
-      var all = document.querySelectorAll('span, button');
-      for (var j = 0; j < all.length; j++) {
-        var txt = (all[j].innerText||'').trim();
-        if (txt.indexOf('Refresh') !== -1 && all[j].offsetParent !== null) { found = all[j]; break; }
-      }
-    }
-    if (found) { found.click(); await wait(2500); updateCounts(); return true; }
-    return false;
-  }
-
-  // Refresh متكرر حتى تظهر حالة معينة
-  async function refreshUntilStatus(status, maxTries) {
-    maxTries = maxTries || 20;
-    for (var i = 0; i < maxTries; i++) {
-      var cnt = countRowsByStatus(status);
-      if (cnt > 0) return cnt;
-      setSt('🔄 انتظار ظهور ' + status + '... (' + (i+1) + '/' + maxTries + ')', 'working');
-      await clickRefresh();
-      await wait(2000);
-    }
-    return countRowsByStatus(status);
-  }
-
-  // Refresh متكرر حتى تختفي حالة معينة
-  async function refreshUntilGone(status, maxTries) {
-    maxTries = maxTries || 20;
-    for (var i = 0; i < maxTries; i++) {
-      var cnt = countRowsByStatus(status);
-      if (cnt === 0) return true;
-      setSt('⏳ ' + cnt + ' طلب "' + status + '" — انتظار (' + (i+1) + '/' + maxTries + ')', 'working');
-      await clickRefresh();
-      await wait(3000);
-    }
-    return countRowsByStatus(status) === 0;
-  }
-
-  function isReject(txt) { return txt.toLowerCase().indexOf('reject') !== -1; }
-
-  function findButtonByText(textMatch, partial) {
-    var textLower = textMatch.toLowerCase();
-    var allEl = document.querySelectorAll('span, button, li, a, div[role="menuitem"], li[role="menuitem"]');
-    for (var i = 0; i < allEl.length; i++) {
-      var el = allEl[i];
-      if (!el.offsetParent && el.offsetWidth === 0) continue;
-      var txt = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
-      if (isReject(txt)) continue;
-      var isMatch = partial ? (txt.toLowerCase().indexOf(textLower) !== -1) : (txt.toLowerCase() === textLower);
-      if (isMatch) return el;
-    }
-    return null;
-  }
-
-  async function openOneDropdown() {
-    var triggers = document.querySelectorAll('.ant-dropdown-trigger, button.ant-dropdown-trigger');
-    for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].offsetParent !== null && !isReject((triggers[i].innerText||''))) { triggers[i].click(); await wait(500); return true; }
-    }
-    return false;
-  }
-
-  async function clickAction(textMatch, partial) {
-    await wait(300);
-    var el = findButtonByText(textMatch, partial);
-    if (el) { el.click(); await wait(600); return true; }
-    await openOneDropdown();
-    await wait(300);
-    el = findButtonByText(textMatch, partial);
-    if (el) { el.click(); await wait(600); return true; }
-    return false;
-  }
-
-  // حاول اضغط الزر — لو مش موجود اعمل Refresh وجرب تاني
-  async function clickActionWithRetry(textMatch, partial, maxRetries) {
-    maxRetries = maxRetries || 10;
-    for (var i = 0; i < maxRetries; i++) {
-      var ok = await clickAction(textMatch, partial);
-      if (ok) return true;
-      setSt('🔄 "' + textMatch + '" مش ظاهر — Refresh (' + (i+1) + '/' + maxRetries + ')', 'working');
-      await clickRefresh();
-      await wait(2000);
-    }
-    return false;
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  Injection
-  // ═══════════════════════════════════════════════════════════════
-
-  function getInput() {
-    // البحث عن أي input بـ rc_select (الرقم بيتغير)
-    var rcInputs = document.querySelectorAll('input[id^="rc_select"]');
-    for (var i = 0; i < rcInputs.length; i++) {
-      if (rcInputs[i].className.indexOf('ant-select-selection-search-input') !== -1) return rcInputs[i];
-    }
-    return document.querySelector('input.ant-select-selection-search-input[role="combobox"]')
-      || document.querySelector('input.ant-select-selection-search-input')
-      || document.querySelector('input[aria-haspopup="listbox"]');
-  }
-
-  // البحث عن span "Reference Number" والضغط عليه لفتح الخانة
-  async function clickReferenceNumber() {
-    var allSpans = document.querySelectorAll('span');
-    for (var i = 0; i < allSpans.length; i++) {
-      var txt = (allSpans[i].innerText || '').trim();
-      if (txt.indexOf('Reference Number') !== -1 && allSpans[i].offsetParent !== null) {
-        allSpans[i].click();
-        await wait(500);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function getSelector() { var input = getInput(); if (!input) return null; return input.closest('.ant-select-selector') || input.closest('.ant-select'); }
-  function countTags() { return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length; }
-  async function waitForOpen(input, timeout) { var start = Date.now(); while (Date.now() - start < timeout) { if (input.getAttribute('aria-expanded') === 'true') return true; await wait(50); } return false; }
-
-  async function forceOpenSelect() {
-    // أولاً: اضغط Reference Number لفتح الخانة
-    var input = getInput();
-    if (!input) {
-      await clickReferenceNumber();
-      await wait(300);
-      input = getInput();
-    }
-    var selector = getSelector();
-    if (!input || !selector) return false;
-    if (input.getAttribute('aria-expanded') === 'true') { input.focus(); return true; }
-
-    // جرب اضغط Reference Number أولاً
-    await clickReferenceNumber();
-    await wait(300);
-    input = getInput();
-    if (!input) return false;
-    if (input.getAttribute('aria-expanded') === 'true') { input.focus(); return true; }
-
-    // جرب اضغط الـ selector
-    selector = getSelector();
-    if (selector) {
-      selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
-      selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
-      selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
-      await wait(50); input.focus(); await wait(50);
-    }
-
-    if (input.getAttribute('aria-expanded') !== 'true') {
-      var overflow = document.querySelector('.ant-select-selection-overflow');
-      if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); }
-    }
-    if (input.getAttribute('aria-expanded') !== 'true') {
-      input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
-      await wait(50);
-    }
-    return await waitForOpen(input, 400);
-  }
-
-  async function injectOne(orderNum) {
-    var input = getInput(); if (!input) return false;
-    var tagsBefore = countTags(); await forceOpenSelect();
-    nativeSetter.call(input, ''); input.dispatchEvent(new Event('input', { bubbles:true })); await wait(30);
-    input.focus(); document.execCommand('selectAll', false); document.execCommand('delete', false); document.execCommand('insertText', false, orderNum); await wait(50);
-    if (input.value !== orderNum) { nativeSetter.call(input, orderNum); input.dispatchEvent(new Event('input', { bubbles:true })); input.dispatchEvent(new Event('change', { bubbles:true })); input.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:orderNum })); }
-    await wait(80);
-    var enterOpts = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
-    input.dispatchEvent(new KeyboardEvent('keydown', enterOpts)); await wait(30);
-    input.dispatchEvent(new KeyboardEvent('keypress', enterOpts)); await wait(30);
-    input.dispatchEvent(new KeyboardEvent('keyup', enterOpts)); await wait(200);
-    var tagsAfter = countTags();
-    if (tagsAfter <= tagsBefore) { input.dispatchEvent(new KeyboardEvent('keydown', enterOpts)); await wait(50); input.dispatchEvent(new KeyboardEvent('keyup', enterOpts)); await wait(200); tagsAfter = countTags(); }
-    return tagsAfter > tagsBefore;
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  UI Events
-  // ═══════════════════════════════════════════════════════════════
-
-  panel.addEventListener('click',function(e){if(panel.classList.contains('fey-min')){panel.classList.remove('fey-min');e.stopPropagation();}});
-  document.getElementById('fey_close').addEventListener('click',function(e){e.stopPropagation();panel.style.animation='feySlideIn 0.3s reverse';setTimeout(function(){panel.remove()},280);});
-  document.getElementById('fey_min').addEventListener('click',function(e){e.stopPropagation();panel.classList.add('fey-min');});
-
-  // ─── زر Allocate (يدوي) ───
-  document.getElementById('fey_alloc_direct').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    await runAllocateOnly();
+  document.getElementById('ali_close').addEventListener('click',e=>{
+    e.stopPropagation();
+    panel.style.transition='all 0.3s';
+    panel.style.opacity='0';
+    panel.style.transform='translateX(40px) scale(0.97)';
+    setTimeout(()=>{
+      panel.remove();
+      state.savedRows=[];
+      state.visitedSet.clear();
+      state.htmlBuffer='';
+    },300);
   });
 
-  // ─── زر Assign to User (يدوي) ───
-  document.getElementById('fey_sel_lt').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    var btn = this; btn.style.opacity = '0.6';
-    setSt('☑️ تحديد Loading Task...', 'working');
-    var count = await selectOnlyByStatus('loading task');
-    updateCounts();
-    if (count === 0) { btn.style.opacity = '1'; showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
-    showToast('تم تحديد ' + count + ' طلب', 'success'); await wait(500);
-    setSt('👤 جاري فتح Assign to User...', 'working');
-    var clicked = await clickAction('Assign to User', true);
-    btn.style.opacity = '1';
-    if (clicked) { showToast('✅ تم فتح Assign to User — اختر الكابتن', 'success'); setSt('👤 اختر الكابتن واضغط Assign ✅', 'done'); }
-    else { showToast('⚠️ Assign to User غير موجود', 'warning'); setSt('⚠️ اضغط Assign to User يدوياً', 'ready'); }
-  });
+  document.getElementById('ali_min').addEventListener('click',e=>{e.stopPropagation();panel.classList.add('ali-minimized')});
 
-  // ─── زر Pending (يدوي) ───
-  document.getElementById('fey_sel_del').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    var btn = this; btn.style.opacity = '0.6';
-    setSt('☑️ تحديد Loading Task...', 'working');
-    var count = await selectOnlyByStatus('loading task');
-    updateCounts();
-    if (count === 0) { btn.style.opacity = '1'; showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
-    showToast('تم تحديد ' + count + ' طلب', 'success'); await wait(500);
-    setSt('⏳ جاري Pending...', 'working');
-    var clicked = await clickAction('pending', false);
-    btn.style.opacity = '1';
-    if (clicked) { showToast('✅ تم Pending', 'success'); setSt('⏳ تم Pending ' + count + ' طلب ✅', 'done'); await wait(2000); updateCounts(); }
-    else { showToast('⚠️ زر pending غير موجود', 'warning'); setSt('⚠️ اضغط pending يدوياً', 'ready'); }
-  });
+  function processData(data){
+    if(!data){return 0}
+    let orders=[];
+    try{orders=typeof data.orders_list==='string'?JSON.parse(data.orders_list):data.orders_list}catch(e){}
+    if(!orders||orders.length===0)return 0;
+    let added=0;
 
-  // ─── زر Collected (يدوي) ───
-  document.getElementById('fey_collected').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    var btn = this; btn.style.opacity = '0.6';
-    setSt('☑️ تحديد Loading Task...', 'working');
-    var count = await selectOnlyByStatus('loading task');
-    updateCounts();
-    if (count === 0) { btn.style.opacity = '1'; showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
-    showToast('تم تحديد ' + count + ' طلب', 'success'); await wait(500);
-    setSt('📦 جاري Collected...', 'working');
-    var clicked = await clickAction('Collected', false);
-    btn.style.opacity = '1';
-    if (clicked) { showToast('✅ تم Collected', 'success'); setSt('📦 تم Collected ' + count + ' طلب ✅', 'done'); await wait(2000); updateCounts(); }
-    else { showToast('⚠️ زر Collected غير موجود', 'warning'); setSt('⚠️ اضغط Collected يدوياً', 'ready'); }
-  });
+    for(let i=0;i<orders.length;i++){
+      const item=orders[i];
+      const inv=item.Invoice||'';
+      const onl=item.onlineNumber||'';
+      const src=item.source||'StorePaid';
+      const hid=item.head_id||'';
+      const typee=item.typee!==undefined?item.typee:'';
 
-  // ─── رفع الملفات ───
-  var uploadArea=document.getElementById('fey_upload');
-  var fileInput=document.getElementById('fey_file');
-  var startBtn=document.getElementById('fey_start');
-  var manualInput=document.getElementById('fey_manual');
+      if(inv.length>=5&&inv.startsWith('0')&&!state.visitedSet.has(inv)){
+        state.visitedSet.add(inv);
+        added++;
+        let st='other';
+        let raw=String(item.status||item.Status||item.order_status||item.OrderStatus||'')
+          .toLowerCase().replace(/<[^>]*>?/gm,'').trim();
 
-  uploadArea.addEventListener('click',function(){fileInput.click()});
-  uploadArea.addEventListener('dragover',function(e){e.preventDefault();this.style.borderColor='#8b5cf6';this.style.background='#ede9fe'});
-  uploadArea.addEventListener('dragleave',function(){this.style.borderColor='#d8b4fe';this.style.background='#faf5ff'});
-  uploadArea.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#d8b4fe';this.style.background='#faf5ff';if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
-  fileInput.addEventListener('change',function(){if(this.files.length)handleFiles(this.files)});
+        if(raw.includes('packed')) st='packed';
+        else if(raw.includes('received')||raw.includes('fulfilled')) st='received';
+        else {
+          let cs=JSON.stringify(item).toLowerCase();
+          if(cs.includes('"packed"')) st='packed';
+          else if(cs.includes('"received"')||cs.includes('"fulfilled"')) st='received';
+        }
 
-  function handleFiles(files){
-    var results=[];var loaded=0;var total=files.length;
-    for(var i=0;i<files.length;i++){
-      (function(idx,f){
-        var r=new FileReader();
-        r.onload=function(e){
-          results[idx]=parse(e.target.result);loaded++;
-          if(loaded===total){
-            var all=[].concat.apply([],results);var u=[],s={};
-            for(var j=0;j<all.length;j++){if(!s[all[j]]){s[all[j]]=true;u.push(all[j])}}
-            state.orders=u;state.injectedCount=0;state.failedCount=0;upStats();var d=all.length-u.length;
-            uploadArea.innerHTML='<div style="font-size:30px;margin-bottom:6px">✅</div><div style="font-size:15px;font-weight:800;color:#059669;margin-bottom:4px">تم تحميل '+total+(total===1?' ملف':' ملفات')+'</div><div style="font-size:13px;color:#10b981;font-weight:600">'+u.length+' طلب'+(d>0?' (حذف '+d+' مكرر)':'')+'</div>';
-            uploadArea.style.borderColor='#34d399';uploadArea.style.background='#f0fdf4';setSt(u.length+' طلب جاهز','loaded');showToast(u.length+' طلب','success');enableStart();
+        const bg=st==='received'?'rgba(34,197,94,0.06)':(st==='packed'?'rgba(245,158,11,0.06)':'transparent');
+        state.htmlBuffer+=`<tr class="fast-row" id="row_${esc(inv)}" style="background:${bg}" data-inv="${esc(inv)}" data-onl="${esc(onl)}" data-src="${esc(src)}" data-hid="${esc(hid)}"><td style="padding:12px 8px"><span class="ali-link">${esc(inv)}</span></td><td style="padding:12px 8px">${esc(onl)}</td><td style="padding:12px 8px">${esc(item.guestName||'')}</td><td style="padding:12px 8px">${esc(item.guestMobile||item.mobile||'')}</td><td style="padding:12px 8px">${esc(item.payment_method||'Cash')}</td><td style="padding:12px 8px">${esc(item.created_at||item.Created_Time||'')}</td><td id="st_${esc(inv)}" style="padding:12px 8px">${esc(st)}</td><td style="padding:12px 8px">${esc(src)}</td></tr>`;
+        state.savedRows.push({id:inv,onl:onl,st:st,typee:typee,guestName:item.guestName||'',guestMobile:item.guestMobile||item.mobile||'',src:src,hid:hid});
+      }
+    }
+    return added;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ✅ v6.5 — Staggered Pipeline with Server-Aware Throttle
+  // ═══════════════════════════════════════════════════════════════
+
+  async function fetchPage(baseUrl, pageNum, currentStatus) {
+    const res = await fetchWithRetry(baseUrl+'Home/getOrders', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({status:currentStatus, pageSelected:pageNum, searchby:''})
+    });
+    const data = await safeParseJSON(res);
+    return data;
+  }
+
+  async function scanAllPages(){
+    state.isProcessing=true;
+    const baseUrl=window.location.origin+"/ez_pill_web/";
+    const currentStatus='packed';
+    setStatus(`جاري الاتصال — ${SERVER_PROFILE.name}...`,'working');
+    let maxPages=parseInt(document.getElementById('p_lim').value)||1;
+    state.savedRows=[];state.visitedSet.clear();state.htmlBuffer='';
+    resetProgress();
+
+    const startTime = performance.now();
+    let pagesCompleted = 0;
+    let totalSuccessful = 0;
+    let failedPageNumbers = [];
+
+    // ═══ حالة الـ Throttle — تبدأ من إعدادات السيرفر ═══
+    const SP = SERVER_PROFILE;
+    let concurrency = SP.initC;
+    let staggerDelay = SP.initDelay;
+    let consecutiveOK = 0;
+    let consecutiveFail = 0;
+
+    function updateSpeedDisplay() {
+      const elapsed = (performance.now() - startTime) / 1000;
+      const pps = elapsed > 0 ? (pagesCompleted / elapsed).toFixed(1) : '0';
+      const spdEl = document.getElementById('ali_speed_val');
+      if(spdEl) spdEl.textContent = `${pps} ص/ث | C:${concurrency}`;
+    }
+
+    try {
+      // ✅ صفحة 1 — لوحدها لنعرف العدد الإجمالي
+      const data1 = await fetchPage(baseUrl, 1, currentStatus);
+      if(data1 && data1.total_orders){
+        const et = parseInt(data1.total_orders) || 0;
+        if(et > 0){ maxPages = Math.ceil(et/10); document.getElementById('p_lim').value = maxPages }
+      }
+      processData(data1); updateStats();
+      pagesCompleted = 1; totalSuccessful = 1;
+      updateProgress(1, maxPages, state.savedRows.length);
+      updateSpeedDisplay();
+
+      if(maxPages > 1) {
+        let nextPage = 2;
+        let activeCount = 0;
+
+        await new Promise((resolveAll) => {
+
+          function onPageDone(pageNum, success) {
+            activeCount--;
+            pagesCompleted++;
+
+            if(success) {
+              totalSuccessful++;
+              consecutiveOK++;
+              consecutiveFail = 0;
+
+              // ✅ رفع السرعة لو مستقر
+              if(consecutiveOK >= SP.rampUp && concurrency < SP.maxC) {
+                concurrency++;
+                staggerDelay = Math.max(staggerDelay - 20, SP.minDelay);
+                consecutiveOK = 0;
+                console.log(`⬆️ Speed up: C=${concurrency}, delay=${staggerDelay}ms`);
+              }
+            } else {
+              consecutiveFail++;
+              consecutiveOK = 0;
+
+              // ⚠️ تقليل السرعة لو في أخطاء
+              if(consecutiveFail >= SP.rampDown) {
+                concurrency = Math.max(concurrency - 1, SP.minC);
+                staggerDelay = Math.min(staggerDelay + 100, SP.maxDelay);
+                consecutiveFail = 0;
+                console.log(`⬇️ Slow down: C=${concurrency}, delay=${staggerDelay}ms`);
+              }
+            }
+
+            updateProgress(pagesCompleted, maxPages, state.savedRows.length);
+            updateSpeedDisplay();
+            setStatus(`جاري الجلب... ${pagesCompleted}/${maxPages} | C:${concurrency}`,'working');
+
+            launchMore();
+
+            if(activeCount === 0 && nextPage > maxPages) {
+              resolveAll();
+            }
           }
-        };r.readAsText(f);
-      })(i,files[i]);
+
+          function launchOne(pageNum) {
+            activeCount++;
+            fetchPage(baseUrl, pageNum, currentStatus)
+              .then(data => {
+                if(data) { processData(data); updateStats(); }
+                onPageDone(pageNum, true);
+              })
+              .catch(err => {
+                console.warn(`❌ Page ${pageNum} failed:`, err.message);
+                failedPageNumbers.push(pageNum);
+                onPageDone(pageNum, false);
+              });
+          }
+
+          function launchMore() {
+            while(activeCount < concurrency && nextPage <= maxPages) {
+              const p = nextPage++;
+              // ✅ Stagger: فاصل بسيط بين كل إطلاق
+              setTimeout(() => launchOne(p), activeCount * staggerDelay);
+            }
+          }
+
+          launchMore();
+        });
+      }
+
+    } catch(err){
+      console.error(err);
+      const backup=loadFromSession();
+      if(backup&&backup.length>0){
+        showToast('فشل الاتصال — تم تحميل آخر نسخة محفوظة','warning');
+        state.savedRows=backup;
+        updateStats();
+        finishScan(true);
+        return;
+      }
+      setStatus('خطأ في الاتصال بالخادم','error');showToast('فشل الاتصال بالخادم','error');state.isProcessing=false;return;
     }
+
+    // ═══════════════════════════════════════════════════
+    // ✅ إعادة محاولة الصفحات الفاشلة — واحدة واحدة
+    // ═══════════════════════════════════════════════════
+    if(failedPageNumbers.length > 0) {
+      setStatus(`إعادة محاولة ${failedPageNumbers.length} صفحة فاشلة...`,'working');
+      showToast(`إعادة محاولة ${failedPageNumbers.length} صفحة...`,'warning');
+
+      const stillFailed = [];
+      for(let i = 0; i < failedPageNumbers.length; i++) {
+        const p = failedPageNumbers[i];
+        setStatus(`إعادة محاولة صفحة ${p} (${i+1}/${failedPageNumbers.length})...`,'working');
+        try {
+          await sleep(SP.retryDelay);
+          const data = await fetchPage(baseUrl, p, currentStatus);
+          if(data) { processData(data); updateStats(); totalSuccessful++; }
+        } catch(e) {
+          stillFailed.push(p);
+        }
+      }
+
+      // محاولة أخيرة
+      if(stillFailed.length > 0) {
+        setStatus(`محاولة أخيرة لـ ${stillFailed.length} صفحة...`,'working');
+        const finalFailed = [];
+        for(const p of stillFailed) {
+          try {
+            await sleep(SP.retryDelay * 2);
+            const data = await fetchPage(baseUrl, p, currentStatus);
+            if(data) { processData(data); updateStats(); totalSuccessful++; }
+          } catch(e) {
+            finalFailed.push(p);
+          }
+        }
+        if(finalFailed.length > 0) {
+          showToast(`⚠️ ${finalFailed.length} صفحة لم تُجلب (${finalFailed.join(',')})`,'warning');
+        }
+      }
+    }
+
+    const totalTime = ((performance.now() - startTime) / 1000).toFixed(1);
+    console.log(`✅ Done: ${state.savedRows.length} records in ${totalTime}s (${totalSuccessful}/${maxPages} pages) — ${SERVER_PROFILE.name}`);
+
+    saveToSession();
+    finishScan(false, totalTime);
   }
 
-  manualInput.addEventListener('input',function(){var o=parse(this.value);if(o.length>0){state.orders=o;state.injectedCount=0;state.failedCount=0;upStats();enableStart()}else{startBtn.disabled=true;startBtn.style.opacity='0.5';startBtn.innerHTML='📤 رفع الطلبات (ارفع ملف أولاً)'}});
-  function enableStart(){startBtn.disabled=false;startBtn.style.opacity='1';startBtn.style.cursor='pointer';startBtn.innerHTML='📤 رفع الطلبات ('+state.orders.length+' طلب)';}
-  document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
+  function finishScan(fromBackup, totalTime){
+    state.isProcessing=false;
+    const maxP=parseInt(document.getElementById('p_lim').value)||1;
+    updateProgress(maxP,maxP,state.savedRows.length);
 
-  // ═══════════════════════════════════════════════════════════════
-  //  رفع → Dialog (3 خيارات)
-  // ═══════════════════════════════════════════════════════════════
+    if(!fromBackup){
+      const tables=document.querySelectorAll('table');
+      let target=tables[0];
+      if(target){
+        for(const t of tables) if(t.innerText.length>target.innerText.length) target=t;
+        const tbody=target.querySelector('tbody')||target;
+        tbody.innerHTML=state.htmlBuffer;
 
-  startBtn.addEventListener('click', async function() {
-    if (state.isRunning || !state.orders.length) return;
+        state.savedRows.forEach(r=>{
+          r.node=document.getElementById('row_'+esc(r.id));
+        });
 
-    // اضغط Reference Number أولاً لفتح الخانة
-    var input = getInput();
-    if (!input) {
-      await clickReferenceNumber();
-      await wait(500);
-      input = getInput();
+        tbody.addEventListener('click',e=>{
+          const tr=e.target.closest('tr[data-inv]');
+          if(tr){
+            e.stopPropagation();
+            const link=e.target.closest('.ali-link');
+            if(link){
+              const inv=tr.dataset.inv;
+              const onl=tr.dataset.onl;
+              const src=tr.dataset.src;
+              const hid=tr.dataset.hid;
+              if(inv&&typeof getDetails==='function') getDetails(onl,inv,src,hid);
+            }
+          }
+        },true);
+      }
     }
-    if (!input) { await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye الصحيحة',buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]}); return; }
 
-    startBtn.disabled = true; startBtn.style.opacity = '0.8';
-    setSt('🔄 جاري تجهيز الخانة...', 'working');
-    await forceOpenSelect();
-    setSt('🚀 جاري الرفع...', 'working');
-    state.isRunning = true; state.injectedCount = 0; state.failedCount = 0;
-    document.getElementById('fey_pw').style.display = 'block'; upStats();
-    var pf = document.getElementById('fey_pf'); var pt = document.getElementById('fey_pt');
-    for (var i = 0; i < state.orders.length; i++) {
-      var order = state.orders[i];
-      setSt((i+1) + '/' + state.orders.length + ': ' + order, 'working');
-      pf.style.width = (((i+1) / state.orders.length) * 100) + '%';
-      pt.innerText = (i+1) + '/' + state.orders.length;
-      startBtn.innerHTML = '📤 ' + (i+1) + '/' + state.orders.length;
-      var ok = await injectOne(order);
-      if (ok) { state.injectedCount++; } else { await wait(300); ok = await injectOne(order); if (ok) { state.injectedCount++; } else { state.failedCount++; } }
-      upStats(); if (i < state.orders.length - 1) await wait(state.delayMs);
+    const recCount=getReceivedCount();
+    const timeMsg = totalTime ? ` في ${totalTime} ثانية` : '';
+    setStatus(`اكتملت العملية: تم حصر ${state.savedRows.length} سجل${timeMsg}`,'done');
+    showToast(`اكتمل الحصر: ${state.savedRows.length} سجل${timeMsg}`,'success');
+
+    const da=document.getElementById('ali_dynamic_area');
+    da.innerHTML=`
+      <div class="ios-grp" style="padding:14px 16px">
+        <div style="position:relative;margin-bottom:8px">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:900;color:${IOS.muted};pointer-events:none;font-family:monospace">0</span>
+          <input type="text" id="ali_sI" class="ios-input" placeholder="أدخل الأرقام بعد الـ 0..." style="padding-left:30px;direction:ltr;text-align:left;letter-spacing:1px;font-family:monospace">
+        </div>
+        <div style="position:relative">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none">🔗</span>
+          <input type="text" id="ali_sO" class="ios-input" placeholder="بحث برقم الطلب (ERX)..." style="padding-right:36px;direction:rtl">
+        </div>
+      </div>
+
+      <div id="ali_search_count" style="font-size:11px;color:${IOS.muted};text-align:center;font-weight:600;padding:2px 0 10px">عرض ${state.savedRows.length} من ${state.savedRows.length} نتيجة</div>
+      <button id="ali_btn_open" class="ios-btn ios-success" style="margin-bottom:8px;opacity:0.7;cursor:not-allowed">⚡ ابحث أولاً ثم افتح المطابق</button>
+
+      <div class="ios-grp" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">الطلبات القابلة للتسليم:</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:${IOS.muted};font-weight:600">المتبقي:</span>
+          <input type="number" id="ali_open_count" value="${recCount}" class="ios-input" style="width:70px;padding:8px;text-align:center;font-size:15px;font-weight:900;color:${recCount>0?IOS.error:IOS.success}" onfocus="this.value=''">
+        </div>
+      </div>
+
+      <button id="ali_btn_deliver_silent" class="ios-btn ios-error" style="margin-bottom:8px">📝 تنفيذ أوامر التسليم (Received + Fulfilled)</button>
+      <button id="ali_btn_export" class="ios-btn ios-warn" style="margin-bottom:8px">📦 تصدير بيانات الطلبات (Packed)</button>
+      <button id="ali_btn_sync" class="ios-btn ios-ghost">🔄 إعادة فحص البيانات</button>`;
+
+    syncReceivedInput();
+
+    const sI=document.getElementById('ali_sI'),sO=document.getElementById('ali_sO'),sc=document.getElementById('ali_search_count'),ob=document.getElementById('ali_btn_open');
+    let cm=[];
+    function fr(){
+      const ri=sI.value.trim();const is=ri!==''?'0'+ri:'';const os=sO.value.trim().toLowerCase();
+      let sh=0;cm=[];const hf=is!==''||os!=='';
+      for(let i=0;i<state.savedRows.length;i++){
+        const rw=state.savedRows[i];
+        const mi=is!==''&&rw.id.startsWith(is);
+        const mo=os!==''&&rw.onl.toLowerCase().includes(os);
+        const s=hf?(mi||mo):true;
+        if(rw.node) rw.node.style.display=s?'':'none';
+        if(s){sh++;if(hf)cm.push(rw);}
+      }
+      sc.innerText=`عرض ${sh} من ${state.savedRows.length} نتيجة`;
+      if(hf&&cm.length>0){
+        ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;ob.style.opacity='1';ob.style.cursor='pointer';
+      }else if(hf&&cm.length===0){
+        ob.innerHTML='⚡ لا توجد نتائج';ob.style.opacity='0.5';ob.style.cursor='not-allowed';
+      }else{
+        ob.innerHTML='⚡ ابحث أولاً ثم افتح المطابق';ob.style.opacity='0.7';ob.style.cursor='not-allowed';
+      }
+      sI.className='ios-input'+(ri.length>0?(sh>0?' match':' nomatch'):'');
+      sO.className='ios-input'+(os.length>0?(sh>0?' match':' nomatch'):'');
     }
-    state.isRunning = false; pf.style.width = '100%';
-    startBtn.disabled = false; startBtn.style.opacity = '1'; startBtn.style.cursor = 'pointer';
-    startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
-    setSt(state.injectedCount+'✅ / '+state.failedCount+'❌', 'done');
+    sI.addEventListener('input',debounce(fr,150));
+    sO.addEventListener('input',debounce(fr,150));
 
-    // 3 خيارات
-    var choice = await showDialog({
-      icon:'📦', iconColor:'blue', title:'ماذا تريد؟',
-      desc:'تم رفع ' + state.injectedCount + ' طلب ✅' + (state.failedCount > 0 ? '  |  فشل ' + state.failedCount + ' ❌' : ''),
-      buttons:[
-        {text:'❌ إلغاء',value:'cancel'},
-        {text:'📦 Allocate فقط',value:'alloc',style:'background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white'},
-        {text:'🚀 تشغيل آلي كامل',value:'auto',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}
-      ]
+    ob.addEventListener('click',async function(){
+      const ri=sI.value.trim();const os=sO.value.trim().toLowerCase();const hf=ri!==''||os!=='';
+      if(!hf){
+        showToast('ابحث أولاً برقم الفاتورة أو رقم الطلب!','warning');
+        sI.focus();sI.style.animation='aliBlink 0.5s 3';setTimeout(()=>{sI.style.animation=''},1500);return;
+      }
+      if(cm.length===0){showToast('لا توجد طلبات مطابقة!','warning');return;}
+      ob.disabled=true;ob.style.opacity='0.6';ob.style.cursor='not-allowed';
+      let opened=0,failed=0,blocked=0;
+      const baseUrl=window.location.origin+"/ez_pill_web/getEZPill_Details";
+      for(let idx=0;idx<cm.length;idx++){
+        const it=cm[idx];
+        const url=`${baseUrl}?onlineNumber=${encodeURIComponent(it.onl.replace(/ERX/gi,''))}&Invoice=${encodeURIComponent(it.id)}&typee=${encodeURIComponent(it.typee)}&head_id=${encodeURIComponent(it.hid)}`;
+        try{
+          const w=window.open(url,"_blank");
+          if(w){
+            opened++;window.focus();try{w.blur()}catch(e){}
+          }else{
+            blocked++;
+            if(blocked===1){
+              showToast('المتصفح يحظر النوافذ — اسمح بالنوافذ المنبثقة!','warning');
+            }
+          }
+        }catch(e){failed++;}
+        ob.innerHTML=`🚀 جاري الفتح (${idx+1}/${cm.length})`;
+        setStatus(`فتح ${idx+1} من ${cm.length}: ${it.onl||it.id}`,'working');
+        if(idx<cm.length-1) await sleep(1200);
+      }
+      let msg=`تم فتح ${opened} طلب`;
+      if(blocked>0) msg+=` (${blocked} محظور)`;
+      if(failed>0) msg+=` (${failed} فشل)`;
+      showToast(msg,opened>0?'success':'error');
+      setStatus('تم فتح المطابق بنجاح','done');
+      ob.disabled=false;ob.innerHTML=`⚡ فتح المطابق (${cm.length} طلب)`;fr();
     });
 
-    if (choice === 'alloc') await runAllocateOnly();
-    else if (choice === 'auto') await runFullAuto();
-  });
-
-  // ═══════════════════════════════════════════════════════════════
-  //  📦 Allocate فقط
-  // ═══════════════════════════════════════════════════════════════
-
-  async function runAllocateOnly() {
-    try {
-      setSt('📦 بحث عن طلبات Allocation...', 'working');
-      if (getFlowColIndex() === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
-      var selected = await selectOnlyByStatus('allocation');
-      if (selected === 0) { showToast('لا يوجد طلبات Allocation', 'warning'); setSt('⚠️ لا يوجد Allocation', 'ready'); updateCounts(); return; }
-      showToast('تم تعليم ' + selected + ' طلب', 'success');
-      setSt('📦 جاري Allocate (' + selected + ')...', 'working'); await wait(400);
-      var allocClicked = await clickAction('Allocate', false);
-      if (allocClicked) { showToast('✅ تم Allocate!', 'success'); }
-      else { showToast('⚠️ اضغط Allocate يدوياً', 'warning'); }
-      setSt('⏳ انتظار Allocation → Loading Task...', 'working');
-      await wait(2000);
-      await refreshUntilGone('allocation', 25);
-      updateCounts();
-      var ltCount = countRowsByStatus('loading task');
-      setSt('✅ تم Allocate — ' + ltCount + ' Loading Task 🎉', 'done');
-    } catch(err) { setSt('❌ خطأ: ' + (err.message || err), 'error'); }
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  //  🚀 تشغيل آلي كامل
-  //
-  //  1. Allocate + Refresh حتى تتحول
-  //  2. تحديد Loading Task + Assign to User
-  //  3. ⏸️ انتظار الكابتن
-  //  4. Refresh حتى تظهر Loading Task + تحديد + Pending
-  //  5. Refresh حتى تظهر Loading Task + تحديد + Collected
-  //  6. تحقق نهائي
-  // ═══════════════════════════════════════════════════════════════
-
-  async function runFullAuto() {
-    try {
-
-      // ══════════ 1: Allocate ══════════
-      setSt('📦 [1/4] بحث عن Allocation...', 'working');
-      if (getFlowColIndex() === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
-
-      var allocCount = await selectOnlyByStatus('allocation');
-      if (allocCount > 0) {
-        showToast('تم تعليم ' + allocCount + ' طلب Allocation', 'success');
-        setSt('📦 [1/4] Allocate (' + allocCount + ')...', 'working');
-        await wait(400);
-        await clickAction('Allocate', false);
-        showToast('✅ تم Allocate', 'success');
-        setSt('🔄 [1/4] انتظار Allocation → Loading Task...', 'working');
-        await wait(2000);
-        await refreshUntilGone('allocation', 25);
-      } else {
-        showToast('لا يوجد Allocation — متابعة', 'info');
-      }
-      updateCounts();
-
-      // ══════════ 2: Assign to User ══════════
-      setSt('🔄 [2/4] تحديث قبل Assign...', 'working');
-      await clickRefresh();
-      await wait(1000);
-
-      setSt('☑️ [2/4] تحديد Loading Task...', 'working');
-      var ltCount = await selectOnlyByStatus('loading task');
-      if (ltCount === 0) {
-        // ممكن لسه ما ظهرتش — استنى
-        ltCount = await refreshUntilStatus('loading task', 15);
-        if (ltCount > 0) ltCount = await selectOnlyByStatus('loading task');
-      }
-      if (ltCount === 0) { showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
-
-      showToast('تم تحديد ' + ltCount + ' طلب', 'success');
-      await wait(500);
-      setSt('👤 [2/4] Assign to User...', 'working');
-      await clickActionWithRetry('Assign to User', true, 10);
-
-      // ══════════ 3: ⏸️ انتظار الكابتن ══════════
-      setSt('⏸️ [2/4] الكود متوقف — اختر الكابتن...', 'paused');
-
-      await showDialog({
-        icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
-        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. لما تخلص اضغط الزر ⬇️\n\n⏸️ الكود متوقف — خذ وقتك',
-        buttons:[{text:'✅ خلصت — كمّل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
+    document.getElementById('ali_btn_deliver_silent').addEventListener('click',async()=>{
+      const list=state.savedRows.filter(r=>r.st==='received');
+      const count=parseInt(document.getElementById('ali_open_count').value)||list.length;
+      const toD=list.slice(0,count);
+      if(!toD.length){showToast('لا توجد سجلات مطابقة','warning');return}
+      const res=await showDialog({
+        icon:'📝',
+        title:'تأكيد أمر التسليم',
+        desc:'سيتم إرسال طلبات التحديث للخادم (Received + Fulfilled)',
+        badges:[{text:'📥 Received+Fulfilled: '+toD.length,active:true},{text:'⚡ معالجة تلقائية',active:true}],
+        info:[{label:'إجمالي السجلات',value:toD.length,color:IOS.error},{label:'العملية',value:'تحديث حالة التسليم',color:IOS.accent}],
+        buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'✅ تأكيد',value:'confirm',primary:true}]
       });
-
-      showToast('👍 جاري إكمال المراحل...', 'success');
-
-      // ══════════ 4: Pending ══════════
-      setSt('🔄 [3/4] تحديث قبل Pending...', 'working');
-      await clickRefresh();
-      await wait(1500);
-
-      // انتظر Loading Task تظهر — ممكن الحالة لسه ما اتغيرتش
-      ltCount = countRowsByStatus('loading task');
-      if (ltCount === 0) {
-        setSt('🔄 [3/4] انتظار ظهور Loading Task...', 'working');
-        ltCount = await refreshUntilStatus('loading task', 15);
+      if(res.action!=='confirm')return;
+      const btn=document.getElementById('ali_btn_deliver_silent');btn.disabled=true;btn.style.opacity='0.7';
+      let sc2=0;const dUrl=window.location.origin+'/ez_pill_web/getEZPill_Details/updatetoDeliver';
+      for(let i=0;i<toD.length;i++){
+        const it=toD[i];
+        btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري (${i+1}/${toD.length})... | متبقي: ${getReceivedCount()}`;
+        try{
+          const params=new URLSearchParams();
+          params.append('invoice_num',it.id);
+          params.append('patienName',it.guestName);
+          params.append('mobile',it.guestMobile);
+          const r=await fetchWithTimeout(dUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:params});
+          if(r.ok){
+            sc2++;
+            it.st='processed';
+            if(it.node){it.node.style.background='rgba(0,0,0,0.03)';it.node.style.opacity='0.5';const stEl=document.getElementById('st_'+it.id);if(stEl) stEl.textContent='processed'}
+            updateStats();
+          }
+        }catch(e){console.warn('فشل:',it.id,e)}
+        if(i%10===0||i===toD.length-1) updateStats();
+        await sleep(50);
       }
 
-      if (ltCount > 0) {
-        setSt('☑️ [3/4] تحديد Loading Task...', 'working');
-        ltCount = await selectOnlyByStatus('loading task');
-        showToast('تم تحديد ' + ltCount + ' طلب', 'success');
-        await wait(500);
+      saveToSession();
 
-        setSt('⏳ [3/4] Pending...', 'working');
-        var pendingOk = await clickActionWithRetry('pending', false, 10);
-        if (pendingOk) showToast('✅ تم Pending', 'success');
-        else showToast('⚠️ Pending لم يُعثر عليه', 'warning');
+      showToast(`تم تنفيذ ${sc2} سجل — المتبقي: ${getReceivedCount()}`,'success');
+      btn.innerHTML=`✅ اكتمل — متبقي: ${getReceivedCount()}`;btn.style.background=IOS.success;btn.style.opacity='1';btn.disabled=false;
+    });
+
+    document.getElementById('ali_btn_export').addEventListener('click',async()=>{
+      const ri=sI.value.trim();const os=sO.value.trim().toLowerCase();const hf=ri!==''||os!=='';
+      const targetList=hf?cm:state.savedRows;
+      const pr=targetList.filter(r=>r.st==='packed');
+      if(!pr.length){showToast('لا توجد بيانات مطابقة للتصدير','warning');return}
+      const res=await showDialog({icon:'📦',title:'تصدير البيانات',desc:'سيتم تصدير بيانات الطلبات المجهزة كملفات نصية',info:[{label:'عدد الطلبات',value:pr.length,color:IOS.warn},{label:'عدد الملفات',value:Math.ceil(pr.length/MAX_PER_FILE),color:IOS.accent}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'📥 تصدير',value:'confirm',primary:true}]});
+      if(res.action!=='confirm')return;
+      const nf=Math.ceil(pr.length/MAX_PER_FILE);
+      for(let i=0;i<nf;i++){
+        const chunk=pr.slice(i*MAX_PER_FILE,Math.min((i+1)*MAX_PER_FILE,pr.length));
+        const content=chunk.map(r=>r.onl).join('\n');
+        const blob=new Blob([content],{type:'text/plain'});
+        const url=URL.createObjectURL(blob);
+        setTimeout(()=>{const a=document.createElement('a');a.href=url;a.download='Data_Export_'+(i+1)+'.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},i*500);
       }
+      showToast(`تم تصدير ${nf} ملف`,'success');
+    });
 
-      // ══════════ 5: Collected ══════════
-      await wait(1500);
-      setSt('🔄 [4/4] تحديث قبل Collected...', 'working');
-      await clickRefresh();
-      await wait(1500);
-
-      ltCount = countRowsByStatus('loading task');
-      if (ltCount === 0) {
-        setSt('🔄 [4/4] انتظار ظهور Loading Task...', 'working');
-        ltCount = await refreshUntilStatus('loading task', 15);
-      }
-
-      if (ltCount > 0) {
-        setSt('☑️ [4/4] تحديد Loading Task...', 'working');
-        ltCount = await selectOnlyByStatus('loading task');
-        showToast('تم تحديد ' + ltCount + ' طلب', 'success');
-        await wait(500);
-
-        setSt('📦 [4/4] Collected ⛔ تجنب Reject...', 'working');
-        var collectedOk = await clickActionWithRetry('Collected', false, 10);
-        if (collectedOk) showToast('✅ تم Collected', 'success');
-        else showToast('⚠️ Collected لم يُعثر عليه', 'warning');
-      }
-
-      // ══════════ 6: التحقق النهائي ══════════
-      await wait(2000);
-      setSt('🔄 التحديث النهائي...', 'working');
-      await clickRefresh();
-      await wait(1000);
-      updateCounts();
-
-      var deliveryCount = countRowsByStatus('delivery');
-      var totalRows = getRows().length;
-
-      showToast('🎉 انتهى! ' + deliveryCount + '/' + totalRows + ' Delivery', 'success');
-      setSt('🎉 تم! ' + deliveryCount + '/' + totalRows + ' Delivery ✅', 'done');
-
-    } catch(err) {
-      setSt('❌ خطأ: ' + (err.message || err), 'error');
-      showToast('خطأ غير متوقع', 'error');
-    }
+    document.getElementById('ali_btn_sync').addEventListener('click',async function(){
+      if(state.isProcessing){showToast('العملية جارية — انتظر!','warning');return}
+      const sb=this;const oc=state.savedRows.length;
+      const res=await showDialog({icon:'🔄',title:'إعادة فحص البيانات',desc:'سيتم إعادة جلب كل البيانات من الخادم',badges:[{text:'حذف القديم',active:true},{text:'جلب الجديد',active:true},{text:'تحديث الحالات',active:true}],info:[{label:'السجلات الحالية',value:oc,color:IOS.accent},{label:'العملية',value:'فحص شامل',color:IOS.blue}],buttons:[{text:'إلغاء',value:'cancel',primary:false},{text:'🔄 بدء',value:'confirm',primary:true}]});
+      if(res.action!=='confirm')return;
+      sb.disabled=true;sb.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...`;sb.style.color=IOS.accent;
+      await scanAllPages();
+    });
   }
 
+  document.getElementById('ali_start').addEventListener('click',function(){if(state.isProcessing)return;this.disabled=true;this.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:aliSpin 0.5s linear infinite"></div> جاري الفحص...`;this.style.opacity='0.7';scanAllPages()});
 })();
