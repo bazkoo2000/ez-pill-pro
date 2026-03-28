@@ -49,7 +49,7 @@ javascript:(function(){
   function showFloatingBar(msg, btnText) {
     return new Promise(function(resolve) {
       var bar = document.createElement('div');
-      bar.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;background:linear-gradient(135deg,#1e293b,#334155);color:white;padding:12px 20px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);font-family:Segoe UI,sans-serif;direction:rtl;display:flex;align-items:center;gap:12px;animation:feyToastIn 0.4s cubic-bezier(0.16,1,0.3,1);max-width:95vw';
+      bar.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999999;background:linear-gradient(135deg,#1e293b,#334155);color:white;padding:12px 20px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);font-family:Segoe UI,sans-serif;direction:rtl;display:flex;align-items:center;gap:12px;animation:feyToastIn 0.4s cubic-bezier(0.16,1,0.3,1);max-width:95vw';
       var btn = document.createElement('button');
       btn.innerText = btnText;
       btn.style.cssText = 'background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;padding:10px 20px;border-radius:12px;font-weight:800;font-size:13px;font-family:Segoe UI,sans-serif;cursor:pointer;white-space:nowrap;transition:all 0.2s;box-shadow:0 4px 12px rgba(5,150,105,0.3)';
@@ -61,7 +61,7 @@ javascript:(function(){
       btn.addEventListener('click', function() {
         bar.style.transition = 'all 0.3s';
         bar.style.opacity = '0';
-        bar.style.transform = 'translateX(-50%) translateY(20px)';
+        bar.style.transform = 'translateX(-50%) translateY(-20px)';
         setTimeout(function() { bar.remove(); resolve('done'); }, 300);
       });
       document.body.appendChild(bar);
