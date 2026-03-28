@@ -2,7 +2,7 @@ javascript:(function(){
   'use strict';
 
   var PANEL_ID = 'fareye_injector';
-  var VERSION = '4.0';
+  var VERSION = '4.1';
   var VER_KEY = 'fareye_ver';
   if (document.getElementById(PANEL_ID)) { document.getElementById(PANEL_ID).remove(); return; }
 
@@ -32,7 +32,7 @@ javascript:(function(){
       if(o.buttons)for(var j=0;j<o.buttons.length;j++)bh+='<button data-fey-btn="'+j+'" style="flex:1;padding:14px;border:none;border-radius:14px;cursor:pointer;font-weight:800;font-size:15px;font-family:Segoe UI,sans-serif;'+(o.buttons[j].style||'background:#f1f5f9;color:#475569')+';transition:all 0.2s">'+o.buttons[j].text+'</button>';
       var dialogBox = document.createElement('div');
       dialogBox.style.cssText = 'background:white;border-radius:24px;width:440px;max-width:92vw;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;font-family:Segoe UI,sans-serif;direction:rtl;color:#1e293b;animation:feyDialogIn 0.4s cubic-bezier(0.16,1,0.3,1)';
-      dialogBox.innerHTML = '<div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500;white-space:pre-line">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px">'+bh+'</div>';
+      dialogBox.innerHTML = '<div style="padding:24px 24px 0;text-align:center"><div style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;background:'+(ibg[o.iconColor]||ibg.blue)+'">'+o.icon+'</div><div style="font-size:20px;font-weight:900;margin-bottom:6px">'+o.title+'</div><div style="font-size:14px;color:#64748b;line-height:1.6;font-weight:500;white-space:pre-line">'+o.desc+'</div></div><div style="padding:20px 24px">'+ih+(o.body||'')+'</div><div style="padding:16px 24px 24px;display:flex;gap:10px;flex-wrap:wrap">'+bh+'</div>';
       ov.appendChild(dialogBox);
       var resolved = false;
       dialogBox.addEventListener('click', function(e) {
@@ -40,10 +40,7 @@ javascript:(function(){
         var b = e.target.closest('[data-fey-btn]');
         if (b) { resolved = true; ov.remove(); resolve(o.buttons[parseInt(b.getAttribute('data-fey-btn'))].value); }
       });
-      // امنع الإقفال بالضغط على الخلفية — بس اسمح للأزرار جوا الـ dialog تشتغل
-      ov.addEventListener('mousedown', function(e) {
-        if (e.target === ov) { e.stopPropagation(); e.preventDefault(); }
-      });
+      ov.addEventListener('mousedown', function(e) { if (e.target === ov) { e.stopPropagation(); e.preventDefault(); } });
       document.body.appendChild(ov);
     });
   }
@@ -81,18 +78,14 @@ javascript:(function(){
           '</div>'+
           '<h3 style="font-size:20px;font-weight:900;margin:0">FAREYE</h3>'+
         '</div>'+
-        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v4.0</span></div>'+
+        '<div style="text-align:right;margin-top:4px;position:relative;z-index:1"><span style="display:inline-block;background:rgba(167,139,250,0.25);color:#c4b5fd;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700">Order Injector v4.1</span></div>'+
       '</div>'+
       '<div style="padding:20px 22px;overflow-y:auto;max-height:calc(92vh - 100px)" id="fey_body">'+
-
-        // الإحصائيات
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div><div style="font-size:18px;margin-bottom:4px">📋</div><div id="fey_s_t" style="font-size:22px;font-weight:900;color:#8b5cf6;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">إجمالي</div></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#10b981,#34d399)"></div><div style="font-size:18px;margin-bottom:4px">✅</div><div id="fey_s_d" style="font-size:22px;font-weight:900;color:#10b981;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">تم رفعه</div></div>'+
           '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;padding:12px 6px;text-align:center;position:relative;overflow:hidden"><div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#ef4444,#f87171)"></div><div style="font-size:18px;margin-bottom:4px">❌</div><div id="fey_s_f" style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;margin-bottom:2px">0</div><div style="font-size:10px;color:#94a3b8;font-weight:700">فشل</div></div>'+
         '</div>'+
-
-        // أدوات ذكية
         '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:16px;padding:14px;margin-bottom:16px">'+
           '<div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-align:center;letter-spacing:0.5px">⚡ أدوات ذكية</div>'+
           '<button id="fey_alloc_direct" class="fey-helper-btn">'+
@@ -112,8 +105,6 @@ javascript:(function(){
             '<span class="fey-badge" style="background:#ede9fe;color:#7c3aed" id="fey_cnt_col">—</span>'+
           '</button>'+
         '</div>'+
-
-        // رفع الملفات
         '<div id="fey_main">'+
           '<div id="fey_upload" style="border:2px dashed #d8b4fe;border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:#faf5ff;margin-bottom:16px">'+
             '<div style="font-size:40px;margin-bottom:8px">📂</div>'+
@@ -136,10 +127,9 @@ javascript:(function(){
     '</div>';
   document.body.appendChild(panel);
 
-  // ─── Helpers ───
   function animN(id,v){var e=document.getElementById(id);if(!e||e.innerText===String(v))return;requestAnimationFrame(function(){e.innerText=v;e.style.animation='feyCountUp 0.4s';setTimeout(function(){e.style.animation=''},400)});}
   function upStats(){animN('fey_s_t',state.orders.length);animN('fey_s_d',state.injectedCount);animN('fey_s_f',state.failedCount);}
-  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
+  function setSt(t,type){var e=document.getElementById('fey_status');if(!e)return;var c={ready:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'},working:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'spinner'},error:{bg:'#fef2f2',co:'#dc2626',bo:'#fecaca',ic:'❌'},done:{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'🎉'},loaded:{bg:'#f5f3ff',co:'#6d28d9',bo:'#ddd6fe',ic:'📋'},waiting:{bg:'#fefce8',co:'#a16207',bo:'#fef08a',ic:'blink'},paused:{bg:'#eff6ff',co:'#1d4ed8',bo:'#bfdbfe',ic:'⏸️'}}[type]||{bg:'#f0fdf4',co:'#15803d',bo:'#bbf7d0',ic:'✅'};var ih=c.ic==='spinner'?'<div style="width:16px;height:16px;border:2px solid rgba(124,58,237,0.2);border-top-color:#8b5cf6;border-radius:50%;animation:feySpin 0.8s linear infinite;flex-shrink:0"></div>':c.ic==='blink'?'<span style="font-size:20px;animation:feyBlink 0.8s infinite">👆</span>':'<span>'+c.ic+'</span>';e.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:13px;font-weight:600;background:'+c.bg+';color:'+c.co+';border:1px solid '+c.bo;e.innerHTML=ih+'<span>'+t+'</span>';}
   function parse(t){return t.split(/[\n\r]+/).map(function(l){return l.trim()}).filter(function(l){return l.length>0});}
   function wait(ms){return new Promise(function(r){setTimeout(r,ms)});}
 
@@ -165,14 +155,7 @@ javascript:(function(){
 
   function getRows() { var rows = document.querySelectorAll('tbody tr.ant-table-row, tbody tr[data-row-key]'); if (!rows.length) rows = document.querySelectorAll('tbody tr'); return rows; }
   function getRowStatus(row, colIndex) { var cells = row.querySelectorAll('td'); if (colIndex >= cells.length) return ''; return (cells[colIndex].innerText || cells[colIndex].textContent || '').replace(/\s+/g,' ').trim().toLowerCase(); }
-
-  function countRowsByStatus(status) {
-    var col = getFlowColIndex(); if (col === -1) return 0;
-    var rows = getRows(); var count = 0;
-    for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; }
-    return count;
-  }
-
+  function countRowsByStatus(status) { var col = getFlowColIndex(); if (col === -1) return 0; var rows = getRows(); var count = 0; for (var r = 0; r < rows.length; r++) { if (getRowStatus(rows[r], col).indexOf(status.toLowerCase()) !== -1) count++; } return count; }
   function isRowChecked(row) { var cb = row.querySelector('td:first-child input[type="checkbox"]') || row.querySelector('input[type="checkbox"]'); return cb && cb.checked; }
 
   async function checkRow(row) {
@@ -200,7 +183,6 @@ javascript:(function(){
     if (cb.checked) { var wrap = row.querySelector('.ant-checkbox-wrapper') || row.querySelector('.ant-checkbox'); if (wrap) { wrap.click(); await wait(80); } }
   }
 
-  // ─── تحديد حالة معينة فقط (وإلغاء تعليم الباقي) ───
   async function selectOnlyByStatus(targetStatus) {
     var col = getFlowColIndex();
     if (col === -1) { showToast('عمود Current Flow غير موجود', 'error'); return 0; }
@@ -216,7 +198,6 @@ javascript:(function(){
     return selected;
   }
 
-  // ─── تحديث عدادات الأزرار ───
   function updateCounts() {
     var allocCount = countRowsByStatus('allocation');
     var ltCount = countRowsByStatus('loading task');
@@ -229,8 +210,6 @@ javascript:(function(){
     if (delEl) { delEl.innerText = ltCount > 0 ? ltCount : '—'; delEl.style.background = ltCount > 0 ? '#dcfce7' : '#f1f5f9'; delEl.style.color = ltCount > 0 ? '#059669' : '#94a3b8'; }
     if (colEl) { colEl.innerText = ltCount > 0 ? ltCount : '—'; colEl.style.background = ltCount > 0 ? '#ede9fe' : '#f1f5f9'; colEl.style.color = ltCount > 0 ? '#7c3aed' : '#94a3b8'; }
   }
-
-  // تحديث العدادات كل 3 ثواني
   setInterval(updateCounts, 3000);
   setTimeout(updateCounts, 500);
 
@@ -242,17 +221,39 @@ javascript:(function(){
     var found = null;
     var svgs = document.querySelectorAll('svg[aria-label="refresh icon"]');
     for (var i = 0; i < svgs.length; i++) { var p = svgs[i].parentElement; if (p && p.offsetParent !== null) { found = p; break; } }
-    if (!found) { var all = document.querySelectorAll('span, button'); for (var j = 0; j < all.length; j++) { if ((all[j].innerText||'').trim() === 'Refresh' && all[j].offsetParent !== null) { found = all[j]; break; } } }
+    if (!found) {
+      var all = document.querySelectorAll('span, button');
+      for (var j = 0; j < all.length; j++) {
+        var txt = (all[j].innerText||'').trim();
+        if (txt.indexOf('Refresh') !== -1 && all[j].offsetParent !== null) { found = all[j]; break; }
+      }
+    }
     if (found) { found.click(); await wait(2500); updateCounts(); return true; }
     return false;
   }
 
-  async function waitUntilStatusGone(status, maxTries, intervalMs) {
-    maxTries = maxTries || 25; intervalMs = intervalMs || 5000;
+  // Refresh متكرر حتى تظهر حالة معينة
+  async function refreshUntilStatus(status, maxTries) {
+    maxTries = maxTries || 20;
     for (var i = 0; i < maxTries; i++) {
-      var cnt = countRowsByStatus(status); if (cnt === 0) return true;
+      var cnt = countRowsByStatus(status);
+      if (cnt > 0) return cnt;
+      setSt('🔄 انتظار ظهور ' + status + '... (' + (i+1) + '/' + maxTries + ')', 'working');
+      await clickRefresh();
+      await wait(2000);
+    }
+    return countRowsByStatus(status);
+  }
+
+  // Refresh متكرر حتى تختفي حالة معينة
+  async function refreshUntilGone(status, maxTries) {
+    maxTries = maxTries || 20;
+    for (var i = 0; i < maxTries; i++) {
+      var cnt = countRowsByStatus(status);
+      if (cnt === 0) return true;
       setSt('⏳ ' + cnt + ' طلب "' + status + '" — انتظار (' + (i+1) + '/' + maxTries + ')', 'working');
-      await wait(intervalMs); await clickRefresh();
+      await clickRefresh();
+      await wait(3000);
     }
     return countRowsByStatus(status) === 0;
   }
@@ -292,30 +293,88 @@ javascript:(function(){
     return false;
   }
 
+  // حاول اضغط الزر — لو مش موجود اعمل Refresh وجرب تاني
+  async function clickActionWithRetry(textMatch, partial, maxRetries) {
+    maxRetries = maxRetries || 10;
+    for (var i = 0; i < maxRetries; i++) {
+      var ok = await clickAction(textMatch, partial);
+      if (ok) return true;
+      setSt('🔄 "' + textMatch + '" مش ظاهر — Refresh (' + (i+1) + '/' + maxRetries + ')', 'working');
+      await clickRefresh();
+      await wait(2000);
+    }
+    return false;
+  }
+
   // ═══════════════════════════════════════════════════════════════
   //  Injection
   // ═══════════════════════════════════════════════════════════════
 
   function getInput() {
-    return document.getElementById('rc_select_1')
-      || document.querySelector('input.ant-select-selection-search-input[role="combobox"]')
+    // البحث عن أي input بـ rc_select (الرقم بيتغير)
+    var rcInputs = document.querySelectorAll('input[id^="rc_select"]');
+    for (var i = 0; i < rcInputs.length; i++) {
+      if (rcInputs[i].className.indexOf('ant-select-selection-search-input') !== -1) return rcInputs[i];
+    }
+    return document.querySelector('input.ant-select-selection-search-input[role="combobox"]')
       || document.querySelector('input.ant-select-selection-search-input')
       || document.querySelector('input[aria-haspopup="listbox"]');
   }
+
+  // البحث عن span "Reference Number" والضغط عليه لفتح الخانة
+  async function clickReferenceNumber() {
+    var allSpans = document.querySelectorAll('span');
+    for (var i = 0; i < allSpans.length; i++) {
+      var txt = (allSpans[i].innerText || '').trim();
+      if (txt.indexOf('Reference Number') !== -1 && allSpans[i].offsetParent !== null) {
+        allSpans[i].click();
+        await wait(500);
+        return true;
+      }
+    }
+    return false;
+  }
+
   function getSelector() { var input = getInput(); if (!input) return null; return input.closest('.ant-select-selector') || input.closest('.ant-select'); }
   function countTags() { return document.querySelectorAll('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix)').length; }
   async function waitForOpen(input, timeout) { var start = Date.now(); while (Date.now() - start < timeout) { if (input.getAttribute('aria-expanded') === 'true') return true; await wait(50); } return false; }
 
   async function forceOpenSelect() {
-    var input = getInput(); var selector = getSelector();
+    // أولاً: اضغط Reference Number لفتح الخانة
+    var input = getInput();
+    if (!input) {
+      await clickReferenceNumber();
+      await wait(300);
+      input = getInput();
+    }
+    var selector = getSelector();
     if (!input || !selector) return false;
     if (input.getAttribute('aria-expanded') === 'true') { input.focus(); return true; }
-    selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
-    selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
-    selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
-    await wait(50); input.focus(); await wait(50);
-    if (input.getAttribute('aria-expanded') !== 'true') { var overflow = document.querySelector('.ant-select-selection-overflow'); if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); } }
-    if (input.getAttribute('aria-expanded') !== 'true') { input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true })); await wait(50); }
+
+    // جرب اضغط Reference Number أولاً
+    await clickReferenceNumber();
+    await wait(300);
+    input = getInput();
+    if (!input) return false;
+    if (input.getAttribute('aria-expanded') === 'true') { input.focus(); return true; }
+
+    // جرب اضغط الـ selector
+    selector = getSelector();
+    if (selector) {
+      selector.dispatchEvent(new MouseEvent('mousedown', { bubbles:true, cancelable:true }));
+      selector.dispatchEvent(new MouseEvent('mouseup', { bubbles:true, cancelable:true }));
+      selector.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
+      await wait(50); input.focus(); await wait(50);
+    }
+
+    if (input.getAttribute('aria-expanded') !== 'true') {
+      var overflow = document.querySelector('.ant-select-selection-overflow');
+      if (overflow) { overflow.dispatchEvent(new MouseEvent('mousedown', { bubbles:true })); overflow.click(); await wait(50); input.focus(); }
+    }
+    if (input.getAttribute('aria-expanded') !== 'true') {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', code:'ArrowDown', keyCode:40, bubbles:true }));
+      await wait(50);
+    }
     return await waitForOpen(input, 400);
   }
 
@@ -343,121 +402,58 @@ javascript:(function(){
   document.getElementById('fey_close').addEventListener('click',function(e){e.stopPropagation();panel.style.animation='feySlideIn 0.3s reverse';setTimeout(function(){panel.remove()},280);});
   document.getElementById('fey_min').addEventListener('click',function(e){e.stopPropagation();panel.classList.add('fey-min');});
 
-  // ─── أزرار التحديد ───
-  document.getElementById('fey_sel_lt').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    var btn = this;
-    btn.style.opacity = '0.6';
-
-    // الخطوة 1: تحديد Loading Task
-    setSt('☑️ تحديد Loading Task...', 'working');
-    var count = await selectOnlyByStatus('loading task');
-    updateCounts();
-
-    if (count === 0) {
-      btn.style.opacity = '1';
-      showToast('لا يوجد طلبات Loading Task', 'warning');
-      setSt('⚠️ لا يوجد Loading Task', 'ready');
-      return;
-    }
-
-    showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
-    await wait(500);
-
-    // الخطوة 2: الضغط على Assign to User
-    setSt('👤 جاري فتح Assign to User...', 'working');
-    var clicked = await clickAction('Assign to User', true);
-
-    btn.style.opacity = '1';
-
-    if (clicked) {
-      showToast('✅ تم فتح Assign to User — اختر الكابتن', 'success');
-      setSt('👤 اختر الكابتن واضغط Assign ✅', 'done');
-    } else {
-      showToast('⚠️ لم يُعثر على Assign to User', 'warning');
-      setSt('⚠️ Assign to User غير موجود — اضغطه يدوياً', 'ready');
-    }
-  });
-
-  document.getElementById('fey_sel_del').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    var btn = this;
-    btn.style.opacity = '0.6';
-
-    // الخطوة 1: تحديد Loading Task
-    setSt('☑️ تحديد Loading Task...', 'working');
-    var count = await selectOnlyByStatus('loading task');
-    updateCounts();
-
-    if (count === 0) {
-      btn.style.opacity = '1';
-      showToast('لا يوجد طلبات Loading Task', 'warning');
-      setSt('⚠️ لا يوجد Loading Task', 'ready');
-      return;
-    }
-
-    showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
-    await wait(500);
-
-    // الخطوة 2: الضغط على pending
-    setSt('⏳ جاري الضغط على Pending...', 'working');
-    var clicked = await clickAction('pending', false);
-
-    btn.style.opacity = '1';
-
-    if (clicked) {
-      showToast('✅ تم Pending لـ ' + count + ' طلب', 'success');
-      setSt('⏳ تم Pending ' + count + ' طلب ✅', 'done');
-      await wait(2000);
-      updateCounts();
-    } else {
-      showToast('⚠️ لم يُعثر على زر pending', 'warning');
-      setSt('⚠️ زر pending غير موجود — اضغطه يدوياً', 'ready');
-    }
-  });
-
-  // ─── Collected ───
-  document.getElementById('fey_collected').addEventListener('click', async function() {
-    if (state.isRunning) return;
-    var btn = this;
-    btn.style.opacity = '0.6';
-
-    // الخطوة 1: تحديد Loading Task
-    setSt('☑️ تحديد Loading Task...', 'working');
-    var count = await selectOnlyByStatus('loading task');
-    updateCounts();
-
-    if (count === 0) {
-      btn.style.opacity = '1';
-      showToast('لا يوجد طلبات Loading Task', 'warning');
-      setSt('⚠️ لا يوجد Loading Task', 'ready');
-      return;
-    }
-
-    showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
-    await wait(500);
-
-    // الخطوة 2: الضغط على Collected
-    setSt('📦 جاري الضغط على Collected...', 'working');
-    var clicked = await clickAction('Collected', false);
-
-    btn.style.opacity = '1';
-
-    if (clicked) {
-      showToast('✅ تم Collected لـ ' + count + ' طلب', 'success');
-      setSt('📦 تم Collected ' + count + ' طلب ✅', 'done');
-      await wait(2000);
-      updateCounts();
-    } else {
-      showToast('⚠️ لم يُعثر على زر Collected', 'warning');
-      setSt('⚠️ زر Collected غير موجود — اضغطه يدوياً', 'ready');
-    }
-  });
-
-  // ─── Allocate ───
+  // ─── زر Allocate (يدوي) ───
   document.getElementById('fey_alloc_direct').addEventListener('click', async function() {
     if (state.isRunning) return;
-    await runAllocate();
+    await runAllocateOnly();
+  });
+
+  // ─── زر Assign to User (يدوي) ───
+  document.getElementById('fey_sel_lt').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    var btn = this; btn.style.opacity = '0.6';
+    setSt('☑️ تحديد Loading Task...', 'working');
+    var count = await selectOnlyByStatus('loading task');
+    updateCounts();
+    if (count === 0) { btn.style.opacity = '1'; showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
+    showToast('تم تحديد ' + count + ' طلب', 'success'); await wait(500);
+    setSt('👤 جاري فتح Assign to User...', 'working');
+    var clicked = await clickAction('Assign to User', true);
+    btn.style.opacity = '1';
+    if (clicked) { showToast('✅ تم فتح Assign to User — اختر الكابتن', 'success'); setSt('👤 اختر الكابتن واضغط Assign ✅', 'done'); }
+    else { showToast('⚠️ Assign to User غير موجود', 'warning'); setSt('⚠️ اضغط Assign to User يدوياً', 'ready'); }
+  });
+
+  // ─── زر Pending (يدوي) ───
+  document.getElementById('fey_sel_del').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    var btn = this; btn.style.opacity = '0.6';
+    setSt('☑️ تحديد Loading Task...', 'working');
+    var count = await selectOnlyByStatus('loading task');
+    updateCounts();
+    if (count === 0) { btn.style.opacity = '1'; showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
+    showToast('تم تحديد ' + count + ' طلب', 'success'); await wait(500);
+    setSt('⏳ جاري Pending...', 'working');
+    var clicked = await clickAction('pending', false);
+    btn.style.opacity = '1';
+    if (clicked) { showToast('✅ تم Pending', 'success'); setSt('⏳ تم Pending ' + count + ' طلب ✅', 'done'); await wait(2000); updateCounts(); }
+    else { showToast('⚠️ زر pending غير موجود', 'warning'); setSt('⚠️ اضغط pending يدوياً', 'ready'); }
+  });
+
+  // ─── زر Collected (يدوي) ───
+  document.getElementById('fey_collected').addEventListener('click', async function() {
+    if (state.isRunning) return;
+    var btn = this; btn.style.opacity = '0.6';
+    setSt('☑️ تحديد Loading Task...', 'working');
+    var count = await selectOnlyByStatus('loading task');
+    updateCounts();
+    if (count === 0) { btn.style.opacity = '1'; showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
+    showToast('تم تحديد ' + count + ' طلب', 'success'); await wait(500);
+    setSt('📦 جاري Collected...', 'working');
+    var clicked = await clickAction('Collected', false);
+    btn.style.opacity = '1';
+    if (clicked) { showToast('✅ تم Collected', 'success'); setSt('📦 تم Collected ' + count + ' طلب ✅', 'done'); await wait(2000); updateCounts(); }
+    else { showToast('⚠️ زر Collected غير موجود', 'warning'); setSt('⚠️ اضغط Collected يدوياً', 'ready'); }
   });
 
   // ─── رفع الملفات ───
@@ -496,15 +492,24 @@ javascript:(function(){
   document.getElementById('fey_speed').addEventListener('input',function(){state.delayMs=parseInt(this.value);document.getElementById('fey_speed_l').innerText=(state.delayMs/1000).toFixed(1)+'s'});
 
   // ═══════════════════════════════════════════════════════════════
-  //  رفع الطلبات → Allocate تلقائي
+  //  رفع → Dialog (3 خيارات)
   // ═══════════════════════════════════════════════════════════════
 
   startBtn.addEventListener('click', async function() {
     if (state.isRunning || !state.orders.length) return;
+
+    // اضغط Reference Number أولاً لفتح الخانة
     var input = getInput();
+    if (!input) {
+      await clickReferenceNumber();
+      await wait(500);
+      input = getInput();
+    }
     if (!input) { await showDialog({icon:'❌',iconColor:'red',title:'لم يتم العثور على الحقل',desc:'تأكد إنك في صفحة FarEye الصحيحة',buttons:[{text:'👍 حسناً',value:'ok',style:'background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white'}]}); return; }
-    startBtn.disabled = true; startBtn.style.opacity = '0.8'; startBtn.innerHTML = '👆 المس الخانة...';
-    for (var sec = 5; sec > 0; sec--) { setSt('👆 المس الخانة الآن! (' + sec + ')', 'waiting'); await wait(1000); }
+
+    startBtn.disabled = true; startBtn.style.opacity = '0.8';
+    setSt('🔄 جاري تجهيز الخانة...', 'working');
+    await forceOpenSelect();
     setSt('🚀 جاري الرفع...', 'working');
     state.isRunning = true; state.injectedCount = 0; state.failedCount = 0;
     document.getElementById('fey_pw').style.display = 'block'; upStats();
@@ -524,57 +529,172 @@ javascript:(function(){
     startBtn.innerHTML = '🔄 إعادة (' + state.orders.length + ')';
     setSt(state.injectedCount+'✅ / '+state.failedCount+'❌', 'done');
 
-    // بعد الرفع → Allocate مباشرة
-    var allocRes = await showDialog({
-      icon:'📦', iconColor:'blue', title:'Allocate الطلبات؟',
-      desc:'تم رفع ' + state.injectedCount + ' طلب ✅' + (state.failedCount > 0 ? '  |  فشل ' + state.failedCount + ' ❌' : '') + '\n\nهل تريد Allocate تلقائي؟',
-      buttons:[ {text:'لا، شكراً',value:'no'}, {text:'📦 Allocate',value:'yes',style:'background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;box-shadow:0 4px 12px rgba(37,99,235,0.3)'} ]
+    // 3 خيارات
+    var choice = await showDialog({
+      icon:'📦', iconColor:'blue', title:'ماذا تريد؟',
+      desc:'تم رفع ' + state.injectedCount + ' طلب ✅' + (state.failedCount > 0 ? '  |  فشل ' + state.failedCount + ' ❌' : ''),
+      buttons:[
+        {text:'❌ إلغاء',value:'cancel'},
+        {text:'📦 Allocate فقط',value:'alloc',style:'background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white'},
+        {text:'🚀 تشغيل آلي كامل',value:'auto',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}
+      ]
     });
-    if (allocRes === 'yes') await runAllocate();
+
+    if (choice === 'alloc') await runAllocateOnly();
+    else if (choice === 'auto') await runFullAuto();
   });
 
   // ═══════════════════════════════════════════════════════════════
-  //  📦 Allocate فقط — بدون مراحل بعده
+  //  📦 Allocate فقط
   // ═══════════════════════════════════════════════════════════════
 
-  async function runAllocate() {
+  async function runAllocateOnly() {
     try {
       setSt('📦 بحث عن طلبات Allocation...', 'working');
-      var flowColIndex = getFlowColIndex();
-      if (flowColIndex === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
-
+      if (getFlowColIndex() === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
       var selected = await selectOnlyByStatus('allocation');
-      if (selected === 0) {
-        showToast('لا يوجد طلبات Allocation', 'warning');
-        setSt('⚠️ لا يوجد طلبات Allocation', 'ready');
-        updateCounts();
-        return;
-      }
-
-      showToast('تم تعليم ' + selected + ' طلب Allocation', 'success');
-      setSt('📦 جاري Allocate (' + selected + ')...', 'working');
-      await wait(400);
-
-      var allocClicked = await clickAction('Allocate');
-      if (allocClicked) {
-        showToast('✅ تم Allocate!', 'success');
-      } else {
-        showToast('⚠️ لم يُعثر على زر Allocate — اضغطه يدوياً', 'warning');
-      }
-
-      // انتظار التحويل
+      if (selected === 0) { showToast('لا يوجد طلبات Allocation', 'warning'); setSt('⚠️ لا يوجد Allocation', 'ready'); updateCounts(); return; }
+      showToast('تم تعليم ' + selected + ' طلب', 'success');
+      setSt('📦 جاري Allocate (' + selected + ')...', 'working'); await wait(400);
+      var allocClicked = await clickAction('Allocate', false);
+      if (allocClicked) { showToast('✅ تم Allocate!', 'success'); }
+      else { showToast('⚠️ اضغط Allocate يدوياً', 'warning'); }
       setSt('⏳ انتظار Allocation → Loading Task...', 'working');
       await wait(2000);
-      await waitUntilStatusGone('allocation', 25, 5000);
-
+      await refreshUntilGone('allocation', 25);
       updateCounts();
       var ltCount = countRowsByStatus('loading task');
-      setSt('✅ تم Allocate — ' + ltCount + ' طلب Loading Task جاهزين 🎉', 'done');
-      showToast('🎉 ' + ltCount + ' طلب Loading Task جاهزين', 'success');
+      setSt('✅ تم Allocate — ' + ltCount + ' Loading Task 🎉', 'done');
+    } catch(err) { setSt('❌ خطأ: ' + (err.message || err), 'error'); }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  🚀 تشغيل آلي كامل
+  //
+  //  1. Allocate + Refresh حتى تتحول
+  //  2. تحديد Loading Task + Assign to User
+  //  3. ⏸️ انتظار الكابتن
+  //  4. Refresh حتى تظهر Loading Task + تحديد + Pending
+  //  5. Refresh حتى تظهر Loading Task + تحديد + Collected
+  //  6. تحقق نهائي
+  // ═══════════════════════════════════════════════════════════════
+
+  async function runFullAuto() {
+    try {
+
+      // ══════════ 1: Allocate ══════════
+      setSt('📦 [1/4] بحث عن Allocation...', 'working');
+      if (getFlowColIndex() === -1) { showToast('عمود Current Flow غير موجود', 'error'); setSt('❌ عمود Current Flow غير موجود', 'error'); return; }
+
+      var allocCount = await selectOnlyByStatus('allocation');
+      if (allocCount > 0) {
+        showToast('تم تعليم ' + allocCount + ' طلب Allocation', 'success');
+        setSt('📦 [1/4] Allocate (' + allocCount + ')...', 'working');
+        await wait(400);
+        await clickAction('Allocate', false);
+        showToast('✅ تم Allocate', 'success');
+        setSt('🔄 [1/4] انتظار Allocation → Loading Task...', 'working');
+        await wait(2000);
+        await refreshUntilGone('allocation', 25);
+      } else {
+        showToast('لا يوجد Allocation — متابعة', 'info');
+      }
+      updateCounts();
+
+      // ══════════ 2: Assign to User ══════════
+      setSt('🔄 [2/4] تحديث قبل Assign...', 'working');
+      await clickRefresh();
+      await wait(1000);
+
+      setSt('☑️ [2/4] تحديد Loading Task...', 'working');
+      var ltCount = await selectOnlyByStatus('loading task');
+      if (ltCount === 0) {
+        // ممكن لسه ما ظهرتش — استنى
+        ltCount = await refreshUntilStatus('loading task', 15);
+        if (ltCount > 0) ltCount = await selectOnlyByStatus('loading task');
+      }
+      if (ltCount === 0) { showToast('لا يوجد Loading Task', 'warning'); setSt('⚠️ لا يوجد Loading Task', 'ready'); return; }
+
+      showToast('تم تحديد ' + ltCount + ' طلب', 'success');
+      await wait(500);
+      setSt('👤 [2/4] Assign to User...', 'working');
+      await clickActionWithRetry('Assign to User', true, 10);
+
+      // ══════════ 3: ⏸️ انتظار الكابتن ══════════
+      setSt('⏸️ [2/4] الكود متوقف — اختر الكابتن...', 'paused');
+
+      await showDialog({
+        icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
+        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. لما تخلص اضغط الزر ⬇️\n\n⏸️ الكود متوقف — خذ وقتك',
+        buttons:[{text:'✅ خلصت — كمّل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
+      });
+
+      showToast('👍 جاري إكمال المراحل...', 'success');
+
+      // ══════════ 4: Pending ══════════
+      setSt('🔄 [3/4] تحديث قبل Pending...', 'working');
+      await clickRefresh();
+      await wait(1500);
+
+      // انتظر Loading Task تظهر — ممكن الحالة لسه ما اتغيرتش
+      ltCount = countRowsByStatus('loading task');
+      if (ltCount === 0) {
+        setSt('🔄 [3/4] انتظار ظهور Loading Task...', 'working');
+        ltCount = await refreshUntilStatus('loading task', 15);
+      }
+
+      if (ltCount > 0) {
+        setSt('☑️ [3/4] تحديد Loading Task...', 'working');
+        ltCount = await selectOnlyByStatus('loading task');
+        showToast('تم تحديد ' + ltCount + ' طلب', 'success');
+        await wait(500);
+
+        setSt('⏳ [3/4] Pending...', 'working');
+        var pendingOk = await clickActionWithRetry('pending', false, 10);
+        if (pendingOk) showToast('✅ تم Pending', 'success');
+        else showToast('⚠️ Pending لم يُعثر عليه', 'warning');
+      }
+
+      // ══════════ 5: Collected ══════════
+      await wait(1500);
+      setSt('🔄 [4/4] تحديث قبل Collected...', 'working');
+      await clickRefresh();
+      await wait(1500);
+
+      ltCount = countRowsByStatus('loading task');
+      if (ltCount === 0) {
+        setSt('🔄 [4/4] انتظار ظهور Loading Task...', 'working');
+        ltCount = await refreshUntilStatus('loading task', 15);
+      }
+
+      if (ltCount > 0) {
+        setSt('☑️ [4/4] تحديد Loading Task...', 'working');
+        ltCount = await selectOnlyByStatus('loading task');
+        showToast('تم تحديد ' + ltCount + ' طلب', 'success');
+        await wait(500);
+
+        setSt('📦 [4/4] Collected ⛔ تجنب Reject...', 'working');
+        var collectedOk = await clickActionWithRetry('Collected', false, 10);
+        if (collectedOk) showToast('✅ تم Collected', 'success');
+        else showToast('⚠️ Collected لم يُعثر عليه', 'warning');
+      }
+
+      // ══════════ 6: التحقق النهائي ══════════
+      await wait(2000);
+      setSt('🔄 التحديث النهائي...', 'working');
+      await clickRefresh();
+      await wait(1000);
+      updateCounts();
+
+      var deliveryCount = countRowsByStatus('delivery');
+      var totalRows = getRows().length;
+
+      showToast('🎉 انتهى! ' + deliveryCount + '/' + totalRows + ' Delivery', 'success');
+      setSt('🎉 تم! ' + deliveryCount + '/' + totalRows + ' Delivery ✅', 'done');
 
     } catch(err) {
       setSt('❌ خطأ: ' + (err.message || err), 'error');
-      showToast('خطأ في Allocate', 'error');
+      showToast('خطأ غير متوقع', 'error');
     }
   }
 
