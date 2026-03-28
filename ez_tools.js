@@ -193,7 +193,64 @@ if(!autoDetected){
 /* ══════════════════════════════════════
    Farmadosis Download (JSON)
    ══════════════════════════════════════ */
-function safeDownload(){try{var pname=(document.getElementById('pname')||{}).value||'';var mobile=(document.getElementById('mobile')||{}).value||'';var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';if(!pname||!mobile)return;if(!inv)return;var treats=[];var rows=document.querySelectorAll('table.styled-table tr');for(var r=1;r<rows.length;r++){var tds=rows[r].querySelectorAll('td');if(tds.length<10)continue;var code=gv(tds[1]);if(!code||code.length<3)continue;var every=gv(tds[6])||'';var mins=1440;if(every.indexOf('12')>-1)mins=720;else if(every.indexOf('8')>-1)mins=480;else if(every.indexOf('6')>-1)mins=360;else if(every.indexOf('4')>-1)mins=240;var st=gv(tds[7])||'09:00';if(st.toUpperCase().indexOf('PM')>-1){var pts=st.replace(/[^0-9:]/g,'').split(':');var hr=parseInt(pts[0])||0;if(hr<12)hr+=12;st=String(hr)+':'+(pts[1]||'00')}else{st=st.replace(/[^0-9:]/g,'')}if(!st||st.length<3)st='09:00';function fd(dd){if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}return dd}var sd=fd(gv(tds[8]));var ed=fd(gv(tds[9]));if(!sd)sd=new Date().toISOString().slice(0,10);if(!ed)ed=sd;treats.push({medicine_code:code,medicine_name:gv(tds[2]),treatment_plan:'custom_interval',starts_at:sd+' '+st,ends_at:ed+' 23:59',emblist_it:true,force_medicine_code_in_production:false,emblist_in_unique_bag:false,is_if_needed_treatment:false,notes:gv(tds[10])||'',configs:[{first_take:sd+' '+st,dose:gv(tds[5])||'1',minutes_interval:mins}]})}if(!treats.length)return;downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv)}catch(e){}}
+function safeDownload(){
+  try{
+    var pname=(document.getElementById('pname')||{}).value||'';
+    var mobile=(document.getElementById('mobile')||{}).value||'';
+    var inv=(document.getElementById('InvoiceNo')||{innerText:''}).innerText.trim()||'';
+    if(!pname||!mobile){alert('⚠️ اسم المريض أو الموبايل غير موجود');return}
+    if(!inv){alert('⚠️ رقم الفاتورة غير موجود');return}
+
+    function fd(dd){
+      if(!dd||dd.indexOf('yyyy')>-1||dd.indexOf('mm/dd')>-1)return'';
+      if(dd.indexOf('/')>-1){var p=dd.split('/');if(p.length===3)return p[2]+'-'+p[0].padStart(2,'0')+'-'+p[1].padStart(2,'0')}
+      return dd;
+    }
+
+    var treats=[];
+    var rows=document.querySelectorAll('table.styled-table tr');
+    for(var r=1;r<rows.length;r++){
+      var tds=rows[r].querySelectorAll('td');
+      if(tds.length<10)continue;
+      var code=gv(tds[1]);
+      if(!code||code.length<3)continue;
+
+      /* ── Every: استخراج الرقم الفعلي وتحويله لدقائق ── */
+      var every=gv(tds[6])||'';
+      var evNum=parseInt(every.replace(/[^0-9]/g,''))||24;
+      var mins=evNum*60;
+
+      /* ── Start Time: استخدام to24h المظبوطة ── */
+      var st=to24h(gv(tds[7])||'09:00');
+
+      /* ── التواريخ ── */
+      var sd=fd(gv(tds[8]));
+      var ed=fd(gv(tds[9]));
+      if(!sd)sd=new Date().toISOString().slice(0,10);
+      if(!ed)ed=sd;
+
+      treats.push({
+        medicine_code:code,
+        medicine_name:gv(tds[2]),
+        treatment_plan:'custom_interval',
+        starts_at:sd+' '+st,
+        ends_at:ed+' 23:59',
+        emblist_it:true,
+        force_medicine_code_in_production:false,
+        emblist_in_unique_bag:false,
+        is_if_needed_treatment:false,
+        notes:gv(tds[10])||'',
+        configs:[{
+          first_take:sd+' '+st,
+          dose:gv(tds[5])||'1',
+          minutes_interval:mins
+        }]
+      });
+    }
+    if(!treats.length){alert('⚠️ لا توجد أصناف للتصدير');return}
+    downloadObjectAsJson({mode:'ONLY_UPDATE_OR_CREATE',patients:[{name:pname,external_id:inv,treatments:treats}]},inv);
+  }catch(e){alert('❌ خطأ في تحميل Farmadosis: '+e.message)}
+}
 
 /* ══════════════════════════════════════
    JVM Download (.OCS)
