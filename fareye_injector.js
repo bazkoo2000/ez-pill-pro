@@ -104,7 +104,7 @@ javascript:(function(){
             '<span class="fey-badge" style="background:#dbeafe;color:#1d4ed8" id="fey_cnt_lt">—</span>'+
           '</button>'+
           '<button id="fey_sel_del" class="fey-helper-btn" style="margin-bottom:0">'+
-            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">🚚</span> تحديد Delivery</span>'+
+            '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">⏳</span> Pending</span>'+
             '<span class="fey-badge" style="background:#dcfce7;color:#059669" id="fey_cnt_del">—</span>'+
           '</button>'+
         '</div>'+
@@ -216,13 +216,12 @@ javascript:(function(){
   function updateCounts() {
     var allocCount = countRowsByStatus('allocation');
     var ltCount = countRowsByStatus('loading task');
-    var delCount = countRowsByStatus('delivery');
     var allocEl = document.getElementById('fey_cnt_alloc');
     var ltEl = document.getElementById('fey_cnt_lt');
     var delEl = document.getElementById('fey_cnt_del');
     if (allocEl) { allocEl.innerText = allocCount > 0 ? allocCount : '—'; allocEl.style.background = allocCount > 0 ? '#fef3c7' : '#f1f5f9'; allocEl.style.color = allocCount > 0 ? '#d97706' : '#94a3b8'; }
     if (ltEl) { ltEl.innerText = ltCount > 0 ? ltCount : '—'; ltEl.style.background = ltCount > 0 ? '#dbeafe' : '#f1f5f9'; ltEl.style.color = ltCount > 0 ? '#1d4ed8' : '#94a3b8'; }
-    if (delEl) { delEl.innerText = delCount > 0 ? delCount : '—'; delEl.style.background = delCount > 0 ? '#dcfce7' : '#f1f5f9'; delEl.style.color = delCount > 0 ? '#059669' : '#94a3b8'; }
+    if (delEl) { delEl.innerText = ltCount > 0 ? ltCount : '—'; delEl.style.background = ltCount > 0 ? '#dcfce7' : '#f1f5f9'; delEl.style.color = ltCount > 0 ? '#059669' : '#94a3b8'; }
   }
 
   // تحديث العدادات كل 3 ثواني
@@ -376,17 +375,38 @@ javascript:(function(){
 
   document.getElementById('fey_sel_del').addEventListener('click', async function() {
     if (state.isRunning) return;
-    this.style.opacity = '0.6';
-    setSt('☑️ تحديد Delivery...', 'working');
-    var count = await selectOnlyByStatus('delivery');
-    this.style.opacity = '1';
+    var btn = this;
+    btn.style.opacity = '0.6';
+
+    // الخطوة 1: تحديد Loading Task
+    setSt('☑️ تحديد Loading Task...', 'working');
+    var count = await selectOnlyByStatus('loading task');
     updateCounts();
-    if (count > 0) {
-      showToast('تم تحديد ' + count + ' طلب Delivery', 'success');
-      setSt('☑️ تم تحديد ' + count + ' Delivery ✅', 'done');
+
+    if (count === 0) {
+      btn.style.opacity = '1';
+      showToast('لا يوجد طلبات Loading Task', 'warning');
+      setSt('⚠️ لا يوجد Loading Task', 'ready');
+      return;
+    }
+
+    showToast('تم تحديد ' + count + ' طلب Loading Task', 'success');
+    await wait(500);
+
+    // الخطوة 2: الضغط على pending
+    setSt('⏳ جاري الضغط على Pending...', 'working');
+    var clicked = await clickAction('pending', false);
+
+    btn.style.opacity = '1';
+
+    if (clicked) {
+      showToast('✅ تم Pending لـ ' + count + ' طلب', 'success');
+      setSt('⏳ تم Pending ' + count + ' طلب ✅', 'done');
+      await wait(2000);
+      updateCounts();
     } else {
-      showToast('لا يوجد طلبات Delivery', 'warning');
-      setSt('⚠️ لا يوجد Delivery', 'ready');
+      showToast('⚠️ لم يُعثر على زر pending', 'warning');
+      setSt('⚠️ زر pending غير موجود — اضغطه يدوياً', 'ready');
     }
   });
 
