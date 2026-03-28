@@ -45,6 +45,29 @@ javascript:(function(){
     });
   }
 
+  // شريط صغير في أسفل الشاشة — ما يغطيش أي حاجة
+  function showFloatingBar(msg, btnText) {
+    return new Promise(function(resolve) {
+      var bar = document.createElement('div');
+      bar.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999999;background:linear-gradient(135deg,#1e293b,#334155);color:white;padding:12px 20px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);font-family:Segoe UI,sans-serif;direction:rtl;display:flex;align-items:center;gap:12px;animation:feyToastIn 0.4s cubic-bezier(0.16,1,0.3,1);max-width:95vw';
+      var btn = document.createElement('button');
+      btn.innerText = btnText;
+      btn.style.cssText = 'background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;padding:10px 20px;border-radius:12px;font-weight:800;font-size:13px;font-family:Segoe UI,sans-serif;cursor:pointer;white-space:nowrap;transition:all 0.2s;box-shadow:0 4px 12px rgba(5,150,105,0.3)';
+      var txt = document.createElement('span');
+      txt.style.cssText = 'font-size:13px;font-weight:600;white-space:nowrap';
+      txt.innerText = msg;
+      bar.appendChild(txt);
+      bar.appendChild(btn);
+      btn.addEventListener('click', function() {
+        bar.style.transition = 'all 0.3s';
+        bar.style.opacity = '0';
+        bar.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(function() { bar.remove(); resolve('done'); }, 300);
+      });
+      document.body.appendChild(bar);
+    });
+  }
+
   var css = document.createElement('style');
   css.innerHTML =
     '@keyframes feySlideIn{from{opacity:0;transform:translateX(40px) scale(0.95)}to{opacity:1;transform:translateX(0) scale(1)}}'+
@@ -617,14 +640,10 @@ javascript:(function(){
       setSt('👤 [2/4] Assign to User...', 'working');
       await clickActionWithRetry('Assign to User', true, 10);
 
-      // ══════════ 3: ⏸️ انتظار الكابتن ══════════
+      // ══════════ 3: ⏸️ انتظار الكابتن — شريط صغير في الأسفل ══════════
       setSt('⏸️ [2/4] الكود متوقف — اختر الكابتن...', 'paused');
 
-      await showDialog({
-        icon:'🚗', iconColor:'blue', title:'اختر الكابتن',
-        desc:'1. اختر كابتن التوصيل من القائمة\n2. اضغط Assign في FarEye\n3. لما تخلص اضغط الزر ⬇️\n\n⏸️ الكود متوقف — خذ وقتك',
-        buttons:[{text:'✅ خلصت — كمّل',value:'done',style:'background:linear-gradient(135deg,#059669,#10b981);color:white;box-shadow:0 4px 12px rgba(5,150,105,0.3)'}]
-      });
+      await showFloatingBar('🚗 اختر الكابتن واضغط Assign — ثم اضغط هنا ⬇️', '✅ خلصت — كمّل');
 
       showToast('👍 جاري إكمال المراحل...', 'success');
 
